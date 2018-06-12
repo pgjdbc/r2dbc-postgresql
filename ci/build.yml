@@ -7,6 +7,7 @@ image_resource:
     repository: r2dbc/r2dbc-postgresql
 
 inputs:
+- name: r2dbc-spi-artifactory
 - name: r2dbc-postgresql
 
 outputs:
