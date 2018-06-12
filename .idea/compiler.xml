@@ -7,7 +7,6 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="r2dbc-postgresql" />
-        <module name="r2dbc-postgresql-examples" />
       </profile>
     </annotationProcessing>
   </component>
