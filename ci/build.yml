@@ -4,8 +4,7 @@ platform: linux
 image_resource:
   type: docker-image
   source:
-    repository: openjdk
-    tag: 8-jdk-alpine
+    repository: r2dbc/r2dbc-postgresql
 
 inputs:
 - name: r2dbc-postgresql
@@ -15,6 +14,7 @@ outputs:
 
 caches:
 - path: maven
+- path: postgresql
 
 run:
   path: r2dbc-postgresql/ci/build.sh
