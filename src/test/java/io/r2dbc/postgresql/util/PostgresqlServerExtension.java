@@ -119,7 +119,7 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
     }
 
     private static String getDataDirectory(String database) {
-        return String.format("target/postgresql/data/%s", database);
+        return String.format("%s/postgresql/data/%s", System.getProperty("java.io.tmpdir"), database);
     }
 
 }
