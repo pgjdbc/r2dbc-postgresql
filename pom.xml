@@ -253,4 +253,24 @@
         </repository>
     </repositories>
 
+    <profiles>
+        <profile>
+            <id>r2dbc-spi-artifactory</id>
+            <activation>
+                <property>
+                    <name>r2dbcSpiArtifactory</name>
+                </property>
+            </activation>
+            <repositories>
+                <repository>
+                    <id>r2dbc-spi-artifactory</id>
+                    <url>${r2dbcSpiArtifactory}</url>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
+                </repository>
+            </repositories>
+        </profile>
+    </profiles>
+
 </project>

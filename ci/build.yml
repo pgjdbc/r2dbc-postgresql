@@ -18,4 +18,6 @@ caches:
 - path: postgresql
 
 run:
-  path: r2dbc-postgresql/ci/build.sh
+  path: r2dbc-postgresql/ci/perm-patch.sh
+  args:
+  - r2dbc-postgresql/ci/build.sh
