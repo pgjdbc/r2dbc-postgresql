@@ -61,7 +61,7 @@ final class Examples {
 
                 .concatWith(close(connection)))
             .as(StepVerifier::create)
-            .expectNextCount(3)  // TODO: Decrease by 1 when https://github.com/reactor/reactor-core/issues/1033
+            .expectNextCount(2)
             .verifyComplete();
     }
 
@@ -80,7 +80,6 @@ final class Examples {
             .as(StepVerifier::create)
             .expectNext(Collections.singletonList(100))
             .expectNext(Collections.singletonList(100))
-            .expectNextCount(1)  // TODO: Remove when https://github.com/reactor/reactor-core/issues/1033
             .verifyComplete();
     }
 
@@ -129,7 +128,6 @@ final class Examples {
             .as(StepVerifier::create)
             .expectNext(Collections.singletonList(1))
             .expectNext(Collections.singletonList(2))
-            .expectNextCount(1)  // TODO: Remove when https://github.com/reactor/reactor-core/issues/1033
             .verifyComplete();
     }
 
@@ -169,7 +167,7 @@ final class Examples {
                     .concatWith(close(connection));
             })
             .as(StepVerifier::create)
-            .expectNextCount(11) // TODO: Decrease by 1 when https://github.com/reactor/reactor-core/issues/1033
+            .expectNextCount(10)
             .verifyComplete();
     }
 
@@ -210,15 +208,11 @@ final class Examples {
                 .concatWith(close(connection)))
             .as(StepVerifier::create)
             .expectNext(Collections.singletonList(100))
-            .expectNextCount(1)  // TODO: Remove when https://github.com/reactor/reactor-core/issues/1033
             .expectNext(1)
             .expectNext(Arrays.asList(100, 200))
-            .expectNextCount(1)  // TODO: Remove when https://github.com/reactor/reactor-core/issues/1033
             .expectNext(1)
             .expectNext(Arrays.asList(100, 200, 300))
-            .expectNextCount(1)  // TODO: Remove when https://github.com/reactor/reactor-core/issues/1033
             .expectNext(Arrays.asList(100, 200))
-            .expectNextCount(1)  // TODO: Remove when https://github.com/reactor/reactor-core/issues/1033
             .verifyComplete();
     }
 
@@ -250,12 +244,9 @@ final class Examples {
                 .concatWith(close(connection)))
             .as(StepVerifier::create)
             .expectNext(Collections.singletonList(100))
-            .expectNextCount(1)  // TODO: Remove when https://github.com/reactor/reactor-core/issues/1033
             .expectNext(1)
             .expectNext(Arrays.asList(100, 200))
-            .expectNextCount(1)  // TODO: Remove when https://github.com/reactor/reactor-core/issues/1033
             .expectNext(Arrays.asList(100, 200))
-            .expectNextCount(1)  // TODO: Remove when https://github.com/reactor/reactor-core/issues/1033
             .verifyComplete();
     }
 
@@ -305,12 +296,9 @@ final class Examples {
                 .concatWith(close(connection)))
             .as(StepVerifier::create)
             .expectNext(Collections.singletonList(100))
-            .expectNextCount(1)  // TODO: Remove when https://github.com/reactor/reactor-core/issues/1033
             .expectNext(1)
             .expectNext(Arrays.asList(100, 200))
-            .expectNextCount(1)  // TODO: Remove when https://github.com/reactor/reactor-core/issues/1033
             .expectNext(Collections.singletonList(100))
-            .expectNextCount(1)  // TODO: Remove when https://github.com/reactor/reactor-core/issues/1033
             .verifyComplete();
     }
 

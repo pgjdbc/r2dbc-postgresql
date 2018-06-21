@@ -45,7 +45,7 @@ final class PostgresqlBatchTest {
             .add("test-query-2")
             .execute()
             .as(StepVerifier::create)
-            .expectNextCount(2)  // TODO: Decrease by 1 when https://github.com/reactor/reactor-core/issues/1033
+            .expectNextCount(1)
             .verifyComplete();
     }
 
@@ -83,7 +83,7 @@ final class PostgresqlBatchTest {
             .add("test-query")
             .execute()
             .as(StepVerifier::create)
-            .expectNextCount(2)  // TODO: Decrease by 1 when https://github.com/reactor/reactor-core/issues/1033
+            .expectNextCount(1)
             .verifyComplete();
     }
 
@@ -97,7 +97,7 @@ final class PostgresqlBatchTest {
             .add("test-query")
             .execute()
             .as(StepVerifier::create)
-            .expectNextCount(2)  // TODO: Decrease by 1 when https://github.com/reactor/reactor-core/issues/1033
+            .expectNextCount(1)
             .verifyComplete();
     }
 
@@ -111,7 +111,7 @@ final class PostgresqlBatchTest {
             .add("test-query")
             .execute()
             .as(StepVerifier::create)
-            .expectNextCount(2)  // TODO: Decrease by 1 when https://github.com/reactor/reactor-core/issues/1033
+            .expectNextCount(1)
             .verifyComplete();
     }
 
