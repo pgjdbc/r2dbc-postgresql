@@ -68,11 +68,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.r2dbc</groupId>
-            <artifactId>r2dbc-spi</artifactId>
-            <version>${r2dbc-spi.version}</version>
-        </dependency>
-        <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-core</artifactId>
         </dependency>
@@ -83,6 +78,11 @@
         <dependency>
             <groupId>io.projectreactor.ipc</groupId>
             <artifactId>reactor-netty</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.r2dbc</groupId>
+            <artifactId>r2dbc-spi</artifactId>
+            <version>${r2dbc-spi.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
