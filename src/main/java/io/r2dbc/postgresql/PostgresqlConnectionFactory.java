@@ -67,6 +67,11 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
     }
 
     @Override
+    public PostgresqlConnectionFactoryMetadata getMetadata() {
+        return PostgresqlConnectionFactoryMetadata.INSTANCE;
+    }
+
+    @Override
     public String toString() {
         return "PostgresqlConnectionFactory{}";
     }

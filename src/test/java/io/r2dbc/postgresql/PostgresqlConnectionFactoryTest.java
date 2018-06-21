@@ -74,4 +74,27 @@ final class PostgresqlConnectionFactoryTest {
             .verifyComplete();
     }
 
+    @Test
+    void getMetadata() {
+        // @formatter:off
+        Client client = TestClient.builder()
+            .parameterStatus("test-key", "test-value")
+            .window()
+                .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username")).thenRespond(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))
+                .expectRequest(new PasswordMessage("md55e9836cdb369d50e3bc7d127e88b4804")).thenRespond(AuthenticationOk.INSTANCE)
+                .done()
+            .build();
+        // @formatter:on
+
+        PostgresqlConnectionConfiguration configuration = PostgresqlConnectionConfiguration.builder()
+            .applicationName("test-application-name")
+            .database("test-database")
+            .host("test-host")
+            .username("test-username")
+            .password("test-password")
+            .build();
+
+        assertThat(new PostgresqlConnectionFactory(() -> client, configuration).getMetadata()).isNotNull();
+    }
+
 }
