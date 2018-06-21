@@ -218,7 +218,7 @@ final class ExtendedQueryPostgresqlStatementTest {
             .add()
             .execute()
             .as(StepVerifier::create)
-            .expectNextCount(3)  // TODO: Decrease by 1 when https://github.com/reactor/reactor-core/issues/1033
+            .expectNextCount(2)
             .verifyComplete();
     }
 
@@ -256,7 +256,7 @@ final class ExtendedQueryPostgresqlStatementTest {
             .add()
             .executeReturningGeneratedKeys()
             .as(StepVerifier::create)
-            .expectNextCount(2)  // TODO: Decrease by 1 when https://github.com/reactor/reactor-core/issues/1033
+            .expectNextCount(1)
             .verifyComplete();
     }
 
@@ -287,7 +287,7 @@ final class ExtendedQueryPostgresqlStatementTest {
             .add()
             .executeReturningGeneratedKeys()
             .as(StepVerifier::create)
-            .expectNextCount(2)  // TODO: Decrease by 1 when https://github.com/reactor/reactor-core/issues/1033
+            .expectNextCount(1)
             .verifyComplete();
     }
 
@@ -319,7 +319,7 @@ final class ExtendedQueryPostgresqlStatementTest {
             .add()
             .executeReturningGeneratedKeys()
             .as(StepVerifier::create)
-            .expectNextCount(2)  // TODO: Decrease by 1 when https://github.com/reactor/reactor-core/issues/1033
+            .expectNextCount(1)
             .verifyComplete();
     }
 
@@ -348,7 +348,7 @@ final class ExtendedQueryPostgresqlStatementTest {
             .bind("$1", 100)
             .execute()
             .as(StepVerifier::create)
-            .expectNextCount(2)  // TODO: Decrease by 1 when https://github.com/reactor/reactor-core/issues/1033
+            .expectNextCount(1)
             .verifyComplete();
     }
 
