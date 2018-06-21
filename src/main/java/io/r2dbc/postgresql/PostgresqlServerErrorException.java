@@ -20,6 +20,7 @@ import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.Field;
 import io.r2dbc.postgresql.message.backend.Field.FieldType;
+import io.r2dbc.spi.R2dbcException;
 import reactor.core.publisher.SynchronousSink;
 
 import java.util.List;
@@ -50,7 +51,7 @@ import static io.r2dbc.postgresql.message.backend.Field.FieldType.WHERE;
 /**
  * An exception that represents a server error.  This exception is a direct translation of the {@link ErrorResponse} message.
  */
-public final class PostgresqlServerErrorException extends RuntimeException {
+public final class PostgresqlServerErrorException extends R2dbcException {
 
     private final String code;
 
