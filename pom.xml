@@ -42,15 +42,20 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <r2dbc-spi.version>1.0.0.BUILD-SNAPSHOT</r2dbc-spi.version>
-        <reactor-core.version>3.1.8.RELEASE</reactor-core.version>
-        <reactor-extra.version>3.1.6.RELEASE</reactor-extra.version>
-        <reactor-netty.version>0.7.8.RELEASE</reactor-netty.version>
+        <reactor.version>Bismuth-SR10</reactor.version>
         <slf4j.version>1.7.25</slf4j.version>
         <spring-boot.version>2.0.2.RELEASE</spring-boot.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>io.projectreactor</groupId>
+                <artifactId>reactor-bom</artifactId>
+                <version>${reactor.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
@@ -70,17 +75,14 @@
         <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-core</artifactId>
-            <version>${reactor-core.version}</version>
         </dependency>
         <dependency>
             <groupId>io.projectreactor.addons</groupId>
             <artifactId>reactor-extra</artifactId>
-            <version>${reactor-extra.version}</version>
         </dependency>
         <dependency>
             <groupId>io.projectreactor.ipc</groupId>
             <artifactId>reactor-netty</artifactId>
-            <version>${reactor-netty.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -104,7 +106,6 @@
         <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-test</artifactId>
-            <version>${reactor-core.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
