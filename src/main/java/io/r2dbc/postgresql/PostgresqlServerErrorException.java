@@ -23,7 +23,6 @@ import io.r2dbc.postgresql.message.backend.Field.FieldType;
 import io.r2dbc.spi.R2dbcException;
 import reactor.core.publisher.SynchronousSink;
 
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -98,40 +97,30 @@ public final class PostgresqlServerErrorException extends R2dbcException {
      * @throws NullPointerException if {@code fields} is {@code null}
      */
     public PostgresqlServerErrorException(List<Field> fields) {
-        super(tryExtract(fields, MESSAGE), tryExtract(fields, CODE));
-        Objects.requireNonNull(fields, "fields must not be null");
-
-        Map<FieldType, String> map = fields.stream()
-            .collect(Collectors.toMap(Field::getType, Field::getValue));
-
-        this.code = map.get(CODE);
-        this.columnName = map.get(COLUMN_NAME);
-        this.constraintName = map.get(CONSTRAINT_NAME);
-        this.dataTypeName = map.get(DATA_TYPE_NAME);
-        this.detail = map.get(DETAIL);
-        this.file = map.get(FILE);
-        this.hint = map.get(HINT);
-        this.internalPosition = map.get(INTERNAL_POSITION);
-        this.internalQuery = map.get(INTERNAL_QUERY);
-        this.line = map.get(LINE);
-        this.message = map.get(MESSAGE);
-        this.position = map.get(POSITION);
-        this.routine = map.get(ROUTINE);
-        this.schemaName = map.get(SCHEMA_NAME);
-        this.severityLocalized = map.get(SEVERITY_LOCALIZED);
-        this.severityNonLocalized = map.get(SEVERITY_NON_LOCALIZED);
-        this.tableName = map.get(TABLE_NAME);
-        this.where = map.get(WHERE);
+        this(convertToMap(fields));
     }
 
-    @Nullable
-    private static String tryExtract(List<Field> fields, FieldType message) {
+    private PostgresqlServerErrorException(Map<FieldType, String> fields) {
+        super(fields.get(MESSAGE), fields.get(CODE));
 
-        if (fields == null) {
-            return null;
-        }
-
-        return fields.stream().filter(it -> it.getType() == message).map(Field::getValue).findFirst().orElse(null);
+        this.code = fields.get(CODE);
+        this.columnName = fields.get(COLUMN_NAME);
+        this.constraintName = fields.get(CONSTRAINT_NAME);
+        this.dataTypeName = fields.get(DATA_TYPE_NAME);
+        this.detail = fields.get(DETAIL);
+        this.file = fields.get(FILE);
+        this.hint = fields.get(HINT);
+        this.internalPosition = fields.get(INTERNAL_POSITION);
+        this.internalQuery = fields.get(INTERNAL_QUERY);
+        this.line = fields.get(LINE);
+        this.message = fields.get(MESSAGE);
+        this.position = fields.get(POSITION);
+        this.routine = fields.get(ROUTINE);
+        this.schemaName = fields.get(SCHEMA_NAME);
+        this.severityLocalized = fields.get(SEVERITY_LOCALIZED);
+        this.severityNonLocalized = fields.get(SEVERITY_NON_LOCALIZED);
+        this.tableName = fields.get(TABLE_NAME);
+        this.where = fields.get(WHERE);
     }
 
     @Override
@@ -362,6 +351,13 @@ public final class PostgresqlServerErrorException extends R2dbcException {
         } else {
             sink.next(message);
         }
+    }
+
+    private static Map<FieldType, String> convertToMap(List<Field> fields) {
+        Objects.requireNonNull(fields, "fields must not be null");
+
+        return fields.stream()
+            .collect(Collectors.toMap(Field::getType, Field::getValue));
     }
 
     private static PostgresqlServerErrorException toException(ErrorResponse errorResponse) {
