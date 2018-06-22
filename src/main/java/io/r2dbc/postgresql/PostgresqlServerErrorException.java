@@ -23,6 +23,7 @@ import io.r2dbc.postgresql.message.backend.Field.FieldType;
 import io.r2dbc.spi.R2dbcException;
 import reactor.core.publisher.SynchronousSink;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -97,6 +98,7 @@ public final class PostgresqlServerErrorException extends R2dbcException {
      * @throws NullPointerException if {@code fields} is {@code null}
      */
     public PostgresqlServerErrorException(List<Field> fields) {
+        super(tryExtract(fields, MESSAGE), tryExtract(fields, CODE));
         Objects.requireNonNull(fields, "fields must not be null");
 
         Map<FieldType, String> map = fields.stream()
@@ -120,6 +122,16 @@ public final class PostgresqlServerErrorException extends R2dbcException {
         this.severityNonLocalized = map.get(SEVERITY_NON_LOCALIZED);
         this.tableName = map.get(TABLE_NAME);
         this.where = map.get(WHERE);
+    }
+
+    @Nullable
+    private static String tryExtract(List<Field> fields, FieldType message) {
+
+        if (fields == null) {
+            return null;
+        }
+
+        return fields.stream().filter(it -> it.getType() == message).map(Field::getValue).findFirst().orElse(null);
     }
 
     @Override
