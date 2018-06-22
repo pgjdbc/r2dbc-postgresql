@@ -76,20 +76,24 @@ public final class DefaultCodecs implements Codecs {
         Objects.requireNonNull(format, "format must not be null");
         Objects.requireNonNull(type, "type must not be null");
 
-        return this.codecs.stream()
-            .filter(codec -> codec.canDecode(byteBuf, dataType, format, type))
-            .map(codec -> ((Codec<T>) codec).decode(byteBuf, format, type))
-            .findFirst()
-            .orElseThrow(() -> new IllegalArgumentException(String.format("Cannot decode value of type %s", type.getName())));
+        for (Codec<?> codec : this.codecs) {
+            if (codec.canDecode(byteBuf, dataType, format, type)) {
+                return ((Codec<T>) codec).decode(byteBuf, format, type);
+            }
+        }
+
+        throw new IllegalArgumentException(String.format("Cannot decode value of type %s", type.getName()));
     }
 
     @Override
     public Parameter encode(@Nullable Object value) {
-        return this.codecs.stream()
-            .filter(codec -> codec.canEncode(value))
-            .map(codec -> codec.encode(value))
-            .findFirst()
-            .orElseThrow(() -> new IllegalArgumentException(String.format("Cannot encode parameter of type %s", value == null ? "null" : value.getClass().getName())));
+        for (Codec<?> codec : this.codecs) {
+            if (codec.canEncode(value)) {
+                return codec.encode(value);
+            }
+        }
+
+        throw new IllegalArgumentException(String.format("Cannot encode parameter of type %s", value == null ? "null" : value.getClass().getName()));
     }
 
 }

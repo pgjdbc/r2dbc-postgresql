@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import static io.r2dbc.postgresql.message.Format.BINARY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.UNSPECIFIED;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -53,6 +54,12 @@ final class DefaultCodecsTest {
     }
 
     @Test
+    void decodeNull() {
+        assertThat(new DefaultCodecs(TEST).decode(null, INT4.getObjectId(), BINARY, Integer.class))
+            .isNull();
+    }
+
+    @Test
     void decodeUnsupportedType() {
         assertThatIllegalArgumentException().isThrownBy(() -> new DefaultCodecs(TEST).decode(TEST.buffer(4), INT4.getObjectId(), BINARY, Object.class))
             .withMessage("Cannot decode value of type java.lang.Object");
@@ -63,6 +70,13 @@ final class DefaultCodecsTest {
         Parameter parameter = new DefaultCodecs(TEST).encode(100);
 
         assertThat(parameter).isEqualTo(new Parameter(BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(100)));
+    }
+
+    @Test
+    void encodeNull() {
+        Parameter parameter = new DefaultCodecs(TEST).encode(null);
+
+        assertThat(parameter).isEqualTo(new Parameter(BINARY, UNSPECIFIED.getObjectId(), null));
     }
 
     @Test
