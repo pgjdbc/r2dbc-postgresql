@@ -89,7 +89,7 @@ final class PostgresqlRowTest {
     @Test
     void getInvalidName() {
         assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRow(MockCodecs.empty(), this.columns).get("test-name-4", Object.class))
-            .withMessage("Column name 'test-name-4' does not exist in column names [test-name-1, test-name-2, test-name-3]");
+            .withMessageMatching("Column name 'test-name-4' does not exist in column names \\[test-name-[\\d], test-name-[\\d], test-name-[\\d]\\]");
     }
 
     @Test

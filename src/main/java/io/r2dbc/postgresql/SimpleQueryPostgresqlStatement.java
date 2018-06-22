@@ -92,11 +92,4 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
         return sql.trim().isEmpty() || !PARAMETER_SYMBOL.matcher(sql).matches();
     }
 
-    private Flux<PostgresqlResult> execute(String sql) {
-        return SimpleQueryMessageFlow
-            .exchange(this.client, sql)
-            .windowUntil(or(CommandComplete.class::isInstance, EmptyQueryResponse.class::isInstance, ErrorResponse.class::isInstance))
-            .map(dataRow -> PostgresqlResult.toResult(this.codecs, dataRow));
-    }
-
 }
