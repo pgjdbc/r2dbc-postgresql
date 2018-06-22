@@ -20,12 +20,12 @@ import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.spi.ColumnMetadata;
 import io.r2dbc.spi.RowMetadata;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * An implementation of {@link RowMetadata} for a PostgreSQL database.
@@ -39,8 +39,7 @@ public final class PostgresqlRowMetadata implements RowMetadata {
     PostgresqlRowMetadata(List<PostgresqlColumnMetadata> columnMetadatas) {
         this.columnMetadatas = Objects.requireNonNull(columnMetadatas, "columnMetadatas must not be null");
 
-        this.nameKeyedColumnMetadatas = this.columnMetadatas.stream()
-            .collect(Collectors.toMap(PostgresqlColumnMetadata::getName, Function.identity()));
+        this.nameKeyedColumnMetadatas = getNameKeyedColumnMetadatas(columnMetadatas);
     }
 
     @Override
@@ -94,9 +93,17 @@ public final class PostgresqlRowMetadata implements RowMetadata {
     static PostgresqlRowMetadata toRowMetadata(RowDescription rowDescription) {
         Objects.requireNonNull(rowDescription, "rowDescription must not be null");
 
-        return new PostgresqlRowMetadata(rowDescription.getFields().stream()
-            .map(PostgresqlColumnMetadata::toColumnMetadata)
-            .collect(Collectors.toList()));
+        return new PostgresqlRowMetadata(getColumnMetadatas(rowDescription));
+    }
+
+    private static List<PostgresqlColumnMetadata> getColumnMetadatas(RowDescription rowDescription) {
+        List<PostgresqlColumnMetadata> columnMetadatas = new ArrayList<>(rowDescription.getFields().size());
+
+        for (RowDescription.Field field : rowDescription.getFields()) {
+            columnMetadatas.add(PostgresqlColumnMetadata.toColumnMetadata(field));
+        }
+
+        return columnMetadatas;
     }
 
     private ColumnMetadata getColumnMetadata(Integer index) {
@@ -113,6 +120,16 @@ public final class PostgresqlRowMetadata implements RowMetadata {
         }
 
         return this.nameKeyedColumnMetadatas.get(name);
+    }
+
+    private Map<String, PostgresqlColumnMetadata> getNameKeyedColumnMetadatas(List<PostgresqlColumnMetadata> columnMetadatas) {
+        Map<String, PostgresqlColumnMetadata> nameKeyedColumnMetadatas = new HashMap<>(columnMetadatas.size());
+
+        for (PostgresqlColumnMetadata columnMetadata : columnMetadatas) {
+            nameKeyedColumnMetadatas.put(columnMetadata.getName(), columnMetadata);
+        }
+
+        return nameKeyedColumnMetadatas;
     }
 
 }

@@ -24,13 +24,12 @@ import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.spi.Row;
 import reactor.util.annotation.Nullable;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * An implementation of {@link Row} for a PostgreSQL database.
@@ -49,8 +48,7 @@ public final class PostgresqlRow implements Row {
         this.codecs = Objects.requireNonNull(codecs, "codecs must not be null");
         this.columns = Objects.requireNonNull(columns, "columns must not be null");
 
-        this.nameKeyedColumns = this.columns.stream()
-            .collect(Collectors.toMap(Column::getName, Function.identity()));
+        this.nameKeyedColumns = getNameKeyedColumns(this.columns);
     }
 
     @Override
@@ -104,19 +102,7 @@ public final class PostgresqlRow implements Row {
         Objects.requireNonNull(dataRow, "dataRow must not be null");
         Objects.requireNonNull(rowDescription, "rowDescription must not be null");
 
-        List<ByteBuf> byteBufs = dataRow.getColumns();
-        List<RowDescription.Field> fields = rowDescription.getFields();
-
-        List<Column> columns = IntStream
-            .range(0, byteBufs.size())
-            .mapToObj(i -> {
-                ByteBuf byteBuf = byteBufs.get(i);
-                RowDescription.Field field = fields.get(i);
-
-                return new Column(byteBuf, field.getDataType(), field.getFormat(), field.getName());
-            })
-            .collect(Collectors.toList());
-
+        List<Column> columns = getColumns(dataRow.getColumns(), rowDescription.getFields());
         dataRow.release();
 
         return new PostgresqlRow(codecs, columns);
@@ -125,6 +111,19 @@ public final class PostgresqlRow implements Row {
     void release() {
         this.columns.forEach(Column::release);
         this.isReleased.set(true);
+    }
+
+    private static List<Column> getColumns(List<ByteBuf> byteBufs, List<RowDescription.Field> fields) {
+        List<Column> columns = new ArrayList<>(byteBufs.size());
+
+        for (int i = 0; i < byteBufs.size(); i++) {
+            ByteBuf byteBuf = byteBufs.get(i);
+            RowDescription.Field field = fields.get(i);
+
+            columns.add(new Column(byteBuf, field.getDataType(), field.getFormat(), field.getName()));
+        }
+
+        return columns;
     }
 
     private Column getColumn(String name) {
@@ -143,6 +142,16 @@ public final class PostgresqlRow implements Row {
         return this.columns.get(index);
     }
 
+    private Map<String, Column> getNameKeyedColumns(List<Column> columns) {
+        Map<String, Column> nameKeyedColumns = new HashMap<>(columns.size());
+
+        for (Column column : columns) {
+            nameKeyedColumns.put(column.getName(), column);
+        }
+
+        return nameKeyedColumns;
+    }
+
     private void requireNotReleased() {
         if (this.isReleased.get()) {
             throw new IllegalStateException("Value cannot be retrieved after row has been released");
@@ -159,7 +168,7 @@ public final class PostgresqlRow implements Row {
 
         private final String name;
 
-        Column(ByteBuf byteBuf, Integer dataType, Format format, String name) {
+        Column(@Nullable ByteBuf byteBuf, Integer dataType, Format format, String name) {
             this.byteBuf = byteBuf == null ? null : byteBuf.retain();
             this.dataType = Objects.requireNonNull(dataType, "dataType must not be null");
             this.format = Objects.requireNonNull(format, "format must not be null");
