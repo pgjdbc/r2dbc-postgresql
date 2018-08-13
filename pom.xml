@@ -42,7 +42,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <r2dbc-spi.version>1.0.0.BUILD-SNAPSHOT</r2dbc-spi.version>
-        <reactor.version>Bismuth-SR10</reactor.version>
+        <reactor.version>Californium-M1</reactor.version>
         <slf4j.version>1.7.25</slf4j.version>
         <spring-boot.version>2.0.4.RELEASE</spring-boot.version>
     </properties>
@@ -76,7 +76,7 @@
             <artifactId>reactor-extra</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.projectreactor.ipc</groupId>
+            <groupId>io.projectreactor.netty</groupId>
             <artifactId>reactor-netty</artifactId>
         </dependency>
         <dependency>

@@ -34,8 +34,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.SynchronousSink;
-import reactor.ipc.netty.tcp.BlockingNettyContext;
-import reactor.ipc.netty.tcp.TcpClient;
+import reactor.netty.Connection;
+import reactor.netty.tcp.TcpClient;
 
 import java.util.HashMap;
 import java.util.List;
@@ -64,6 +64,8 @@ public final class ReactorNettyClient implements Client {
 
     private final AtomicReference<ByteBufAllocator> byteBufAllocator = new AtomicReference<>();
 
+    private final AtomicReference<Connection> connection = new AtomicReference<>();
+
     private final BiConsumer<BackendMessage, SynchronousSink<BackendMessage>> handleErrorResponse = handleBackendMessage(ErrorResponse.class,
         (message, sink) -> {
             this.logger.error("Error: {}", toString(message.getFields()));
@@ -74,8 +76,6 @@ public final class ReactorNettyClient implements Client {
         (message, sink) -> this.logger.warn("Notice: {}", toString(message.getFields())));
 
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
-
-    private final AtomicReference<BlockingNettyContext> nettyContext = new AtomicReference<>();
 
     private final ConcurrentMap<String, String> parameterStatus = new ConcurrentHashMap<>();
 
@@ -119,42 +119,44 @@ public final class ReactorNettyClient implements Client {
         BackendMessageDecoder decoder = new BackendMessageDecoder();
         FluxSink<Flux<BackendMessage>> responses = this.responseProcessor.sink();
 
-        BlockingNettyContext nettyContext = TcpClient.create(host, port)
-            .start((inbound, outbound) -> {
-                this.byteBufAllocator.set(outbound.alloc());
+        Connection connection = TcpClient.create()
+            .host(host).port(port)
+            .connectNow();
 
-                inbound.receive()
-                    .retain()
-                    .concatMap(decoder::decode)
-                    .doOnNext(message -> this.logger.debug("Response: {}", message))
-                    .handle(this.handleNoticeResponse)
-                    .handle(this.handleErrorResponse)
-                    .handle(this.handleBackendKeyData)
-                    .handle(this.handleParameterStatus)
-                    .handle(this.handleReadyForQuery)
-                    .windowWhile(not(ReadyForQuery.class::isInstance))
-                    .subscribe(responses::next, responses::error, responses::complete);
+        this.byteBufAllocator.set(connection.outbound().alloc());
 
-                return this.requestProcessor
-                    .doOnNext(message -> this.logger.debug("Request:  {}", message))
-                    .concatMap(message -> outbound.send(message.encode(outbound.alloc())));
-            });
+        connection.inbound().receive()
+            .retain()
+            .concatMap(decoder::decode)
+            .doOnNext(message -> this.logger.debug("Response: {}", message))
+            .handle(this.handleNoticeResponse)
+            .handle(this.handleErrorResponse)
+            .handle(this.handleBackendKeyData)
+            .handle(this.handleParameterStatus)
+            .handle(this.handleReadyForQuery)
+            .windowWhile(not(ReadyForQuery.class::isInstance))
+            .subscribe(responses::next, responses::error, responses::complete);
 
-        this.nettyContext.set(nettyContext);
+        this.requestProcessor
+            .doOnNext(message -> this.logger.debug("Request:  {}", message))
+            .concatMap(message -> connection.outbound().send(message.encode(connection.outbound().alloc())))
+            .subscribe();
+
+        this.connection.set(connection);
     }
 
     @Override
     public Mono<Void> close() {
         return Mono.defer(() -> {
-            BlockingNettyContext nettyContext = this.nettyContext.getAndSet(null);
+            Connection connection = this.connection.getAndSet(null);
 
-            if (nettyContext == null) {
+            if (connection == null) {
                 return Mono.empty();
             }
 
             return TerminationMessageFlow.exchange(this)
                 .doOnComplete(() -> {
-                    nettyContext.shutdown();
+                    connection.disposeNow();
                     this.isClosed.set(true);
                 })
                 .then();
