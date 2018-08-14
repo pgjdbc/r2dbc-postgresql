@@ -36,7 +36,7 @@ final class AbstractCodecTest {
             .build();
 
         assertThat(codec.canDecode(null, VARCHAR.getObjectId(), BINARY, String.class)).isFalse();
-        assertThat(codec.canDecode(TEST.buffer(0), VARCHAR.getObjectId(), BINARY, Object.class)).isFalse();
+        assertThat(codec.canDecode(TEST.buffer(0), VARCHAR.getObjectId(), BINARY, Void.class)).isFalse();
         assertThat(codec.canDecode(TEST.buffer(0), VARCHAR.getObjectId(), BINARY, String.class)).isTrue();
     }
 
