@@ -55,6 +55,17 @@ final class PostgresqlRowTest {
     }
 
     @Test
+    void geDefaultType() {
+        Object value = new Object();
+
+        MockCodecs codecs = MockCodecs.builder()
+            .decoding(TEST.buffer(4).writeInt(300), 400, TEXT, Object.class, value)
+            .build();
+
+        assertThat(new PostgresqlRow(codecs, this.columns).get("test-name-2")).isSameAs(value);
+    }
+
+    @Test
     void getAfterRelease() {
         Object value = new Object();
 
