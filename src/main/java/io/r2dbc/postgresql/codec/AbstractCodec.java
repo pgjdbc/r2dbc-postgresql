@@ -38,7 +38,7 @@ abstract class AbstractCodec<T> implements Codec<T> {
         Objects.requireNonNull(type, "type must not be null");
 
         return byteBuf != null &&
-            this.type.isAssignableFrom(type) &&
+            type.isAssignableFrom(this.type) &&
             doCanDecode(format, PostgresqlObjectId.valueOf(dataType));
     }
 

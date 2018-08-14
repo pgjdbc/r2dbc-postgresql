@@ -42,6 +42,12 @@ final class DefaultCodecsTest {
     }
 
     @Test
+    void decodeDefaultType() {
+        assertThat(new DefaultCodecs(TEST).decode(TEST.buffer(4).writeInt(100), INT4.getObjectId(), BINARY, Object.class))
+            .isEqualTo(100);
+    }
+
+    @Test
     void decodeNoFormat() {
         assertThatNullPointerException().isThrownBy(() -> new DefaultCodecs(TEST).decode(TEST.buffer(4), INT4.getObjectId(), null, Object.class))
             .withMessage("format must not be null");
@@ -61,8 +67,8 @@ final class DefaultCodecsTest {
 
     @Test
     void decodeUnsupportedType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new DefaultCodecs(TEST).decode(TEST.buffer(4), INT4.getObjectId(), BINARY, Object.class))
-            .withMessage("Cannot decode value of type java.lang.Object");
+        assertThatIllegalArgumentException().isThrownBy(() -> new DefaultCodecs(TEST).decode(TEST.buffer(4), INT4.getObjectId(), BINARY, Void.class))
+            .withMessage("Cannot decode value of type java.lang.Void");
     }
 
     @Test
