@@ -39,19 +39,8 @@ final class EnumCodec extends AbstractCodec<Enum> {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public Enum decode(ByteBuf byteBuf, @Nullable Format format, Class<? extends Enum> type) {
-        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
-        Objects.requireNonNull(type, "type must not be null");
-
-        return Enum.valueOf(type, ByteBufUtils.decode(byteBuf));
-    }
-
-    @Override
-    public Parameter doEncode(Enum value) {
-        Objects.requireNonNull(value, "value must not be null");
-
-        return this.delegate.doEncode(value.name());
+    public Parameter encodeNull() {
+        return this.delegate.encodeNull();
     }
 
     @Override
@@ -60,6 +49,22 @@ final class EnumCodec extends AbstractCodec<Enum> {
         Objects.requireNonNull(type, "type must not be null");
 
         return this.delegate.doCanDecode(format, type);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    Enum doDecode(ByteBuf byteBuf, @Nullable Format format, Class<? extends Enum> type) {
+        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
+        Objects.requireNonNull(type, "type must not be null");
+
+        return Enum.valueOf(type, ByteBufUtils.decode(byteBuf));
+    }
+
+    @Override
+    Parameter doEncode(Enum value) {
+        Objects.requireNonNull(value, "value must not be null");
+
+        return this.delegate.doEncode(value.name());
     }
 
 }

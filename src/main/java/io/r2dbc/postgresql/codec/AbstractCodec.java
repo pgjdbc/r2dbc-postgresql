@@ -33,12 +33,11 @@ abstract class AbstractCodec<T> implements Codec<T> {
     }
 
     @Override
-    public final boolean canDecode(@Nullable ByteBuf byteBuf, int dataType, Format format, Class<?> type) {
+    public final boolean canDecode(int dataType, Format format, Class<?> type) {
         Objects.requireNonNull(format, "format must not be null");
         Objects.requireNonNull(type, "type must not be null");
 
-        return byteBuf != null &&
-            type.isAssignableFrom(this.type) &&
+        return type.isAssignableFrom(this.type) &&
             doCanDecode(format, PostgresqlObjectId.valueOf(dataType));
     }
 
@@ -50,6 +49,23 @@ abstract class AbstractCodec<T> implements Codec<T> {
     }
 
     @Override
+    public final boolean canEncodeNull(Class<?> type) {
+        Objects.requireNonNull(type, "type must not be null");
+
+        return this.type.isAssignableFrom(type);
+    }
+
+    @Nullable
+    @Override
+    public final T decode(@Nullable ByteBuf byteBuf, Format format, Class<? extends T> type) {
+        if (byteBuf == null) {
+            return null;
+        }
+
+        return doDecode(byteBuf, format, type);
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     public final Parameter encode(Object value) {
         Objects.requireNonNull(value, "value must not be null");
@@ -57,14 +73,20 @@ abstract class AbstractCodec<T> implements Codec<T> {
         return doEncode((T) value);
     }
 
-    static Parameter create(Format format, PostgresqlObjectId type, ByteBuf value) {
+    static Parameter create(Format format, PostgresqlObjectId type, @Nullable ByteBuf value) {
         Objects.requireNonNull(format, "format must not be null");
         Objects.requireNonNull(type, "type must not be null");
 
         return new Parameter(format, type.getObjectId(), value);
     }
 
+    static Parameter createNull(Format format, PostgresqlObjectId type) {
+        return create(format, type, null);
+    }
+
     abstract boolean doCanDecode(Format format, PostgresqlObjectId type);
+
+    abstract T doDecode(ByteBuf byteBuf, Format format, Class<? extends T> type);
 
     abstract Parameter doEncode(T value);
 

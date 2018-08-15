@@ -40,18 +40,8 @@ final class ZonedDateTimeCodec extends AbstractCodec<ZonedDateTime> {
     }
 
     @Override
-    public ZonedDateTime decode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends ZonedDateTime> type) {
-        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
-
-        return ZonedDateTime.parse(ByteBufUtils.decode(byteBuf));
-    }
-
-    @Override
-    public Parameter doEncode(ZonedDateTime value) {
-        Objects.requireNonNull(value, "value must not be null");
-
-        ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toString());
-        return create(TEXT, TIMESTAMPTZ, encoded);
+    public Parameter encodeNull() {
+        return createNull(TEXT, TIMESTAMPTZ);
     }
 
     @Override
@@ -60,6 +50,21 @@ final class ZonedDateTimeCodec extends AbstractCodec<ZonedDateTime> {
         Objects.requireNonNull(type, "type must not be null");
 
         return TEXT == format && TIMESTAMPTZ == type;
+    }
+
+    @Override
+    ZonedDateTime doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends ZonedDateTime> type) {
+        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
+
+        return ZonedDateTime.parse(ByteBufUtils.decode(byteBuf));
+    }
+
+    @Override
+    Parameter doEncode(ZonedDateTime value) {
+        Objects.requireNonNull(value, "value must not be null");
+
+        ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toString());
+        return create(TEXT, TIMESTAMPTZ, encoded);
     }
 
 }

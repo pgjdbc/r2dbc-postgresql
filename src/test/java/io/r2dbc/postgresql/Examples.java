@@ -66,6 +66,22 @@ final class Examples {
     }
 
     @Test
+    void bindNull() {
+        this.connectionFactory.create()
+            .flatMapMany(connection -> connection
+
+                .createStatement("INSERT INTO test VALUES($1)")
+                .bindNull("$1", Integer.class)
+                .add()
+                .execute()
+
+                .concatWith(close(connection)))
+            .as(StepVerifier::create)
+            .expectNextCount(1)
+            .verifyComplete();
+    }
+
+    @Test
     void compoundStatement() {
         SERVER.getJdbcOperations().execute("INSERT INTO test VALUES (100)");
 

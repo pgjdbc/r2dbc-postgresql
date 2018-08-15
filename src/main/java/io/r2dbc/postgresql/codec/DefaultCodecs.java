@@ -42,7 +42,6 @@ public final class DefaultCodecs implements Codecs {
         Objects.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
 
         this.codecs = Arrays.asList(
-            new NullCodec(),
             new BigDecimalCodec(byteBufAllocator),
             new BooleanCodec(byteBufAllocator),
             new ByteCodec(byteBufAllocator),
@@ -76,8 +75,12 @@ public final class DefaultCodecs implements Codecs {
         Objects.requireNonNull(format, "format must not be null");
         Objects.requireNonNull(type, "type must not be null");
 
+        if (byteBuf == null) {
+            return null;
+        }
+
         for (Codec<?> codec : this.codecs) {
-            if (codec.canDecode(byteBuf, dataType, format, type)) {
+            if (codec.canDecode(dataType, format, type)) {
                 return ((Codec<T>) codec).decode(byteBuf, format, type);
             }
         }
@@ -86,14 +89,28 @@ public final class DefaultCodecs implements Codecs {
     }
 
     @Override
-    public Parameter encode(@Nullable Object value) {
+    public Parameter encode(Object value) {
+        Objects.requireNonNull(value, "value must not be null");
+
         for (Codec<?> codec : this.codecs) {
             if (codec.canEncode(value)) {
                 return codec.encode(value);
             }
         }
 
-        throw new IllegalArgumentException(String.format("Cannot encode parameter of type %s", value == null ? "null" : value.getClass().getName()));
+        throw new IllegalArgumentException(String.format("Cannot encode parameter of type %s", value.getClass().getName()));
     }
 
+    @Override
+    public Parameter encodeNull(Class<?> type) {
+        Objects.requireNonNull(type, "type must not be null");
+
+        for (Codec<?> codec : this.codecs) {
+            if (codec.canEncodeNull(type)) {
+                return codec.encodeNull();
+            }
+        }
+
+        throw new IllegalArgumentException(String.format("Cannot encode null parameter of type %s", type.getName()));
+    }
 }

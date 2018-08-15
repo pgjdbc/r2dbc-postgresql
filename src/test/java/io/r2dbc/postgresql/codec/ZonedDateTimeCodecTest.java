@@ -49,8 +49,7 @@ final class ZonedDateTimeCodecTest {
 
     @Test
     void decodeNoByteBuf() {
-        assertThatNullPointerException().isThrownBy(() -> new ZonedDateTimeCodec(TEST).decode(null, TEXT, ZonedDateTime.class))
-            .withMessage("byteBuf must not be null");
+        assertThat(new ZonedDateTimeCodec(TEST).decode(null, TEXT, ZonedDateTime.class)).isNull();
     }
 
     @Test
@@ -86,6 +85,12 @@ final class ZonedDateTimeCodecTest {
     void doEncodeNoValue() {
         assertThatNullPointerException().isThrownBy(() -> new ZonedDateTimeCodec(TEST).doEncode(null))
             .withMessage("value must not be null");
+    }
+
+    @Test
+    void encodeNull() {
+        assertThat(new ZonedDateTimeCodec(TEST).encodeNull())
+            .isEqualTo(new Parameter(TEXT, TIMESTAMPTZ.getObjectId(), null));
     }
 
 }

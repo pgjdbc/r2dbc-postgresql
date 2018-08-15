@@ -39,17 +39,8 @@ final class DateCodec extends AbstractCodec<Date> {
     }
 
     @Override
-    public Date decode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends Date> type) {
-        Objects.requireNonNull("byteBuf must not be null");
-
-        return Date.from(this.delegate.decode(byteBuf, format, Instant.class));
-    }
-
-    @Override
-    public Parameter doEncode(Date value) {
-        Objects.requireNonNull(value, "value must not be null");
-
-        return this.delegate.doEncode(value.toInstant());
+    public Parameter encodeNull() {
+        return this.delegate.encodeNull();
     }
 
     @Override
@@ -58,6 +49,20 @@ final class DateCodec extends AbstractCodec<Date> {
         Objects.requireNonNull(type, "type must not be null");
 
         return this.delegate.doCanDecode(format, type);
+    }
+
+    @Override
+    Date doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends Date> type) {
+        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
+
+        return Date.from(this.delegate.decode(byteBuf, format, Instant.class));
+    }
+
+    @Override
+    Parameter doEncode(Date value) {
+        Objects.requireNonNull(value, "value must not be null");
+
+        return this.delegate.doEncode(value.toInstant());
     }
 
 }

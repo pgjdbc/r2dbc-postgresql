@@ -50,8 +50,7 @@ final class InetAddressCodecTest {
 
     @Test
     void decodeNoByteBuf() {
-        assertThatNullPointerException().isThrownBy(() -> new InetAddressCodec(TEST).decode(null, TEXT, InetAddress.class))
-            .withMessage("byteBuf must not be null");
+        assertThat(new InetAddressCodec(TEST).decode(null, TEXT, InetAddress.class)).isNull();
     }
 
     @Test
@@ -87,6 +86,12 @@ final class InetAddressCodecTest {
     void doEncodeNoValue() {
         assertThatNullPointerException().isThrownBy(() -> new InetAddressCodec(TEST).doEncode(null))
             .withMessage("value must not be null");
+    }
+
+    @Test
+    void encodeNull() {
+        assertThat(new InetAddressCodec(TEST).encodeNull())
+            .isEqualTo(new Parameter(TEXT, UNSPECIFIED.getObjectId(), null));
     }
 
 }

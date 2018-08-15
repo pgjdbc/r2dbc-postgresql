@@ -35,20 +35,19 @@ final class AbstractCodecTest {
             .canDecode(BINARY, VARCHAR)
             .build();
 
-        assertThat(codec.canDecode(null, VARCHAR.getObjectId(), BINARY, String.class)).isFalse();
-        assertThat(codec.canDecode(TEST.buffer(0), VARCHAR.getObjectId(), BINARY, Void.class)).isFalse();
-        assertThat(codec.canDecode(TEST.buffer(0), VARCHAR.getObjectId(), BINARY, String.class)).isTrue();
+        assertThat(codec.canDecode(VARCHAR.getObjectId(), BINARY, String.class)).isTrue();
+        assertThat(codec.canDecode(VARCHAR.getObjectId(), BINARY, Void.class)).isFalse();
     }
 
     @Test
     void canDecodeNoFormat() {
-        assertThatNullPointerException().isThrownBy(() -> MockCodec.empty(String.class).canDecode(null, 100, null, String.class))
+        assertThatNullPointerException().isThrownBy(() -> MockCodec.empty(String.class).canDecode(100, null, String.class))
             .withMessage("format must not be null");
     }
 
     @Test
     void canDecodeNoType() {
-        assertThatNullPointerException().isThrownBy(() -> MockCodec.empty(String.class).canDecode(null, 100, BINARY, null))
+        assertThatNullPointerException().isThrownBy(() -> MockCodec.empty(String.class).canDecode(100, BINARY, null))
             .withMessage("type must not be null");
     }
 
@@ -62,6 +61,18 @@ final class AbstractCodecTest {
     void canEncodeNoValue() {
         assertThatNullPointerException().isThrownBy(() -> MockCodec.empty(String.class).canEncode(null))
             .withMessage("value must not be null");
+    }
+
+    @Test
+    void canEncodeNull() {
+        assertThatNullPointerException().isThrownBy(() -> MockCodec.empty(String.class).canEncodeNull(null))
+            .withMessage("type must not be null");
+    }
+
+    @Test
+    void canEncodeNullNoValue() {
+        assertThat(MockCodec.empty(String.class).canEncodeNull(String.class)).isTrue();
+        assertThat(MockCodec.empty(String.class).canEncodeNull(Void.class)).isFalse();
     }
 
     @Test
@@ -86,6 +97,25 @@ final class AbstractCodecTest {
     @Test
     void createNoType() {
         assertThatNullPointerException().isThrownBy(() -> AbstractCodec.create(TEXT, null, null))
+            .withMessage("type must not be null");
+    }
+
+    @Test
+    void createNull() {
+        Parameter parameter = AbstractCodec.createNull(TEXT, INT4);
+
+        assertThat(parameter).isEqualTo(new Parameter(TEXT, INT4.getObjectId(), null));
+    }
+
+    @Test
+    void createNullNoFormat() {
+        assertThatNullPointerException().isThrownBy(() -> AbstractCodec.createNull(null, INT4))
+            .withMessage("format must not be null");
+    }
+
+    @Test
+    void createNullNoType() {
+        assertThatNullPointerException().isThrownBy(() -> AbstractCodec.createNull(TEXT, null))
             .withMessage("type must not be null");
     }
 

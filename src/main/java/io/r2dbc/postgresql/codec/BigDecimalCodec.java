@@ -40,18 +40,8 @@ final class BigDecimalCodec extends AbstractCodec<BigDecimal> {
     }
 
     @Override
-    public BigDecimal decode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends BigDecimal> type) {
-        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
-
-        return new BigDecimal(ByteBufUtils.decode(byteBuf));
-    }
-
-    @Override
-    public Parameter doEncode(BigDecimal value) {
-        Objects.requireNonNull(value, "value must not be null");
-
-        ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toString());
-        return create(TEXT, NUMERIC, encoded);
+    public Parameter encodeNull() {
+        return createNull(TEXT, NUMERIC);
     }
 
     @Override
@@ -60,6 +50,21 @@ final class BigDecimalCodec extends AbstractCodec<BigDecimal> {
         Objects.requireNonNull(type, "type must not be null");
 
         return TEXT == format && NUMERIC == type;
+    }
+
+    @Override
+    BigDecimal doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends BigDecimal> type) {
+        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
+
+        return new BigDecimal(ByteBufUtils.decode(byteBuf));
+    }
+
+    @Override
+    Parameter doEncode(BigDecimal value) {
+        Objects.requireNonNull(value, "value must not be null");
+
+        ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toString());
+        return create(TEXT, NUMERIC, encoded);
     }
 
 }

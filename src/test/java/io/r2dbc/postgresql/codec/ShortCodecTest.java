@@ -46,8 +46,7 @@ final class ShortCodecTest {
 
     @Test
     void decodeNoByteBuf() {
-        assertThatNullPointerException().isThrownBy(() -> new ShortCodec(TEST).decode(null, BINARY, Short.class))
-            .withMessage("byteBuf must not be null");
+        assertThat(new ShortCodec(TEST).decode(null, BINARY, Short.class)).isNull();
     }
 
     @Test
@@ -81,5 +80,11 @@ final class ShortCodecTest {
     void doEncodeNoValue() {
         assertThatNullPointerException().isThrownBy(() -> new ShortCodec(TEST).doEncode(null))
             .withMessage("value must not be null");
+    }
+
+    @Test
+    void encodeNull() {
+        assertThat(new ShortCodec(TEST).encodeNull())
+            .isEqualTo(new Parameter(BINARY, INT2.getObjectId(), null));
     }
 }

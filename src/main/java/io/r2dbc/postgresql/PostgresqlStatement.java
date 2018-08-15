@@ -42,10 +42,9 @@ public interface PostgresqlStatement extends Statement {
      * {@inheritDoc}
      *
      * @throws IllegalArgumentException if {@code identifier} is not a {@link String} like {@code $1}, {@code $2}, etc.
-     * @throws IllegalArgumentException if {@code type} is not an {@link Integer}
      */
     @Override
-    PostgresqlStatement bindNull(Object identifier, Object type);
+    PostgresqlStatement bindNull(Object identifier, Class<?> type);
 
     @Override
     Flux<PostgresqlResult> execute();

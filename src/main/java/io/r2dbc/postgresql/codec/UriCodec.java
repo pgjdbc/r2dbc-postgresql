@@ -38,17 +38,8 @@ final class UriCodec extends AbstractCodec<URI> {
     }
 
     @Override
-    public URI decode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends URI> type) {
-        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
-
-        return URI.create(this.delegate.decode(byteBuf, format, String.class));
-    }
-
-    @Override
-    public Parameter doEncode(URI value) {
-        Objects.requireNonNull(value, "value must not be null");
-
-        return this.delegate.doEncode(value.toString());
+    public Parameter encodeNull() {
+        return this.delegate.encodeNull();
     }
 
     @Override
@@ -57,6 +48,20 @@ final class UriCodec extends AbstractCodec<URI> {
         Objects.requireNonNull(type, "type must not be null");
 
         return this.delegate.doCanDecode(format, type);
+    }
+
+    @Override
+    URI doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends URI> type) {
+        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
+
+        return URI.create(this.delegate.decode(byteBuf, format, String.class));
+    }
+
+    @Override
+    Parameter doEncode(URI value) {
+        Objects.requireNonNull(value, "value must not be null");
+
+        return this.delegate.doEncode(value.toString());
     }
 
 }

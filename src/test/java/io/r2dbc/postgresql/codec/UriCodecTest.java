@@ -46,8 +46,7 @@ final class UriCodecTest {
 
     @Test
     void decodeNoByteBuf() {
-        assertThatNullPointerException().isThrownBy(() -> new UriCodec(TEST).decode(null, TEXT, URI.class))
-            .withMessage("byteBuf must not be null");
+        assertThat(new UriCodec(TEST).decode(null, TEXT, URI.class)).isNull();
     }
 
     @Test
@@ -83,6 +82,12 @@ final class UriCodecTest {
     void doEncodeNoValue() {
         assertThatNullPointerException().isThrownBy(() -> new UriCodec(TEST).doEncode(null))
             .withMessage("value must not be null");
+    }
+
+    @Test
+    void encodeNull() {
+        assertThat(new UriCodec(TEST).encodeNull())
+            .isEqualTo(new Parameter(TEXT, VARCHAR.getObjectId(), null));
     }
 
 }

@@ -37,17 +37,8 @@ final class CharacterCodec extends AbstractCodec<Character> {
     }
 
     @Override
-    public Character decode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends Character> type) {
-        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
-
-        return this.delegate.decode(byteBuf, format, String.class).charAt(0);
-    }
-
-    @Override
-    public Parameter doEncode(Character value) {
-        Objects.requireNonNull(value, "value must not be null");
-
-        return this.delegate.doEncode(value.toString());
+    public Parameter encodeNull() {
+        return this.delegate.encodeNull();
     }
 
     @Override
@@ -58,5 +49,18 @@ final class CharacterCodec extends AbstractCodec<Character> {
         return this.delegate.doCanDecode(format, type);
     }
 
+    @Override
+    Character doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends Character> type) {
+        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
+
+        return this.delegate.decode(byteBuf, format, String.class).charAt(0);
+    }
+
+    @Override
+    Parameter doEncode(Character value) {
+        Objects.requireNonNull(value, "value must not be null");
+
+        return this.delegate.doEncode(value.toString());
+    }
 
 }

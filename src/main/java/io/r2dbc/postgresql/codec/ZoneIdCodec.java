@@ -38,17 +38,8 @@ final class ZoneIdCodec extends AbstractCodec<ZoneId> {
     }
 
     @Override
-    public ZoneId decode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends ZoneId> type) {
-        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
-
-        return ZoneId.of(this.delegate.decode(byteBuf, format, String.class));
-    }
-
-    @Override
-    public Parameter doEncode(ZoneId value) {
-        Objects.requireNonNull(value, "value must not be null");
-
-        return this.delegate.doEncode(value.getId());
+    public Parameter encodeNull() {
+        return this.delegate.encodeNull();
     }
 
     @Override
@@ -59,4 +50,17 @@ final class ZoneIdCodec extends AbstractCodec<ZoneId> {
         return this.delegate.doCanDecode(format, type);
     }
 
+    @Override
+    ZoneId doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends ZoneId> type) {
+        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
+
+        return ZoneId.of(this.delegate.decode(byteBuf, format, String.class));
+    }
+
+    @Override
+    Parameter doEncode(ZoneId value) {
+        Objects.requireNonNull(value, "value must not be null");
+
+        return this.delegate.doEncode(value.getId());
+    }
 }

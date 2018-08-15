@@ -39,7 +39,19 @@ final class ShortCodec extends AbstractCodec<Short> {
     }
 
     @Override
-    public Short decode(ByteBuf byteBuf, Format format, @Nullable Class<? extends Short> type) {
+    public Parameter encodeNull() {
+        return createNull(BINARY, INT2);
+    }
+
+    @Override
+    boolean doCanDecode(@Nullable Format format, PostgresqlObjectId type) {
+        Objects.requireNonNull(type, "type must not be null");
+
+        return INT2 == type;
+    }
+
+    @Override
+    Short doDecode(ByteBuf byteBuf, Format format, @Nullable Class<? extends Short> type) {
         Objects.requireNonNull(byteBuf, "byteBuf must not be null");
         Objects.requireNonNull(format, "format must not be null");
 
@@ -51,18 +63,11 @@ final class ShortCodec extends AbstractCodec<Short> {
     }
 
     @Override
-    public Parameter doEncode(Short value) {
+    Parameter doEncode(Short value) {
         Objects.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = this.byteBufAllocator.buffer(2).writeShort(value);
         return create(BINARY, INT2, encoded);
-    }
-
-    @Override
-    boolean doCanDecode(@Nullable Format format, PostgresqlObjectId type) {
-        Objects.requireNonNull(type, "type must not be null");
-
-        return INT2 == type;
     }
 
 }

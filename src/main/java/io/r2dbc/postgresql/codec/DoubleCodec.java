@@ -39,7 +39,19 @@ final class DoubleCodec extends AbstractCodec<Double> {
     }
 
     @Override
-    public Double decode(ByteBuf byteBuf, Format format, @Nullable Class<? extends Double> type) {
+    public Parameter encodeNull() {
+        return createNull(BINARY, FLOAT8);
+    }
+
+    @Override
+    boolean doCanDecode(@Nullable Format format, PostgresqlObjectId type) {
+        Objects.requireNonNull(type, "type must not be null");
+
+        return FLOAT8 == type;
+    }
+
+    @Override
+    Double doDecode(ByteBuf byteBuf, Format format, @Nullable Class<? extends Double> type) {
         Objects.requireNonNull(byteBuf, "byteBuf must not be null");
         Objects.requireNonNull(format, "format must not be null");
 
@@ -51,18 +63,11 @@ final class DoubleCodec extends AbstractCodec<Double> {
     }
 
     @Override
-    public Parameter doEncode(Double value) {
+    Parameter doEncode(Double value) {
         Objects.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = this.byteBufAllocator.buffer(8).writeDouble(value);
         return create(BINARY, FLOAT8, encoded);
-    }
-
-    @Override
-    boolean doCanDecode(@Nullable Format format, PostgresqlObjectId type) {
-        Objects.requireNonNull(type, "type must not be null");
-
-        return FLOAT8 == type;
     }
 
 }

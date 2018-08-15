@@ -39,18 +39,8 @@ final class BooleanCodec extends AbstractCodec<Boolean> {
     }
 
     @Override
-    public Boolean decode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends Boolean> type) {
-        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
-
-        return Boolean.valueOf(ByteBufUtils.decode(byteBuf));
-    }
-
-    @Override
-    public Parameter doEncode(Boolean value) {
-        Objects.requireNonNull(value, "value must not be null");
-
-        ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value ? "TRUE" : "FALSE");
-        return create(TEXT, BOOL, encoded);
+    public Parameter encodeNull() {
+        return createNull(TEXT, BOOL);
     }
 
     @Override
@@ -59,6 +49,21 @@ final class BooleanCodec extends AbstractCodec<Boolean> {
         Objects.requireNonNull(type, "type must not be null");
 
         return TEXT == format && BOOL == type;
+    }
+
+    @Override
+    Boolean doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends Boolean> type) {
+        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
+
+        return Boolean.valueOf(ByteBufUtils.decode(byteBuf));
+    }
+
+    @Override
+    Parameter doEncode(Boolean value) {
+        Objects.requireNonNull(value, "value must not be null");
+
+        ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value ? "TRUE" : "FALSE");
+        return create(TEXT, BOOL, encoded);
     }
 
 }

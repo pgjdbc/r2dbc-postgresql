@@ -37,18 +37,8 @@ final class ByteCodec extends AbstractCodec<Byte> {
     }
 
     @Override
-    public Byte decode(ByteBuf byteBuf, Format format, @Nullable Class<? extends Byte> type) {
-        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
-        Objects.requireNonNull(format, "format must not be null");
-
-        return this.delegate.decode(byteBuf, format, Short.class).byteValue();
-    }
-
-    @Override
-    public Parameter doEncode(Byte value) {
-        Objects.requireNonNull(value, "value must not be null");
-
-        return this.delegate.doEncode((short) value);
+    public Parameter encodeNull() {
+        return this.delegate.encodeNull();
     }
 
     @Override
@@ -56,6 +46,21 @@ final class ByteCodec extends AbstractCodec<Byte> {
         Objects.requireNonNull(type, "type must not be null");
 
         return this.delegate.doCanDecode(format, type);
+    }
+
+    @Override
+    Byte doDecode(ByteBuf byteBuf, Format format, @Nullable Class<? extends Byte> type) {
+        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
+        Objects.requireNonNull(format, "format must not be null");
+
+        return this.delegate.decode(byteBuf, format, Short.class).byteValue();
+    }
+
+    @Override
+    Parameter doEncode(Byte value) {
+        Objects.requireNonNull(value, "value must not be null");
+
+        return this.delegate.doEncode((short) value);
     }
 
 }

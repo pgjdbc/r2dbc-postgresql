@@ -45,7 +45,17 @@ public interface Codecs {
      *
      * @param value the value to encode
      * @return the encoded value
+     * @throws NullPointerException if {@code value} is {@code null}
      */
-    Parameter encode(@Nullable Object value);
+    Parameter encode(Object value);
+
+    /**
+     * Encode a {@code null} value.
+     *
+     * @param type the type to encode
+     * @return the encoded value
+     * @throws NullPointerException if {@code type} is {@code null}
+     */
+    Parameter encodeNull(Class<?> type);
 
 }

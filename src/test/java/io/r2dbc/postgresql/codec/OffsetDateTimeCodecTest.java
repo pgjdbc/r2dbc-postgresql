@@ -49,8 +49,7 @@ final class OffsetDateTimeCodecTest {
 
     @Test
     void decodeNoByteBuf() {
-        assertThatNullPointerException().isThrownBy(() -> new OffsetDateTimeCodec(TEST).decode(null, TEXT, OffsetDateTime.class))
-            .withMessage("byteBuf must not be null");
+        assertThat(new OffsetDateTimeCodec(TEST).decode(null, TEXT, OffsetDateTime.class)).isNull();
     }
 
     @Test
@@ -86,6 +85,12 @@ final class OffsetDateTimeCodecTest {
     void doEncodeNoValue() {
         assertThatNullPointerException().isThrownBy(() -> new OffsetDateTimeCodec(TEST).doEncode(null))
             .withMessage("value must not be null");
+    }
+
+    @Test
+    void encodeNull() {
+        assertThat(new OffsetDateTimeCodec(TEST).encodeNull())
+            .isEqualTo(new Parameter(TEXT, TIMESTAMPTZ.getObjectId(), null));
     }
 
 }
