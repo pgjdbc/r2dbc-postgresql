@@ -24,7 +24,6 @@ import reactor.core.publisher.Flux;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * An implementation of {@link Batch} for executing a collection of statements in a batch against a PostgreSQL database.
@@ -56,7 +55,7 @@ public final class PostgresqlBatch implements Batch {
 
     @Override
     public Flux<PostgresqlResult> execute() {
-        return new SimpleQueryPostgresqlStatement(this.client, this.codecs, this.statements.stream().collect(Collectors.joining("; ")))
+        return new SimpleQueryPostgresqlStatement(this.client, this.codecs, String.join("; ", this.statements))
             .execute();
     }
 

@@ -53,7 +53,7 @@ final class ByteCodec extends AbstractCodec<Byte> {
         Objects.requireNonNull(byteBuf, "byteBuf must not be null");
         Objects.requireNonNull(format, "format must not be null");
 
-        return this.delegate.decode(byteBuf, format, Short.class).byteValue();
+        return this.delegate.doDecode(byteBuf, format, Short.class).byteValue();
     }
 
     @Override

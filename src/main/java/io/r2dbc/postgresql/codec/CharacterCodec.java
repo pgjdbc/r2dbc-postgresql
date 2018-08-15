@@ -53,7 +53,7 @@ final class CharacterCodec extends AbstractCodec<Character> {
     Character doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends Character> type) {
         Objects.requireNonNull(byteBuf, "byteBuf must not be null");
 
-        return this.delegate.decode(byteBuf, format, String.class).charAt(0);
+        return this.delegate.doDecode(byteBuf, format, String.class).charAt(0);
     }
 
     @Override

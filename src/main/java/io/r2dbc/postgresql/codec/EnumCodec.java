@@ -21,7 +21,6 @@ import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
-import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
 import java.util.Objects;
@@ -57,7 +56,7 @@ final class EnumCodec extends AbstractCodec<Enum> {
         Objects.requireNonNull(byteBuf, "byteBuf must not be null");
         Objects.requireNonNull(type, "type must not be null");
 
-        return Enum.valueOf(type, ByteBufUtils.decode(byteBuf));
+        return Enum.valueOf(type, this.delegate.doDecode(byteBuf, format, String.class));
     }
 
     @Override

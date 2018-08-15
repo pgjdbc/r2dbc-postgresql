@@ -55,7 +55,7 @@ final class DateCodec extends AbstractCodec<Date> {
     Date doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends Date> type) {
         Objects.requireNonNull(byteBuf, "byteBuf must not be null");
 
-        return Date.from(this.delegate.decode(byteBuf, format, Instant.class));
+        return Date.from(this.delegate.doDecode(byteBuf, format, Instant.class));
     }
 
     @Override

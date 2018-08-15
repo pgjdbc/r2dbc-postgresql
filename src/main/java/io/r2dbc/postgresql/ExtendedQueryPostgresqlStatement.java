@@ -37,9 +37,9 @@ import static java.util.regex.Pattern.CASE_INSENSITIVE;
 
 final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
 
-    private static Pattern INSERT = Pattern.compile(".*INSERT.*", CASE_INSENSITIVE);
+    private static final Pattern INSERT = Pattern.compile(".*INSERT.*", CASE_INSENSITIVE);
 
-    private static Pattern RETURNING = Pattern.compile(".*RETURNING.*", CASE_INSENSITIVE);
+    private static final Pattern RETURNING = Pattern.compile(".*RETURNING.*", CASE_INSENSITIVE);
 
     private final Bindings bindings = new Bindings();
 

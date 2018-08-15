@@ -54,7 +54,7 @@ final class ZoneIdCodec extends AbstractCodec<ZoneId> {
     ZoneId doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends ZoneId> type) {
         Objects.requireNonNull(byteBuf, "byteBuf must not be null");
 
-        return ZoneId.of(this.delegate.decode(byteBuf, format, String.class));
+        return ZoneId.of(this.delegate.doDecode(byteBuf, format, String.class));
     }
 
     @Override
