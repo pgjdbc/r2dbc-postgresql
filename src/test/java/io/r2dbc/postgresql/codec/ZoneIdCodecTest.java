@@ -48,8 +48,7 @@ final class ZoneIdCodecTest {
 
     @Test
     void decodeNoByteBuf() {
-        assertThatNullPointerException().isThrownBy(() -> new ZoneIdCodec(TEST).decode(null, TEXT, ZoneId.class))
-            .withMessage("byteBuf must not be null");
+        assertThat(new ZoneIdCodec(TEST).decode(null, TEXT, ZoneId.class)).isNull();
     }
 
     @Test
@@ -85,6 +84,12 @@ final class ZoneIdCodecTest {
     void doEncodeNoValue() {
         assertThatNullPointerException().isThrownBy(() -> new ZoneIdCodec(TEST).doEncode(null))
             .withMessage("value must not be null");
+    }
+
+    @Test
+    void encodeNull() {
+        assertThat(new ZoneIdCodec(TEST).encodeNull())
+            .isEqualTo(new Parameter(TEXT, VARCHAR.getObjectId(), null));
     }
 
 }

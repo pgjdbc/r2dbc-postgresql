@@ -46,8 +46,7 @@ final class ByteCodecTest {
 
     @Test
     void decodeNoByteBuf() {
-        assertThatNullPointerException().isThrownBy(() -> new ByteCodec(TEST).decode(null, BINARY, Byte.class))
-            .withMessage("byteBuf must not be null");
+        assertThat(new ByteCodec(TEST).decode(null, BINARY, Byte.class)).isNull();
     }
 
     @Test
@@ -81,6 +80,12 @@ final class ByteCodecTest {
     void doEncodeNoValue() {
         assertThatNullPointerException().isThrownBy(() -> new ByteCodec(TEST).doEncode(null))
             .withMessage("value must not be null");
+    }
+
+    @Test
+    void encodeNull() {
+        assertThat(new ByteCodec(TEST).encodeNull())
+            .isEqualTo(new Parameter(BINARY, INT2.getObjectId(), null));
     }
 
 }

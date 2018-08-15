@@ -47,10 +47,10 @@ final class EnumCodecTest {
             .isEqualTo(timeUnit);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void decodeNoByteBuf() {
-        assertThatNullPointerException().isThrownBy(() -> new EnumCodec(TEST).decode(null, TEXT, TimeUnit.class))
-            .withMessage("byteBuf must not be null");
+        assertThat(new EnumCodec(TEST).decode(null, TEXT, TimeUnit.class)).isNull();
     }
 
     @Test
@@ -86,6 +86,12 @@ final class EnumCodecTest {
     void doEncodeNoValue() {
         assertThatNullPointerException().isThrownBy(() -> new EnumCodec(TEST).doEncode(null))
             .withMessage("value must not be null");
+    }
+
+    @Test
+    void encodeNull() {
+        assertThat(new EnumCodec(TEST).encodeNull())
+            .isEqualTo(new Parameter(TEXT, VARCHAR.getObjectId(), null));
     }
 
 }

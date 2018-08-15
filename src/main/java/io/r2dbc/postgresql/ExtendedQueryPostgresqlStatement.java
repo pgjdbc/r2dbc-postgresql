@@ -19,24 +19,20 @@ package io.r2dbc.postgresql;
 import io.r2dbc.postgresql.client.Binding;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.ExtendedQueryMessageFlow;
-import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.client.PortalNameSupplier;
 import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.message.backend.CloseComplete;
 import io.r2dbc.postgresql.util.ObjectUtils;
 import reactor.core.publisher.Flux;
-import reactor.util.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static io.r2dbc.postgresql.client.ExtendedQueryMessageFlow.PARAMETER_SYMBOL;
-import static io.r2dbc.postgresql.message.Format.BINARY;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 
 final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
@@ -80,12 +76,9 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
     }
 
     @Override
-    public ExtendedQueryPostgresqlStatement bind(Integer index, @Nullable Object value) {
+    public ExtendedQueryPostgresqlStatement bind(Integer index, Object value) {
         Objects.requireNonNull(index, "index must not be null");
-
-        if (value instanceof Optional) {
-            return bind(index, ((Optional<?>) value).orElse(null));
-        }
+        Objects.requireNonNull(value, "value must not be null");
 
         this.bindings.getCurrent().add(index, this.codecs.encode(value));
 
@@ -93,13 +86,12 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
     }
 
     @Override
-    public ExtendedQueryPostgresqlStatement bindNull(Object identifier, Object type) {
+    public ExtendedQueryPostgresqlStatement bindNull(Object identifier, Class<?> type) {
         Objects.requireNonNull(identifier, "identifier must not be null");
         ObjectUtils.requireType(identifier, String.class, "identifier must be a String");
         Objects.requireNonNull(type, "type must not be null");
-        ObjectUtils.requireType(type, Integer.class, "type must be a Integer");
 
-        bindNull(getIndex((String) identifier), (Integer) type);
+        bindNull(getIndex((String) identifier), type);
         return this;
     }
 
@@ -139,8 +131,8 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
         return this.bindings.getCurrent();
     }
 
-    private void bindNull(Integer index, Integer type) {
-        this.bindings.getCurrent().add(index, new Parameter(BINARY, type, null));
+    private void bindNull(Integer index, Class<?> type) {
+        this.bindings.getCurrent().add(index, this.codecs.encodeNull(type));
     }
 
     private Flux<PostgresqlResult> execute(String sql) {

@@ -23,13 +23,17 @@ import reactor.util.annotation.Nullable;
 
 interface Codec<T> {
 
-    boolean canDecode(@Nullable ByteBuf byteBuf, int dataType, Format format, Class<?> type);
+    boolean canDecode(int dataType, Format format, Class<?> type);
 
-    boolean canEncode(@Nullable Object value);
+    boolean canEncode(Object value);
+
+    boolean canEncodeNull(Class<?> type);
 
     @Nullable
     T decode(@Nullable ByteBuf byteBuf, Format format, Class<? extends T> type);
 
-    Parameter encode(@Nullable Object value);
+    Parameter encode(Object value);
+
+    Parameter encodeNull();
 
 }

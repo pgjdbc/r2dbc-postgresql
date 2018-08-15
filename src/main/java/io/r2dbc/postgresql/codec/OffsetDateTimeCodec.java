@@ -40,18 +40,8 @@ final class OffsetDateTimeCodec extends AbstractCodec<OffsetDateTime> {
     }
 
     @Override
-    public OffsetDateTime decode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends OffsetDateTime> type) {
-        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
-
-        return OffsetDateTime.parse(ByteBufUtils.decode(byteBuf));
-    }
-
-    @Override
-    public Parameter doEncode(OffsetDateTime value) {
-        Objects.requireNonNull(value, "value must not be null");
-
-        ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toString());
-        return create(TEXT, TIMESTAMPTZ, encoded);
+    public Parameter encodeNull() {
+        return createNull(TEXT, TIMESTAMPTZ);
     }
 
     @Override
@@ -60,6 +50,21 @@ final class OffsetDateTimeCodec extends AbstractCodec<OffsetDateTime> {
         Objects.requireNonNull(type, "type must not be null");
 
         return TEXT == format && TIMESTAMPTZ == type;
+    }
+
+    @Override
+    OffsetDateTime doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends OffsetDateTime> type) {
+        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
+
+        return OffsetDateTime.parse(ByteBufUtils.decode(byteBuf));
+    }
+
+    @Override
+    Parameter doEncode(OffsetDateTime value) {
+        Objects.requireNonNull(value, "value must not be null");
+
+        ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toString());
+        return create(TEXT, TIMESTAMPTZ, encoded);
     }
 
 }

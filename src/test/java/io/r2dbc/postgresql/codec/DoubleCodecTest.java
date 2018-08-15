@@ -46,8 +46,7 @@ final class DoubleCodecTest {
 
     @Test
     void decodeNoByteBuf() {
-        assertThatNullPointerException().isThrownBy(() -> new DoubleCodec(TEST).decode(null, BINARY, Double.class))
-            .withMessage("byteBuf must not be null");
+        assertThat(new DoubleCodec(TEST).decode(null, BINARY, Double.class)).isNull();
     }
 
     @Test
@@ -81,6 +80,12 @@ final class DoubleCodecTest {
     void doEncodeNoValue() {
         assertThatNullPointerException().isThrownBy(() -> new DoubleCodec(TEST).doEncode(null))
             .withMessage("value must not be null");
+    }
+
+    @Test
+    void encodeNull() {
+        assertThat(new DoubleCodec(TEST).encodeNull())
+            .isEqualTo(new Parameter(BINARY, FLOAT8.getObjectId(), null));
     }
 
 }

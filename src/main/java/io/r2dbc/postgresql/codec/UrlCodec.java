@@ -39,21 +39,15 @@ final class UrlCodec extends AbstractCodec<URL> {
     }
 
     @Override
-    public URL decode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends URL> type) {
-        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
-
-        try {
-            return new URL(this.delegate.decode(byteBuf, format, String.class));
-        } catch (MalformedURLException e) {
-            throw new IllegalArgumentException(e);
-        }
-    }
-
-    @Override
     public Parameter doEncode(URL value) {
         Objects.requireNonNull(value, "value must not be null");
 
         return this.delegate.doEncode(value.toString());
+    }
+
+    @Override
+    public Parameter encodeNull() {
+        return this.delegate.encodeNull();
     }
 
     @Override
@@ -62,6 +56,17 @@ final class UrlCodec extends AbstractCodec<URL> {
         Objects.requireNonNull(type, "type must not be null");
 
         return this.delegate.doCanDecode(format, type);
+    }
+
+    @Override
+    URL doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends URL> type) {
+        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
+
+        try {
+            return new URL(this.delegate.decode(byteBuf, format, String.class));
+        } catch (MalformedURLException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
 }

@@ -21,7 +21,6 @@ import org.junit.jupiter.api.Test;
 
 import static io.r2dbc.postgresql.message.Format.BINARY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.UNSPECIFIED;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -79,10 +78,28 @@ final class DefaultCodecsTest {
     }
 
     @Test
-    void encodeNull() {
-        Parameter parameter = new DefaultCodecs(TEST).encode(null);
+    void encodeNoValue() {
+        assertThatNullPointerException().isThrownBy(() -> new DefaultCodecs(TEST).encode(null))
+            .withMessage("value must not be null");
+    }
 
-        assertThat(parameter).isEqualTo(new Parameter(BINARY, UNSPECIFIED.getObjectId(), null));
+    @Test
+    void encodeNull() {
+        Parameter parameter = new DefaultCodecs(TEST).encodeNull(Integer.class);
+
+        assertThat(parameter).isEqualTo(new Parameter(BINARY, INT4.getObjectId(), null));
+    }
+
+    @Test
+    void encodeNullNoType() {
+        assertThatNullPointerException().isThrownBy(() -> new DefaultCodecs(TEST).encodeNull(null))
+            .withMessage("type must not be null");
+    }
+
+    @Test
+    void encodeNullUnsupportedType() {
+        assertThatIllegalArgumentException().isThrownBy(() -> new DefaultCodecs(TEST).encodeNull(Object.class))
+            .withMessage("Cannot encode null parameter of type java.lang.Object");
     }
 
     @Test
@@ -90,5 +107,4 @@ final class DefaultCodecsTest {
         assertThatIllegalArgumentException().isThrownBy(() -> new DefaultCodecs(TEST).encode(new Object()))
             .withMessage("Cannot encode parameter of type java.lang.Object");
     }
-
 }

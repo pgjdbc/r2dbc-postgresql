@@ -61,12 +61,25 @@ public final class MockCodecs implements Codecs {
     }
 
     @Override
-    public Parameter encode(@Nullable Object value) {
+    public Parameter encode(Object value) {
+        Objects.requireNonNull(value);
+
         if (!this.encodings.containsKey(value)) {
             throw new AssertionError(String.format("Unexpected call to encode(Object) with value '%s'", value));
         }
 
         return this.encodings.get(value);
+    }
+
+    @Override
+    public Parameter encodeNull(Class<?> type) {
+        Objects.requireNonNull(type);
+
+        if (!this.encodings.containsKey(type)) {
+            throw new AssertionError(String.format("Unexpected call to encodeNull(Class<?>) with value '%s'", type));
+        }
+
+        return this.encodings.get(type);
     }
 
     @Override

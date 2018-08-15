@@ -49,8 +49,7 @@ final class BigDecimalCodecTest {
 
     @Test
     void decodeNoByteBuf() {
-        assertThatNullPointerException().isThrownBy(() -> new BigDecimalCodec(TEST).decode(null, TEXT, BigDecimal.class))
-            .withMessage("byteBuf must not be null");
+        assertThat(new BigDecimalCodec(TEST).decode(null, TEXT, BigDecimal.class)).isNull();
     }
 
     @Test
@@ -86,6 +85,12 @@ final class BigDecimalCodecTest {
     void doEncodeNoValue() {
         assertThatNullPointerException().isThrownBy(() -> new BigDecimalCodec(TEST).doEncode(null))
             .withMessage("value must not be null");
+    }
+
+    @Test
+    void encodeNull() {
+        assertThat(new BigDecimalCodec(TEST).encodeNull())
+            .isEqualTo(new Parameter(TEXT, NUMERIC.getObjectId(), null));
     }
 
 }

@@ -40,18 +40,8 @@ final class LocalDateTimeCodec extends AbstractCodec<LocalDateTime> {
     }
 
     @Override
-    public LocalDateTime decode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends LocalDateTime> type) {
-        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
-
-        return LocalDateTime.parse(ByteBufUtils.decode(byteBuf));
-    }
-
-    @Override
-    public Parameter doEncode(LocalDateTime value) {
-        Objects.requireNonNull(value, "value must not be null");
-
-        ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toString());
-        return create(TEXT, TIMESTAMP, encoded);
+    public Parameter encodeNull() {
+        return createNull(TEXT, TIMESTAMP);
     }
 
     @Override
@@ -60,6 +50,21 @@ final class LocalDateTimeCodec extends AbstractCodec<LocalDateTime> {
         Objects.requireNonNull(type, "type must not be null");
 
         return TEXT == format && TIMESTAMP == type;
+    }
+
+    @Override
+    LocalDateTime doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends LocalDateTime> type) {
+        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
+
+        return LocalDateTime.parse(ByteBufUtils.decode(byteBuf));
+    }
+
+    @Override
+    Parameter doEncode(LocalDateTime value) {
+        Objects.requireNonNull(value, "value must not be null");
+
+        ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toString());
+        return create(TEXT, TIMESTAMP, encoded);
     }
 
 }

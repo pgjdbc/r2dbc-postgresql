@@ -44,8 +44,7 @@ final class StringCodecTest {
 
     @Test
     void decodeNoByteBuf() {
-        assertThatNullPointerException().isThrownBy(() -> new StringCodec(TEST).decode(null, TEXT, String.class))
-            .withMessage("byteBuf must not be null");
+        assertThat(new StringCodec(TEST).decode(null, TEXT, String.class)).isNull();
     }
 
     @Test
@@ -81,6 +80,12 @@ final class StringCodecTest {
     void doEncodeNoValue() {
         assertThatNullPointerException().isThrownBy(() -> new StringCodec(TEST).doEncode(null))
             .withMessage("value must not be null");
+    }
+
+    @Test
+    void encodeNull() {
+        assertThat(new StringCodec(TEST).encodeNull())
+            .isEqualTo(new Parameter(TEXT, VARCHAR.getObjectId(), null));
     }
 
 }

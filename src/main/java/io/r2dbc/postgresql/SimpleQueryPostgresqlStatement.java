@@ -60,7 +60,7 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
     }
 
     @Override
-    public SimpleQueryPostgresqlStatement bindNull(@Nullable Object identifier, @Nullable Object type) {
+    public SimpleQueryPostgresqlStatement bindNull(@Nullable Object identifier, @Nullable Class<?> type) {
         throw new UnsupportedOperationException(String.format("Binding parameters is not supported for the statement '%s'", this.sql));
     }
 

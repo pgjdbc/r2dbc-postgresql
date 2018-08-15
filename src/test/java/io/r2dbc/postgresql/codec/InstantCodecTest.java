@@ -49,8 +49,7 @@ final class InstantCodecTest {
 
     @Test
     void decodeNoByteBuf() {
-        assertThatNullPointerException().isThrownBy(() -> new InstantCodec(TEST).decode(null, TEXT, Instant.class))
-            .withMessage("byteBuf must not be null");
+        assertThat(new InstantCodec(TEST).decode(null, TEXT, Instant.class)).isNull();
     }
 
     @Test
@@ -86,6 +85,12 @@ final class InstantCodecTest {
     void doEncodeNoValue() {
         assertThatNullPointerException().isThrownBy(() -> new InstantCodec(TEST).doEncode(null))
             .withMessage("value must not be null");
+    }
+
+    @Test
+    void encodeNull() {
+        assertThat(new InstantCodec(TEST).encodeNull())
+            .isEqualTo(new Parameter(TEXT, TIMESTAMP.getObjectId(), null));
     }
 
 }

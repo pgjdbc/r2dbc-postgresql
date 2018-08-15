@@ -52,19 +52,8 @@ public final class MockCodec<T> extends AbstractCodec<T> {
     }
 
     @Override
-    public T decode(ByteBuf byteBuf, Format format, Class<? extends T> type) {
-        Objects.requireNonNull(byteBuf);
-        Objects.requireNonNull(format);
-        Objects.requireNonNull(type);
-
-        Decoding decoding = new Decoding(byteBuf, format);
-
-        if (!this.decodings.containsKey(decoding)) {
-            throw new AssertionError(String.format("Unexpected call to decode(ByteBuf, Format, Class) with values '%s', '%s', '%s'", byteBuf, format, type.getName()));
-        }
-
-        return this.decodings.get(decoding);
-
+    public Parameter encodeNull() {
+        return this.encodings.get(null);
     }
 
     @Override
@@ -81,6 +70,22 @@ public final class MockCodec<T> extends AbstractCodec<T> {
         Objects.requireNonNull(type);
 
         return this.canDecodes.contains(new CanDecode(format, type));
+    }
+
+    @Override
+    T doDecode(ByteBuf byteBuf, Format format, Class<? extends T> type) {
+        Objects.requireNonNull(byteBuf);
+        Objects.requireNonNull(format);
+        Objects.requireNonNull(type);
+
+        Decoding decoding = new Decoding(byteBuf, format);
+
+        if (!this.decodings.containsKey(decoding)) {
+            throw new AssertionError(String.format("Unexpected call to decode(ByteBuf, Format, Class) with values '%s', '%s', '%s'", byteBuf, format, type.getName()));
+        }
+
+        return this.decodings.get(decoding);
+
     }
 
     @Override

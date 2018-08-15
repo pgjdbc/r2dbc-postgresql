@@ -39,18 +39,8 @@ final class StringCodec extends AbstractCodec<String> {
     }
 
     @Override
-    public String decode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends String> type) {
-        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
-
-        return ByteBufUtils.decode(byteBuf);
-    }
-
-    @Override
-    public Parameter doEncode(String value) {
-        Objects.requireNonNull(value, "value must not be null");
-
-        ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value);
-        return create(TEXT, VARCHAR, encoded);
+    public Parameter encodeNull() {
+        return createNull(TEXT, VARCHAR);
     }
 
     @Override
@@ -59,6 +49,21 @@ final class StringCodec extends AbstractCodec<String> {
         Objects.requireNonNull(type, "type must not be null");
 
         return VARCHAR == type && TEXT == format;
+    }
+
+    @Override
+    String doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends String> type) {
+        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
+
+        return ByteBufUtils.decode(byteBuf);
+    }
+
+    @Override
+    Parameter doEncode(String value) {
+        Objects.requireNonNull(value, "value must not be null");
+
+        ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value);
+        return create(TEXT, VARCHAR, encoded);
     }
 
 }

@@ -46,8 +46,7 @@ final class LongCodecTest {
 
     @Test
     void decodeNoByteBuf() {
-        assertThatNullPointerException().isThrownBy(() -> new LongCodec(TEST).decode(null, BINARY, Long.class))
-            .withMessage("byteBuf must not be null");
+        assertThat(new LongCodec(TEST).decode(null, BINARY, Long.class)).isNull();
     }
 
     @Test
@@ -81,6 +80,12 @@ final class LongCodecTest {
     void doEncodeNoValue() {
         assertThatNullPointerException().isThrownBy(() -> new LongCodec(TEST).doEncode(null))
             .withMessage("value must not be null");
+    }
+
+    @Test
+    void encodeNull() {
+        assertThat(new LongCodec(TEST).encodeNull())
+            .isEqualTo(new Parameter(BINARY, INT8.getObjectId(), null));
     }
 
 }

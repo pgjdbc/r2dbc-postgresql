@@ -49,8 +49,7 @@ final class DateCodecTest {
 
     @Test
     void decodeNoByteBuf() {
-        assertThatNullPointerException().isThrownBy(() -> new DateCodec(TEST).decode(null, TEXT, Date.class))
-            .withMessage("byteBuf must not be null");
+        assertThat(new DateCodec(TEST).decode(null, TEXT, Date.class)).isNull();
     }
 
     @Test
@@ -86,6 +85,12 @@ final class DateCodecTest {
     void doEncodeNoValue() {
         assertThatNullPointerException().isThrownBy(() -> new DateCodec(TEST).doEncode(null))
             .withMessage("value must not be null");
+    }
+
+    @Test
+    void encodeNull() {
+        assertThat(new DateCodec(TEST).encodeNull())
+            .isEqualTo(new Parameter(TEXT, TIMESTAMP.getObjectId(), null));
     }
 
 }

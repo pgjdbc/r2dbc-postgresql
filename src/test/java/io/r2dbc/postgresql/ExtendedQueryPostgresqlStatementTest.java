@@ -39,7 +39,6 @@ import reactor.test.StepVerifier;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
-import java.util.Optional;
 
 import static io.r2dbc.postgresql.client.TestClient.NO_OP;
 import static io.r2dbc.postgresql.message.Format.BINARY;
@@ -75,44 +74,43 @@ final class ExtendedQueryPostgresqlStatementTest {
 
     @Test
     void bindIndexNoIndex() {
-        assertThatNullPointerException().isThrownBy(() -> this.statement.bind(null, null))
+        assertThatNullPointerException().isThrownBy(() -> this.statement.bind(null, ""))
             .withMessage("index must not be null");
     }
 
     @Test
-    void bindIndexOptional() {
-        Optional<Integer> optional = Optional.of(100);
-
-        assertThat(this.statement.bind(0, optional).getCurrentBinding()).isEqualTo(new Binding().add(0, this.parameter));
-    }
-
-    @Test
-    void bindIndexOptionalEmpty() {
-        MockCodecs codecs = MockCodecs.builder()
-            .encoding(null, this.parameter)
-            .build();
-
-        Optional<Integer> optional = Optional.empty();
-
-        assertThat(new ExtendedQueryPostgresqlStatement(NO_OP, codecs, () -> "", "test-query-$1", this.statementCache).bind(0, optional).getCurrentBinding())
-            .isEqualTo(new Binding().add(0, this.parameter));
+    void bindIndexNoValue() {
+        assertThatNullPointerException().isThrownBy(() -> this.statement.bind(1, null))
+            .withMessage("value must not be null");
     }
 
     @Test
     void bindNoIdentifier() {
-        assertThatNullPointerException().isThrownBy(() -> this.statement.bind((String) null, null))
+        assertThatNullPointerException().isThrownBy(() -> this.statement.bind((String) null, ""))
             .withMessage("identifier must not be null");
     }
 
     @Test
+    void bindNoValue() {
+        assertThatNullPointerException().isThrownBy(() -> this.statement.bind("$1", null))
+            .withMessage("value must not be null");
+    }
+
+    @Test
     void bindNull() {
-        assertThat(this.statement.bindNull("$1", 100).getCurrentBinding())
-            .isEqualTo(new Binding().add(0, new Parameter(BINARY, 100, null)));
+        MockCodecs codecs = MockCodecs.builder()
+            .encoding(Integer.class, new Parameter(BINARY, INT4.getObjectId(), null))
+            .build();
+
+        ExtendedQueryPostgresqlStatement statement = new ExtendedQueryPostgresqlStatement(NO_OP, codecs, () -> "", "test-query-$1", this.statementCache);
+
+        assertThat(statement.bindNull("$1", Integer.class).getCurrentBinding())
+            .isEqualTo(new Binding().add(0, new Parameter(BINARY, INT4.getObjectId(), null)));
     }
 
     @Test
     void bindNullNoIdentifier() {
-        assertThatNullPointerException().isThrownBy(() -> this.statement.bindNull(null, 100))
+        assertThatNullPointerException().isThrownBy(() -> this.statement.bindNull(null, Integer.class))
             .withMessage("identifier must not be null");
     }
 
@@ -124,20 +122,14 @@ final class ExtendedQueryPostgresqlStatementTest {
 
     @Test
     void bindNullWrongIdentifierFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> this.statement.bindNull("foo", 100))
+        assertThatIllegalArgumentException().isThrownBy(() -> this.statement.bindNull("foo", Integer.class))
             .withMessage("Identifier 'foo' is not a valid identifier. Should be of the pattern '.*\\$([\\d]+).*'.");
     }
 
     @Test
     void bindNullWrongIdentifierType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> this.statement.bindNull(new Object(), 100))
+        assertThatIllegalArgumentException().isThrownBy(() -> this.statement.bindNull(new Object(), Integer.class))
             .withMessage("identifier must be a String");
-    }
-
-    @Test
-    void bindNullWrongTypeType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> this.statement.bindNull("$1", new Object()))
-            .withMessage("type must be a Integer");
     }
 
     @Test

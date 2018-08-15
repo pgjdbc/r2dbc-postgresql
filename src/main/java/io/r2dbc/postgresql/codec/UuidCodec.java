@@ -38,13 +38,6 @@ final class UuidCodec extends AbstractCodec<UUID> {
     }
 
     @Override
-    public UUID decode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends UUID> type) {
-        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
-
-        return new UUID(byteBuf.readLong(), byteBuf.readLong());
-    }
-
-    @Override
     public Parameter doEncode(UUID value) {
         Objects.requireNonNull(value, "value must not be null");
 
@@ -53,11 +46,23 @@ final class UuidCodec extends AbstractCodec<UUID> {
     }
 
     @Override
+    public Parameter encodeNull() {
+        return createNull(BINARY, PostgresqlObjectId.UUID);
+    }
+
+    @Override
     boolean doCanDecode(Format format, PostgresqlObjectId type) {
         Objects.requireNonNull(format, "format must not be null");
         Objects.requireNonNull(type, "type must not be null");
 
         return BINARY == format && PostgresqlObjectId.UUID == type;
+    }
+
+    @Override
+    UUID doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends UUID> type) {
+        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
+
+        return new UUID(byteBuf.readLong(), byteBuf.readLong());
     }
 
 }

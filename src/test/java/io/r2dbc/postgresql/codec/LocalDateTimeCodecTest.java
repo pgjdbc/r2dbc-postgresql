@@ -49,8 +49,7 @@ final class LocalDateTimeCodecTest {
 
     @Test
     void decodeNoByteBuf() {
-        assertThatNullPointerException().isThrownBy(() -> new LocalDateTimeCodec(TEST).decode(null, TEXT, LocalDateTime.class))
-            .withMessage("byteBuf must not be null");
+        assertThat(new LocalDateTimeCodec(TEST).decode(null, TEXT, LocalDateTime.class)).isNull();
     }
 
     @Test
@@ -86,6 +85,12 @@ final class LocalDateTimeCodecTest {
     void doEncodeNoValue() {
         assertThatNullPointerException().isThrownBy(() -> new LocalDateTimeCodec(TEST).doEncode(null))
             .withMessage("value must not be null");
+    }
+
+    @Test
+    void encodeNull() {
+        assertThat(new LocalDateTimeCodec(TEST).encodeNull())
+            .isEqualTo(new Parameter(TEXT, TIMESTAMP.getObjectId(), null));
     }
 
 }

@@ -39,7 +39,19 @@ final class IntegerCodec extends AbstractCodec<Integer> {
     }
 
     @Override
-    public Integer decode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends Integer> type) {
+    public Parameter encodeNull() {
+        return createNull(BINARY, INT4);
+    }
+
+    @Override
+    boolean doCanDecode(@Nullable Format format, PostgresqlObjectId type) {
+        Objects.requireNonNull(type, "type must not be null");
+
+        return INT4 == type;
+    }
+
+    @Override
+    Integer doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends Integer> type) {
         Objects.requireNonNull(byteBuf, "byteBuf must not be null");
         Objects.requireNonNull(format, "format must not be null");
 
@@ -51,18 +63,11 @@ final class IntegerCodec extends AbstractCodec<Integer> {
     }
 
     @Override
-    public Parameter doEncode(Integer value) {
+    Parameter doEncode(Integer value) {
         Objects.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = this.byteBufAllocator.buffer(4).writeInt(value);
         return create(BINARY, INT4, encoded);
-    }
-
-    @Override
-    boolean doCanDecode(@Nullable Format format, PostgresqlObjectId type) {
-        Objects.requireNonNull(type, "type must not be null");
-
-        return INT4 == type;
     }
 
 }

@@ -47,8 +47,7 @@ final class UrlCodecTest {
 
     @Test
     void decodeNoByteBuf() {
-        assertThatNullPointerException().isThrownBy(() -> new UrlCodec(TEST).decode(null, TEXT, URL.class))
-            .withMessage("byteBuf must not be null");
+        assertThat(new UrlCodec(TEST).decode(null, TEXT, URL.class)).isNull();
     }
 
     @Test
@@ -84,6 +83,12 @@ final class UrlCodecTest {
     void doEncodeNoValue() {
         assertThatNullPointerException().isThrownBy(() -> new UrlCodec(TEST).doEncode(null))
             .withMessage("value must not be null");
+    }
+
+    @Test
+    void encodeNull() {
+        assertThat(new UrlCodec(TEST).encodeNull())
+            .isEqualTo(new Parameter(TEXT, VARCHAR.getObjectId(), null));
     }
 
 }

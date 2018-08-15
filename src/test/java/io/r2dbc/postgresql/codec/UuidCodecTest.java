@@ -48,8 +48,7 @@ final class UuidCodecTest {
 
     @Test
     void decodeNoByteBuf() {
-        assertThatNullPointerException().isThrownBy(() -> new UuidCodec(TEST).decode(null, TEXT, UUID.class))
-            .withMessage("byteBuf must not be null");
+        assertThat(new UuidCodec(TEST).decode(null, TEXT, UUID.class)).isNull();
     }
 
     @Test
@@ -85,6 +84,12 @@ final class UuidCodecTest {
     void doEncodeNoValue() {
         assertThatNullPointerException().isThrownBy(() -> new UuidCodec(TEST).doEncode(null))
             .withMessage("value must not be null");
+    }
+
+    @Test
+    void encodeNull() {
+        assertThat(new UuidCodec(TEST).encodeNull())
+            .isEqualTo(new Parameter(BINARY, PostgresqlObjectId.UUID.getObjectId(), null));
     }
 
 }
