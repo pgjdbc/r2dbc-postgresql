@@ -48,7 +48,7 @@ final class StringCodec extends AbstractCodec<String> {
         Objects.requireNonNull(format, "format must not be null");
         Objects.requireNonNull(type, "type must not be null");
 
-        return VARCHAR == type && TEXT == format;
+        return TEXT == format && VARCHAR == type;
     }
 
     @Override

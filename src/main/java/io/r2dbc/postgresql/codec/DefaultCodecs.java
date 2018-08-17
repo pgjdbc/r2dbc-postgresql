@@ -42,6 +42,13 @@ public final class DefaultCodecs implements Codecs {
         Objects.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
 
         this.codecs = Arrays.asList(
+
+            // Prioritized Codecs
+            new ShortCodec(byteBufAllocator),
+            new StringCodec(byteBufAllocator),
+            new InstantCodec(byteBufAllocator),
+            new ZonedDateTimeCodec(byteBufAllocator),
+
             new BigDecimalCodec(byteBufAllocator),
             new BooleanCodec(byteBufAllocator),
             new ByteCodec(byteBufAllocator),
@@ -51,20 +58,16 @@ public final class DefaultCodecs implements Codecs {
             new EnumCodec(byteBufAllocator),
             new FloatCodec(byteBufAllocator),
             new InetAddressCodec(byteBufAllocator),
-            new InstantCodec(byteBufAllocator),
             new IntegerCodec(byteBufAllocator),
             new LocalDateCodec(byteBufAllocator),
             new LocalDateTimeCodec(byteBufAllocator),
             new LocalTimeCodec(byteBufAllocator),
             new LongCodec(byteBufAllocator),
             new OffsetDateTimeCodec(byteBufAllocator),
-            new ShortCodec(byteBufAllocator),
-            new StringCodec(byteBufAllocator),
             new UriCodec(byteBufAllocator),
             new UrlCodec(byteBufAllocator),
             new UuidCodec(byteBufAllocator),
-            new ZoneIdCodec(byteBufAllocator),
-            new ZonedDateTimeCodec(byteBufAllocator)
+            new ZoneIdCodec(byteBufAllocator)
         );
     }
 
