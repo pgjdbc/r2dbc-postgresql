@@ -17,10 +17,19 @@
 package io.r2dbc.postgresql.codec;
 
 import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.util.ByteBufUtils;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
+import java.time.ZonedDateTime;
+
 import static io.r2dbc.postgresql.message.Format.BINARY;
+import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT2;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMP;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMPTZ;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -68,6 +77,17 @@ final class DefaultCodecsTest {
     void decodeUnsupportedType() {
         assertThatIllegalArgumentException().isThrownBy(() -> new DefaultCodecs(TEST).decode(TEST.buffer(4), INT4.getObjectId(), BINARY, Void.class))
             .withMessage("Cannot decode value of type java.lang.Void");
+    }
+
+    @Test
+    void delegatePriority() {
+        Codecs codecs = new DefaultCodecs(TEST);
+
+        assertThat(codecs.decode(TEST.buffer(2).writeShort((byte) 100), INT2.getObjectId(), BINARY, Object.class)).isInstanceOf(Short.class);
+        assertThat(codecs.decode(ByteBufUtils.encode(TEST, "100"), INT2.getObjectId(), TEXT, Object.class)).isInstanceOf(Short.class);
+        assertThat(codecs.decode(ByteBufUtils.encode(TEST, "test"), VARCHAR.getObjectId(), TEXT, Object.class)).isInstanceOf(String.class);
+        assertThat(codecs.decode(ByteBufUtils.encode(TEST, Instant.now().toString()), TIMESTAMP.getObjectId(), TEXT, Object.class)).isInstanceOf(Instant.class);
+        assertThat(codecs.decode(ByteBufUtils.encode(TEST, ZonedDateTime.now().toString()), TIMESTAMPTZ.getObjectId(), TEXT, Object.class)).isInstanceOf(ZonedDateTime.class);
     }
 
     @Test
