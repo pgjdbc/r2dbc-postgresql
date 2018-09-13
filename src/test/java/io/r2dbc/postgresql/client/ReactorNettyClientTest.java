@@ -45,7 +45,7 @@ final class ReactorNettyClientTest {
     @RegisterExtension
     static final PostgresqlServerExtension SERVER = new PostgresqlServerExtension();
 
-    private final ReactorNettyClient client = new ReactorNettyClient(SERVER.getHost(), SERVER.getPort());
+    private final ReactorNettyClient client = ReactorNettyClient.connect(SERVER.getHost(), SERVER.getPort()).block();
 
     @Test
     void close() {
@@ -63,7 +63,7 @@ final class ReactorNettyClientTest {
 
     @Test
     void constructorNoHost() {
-        assertThatNullPointerException().isThrownBy(() -> new ReactorNettyClient(null, SERVER.getPort()))
+        assertThatNullPointerException().isThrownBy(() -> ReactorNettyClient.connect(null, SERVER.getPort()))
             .withMessage("host must not be null");
     }
 
