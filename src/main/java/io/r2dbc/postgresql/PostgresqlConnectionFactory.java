@@ -33,7 +33,7 @@ import java.util.function.Supplier;
  */
 public final class PostgresqlConnectionFactory implements ConnectionFactory {
 
-    private final Supplier<Client> clientFactory;
+    private final Mono<? extends Client> clientFactory;
 
     private final PostgresqlConnectionConfiguration configuration;
 
@@ -44,21 +44,21 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
      * @throws NullPointerException if {@code configuration} is {@code null}
      */
     public PostgresqlConnectionFactory(PostgresqlConnectionConfiguration configuration) {
-        this(() -> {
+        this(Mono.defer(() -> {
             Objects.requireNonNull(configuration, "configuration must not be null");
 
-            return new ReactorNettyClient(configuration.getHost(), configuration.getPort());
-        }, configuration);
+            return ReactorNettyClient.connect(configuration.getHost(), configuration.getPort()).cast(Client.class);
+        }), configuration);
     }
 
-    PostgresqlConnectionFactory(Supplier<Client> clientFactory, PostgresqlConnectionConfiguration configuration) {
+    PostgresqlConnectionFactory(Mono<? extends Client> clientFactory, PostgresqlConnectionConfiguration configuration) {
         this.clientFactory = Objects.requireNonNull(clientFactory, "clientFactory must not be null");
         this.configuration = Objects.requireNonNull(configuration, "configuration must not be null");
     }
 
     @Override
     public Mono<PostgresqlConnection> create() {
-        return Mono.just(this.clientFactory.get())
+        return this.clientFactory
             .delayUntil(client ->
                 StartupMessageFlow
                     .exchange(this.configuration.getApplicationName(), getAuthenticationHandler(this.configuration), client, this.configuration.getDatabase().orElse(null),

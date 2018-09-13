@@ -35,6 +35,7 @@ import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.SynchronousSink;
 import reactor.netty.Connection;
+import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.tcp.TcpClient;
 
 import java.util.HashMap;
@@ -107,21 +108,16 @@ public final class ReactorNettyClient implements Client {
         });
 
     /**
-     * Creates a new frame processor connected to a given host.
+     * Creates a new frame processor connected to a given TCP connection.
      *
-     * @param host the host to connect to
-     * @param port the port to connect to
-     * @throws NullPointerException if {@code host} or {@code decoder} is {@code null}
+     * @param connection the TCP connection
+     * @throws NullPointerException if {@code connection} is {@code null}
      */
-    public ReactorNettyClient(String host, int port) {
-        Objects.requireNonNull(host, "host must not be null");
+    private ReactorNettyClient(Connection connection) {
+        Objects.requireNonNull(connection, "Connection must not be null");
 
         BackendMessageDecoder decoder = new BackendMessageDecoder();
         FluxSink<Flux<BackendMessage>> responses = this.responseProcessor.sink();
-
-        Connection connection = TcpClient.create()
-            .host(host).port(port)
-            .connectNow();
 
         this.byteBufAllocator.set(connection.outbound().alloc());
 
@@ -145,6 +141,38 @@ public final class ReactorNettyClient implements Client {
         this.connection.set(connection);
     }
 
+    /**
+     * Creates a new frame processor connected to a given host.
+     *
+     * @param host the host to connect to
+     * @param port the port to connect to
+     * @throws NullPointerException if {@code host} is {@code null}
+     */
+    public static Mono<ReactorNettyClient> connect(String host, int port) {
+        Objects.requireNonNull(host, "host must not be null");
+
+        return connect(ConnectionProvider.newConnection(), host, port);
+    }
+
+    /**
+     * Creates a new frame processor connected to a given host.
+     *
+     * @param connectionProvider the connection provider resources
+     * @param host               the host to connect to
+     * @param port               the port to connect to
+     * @throws NullPointerException if {@code host} is {@code null}
+     */
+    public static Mono<ReactorNettyClient> connect(ConnectionProvider connectionProvider, String host, int port) {
+        Objects.requireNonNull(connectionProvider, "connectionProvider must not be null");
+        Objects.requireNonNull(host, "host must not be null");
+
+        Mono<? extends Connection> connection = TcpClient.create(connectionProvider)
+            .host(host).port(port)
+            .connect();
+
+        return connection.map(ReactorNettyClient::new);
+    }
+    
     @Override
     public Mono<Void> close() {
         return Mono.defer(() -> {

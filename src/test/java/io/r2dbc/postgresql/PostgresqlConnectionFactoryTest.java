@@ -23,6 +23,7 @@ import io.r2dbc.postgresql.message.backend.AuthenticationOk;
 import io.r2dbc.postgresql.message.frontend.PasswordMessage;
 import io.r2dbc.postgresql.message.frontend.StartupMessage;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
@@ -67,7 +68,7 @@ final class PostgresqlConnectionFactoryTest {
             .password("test-password")
             .build();
 
-        new PostgresqlConnectionFactory(() -> client, configuration)
+        new PostgresqlConnectionFactory(Mono.just(client), configuration)
             .create()
             .as(StepVerifier::create)
             .assertNext(connection -> assertThat(connection.getParameterStatus()).containsEntry("test-key", "test-value"))
@@ -94,7 +95,7 @@ final class PostgresqlConnectionFactoryTest {
             .password("test-password")
             .build();
 
-        assertThat(new PostgresqlConnectionFactory(() -> client, configuration).getMetadata()).isNotNull();
+        assertThat(new PostgresqlConnectionFactory(Mono.just(client), configuration).getMetadata()).isNotNull();
     }
 
 }
