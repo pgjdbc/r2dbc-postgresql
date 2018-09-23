@@ -1,0 +1,22 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: r2dbc/r2dbc-postgresql
+
+inputs:
+- name: r2dbc-postgresql
+
+outputs:
+- name: r2dbc-postgresql-artifactory
+
+caches:
+- path: maven
+- path: postgresql
+
+run:
+  path: r2dbc-postgresql/ci/perm-patch.sh
+  args:
+  - r2dbc-postgresql/ci/release.sh
