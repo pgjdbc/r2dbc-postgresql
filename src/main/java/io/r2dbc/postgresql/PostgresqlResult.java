@@ -111,6 +111,7 @@ public final class PostgresqlResult implements Result {
 
         messages
             .handle(PostgresqlServerErrorException::handleErrorResponse)
+            .hide()
             .subscribe(processor);
 
         return new PostgresqlResult(codecs, rowMetadata, rows, rowsUpdated);
