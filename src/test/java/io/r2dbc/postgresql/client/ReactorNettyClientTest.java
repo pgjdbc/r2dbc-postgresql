@@ -16,22 +16,16 @@
 
 package io.r2dbc.postgresql.client;
 
-import io.r2dbc.postgresql.message.backend.AuthenticationCleartextPassword;
+import io.r2dbc.postgresql.authentication.PasswordAuthenticationHandler;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.DataRow;
-import io.r2dbc.postgresql.message.backend.ReadyForQuery;
 import io.r2dbc.postgresql.message.backend.RowDescription;
-import io.r2dbc.postgresql.message.frontend.FrontendMessage;
-import io.r2dbc.postgresql.message.frontend.PasswordMessage;
 import io.r2dbc.postgresql.message.frontend.Query;
-import io.r2dbc.postgresql.message.frontend.StartupMessage;
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import reactor.core.publisher.EmitterProcessor;
-import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -45,7 +39,10 @@ final class ReactorNettyClientTest {
     @RegisterExtension
     static final PostgresqlServerExtension SERVER = new PostgresqlServerExtension();
 
-    private final ReactorNettyClient client = ReactorNettyClient.connect(SERVER.getHost(), SERVER.getPort()).block();
+    private final ReactorNettyClient client = ReactorNettyClient.connect(SERVER.getHost(), SERVER.getPort())
+        .delayUntil(client -> StartupMessageFlow
+            .exchange(this.getClass().getName(), new PasswordAuthenticationHandler(SERVER.getPassword(), SERVER.getUsername()), client, SERVER.getDatabase(), SERVER.getUsername()))
+        .block();
 
     @Test
     void close() {
@@ -65,25 +62,6 @@ final class ReactorNettyClientTest {
     void constructorNoHost() {
         assertThatNullPointerException().isThrownBy(() -> ReactorNettyClient.connect(null, SERVER.getPort()))
             .withMessage("host must not be null");
-    }
-
-    @BeforeEach
-    void createClient() {
-        EmitterProcessor<FrontendMessage> requestProcessor = EmitterProcessor.create(false);
-        FluxSink<FrontendMessage> requests = requestProcessor.sink();
-
-        this.client
-            .exchange(requestProcessor)
-            .doOnSubscribe(s -> requests.next(new StartupMessage("test-application-name", SERVER.getDatabase(), SERVER.getUsername())))
-            .handle((message, sink) -> {
-                if (message instanceof AuthenticationCleartextPassword) {
-                    requests.next(new PasswordMessage(SERVER.getPassword()));
-                } else {
-                    sink.next(message);
-                }
-            })
-            .takeUntil(ReadyForQuery.class::isInstance)
-            .blockLast();
     }
 
     @BeforeEach
@@ -123,7 +101,7 @@ final class ReactorNettyClientTest {
 
     @Test
     void handleParameterStatus() {
-        assertThat(this.client.getParameterStatus()).containsEntry("application_name", "test-application-name");
+        assertThat(this.client.getParameterStatus()).containsEntry("application_name", this.getClass().getName());
     }
 
     @Test
