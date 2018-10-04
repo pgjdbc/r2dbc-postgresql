@@ -116,6 +116,11 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>io.r2dbc</groupId>
+            <artifactId>r2dbc-spi-test</artifactId>
+            <version>${r2dbc-spi.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <version>${assertj.version}</version>
@@ -221,6 +226,10 @@
                 <version>2.22.0</version>
                 <configuration>
                     <runOrder>random</runOrder>
+                    <includes>
+                        <include>**/*Example.java</include>
+                        <include>**/*Test.java</include>
+                    </includes>
                 </configuration>
             </plugin>
         </plugins>
