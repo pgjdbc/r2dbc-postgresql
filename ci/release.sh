@@ -3,7 +3,6 @@
 set -e -u
 
 [[ -d $PWD/maven && ! -d $HOME/.m2 ]] && ln -s $PWD/maven $HOME/.m2
-[[ -d $PWD/postgresql && ! -d $HOME/.embedpostgresql ]] && ln -s $PWD/postgresql $HOME/.embedpostgresql
 
 r2dbc_postgresql_artifactory=$(pwd)/r2dbc-postgresql-artifactory
 

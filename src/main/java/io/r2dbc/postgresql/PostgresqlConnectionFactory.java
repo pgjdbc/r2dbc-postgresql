@@ -26,7 +26,6 @@ import io.r2dbc.spi.ConnectionFactory;
 import reactor.core.publisher.Mono;
 
 import java.util.Objects;
-import java.util.function.Supplier;
 
 /**
  * An implementation of {@link ConnectionFactory} for creating connections to a PostgreSQL database.
@@ -73,7 +72,10 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
 
     @Override
     public String toString() {
-        return "PostgresqlConnectionFactory{}";
+        return "PostgresqlConnectionFactory{" +
+            "clientFactory=" + this.clientFactory +
+            ", configuration=" + this.configuration +
+            '}';
     }
 
     private AuthenticationHandler getAuthenticationHandler(PostgresqlConnectionConfiguration configuration) {
