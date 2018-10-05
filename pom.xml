@@ -119,6 +119,7 @@
             <groupId>io.r2dbc</groupId>
             <artifactId>r2dbc-spi-test</artifactId>
             <version>${r2dbc-spi.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.assertj</groupId>
