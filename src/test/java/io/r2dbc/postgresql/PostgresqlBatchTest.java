@@ -37,7 +37,7 @@ final class PostgresqlBatchTest {
     @Test
     void add() {
         Client client = TestClient.builder()
-            .expectRequest(new Query("test-query-1; test-query-2")).thenRespond(new CommandComplete("test", null, null))
+            .expectRequest(new Query("test-query-1; test-query-2")).thenRespond(new CommandComplete("test-1", null, null), new CommandComplete("test-2", null, null))
             .build();
 
         new PostgresqlBatch(client, MockCodecs.empty())
@@ -45,7 +45,7 @@ final class PostgresqlBatchTest {
             .add("test-query-2")
             .execute()
             .as(StepVerifier::create)
-            .expectNextCount(1)
+            .expectNextCount(2)
             .verifyComplete();
     }
 

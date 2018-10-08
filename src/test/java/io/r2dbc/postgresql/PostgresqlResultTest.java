@@ -117,7 +117,7 @@ final class PostgresqlResultTest {
 
         result.map((row, rowMetadata) -> row)
             .as(StepVerifier::create)
-            .expectNext(new PostgresqlRow(MockCodecs.empty(), Collections.emptyList()))
+            .expectNextCount(1)
             .verifyComplete();
 
         result.getRowsUpdated()

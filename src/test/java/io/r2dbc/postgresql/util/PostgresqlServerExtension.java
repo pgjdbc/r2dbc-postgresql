@@ -53,6 +53,8 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
             .password(this.container.getPassword())
             .build();
 
+        this.dataSource.setMaximumPoolSize(1);
+
         this.jdbcOperations = new JdbcTemplate(this.dataSource);
     }
 

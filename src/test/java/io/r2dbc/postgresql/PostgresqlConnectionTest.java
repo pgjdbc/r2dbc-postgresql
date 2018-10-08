@@ -160,18 +160,6 @@ final class PostgresqlConnectionTest {
     }
 
     @Test
-    void createSavePointNonOpen() {
-        Client client = TestClient.builder()
-            .transactionStatus(IDLE)
-            .build();
-
-        new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache)
-            .createSavepoint("test-name")
-            .as(StepVerifier::create)
-            .verifyComplete();
-    }
-
-    @Test
     void createSavepoint() {
         Client client = TestClient.builder()
             .transactionStatus(OPEN)
@@ -201,6 +189,18 @@ final class PostgresqlConnectionTest {
     void createSavepointNoName() {
         assertThatNullPointerException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), () -> "", this.statementCache).createSavepoint(null))
             .withMessage("name must not be null");
+    }
+
+    @Test
+    void createSavepointNonOpen() {
+        Client client = TestClient.builder()
+            .transactionStatus(IDLE)
+            .build();
+
+        new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache)
+            .createSavepoint("test-name")
+            .as(StepVerifier::create)
+            .verifyComplete();
     }
 
     @Test
@@ -355,6 +355,19 @@ final class PostgresqlConnectionTest {
     }
 
     @Test
+    void setTransactionIsolationLevel() {
+        Client client = TestClient.builder()
+            .transactionStatus(OPEN)
+            .expectRequest(new Query("SET TRANSACTION ISOLATION LEVEL READ COMMITTED")).thenRespond(new CommandComplete("SET", null, null))
+            .build();
+
+        new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache)
+            .setTransactionIsolationLevel(READ_COMMITTED)
+            .as(StepVerifier::create)
+            .verifyComplete();
+    }
+
+    @Test
     void setTransactionIsolationLevelErrorResponse() {
         Client client = TestClient.builder()
             .transactionStatus(IDLE)
@@ -368,7 +381,13 @@ final class PostgresqlConnectionTest {
     }
 
     @Test
-    void setTransactionIsolationLevelIdle() {
+    void setTransactionIsolationLevelNoIsolationLevel() {
+        assertThatNullPointerException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), () -> "", this.statementCache).setTransactionIsolationLevel(null))
+            .withMessage("isolationLevel must not be null");
+    }
+
+    @Test
+    void setTransactionIsolationLevelNonOpen() {
         Client client = TestClient.builder()
             .transactionStatus(IDLE)
             .expectRequest(new Query("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL READ COMMITTED")).thenRespond(new CommandComplete("SET", null, null))
@@ -381,20 +400,14 @@ final class PostgresqlConnectionTest {
     }
 
     @Test
-    void setTransactionIsolationLevelNoIsolationLevel() {
-        assertThatNullPointerException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), () -> "", this.statementCache).setTransactionIsolationLevel(null))
-            .withMessage("isolationLevel must not be null");
-    }
-
-    @Test
-    void setTransactionIsolationLevelOpen() {
+    void setTransactionMutability() {
         Client client = TestClient.builder()
             .transactionStatus(OPEN)
-            .expectRequest(new Query("SET TRANSACTION ISOLATION LEVEL READ COMMITTED")).thenRespond(new CommandComplete("SET", null, null))
+            .expectRequest(new Query("SET TRANSACTION READ ONLY")).thenRespond(new CommandComplete("SET", null, null))
             .build();
 
         new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache)
-            .setTransactionIsolationLevel(READ_COMMITTED)
+            .setTransactionMutability(READ_ONLY)
             .as(StepVerifier::create)
             .verifyComplete();
     }
@@ -413,29 +426,16 @@ final class PostgresqlConnectionTest {
     }
 
     @Test
-    void setTransactionMutabilityIdle() {
-        Client client = TestClient.builder()
-            .transactionStatus(IDLE)
-            .expectRequest(new Query("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY")).thenRespond(new CommandComplete("SET", null, null))
-            .build();
-
-        new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache)
-            .setTransactionMutability(READ_ONLY)
-            .as(StepVerifier::create)
-            .verifyComplete();
-    }
-
-    @Test
     void setTransactionMutabilityNoMutability() {
         assertThatNullPointerException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), () -> "", this.statementCache).setTransactionMutability(null))
             .withMessage("mutability must not be null");
     }
 
     @Test
-    void setTransactionMutabilityOpen() {
+    void setTransactionMutabilityNonOpen() {
         Client client = TestClient.builder()
-            .transactionStatus(OPEN)
-            .expectRequest(new Query("SET TRANSACTION READ ONLY")).thenRespond(new CommandComplete("SET", null, null))
+            .transactionStatus(IDLE)
+            .expectRequest(new Query("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY")).thenRespond(new CommandComplete("SET", null, null))
             .build();
 
         new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache)

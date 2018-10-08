@@ -67,6 +67,10 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
         return this;
     }
 
+    public Bindings getBindings() {
+        return bindings;
+    }
+
     @Override
     public ExtendedQueryPostgresqlStatement bind(Object identifier, Object value) {
         Objects.requireNonNull(identifier, "identifier must not be null");

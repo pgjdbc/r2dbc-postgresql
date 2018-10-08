@@ -55,7 +55,7 @@ final class PostgresqlRowTest {
     }
 
     @Test
-    void geDefaultType() {
+    void getDefaultType() {
         Object value = new Object();
 
         MockCodecs codecs = MockCodecs.builder()

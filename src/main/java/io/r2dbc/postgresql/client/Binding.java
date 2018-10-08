@@ -42,16 +42,16 @@ public final class Binding {
     /**
      * Add a {@link Parameter} to the binding.
      *
-     * @param identifier the identifier of the {@link Parameter}
-     * @param parameter  the {@link Parameter}
+     * @param index     the index of the {@link Parameter}
+     * @param parameter the {@link Parameter}
      * @return this {@link Binding}
-     * @throws NullPointerException if {@code identifier} or {@code parameter} is {@code null}
+     * @throws NullPointerException if {@code index} or {@code parameter} is {@code null}
      */
-    public Binding add(Integer identifier, Parameter parameter) {
-        Objects.requireNonNull(identifier, "identifier must not be null");
+    public Binding add(Integer index, Parameter parameter) {
+        Objects.requireNonNull(index, "index must not be null");
         Objects.requireNonNull(parameter, "parameter must not be null");
 
-        this.parameters.put(identifier, parameter);
+        this.parameters.put(index, parameter);
 
         return this;
     }

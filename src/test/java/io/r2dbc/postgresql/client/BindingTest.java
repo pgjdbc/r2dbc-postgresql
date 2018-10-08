@@ -28,9 +28,9 @@ import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 final class BindingTest {
 
     @Test
-    void addNoIdentifier() {
+    void addNoIndex() {
         assertThatNullPointerException().isThrownBy(() -> new Binding().add(null, new Parameter(TEXT, 100, null)))
-            .withMessage("identifier must not be null");
+            .withMessage("index must not be null");
     }
 
     @Test
