@@ -23,7 +23,6 @@ import io.r2dbc.postgresql.client.TransactionStatus;
 import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.IsolationLevel;
-import io.r2dbc.spi.Mutability;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -187,16 +186,6 @@ public final class PostgresqlConnection implements Connection {
     }
 
     @Override
-    public Mono<Void> setTransactionMutability(Mutability mutability) {
-        Objects.requireNonNull(mutability, "mutability must not be null");
-
-        return withTransactionStatus(getTransactionMutabilityQuery(mutability))
-            .flatMapMany(query -> SimpleQueryMessageFlow.exchange(this.client, query))
-            .handle(PostgresqlServerErrorException::handleErrorResponse)
-            .then();
-    }
-
-    @Override
     public String toString() {
         return "PostgresqlConnection{" +
             "client=" + this.client +
@@ -212,16 +201,6 @@ public final class PostgresqlConnection implements Connection {
                 return String.format("SET TRANSACTION ISOLATION LEVEL %s", isolationLevel.asSql());
             } else {
                 return String.format("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL %s", isolationLevel.asSql());
-            }
-        };
-    }
-
-    private static Function<TransactionStatus, String> getTransactionMutabilityQuery(Mutability mutability) {
-        return transactionStatus -> {
-            if (transactionStatus == OPEN) {
-                return String.format("SET TRANSACTION %s", mutability.asSql());
-            } else {
-                return String.format("SET SESSION CHARACTERISTICS AS TRANSACTION %s", mutability.asSql());
             }
         };
     }
