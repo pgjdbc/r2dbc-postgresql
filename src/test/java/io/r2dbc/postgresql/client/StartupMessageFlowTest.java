@@ -41,9 +41,9 @@ final class StartupMessageFlowTest {
         // @formatter:off
         Client client = TestClient.builder()
             .window()
-            .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username")).thenRespond(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))
-            .expectRequest(new PasswordMessage("test-password")).thenRespond(AuthenticationOk.INSTANCE)
-            .done()
+                .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username")).thenRespond(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))
+                .expectRequest(new PasswordMessage("test-password")).thenRespond(AuthenticationOk.INSTANCE)
+                .done()
             .build();
         // @formatter:on
 
