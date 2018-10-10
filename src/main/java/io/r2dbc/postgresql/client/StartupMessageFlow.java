@@ -28,6 +28,7 @@ import reactor.core.publisher.FluxSink;
 import reactor.util.annotation.Nullable;
 
 import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * A utility class that encapsulates the <a href="https://www.postgresql.org/docs/10/static/protocol-flow.html#idm46428664018352">Start-up</a> message flow.
@@ -40,17 +41,19 @@ public final class StartupMessageFlow {
     /**
      * Execute the <a href="https://www.postgresql.org/docs/10/static/protocol-flow.html#idm46428664018352">Start-up</a> message flow.
      *
-     * @param applicationName       the name of the application connecting to the server
-     * @param authenticationHandler the {@link AuthenticationHandler} to use for authentication
-     * @param client                the {@link Client} to exchange messages with
-     * @param database              the database to connect to
-     * @param username              the username to authenticate with
+     * @param applicationName               the name of the application connecting to the server
+     * @param authenticationHandlerProvider the {@link Function} used to provide an {@link AuthenticationHandler} to use for authentication
+     * @param client                        the {@link Client} to exchange messages with
+     * @param database                      the database to connect to
+     * @param username                      the username to authenticate with
      * @return the messages received after authentication is complete, in response to this exchange
      * @throws NullPointerException if {@code applicationName}, {@code authenticationHandler}, {@code client}, or {@code username} is {@code null}
      */
-    public static Flux<BackendMessage> exchange(String applicationName, AuthenticationHandler authenticationHandler, Client client, @Nullable String database, String username) {
+    public static Flux<BackendMessage> exchange(String applicationName, Function<AuthenticationMessage, AuthenticationHandler> authenticationHandlerProvider, Client client,
+                                                @Nullable String database, String username) {
+
         Objects.requireNonNull(applicationName, "applicationName must not be null");
-        Objects.requireNonNull(authenticationHandler, "authenticationHandler must not be null");
+        Objects.requireNonNull(authenticationHandlerProvider, "authenticationHandlerProvider must not be null");
         Objects.requireNonNull(client, "client must not be null");
         Objects.requireNonNull(username, "username must not be null");
 
@@ -63,7 +66,8 @@ public final class StartupMessageFlow {
                     requests.complete();
                 } else if (message instanceof AuthenticationMessage) {
                     try {
-                        requests.next(authenticationHandler.handle((AuthenticationMessage) message));
+                        AuthenticationMessage authenticationMessage = (AuthenticationMessage) message;
+                        requests.next(authenticationHandlerProvider.apply(authenticationMessage).handle(authenticationMessage));
                     } catch (Exception e) {
                         requests.error(e);
                         sink.error(e);

@@ -22,6 +22,7 @@ import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.ReactorNettyClient;
 import io.r2dbc.postgresql.client.StartupMessageFlow;
 import io.r2dbc.postgresql.codec.DefaultCodecs;
+import io.r2dbc.postgresql.message.backend.AuthenticationMessage;
 import io.r2dbc.spi.ConnectionFactory;
 import reactor.core.publisher.Mono;
 
@@ -60,8 +61,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
         return this.clientFactory
             .delayUntil(client ->
                 StartupMessageFlow
-                    .exchange(this.configuration.getApplicationName(), getAuthenticationHandler(this.configuration), client, this.configuration.getDatabase().orElse(null),
-                        this.configuration.getUsername()))
+                    .exchange(this.configuration.getApplicationName(), this::getAuthenticationHandler, client, this.configuration.getDatabase().orElse(null), this.configuration.getUsername()))
             .map(client -> new PostgresqlConnection(client, new DefaultCodecs(client.getByteBufAllocator()), DefaultPortalNameSupplier.INSTANCE, new IndefiniteStatementCache(client)));
     }
 
@@ -78,8 +78,12 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
             '}';
     }
 
-    private AuthenticationHandler getAuthenticationHandler(PostgresqlConnectionConfiguration configuration) {
-        return new PasswordAuthenticationHandler(configuration.getPassword(), configuration.getUsername());
+    private AuthenticationHandler getAuthenticationHandler(AuthenticationMessage message) {
+        if (PasswordAuthenticationHandler.supports(message)) {
+            return new PasswordAuthenticationHandler(this.configuration.getPassword(), this.configuration.getUsername());
+        } else {
+            throw new IllegalStateException(String.format("Unable to provide AuthenticationHandler capable of handling %s", message));
+        }
     }
 
 }
