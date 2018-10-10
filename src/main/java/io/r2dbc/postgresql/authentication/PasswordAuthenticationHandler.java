@@ -25,7 +25,7 @@ import io.r2dbc.postgresql.message.frontend.PasswordMessage;
 import java.util.Objects;
 
 /**
- * An implementation of {@link AuthenticationHandler} that handles {@link AuthenticationMD5Password} messages.
+ * An implementation of {@link AuthenticationHandler} that handles {@link AuthenticationCleartextPassword} and {@link AuthenticationMD5Password} messages.
  */
 public final class PasswordAuthenticationHandler implements AuthenticationHandler {
 
@@ -43,6 +43,19 @@ public final class PasswordAuthenticationHandler implements AuthenticationHandle
     public PasswordAuthenticationHandler(String password, String username) {
         this.password = Objects.requireNonNull(password, "password must not be null");
         this.username = Objects.requireNonNull(username, "username must not be null");
+    }
+
+    /**
+     * Returns whether this {@link AuthenticationHandler} can support authentication for a given authentication message response.
+     *
+     * @param message the message to inspect
+     * @return whether this {@link AuthenticationHandler} can support authentication for a given authentication message response
+     * @throws NullPointerException if {@code message} is {@code null}
+     */
+    public static boolean supports(AuthenticationMessage message) {
+        Objects.requireNonNull(message, "message must not be null");
+
+        return message instanceof AuthenticationCleartextPassword || message instanceof AuthenticationMD5Password;
     }
 
     @Override

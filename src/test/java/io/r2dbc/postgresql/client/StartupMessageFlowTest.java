@@ -41,16 +41,16 @@ final class StartupMessageFlowTest {
         // @formatter:off
         Client client = TestClient.builder()
             .window()
-                .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username")).thenRespond(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))
-                .expectRequest(new PasswordMessage("test-password")).thenRespond(AuthenticationOk.INSTANCE)
-                .done()
+            .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username")).thenRespond(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))
+            .expectRequest(new PasswordMessage("test-password")).thenRespond(AuthenticationOk.INSTANCE)
+            .done()
             .build();
         // @formatter:on
 
         when(this.authenticationHandler.handle(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))).thenReturn(new PasswordMessage("test-password"));
 
         StartupMessageFlow
-            .exchange("test-application-name", this.authenticationHandler, client, "test-database", "test-username")
+            .exchange("test-application-name", m -> this.authenticationHandler, client, "test-database", "test-username")
             .as(StepVerifier::create)
             .verifyComplete();
     }
@@ -64,7 +64,7 @@ final class StartupMessageFlowTest {
         when(this.authenticationHandler.handle(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))).thenThrow(new IllegalArgumentException());
 
         StartupMessageFlow
-            .exchange("test-application-name", this.authenticationHandler, client, "test-database", "test-username")
+            .exchange("test-application-name", m -> this.authenticationHandler, client, "test-database", "test-username")
             .as(StepVerifier::create)
             .verifyError(IllegalArgumentException.class);
     }
@@ -76,7 +76,7 @@ final class StartupMessageFlowTest {
             .build();
 
         StartupMessageFlow
-            .exchange("test-application-name", this.authenticationHandler, client, "test-database", "test-username")
+            .exchange("test-application-name", m -> this.authenticationHandler, client, "test-database", "test-username")
             .as(StepVerifier::create)
             .verifyComplete();
     }
@@ -88,7 +88,7 @@ final class StartupMessageFlowTest {
             .build();
 
         StartupMessageFlow
-            .exchange("test-application-name", this.authenticationHandler, client, "test-database", "test-username")
+            .exchange("test-application-name", m -> this.authenticationHandler, client, "test-database", "test-username")
             .as(StepVerifier::create)
             .expectNext(new BackendKeyData(100, 200))
             .verifyComplete();
@@ -96,25 +96,25 @@ final class StartupMessageFlowTest {
 
     @Test
     void exchangeNoApplicationName() {
-        assertThatNullPointerException().isThrownBy(() -> StartupMessageFlow.exchange(null, this.authenticationHandler, NO_OP, "test-database", "test-username"))
+        assertThatNullPointerException().isThrownBy(() -> StartupMessageFlow.exchange(null, m -> this.authenticationHandler, NO_OP, "test-database", "test-username"))
             .withMessage("applicationName must not be null");
     }
 
     @Test
-    void exchangeNoAuthenticationHandler() {
+    void exchangeNoAuthenticationHandlerProvider() {
         assertThatNullPointerException().isThrownBy(() -> StartupMessageFlow.exchange("test-application-name", null, NO_OP, "test-database", "test-username"))
-            .withMessage("authenticationHandler must not be null");
+            .withMessage("authenticationHandlerProvider must not be null");
     }
 
     @Test
     void exchangeNoClient() {
-        assertThatNullPointerException().isThrownBy(() -> StartupMessageFlow.exchange("test-application-name", this.authenticationHandler, null, "test-database", "test-username"))
+        assertThatNullPointerException().isThrownBy(() -> StartupMessageFlow.exchange("test-application-name", m -> this.authenticationHandler, null, "test-database", "test-username"))
             .withMessage("client must not be null");
     }
 
     @Test
     void exchangeNoUsername() {
-        assertThatNullPointerException().isThrownBy(() -> StartupMessageFlow.exchange("test-application-name", this.authenticationHandler, NO_OP, "test-database", null))
+        assertThatNullPointerException().isThrownBy(() -> StartupMessageFlow.exchange("test-application-name", m -> this.authenticationHandler, NO_OP, "test-database", null))
             .withMessage("username must not be null");
     }
 
