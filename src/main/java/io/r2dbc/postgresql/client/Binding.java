@@ -72,7 +72,7 @@ public final class Binding {
      * @return the formats of the parameters in the binding
      */
     public List<Format> getParameterFormats() {
-        ArrayList<Format> format = new ArrayList<Format>(this.parameters.size());
+        List<Format> format = new ArrayList<Format>(this.parameters.size());
         for( Parameter p : this.parameters.values()){
             format.add(p.getFormat());
         }
@@ -85,7 +85,7 @@ public final class Binding {
      * @return the types of the parameters in the binding
      */
     public List<Integer> getParameterTypes() {
-        ArrayList<Integer> types = new ArrayList<Integer>(this.parameters.size());
+        List<Integer> types = new ArrayList<Integer>(this.parameters.size());
         for( Parameter p : this.parameters.values()){
             types.add(p.getType());
         }
@@ -99,7 +99,7 @@ public final class Binding {
      */
     public List<ByteBuf> getParameterValues() {
 
-        ArrayList<ByteBuf> values = new ArrayList<ByteBuf>(this.parameters.size());
+        List<ByteBuf> values = new ArrayList<ByteBuf>(this.parameters.size());
         for( Parameter p : this.parameters.values()){
             values.add(p.getValue());
         }

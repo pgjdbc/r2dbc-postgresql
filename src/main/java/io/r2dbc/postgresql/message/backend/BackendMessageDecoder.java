@@ -252,10 +252,12 @@ public final class BackendMessageDecoder {
         }
 
         static MessageType valueOf(byte b) {
-            return Arrays.stream(values())
-                .filter(type -> type.discriminator == b)
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(String.format("%c is not a valid message type", b)));
+            for (MessageType messageType : values()) {
+                if (messageType.discriminator == b ) {
+                    return messageType;
+                }
+            }
+            throw new IllegalArgumentException(String.format("%c is not a valid message type", b));
         }
 
     }
