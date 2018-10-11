@@ -19,13 +19,11 @@ package io.r2dbc.postgresql.client;
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.message.Format;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import static io.r2dbc.postgresql.message.Format.TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.UNSPECIFIED;
@@ -74,9 +72,11 @@ public final class Binding {
      * @return the formats of the parameters in the binding
      */
     public List<Format> getParameterFormats() {
-        return getParameters()
-            .map(Parameter::getFormat)
-            .collect(Collectors.toList());
+        ArrayList<Format> format = new ArrayList<Format>(this.parameters.size());
+        for( Parameter p : this.parameters.values()){
+            format.add(p.getFormat());
+        }
+        return format;
     }
 
     /**
@@ -85,9 +85,11 @@ public final class Binding {
      * @return the types of the parameters in the binding
      */
     public List<Integer> getParameterTypes() {
-        return getParameters()
-            .map(Parameter::getType)
-            .collect(Collectors.toList());
+        ArrayList<Integer> types = new ArrayList<Integer>(this.parameters.size());
+        for( Parameter p : this.parameters.values()){
+            types.add(p.getType());
+        }
+        return types;
     }
 
     /**
@@ -96,9 +98,12 @@ public final class Binding {
      * @return the values of the parameters in the binding
      */
     public List<ByteBuf> getParameterValues() {
-        return getParameters()
-            .map(Parameter::getValue)
-            .collect(Collectors.toList());
+
+        ArrayList<ByteBuf> values = new ArrayList<ByteBuf>(this.parameters.size());
+        for( Parameter p : this.parameters.values()){
+            values.add(p.getValue());
+        }
+        return values;
     }
 
     @Override
@@ -115,11 +120,6 @@ public final class Binding {
 
     private Parameter get(Integer identifier) {
         return this.parameters.getOrDefault(identifier, UNSPECIFIED_PARAMETER);
-    }
-
-    private Stream<Parameter> getParameters() {
-        return IntStream.range(0, size())
-            .mapToObj(this::get);
     }
 
     private int size() {
