@@ -18,7 +18,6 @@ package io.r2dbc.postgresql.client;
 
 import io.r2dbc.postgresql.message.backend.ReadyForQuery;
 
-import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -50,10 +49,10 @@ public enum TransactionStatus {
     static TransactionStatus valueOf(ReadyForQuery.TransactionStatus t) {
         Objects.requireNonNull(t, "t must not be null");
 
-        return Arrays.stream(values())
-            .filter(type -> type.discriminator == t)
-            .findFirst()
-            .orElseThrow(() -> new IllegalArgumentException(String.format("%s is not a valid transaction status", t)));
+        if ( t == IDLE.discriminator ) return IDLE;
+        if ( t == OPEN.discriminator ) return OPEN;
+        if ( t == FAILED.discriminator ) return FAILED;
+        throw new IllegalArgumentException(String.format("%s is not a valid transaction status", t));
     }
 
 }
