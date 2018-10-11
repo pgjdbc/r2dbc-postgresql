@@ -39,8 +39,9 @@ final class FrontendMessageUtils {
         Objects.requireNonNull(out, "out must not be null");
         Objects.requireNonNull(values, "values must not be null");
 
-        Arrays.stream(values)
-            .forEach(out::writeByte);
+        for (int value : values) {
+            out.writeByte(value);
+        }
         return out;
     }
 
