@@ -19,10 +19,9 @@ package io.r2dbc.postgresql.message.backend;
 import io.netty.buffer.ByteBuf;
 import reactor.util.annotation.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * The DataRow message.
@@ -96,10 +95,12 @@ public final class DataRow implements BackendMessage {
     static DataRow decode(ByteBuf in) {
         Objects.requireNonNull(in, "in must not be null");
 
-        List<ByteBuf> columns = IntStream.range(0, in.readShort())
-            .mapToObj(i -> decodeColumn(in))
-            .collect(Collectors.toList());
+        int numColumns = in.readShort();
+        List<ByteBuf> columns = new ArrayList<ByteBuf>(numColumns);
 
+        for (int i=0; i < numColumns; i++) {
+            columns.add(decodeColumn(in));
+        }
         return new DataRow(columns);
     }
 

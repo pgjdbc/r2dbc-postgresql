@@ -209,10 +209,12 @@ public final class BackendMessageDecoder {
         }
 
         static AuthenticationType valueOf(int i) {
-            return Arrays.stream(values())
-                .filter(type -> type.discriminator == i)
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(String.format("%d is not a valid authentication type", i)));
+            for ( AuthenticationType authType : values() ){
+                if (authType.discriminator == i ){
+                    return authType;
+                }
+            }
+            throw new IllegalArgumentException(String.format("%d is not a valid authentication type", i));
         }
 
     }
