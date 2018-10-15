@@ -28,7 +28,7 @@ import java.util.Objects;
 /**
  * An implementation of {@link Batch} for executing a collection of statements in a batch against a PostgreSQL database.
  */
-public final class PostgresqlBatch implements Batch {
+public final class PostgresqlBatch implements Batch<PostgresqlBatch> {
 
     private final Client client;
 

@@ -43,7 +43,7 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
     }
 
     @Override
-    public void beforeAll(ExtensionContext context) throws IOException {
+    public void beforeAll(ExtensionContext context) {
         this.container.start();
 
         this.dataSource = DataSourceBuilder.create()

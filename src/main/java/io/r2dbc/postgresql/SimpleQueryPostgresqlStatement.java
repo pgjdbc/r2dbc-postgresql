@@ -30,7 +30,7 @@ import java.util.Objects;
 import static io.r2dbc.postgresql.client.ExtendedQueryMessageFlow.PARAMETER_SYMBOL;
 import static io.r2dbc.postgresql.util.PredicateUtils.or;
 
-final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
+final class SimpleQueryPostgresqlStatement implements PostgresqlStatement<SimpleQueryPostgresqlStatement> {
 
     private final Client client;
 
@@ -55,7 +55,7 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
     }
 
     @Override
-    public SimpleQueryPostgresqlStatement bind(@Nullable Integer index, @Nullable Object value) {
+    public SimpleQueryPostgresqlStatement bind(int index, @Nullable Object value) {
         throw new UnsupportedOperationException(String.format("Binding parameters is not supported for the statement '%s'", this.sql));
     }
 

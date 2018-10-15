@@ -35,7 +35,7 @@ import java.util.stream.Stream;
 import static io.r2dbc.postgresql.client.ExtendedQueryMessageFlow.PARAMETER_SYMBOL;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 
-final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
+final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement<ExtendedQueryPostgresqlStatement> {
 
     private static final Pattern INSERT = Pattern.compile(".*INSERT.*", CASE_INSENSITIVE);
 
@@ -76,8 +76,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
     }
 
     @Override
-    public ExtendedQueryPostgresqlStatement bind(Integer index, Object value) {
-        Objects.requireNonNull(index, "index must not be null");
+    public ExtendedQueryPostgresqlStatement bind(int index, Object value) {
         Objects.requireNonNull(value, "value must not be null");
 
         this.bindings.getCurrent().add(index, this.codecs.encode(value));

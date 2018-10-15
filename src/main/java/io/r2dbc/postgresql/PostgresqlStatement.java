@@ -22,10 +22,7 @@ import reactor.core.publisher.Flux;
 /**
  * A strongly typed implementation of {@link Statement} for a PostgreSQL database.
  */
-public interface PostgresqlStatement extends Statement {
-
-    @Override
-    PostgresqlStatement add();
+public interface PostgresqlStatement<SELF extends Statement<SELF>> extends Statement<SELF> {
 
     /**
      * {@inheritDoc}
@@ -33,10 +30,7 @@ public interface PostgresqlStatement extends Statement {
      * @throws IllegalArgumentException if {@code identifier} is not a {@link String} like {@code $1}, {@code $2}, etc.
      */
     @Override
-    PostgresqlStatement bind(Object identifier, Object value);
-
-    @Override
-    PostgresqlStatement bind(Integer index, Object value);
+    SELF bind(Object identifier, Object value);
 
     /**
      * {@inheritDoc}
@@ -44,7 +38,7 @@ public interface PostgresqlStatement extends Statement {
      * @throws IllegalArgumentException if {@code identifier} is not a {@link String} like {@code $1}, {@code $2}, etc.
      */
     @Override
-    PostgresqlStatement bindNull(Object identifier, Class<?> type);
+    SELF bindNull(Object identifier, Class<?> type);
 
     @Override
     Flux<PostgresqlResult> execute();
