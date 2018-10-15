@@ -47,8 +47,11 @@ public enum Format {
      * @return the enum constant of this type with the specified discriminator
      */
     public static Format valueOf(short s) {
-        if ( s == BINARY.discriminator ) return BINARY;
-        if ( s == TEXT.discriminator ) return TEXT;
+        for ( Format format: values()) {
+            if (format.discriminator == s) {
+                return format;
+            }
+        }
         throw new IllegalArgumentException(String.format("%d is not a valid format", s));
     }
 

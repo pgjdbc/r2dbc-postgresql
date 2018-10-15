@@ -49,9 +49,11 @@ public enum TransactionStatus {
     static TransactionStatus valueOf(ReadyForQuery.TransactionStatus t) {
         Objects.requireNonNull(t, "t must not be null");
 
-        if ( t == IDLE.discriminator ) return IDLE;
-        if ( t == OPEN.discriminator ) return OPEN;
-        if ( t == FAILED.discriminator ) return FAILED;
+        for ( TransactionStatus transactionStatus : values() ) {
+            if (transactionStatus.discriminator == t ) {
+                return transactionStatus;
+            }
+        }
         throw new IllegalArgumentException(String.format("%s is not a valid transaction status", t));
     }
 

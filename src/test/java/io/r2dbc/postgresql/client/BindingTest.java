@@ -48,6 +48,8 @@ final class BindingTest {
 
     @Test
     void getParameterFormats() {
+
+        // note we are testing to make sure binding to 0, and 2 contains
         Binding binding = new Binding();
         binding.add(0, new Parameter(BINARY, 100, TEST.buffer(4).writeInt(200)));
         binding.add(2, new Parameter(BINARY, 100, TEST.buffer(4).writeInt(300)));

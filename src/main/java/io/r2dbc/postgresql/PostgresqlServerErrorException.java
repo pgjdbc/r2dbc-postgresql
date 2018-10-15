@@ -27,7 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
+import java.util.Optional;
 
 
 import static io.r2dbc.postgresql.message.backend.Field.FieldType.CODE;
@@ -167,7 +167,7 @@ public final class PostgresqlServerErrorException extends R2dbcException {
      *
      * @return the value of the {@link FieldType#COLUMN_NAME} field
      */
-    public String getColumnName() { return this.columnName; }
+    public Optional<String> getColumnName() { return Optional.ofNullable(this.columnName); }
 
     /**
      * Returns the value of the {@link FieldType#CONSTRAINT_NAME} field.
