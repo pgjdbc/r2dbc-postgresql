@@ -274,9 +274,9 @@ public enum PostgresqlObjectId {
     TIMETZ_ARRAY(1270),
 
     /**
-     * The unspecified object id.
+     * The unknown object id.
      */
-    UNSPECIFIED(2),
+    UNKNOWN(705),
 
     /**
      * The UUID object id.
