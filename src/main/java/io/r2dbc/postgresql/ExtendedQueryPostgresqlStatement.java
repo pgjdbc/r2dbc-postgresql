@@ -95,6 +95,14 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement<Exte
     }
 
     @Override
+    public ExtendedQueryPostgresqlStatement bindNull(int index, Class<?> type) {
+        Objects.requireNonNull(type, "type must not be null");
+
+        this.bindings.getCurrent().add(index, this.codecs.encodeNull(type));
+        return this;
+    }
+
+    @Override
     public Flux<PostgresqlResult> execute() {
         return execute(this.sql);
     }
@@ -128,10 +136,6 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement<Exte
 
     Binding getCurrentBinding() {
         return this.bindings.getCurrent();
-    }
-
-    private void bindNull(Integer index, Class<?> type) {
-        this.bindings.getCurrent().add(index, this.codecs.encodeNull(type));
     }
 
     private Flux<PostgresqlResult> execute(String sql) {

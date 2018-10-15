@@ -103,6 +103,12 @@ final class ExtendedQueryPostgresqlStatementTest {
     }
 
     @Test
+    void bindNullIndexNoType() {
+        assertThatNullPointerException().isThrownBy(() -> this.statement.bindNull(0, null))
+            .withMessage("type must not be null");
+    }
+
+    @Test
     void bindNullNoIdentifier() {
         assertThatNullPointerException().isThrownBy(() -> this.statement.bindNull(null, Integer.class))
             .withMessage("identifier must not be null");

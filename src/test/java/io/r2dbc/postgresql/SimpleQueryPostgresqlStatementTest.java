@@ -46,10 +46,24 @@ final class SimpleQueryPostgresqlStatementTest {
     }
 
     @Test
+    void bindIndex() {
+        assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> new SimpleQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), "test-query").bind(0, null))
+            .withMessage("Binding parameters is not supported for the statement 'test-query'");
+    }
+
+
+    @Test
     void bindNull() {
         assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> new SimpleQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), "test-query").bindNull(null, null))
             .withMessage("Binding parameters is not supported for the statement 'test-query'");
     }
+
+    @Test
+    void bindNullIndex() {
+        assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> new SimpleQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), "test-query").bindNull(0, null))
+            .withMessage("Binding parameters is not supported for the statement 'test-query'");
+    }
+
 
     @Test
     void constructorNoClient() {

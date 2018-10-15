@@ -65,6 +65,11 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement<Simple
     }
 
     @Override
+    public SimpleQueryPostgresqlStatement bindNull(int index, @Nullable Class<?> type) {
+        throw new UnsupportedOperationException(String.format("Binding parameters is not supported for the statement '%s'", this.sql));
+    }
+
+    @Override
     public Flux<PostgresqlResult> execute() {
         return SimpleQueryMessageFlow
             .exchange(this.client, this.sql)
