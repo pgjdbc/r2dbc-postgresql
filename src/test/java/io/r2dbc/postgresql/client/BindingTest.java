@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import static io.r2dbc.postgresql.message.Format.BINARY;
 import static io.r2dbc.postgresql.message.Format.TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.UNSPECIFIED;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.UNKNOWN;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
@@ -61,7 +61,7 @@ final class BindingTest {
         binding.add(0, new Parameter(BINARY, 100, TEST.buffer(4).writeInt(200)));
         binding.add(2, new Parameter(BINARY, 100, TEST.buffer(4).writeInt(300)));
 
-        assertThat(binding.getParameterTypes()).containsExactly(100, UNSPECIFIED.getObjectId(), 100);
+        assertThat(binding.getParameterTypes()).containsExactly(100, UNKNOWN.getObjectId(), 100);
     }
 
     @Test

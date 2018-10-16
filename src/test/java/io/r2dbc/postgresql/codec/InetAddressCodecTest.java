@@ -25,7 +25,7 @@ import java.net.UnknownHostException;
 import static io.r2dbc.postgresql.message.Format.BINARY;
 import static io.r2dbc.postgresql.message.Format.TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.UNSPECIFIED;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.UNKNOWN;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
@@ -57,9 +57,9 @@ final class InetAddressCodecTest {
     void doCanDecode() {
         InetAddressCodec codec = new InetAddressCodec(TEST);
 
-        assertThat(codec.doCanDecode(BINARY, UNSPECIFIED)).isFalse();
+        assertThat(codec.doCanDecode(BINARY, UNKNOWN)).isFalse();
         assertThat(codec.doCanDecode(TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(TEXT, UNSPECIFIED)).isTrue();
+        assertThat(codec.doCanDecode(TEXT, UNKNOWN)).isTrue();
     }
 
     @Test
@@ -79,7 +79,7 @@ final class InetAddressCodecTest {
         InetAddress inetAddress = InetAddress.getByName("localhost");
 
         assertThat(new InetAddressCodec(TEST).doEncode(inetAddress))
-            .isEqualTo(new Parameter(TEXT, UNSPECIFIED.getObjectId(), encode(TEST, inetAddress.getHostAddress())));
+            .isEqualTo(new Parameter(TEXT, UNKNOWN.getObjectId(), encode(TEST, inetAddress.getHostAddress())));
     }
 
     @Test
@@ -91,7 +91,7 @@ final class InetAddressCodecTest {
     @Test
     void encodeNull() {
         assertThat(new InetAddressCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(TEXT, UNSPECIFIED.getObjectId(), null));
+            .isEqualTo(new Parameter(TEXT, UNKNOWN.getObjectId(), null));
     }
 
 }

@@ -28,14 +28,14 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static io.r2dbc.postgresql.message.Format.TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.UNSPECIFIED;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.UNKNOWN;
 
 /**
  * A collection of {@link Parameter}s for a single bind invocation of an {@link ExtendedQueryMessageFlow}.
  */
 public final class Binding {
 
-    private static final Parameter UNSPECIFIED_PARAMETER = new Parameter(TEXT, UNSPECIFIED.getObjectId(), null);
+    private static final Parameter UNKNOWN_PARAMETER = new Parameter(TEXT, UNKNOWN.getObjectId(), null);
 
     private final SortedMap<Integer, Parameter> parameters = new TreeMap<>();
 
@@ -114,7 +114,7 @@ public final class Binding {
     }
 
     private Parameter get(Integer identifier) {
-        return this.parameters.getOrDefault(identifier, UNSPECIFIED_PARAMETER);
+        return this.parameters.getOrDefault(identifier, UNKNOWN_PARAMETER);
     }
 
     private Stream<Parameter> getParameters() {
