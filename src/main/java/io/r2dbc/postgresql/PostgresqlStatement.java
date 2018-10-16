@@ -22,7 +22,7 @@ import reactor.core.publisher.Flux;
 /**
  * A strongly typed implementation of {@link Statement} for a PostgreSQL database.
  */
-public interface PostgresqlStatement<SELF extends Statement<SELF>> extends Statement<SELF> {
+public interface PostgresqlStatement<SELF extends PostgresqlStatement<SELF>> extends Statement<SELF> {
 
     /**
      * {@inheritDoc}
