@@ -19,26 +19,16 @@ package io.r2dbc.postgresql.client;
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.PostgresqlBindingException;
 import io.r2dbc.postgresql.message.Format;
-import io.r2dbc.spi.R2dbcException;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.SortedMap;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-
-import static io.r2dbc.postgresql.message.Format.TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.UNSPECIFIED;
+import java.util.function.Function;
 
 /**
  * A collection of {@link Parameter}s for a single bind invocation of an {@link ExtendedQueryMessageFlow}.
  */
 public final class Binding {
-
-    private static final Parameter UNSPECIFIED_PARAMETER = new Parameter(TEXT, UNSPECIFIED.getObjectId(), null);
 
     private final List<Parameter> parameters = new ArrayList<>();
 
@@ -54,17 +44,11 @@ public final class Binding {
         Objects.requireNonNull(index, "index must not be null");
         Objects.requireNonNull(parameter, "parameter must not be null");
 
-        // ensure that any skipped parameters are set to null
-        int curSize = parameters.size();
-
-        if (curSize < index) {
-            while (curSize < index) {
-                this.parameters.add(curSize++, null);
-            }
-            this.parameters.add(index, parameter);
-        } else {
-            this.parameters.set(index, parameter);
+        for (int i = this.parameters.size(); i < index; i++) {
+            this.parameters.add(i, null);
         }
+
+        this.parameters.add(index, parameter);
         return this;
     }
 
@@ -86,15 +70,8 @@ public final class Binding {
      * @return the formats of the parameters in the binding
      */
 
-    public List<Format> getParameterFormats()  {
-        List <Format> formats = new ArrayList<>();
-        for (Parameter parameter : parameters ){
-            if (parameter == null) {
-                throw new PostgresqlBindingException( "Null parameter found");
-            }
-            formats.add( parameter.getFormat() );
-        }
-        return formats;
+    public List<Format> getParameterFormats() {
+        return getTransformedParameters(Parameter::getFormat);
     }
 
     /**
@@ -102,15 +79,8 @@ public final class Binding {
      *
      * @return the types of the parameters in the binding
      */
-    public List<Integer> getParameterTypes()  {
-        List <Integer> types = new ArrayList<>();
-        for (Parameter parameter : parameters ){
-            if (parameter == null) {
-                throw new PostgresqlBindingException( "Null parameter found");
-            }
-            types.add( parameter.getType() );
-        }
-        return types;
+    public List<Integer> getParameterTypes() {
+        return getTransformedParameters(Parameter::getType);
     }
 
     /**
@@ -118,20 +88,17 @@ public final class Binding {
      *
      * @return the values of the parameters in the binding
      */
-    public List<ByteBuf> getParameterValues()  {
-        List <ByteBuf> values = new ArrayList<>();
-        for (Parameter parameter : parameters ){
-            if (parameter == null) {
-                throw new PostgresqlBindingException( "Null parameter found");
-            }
-            values.add( parameter.getValue() );
-        }
-        return values;
+    public List<ByteBuf> getParameterValues() {
+        return getTransformedParameters(Parameter::getValue);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(this.parameters);
+    }
+
+    public boolean isEmpty() {
+        return this.parameters.isEmpty();
     }
 
     @Override
@@ -141,8 +108,19 @@ public final class Binding {
             '}';
     }
 
-    public boolean isEmpty() {
-        return this.parameters.isEmpty();
+    private <T> List<T> getTransformedParameters(Function<Parameter, T> transformer) {
+        List<T> transformed = new ArrayList<>(this.parameters.size());
+
+        for (int i = 0; i < this.parameters.size(); i++) {
+            Parameter parameter = this.parameters.get(i);
+            if (parameter == null) {
+                throw new PostgresqlBindingException(String.format("No parameter specified for index %d", i));
+            }
+
+            transformed.add(transformer.apply(parameter));
+        }
+
+        return transformed;
     }
 
 }

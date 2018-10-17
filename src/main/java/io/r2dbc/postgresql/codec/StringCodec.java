@@ -50,7 +50,6 @@ final class StringCodec extends AbstractCodec<String> {
         Objects.requireNonNull(format, "format must not be null");
         Objects.requireNonNull(type, "type must not be null");
 
-        // all of these decode as String
         return TEXT == format && (CHAR == type || PostgresqlObjectId.TEXT == type || UNKNOWN == type || VARCHAR == type);
     }
 

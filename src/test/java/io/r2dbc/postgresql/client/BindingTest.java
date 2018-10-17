@@ -21,12 +21,11 @@ import org.junit.jupiter.api.Test;
 
 import static io.r2dbc.postgresql.message.Format.BINARY;
 import static io.r2dbc.postgresql.message.Format.TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.UNSPECIFIED;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
-import static org.assertj.core.api.Assertions.fail;
 
 final class BindingTest {
 
@@ -46,66 +45,61 @@ final class BindingTest {
     void empty() {
         Binding binding = new Binding();
 
-        assertThat(binding.isEmpty());
+        assertThat(binding.isEmpty()).isTrue();
     }
 
     @Test
     void getParameterFormats() {
         Binding binding = new Binding();
-        binding.add(2, new Parameter(BINARY, 100, TEST.buffer(4).writeInt(300)));
-
-        try {
-            binding.getParameterFormats();
-        } catch (PostgresqlBindingException ex ){
-            assertThat(ex.getMessage().equals("Null parameter found"));
-        }
         binding.add(0, new Parameter(BINARY, 100, TEST.buffer(4).writeInt(200)));
         binding.add(1, new Parameter(TEXT, VARCHAR.getObjectId(), TEST.buffer().writeBytes("Hello".getBytes())));
-        try {
-            assertThat(binding.getParameterFormats()).containsExactly(BINARY, TEXT, BINARY);
-        } catch (PostgresqlBindingException ex ){
-            fail("should not get this exception");
-        }
+        binding.add(2, new Parameter(BINARY, 100, TEST.buffer(4).writeInt(300)));
+
+        assertThat(binding.getParameterFormats()).containsExactly(BINARY, TEXT, BINARY);
+    }
+
+    @Test
+    void getParameterFormatsUnbound() {
+        Binding binding = new Binding();
+        binding.add(2, new Parameter(BINARY, 100, TEST.buffer(4).writeInt(300)));
+
+        assertThatExceptionOfType(PostgresqlBindingException.class).isThrownBy(binding::getParameterFormats).withMessage("No parameter specified for index 0");
     }
 
     @Test
     void getParameterTypes() {
         Binding binding = new Binding();
-        binding.add(2, new Parameter(BINARY, 100, TEST.buffer(4).writeInt(300)));
-        try {
-            binding.getParameterTypes();
-        }catch (PostgresqlBindingException ex ){
-            assertThat(ex.getMessage().equals("Null parameter found"));
-        }
         binding.add(0, new Parameter(BINARY, 100, TEST.buffer(4).writeInt(200)));
         binding.add(1, new Parameter(TEXT, VARCHAR.getObjectId(), TEST.buffer().writeBytes("Hello".getBytes())));
+        binding.add(2, new Parameter(BINARY, 100, TEST.buffer(4).writeInt(300)));
 
-        try {
-            assertThat(binding.getParameterTypes()).containsExactly(100, VARCHAR.getObjectId(), 100);
-        } catch (PostgresqlBindingException ex ){
-            fail("should not get this exception");
-        }
+        assertThat(binding.getParameterTypes()).containsExactly(100, VARCHAR.getObjectId(), 100);
+    }
+
+    @Test
+    void getParameterTypesUnbound() {
+        Binding binding = new Binding();
+        binding.add(2, new Parameter(BINARY, 100, TEST.buffer(4).writeInt(300)));
+
+        assertThatExceptionOfType(PostgresqlBindingException.class).isThrownBy(binding::getParameterTypes).withMessage("No parameter specified for index 0");
     }
 
     @Test
     void getParameterValues() {
         Binding binding = new Binding();
-        binding.add(2, new Parameter(BINARY, 100, TEST.buffer(4).writeInt(300)));
-        try {
-            binding.getParameterTypes();
-        }catch (PostgresqlBindingException ex ){
-            assertThat(ex.getMessage().equals("Null parameter found"));
-        }
-
         binding.add(0, new Parameter(BINARY, 100, TEST.buffer(4).writeInt(200)));
         binding.add(1, new Parameter(TEXT, VARCHAR.getObjectId(), TEST.buffer().writeBytes("Hello".getBytes())));
+        binding.add(2, new Parameter(BINARY, 100, TEST.buffer(4).writeInt(300)));
 
-        try {
-            assertThat(binding.getParameterTypes()).containsExactly(100, VARCHAR.getObjectId(), 100);
-            assertThat(binding.getParameterValues()).containsExactly(TEST.buffer(4).writeInt(200), TEST.buffer().writeBytes("Hello".getBytes()), TEST.buffer(4).writeInt(300));
-        } catch (PostgresqlBindingException ex ){
-            fail("should not get this exception");
-        }
+        assertThat(binding.getParameterValues()).containsExactly(TEST.buffer(4).writeInt(200), TEST.buffer().writeBytes("Hello".getBytes()), TEST.buffer(4).writeInt(300));
+    }
+
+    @Test
+    void getParameterValuesUnbound() {
+        Binding binding = new Binding();
+        binding.add(2, new Parameter(BINARY, 100, TEST.buffer(4).writeInt(300)));
+
+        assertThatExceptionOfType(PostgresqlBindingException.class).isThrownBy(binding::getParameterValues).withMessage("No parameter specified for index 0");
     }
 
 }

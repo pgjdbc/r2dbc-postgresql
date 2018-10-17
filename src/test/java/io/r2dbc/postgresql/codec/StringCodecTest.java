@@ -58,7 +58,7 @@ final class StringCodecTest {
         assertThat(codec.doCanDecode(TEXT, MONEY)).isFalse();
         assertThat(codec.doCanDecode(TEXT, CHAR)).isTrue();
         assertThat(codec.doCanDecode(TEXT, PostgresqlObjectId.TEXT)).isTrue();
-        assertThat(codec.doCanDecode(TEXT,UNKNOWN)).isTrue();
+        assertThat(codec.doCanDecode(TEXT, UNKNOWN)).isTrue();
         assertThat(codec.doCanDecode(TEXT, VARCHAR)).isTrue();
     }
 

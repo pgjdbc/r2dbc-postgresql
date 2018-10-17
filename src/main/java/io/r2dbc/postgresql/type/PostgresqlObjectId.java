@@ -280,6 +280,7 @@ public enum PostgresqlObjectId {
      * versions will return UNKNOWN
      */
     UNKNOWN(705),
+
     /**
      * The unspecified object id.
      * This can be sent as a parameter type
