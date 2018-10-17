@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 import static io.r2dbc.postgresql.client.ExtendedQueryMessageFlow.PARAMETER_SYMBOL;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
@@ -141,7 +140,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement<Exte
     private Flux<PostgresqlResult> execute(String sql) {
         return this.statementCache.getName(this.bindings.first(), sql)
             .flatMapMany(name -> ExtendedQueryMessageFlow
-                .execute(Flux.fromStream(this.bindings.stream()), this.client, this.portalNameSupplier, name))
+                .execute(Flux.fromIterable(this.bindings.bindings), this.client, this.portalNameSupplier, name))
             .windowUntil(CloseComplete.class::isInstance)
             .map(messages -> PostgresqlResult.toResult(this.codecs, messages));
     }
@@ -175,7 +174,10 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement<Exte
         }
 
         private Binding first() {
-            return this.bindings.stream().findFirst().orElseThrow(() -> new IllegalStateException("No parameters have been bound"));
+            if (this.bindings.isEmpty()){
+                throw new IllegalStateException("No parameters have been bound");
+            }
+            return this.bindings.get(0);
         }
 
         private Binding getCurrent() {
@@ -185,10 +187,6 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement<Exte
             }
 
             return this.current;
-        }
-
-        private Stream<Binding> stream() {
-            return this.bindings.stream();
         }
 
     }
