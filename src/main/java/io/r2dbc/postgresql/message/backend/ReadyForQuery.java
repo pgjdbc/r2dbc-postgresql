@@ -18,7 +18,6 @@ package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
 
-import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -104,10 +103,12 @@ public final class ReadyForQuery implements BackendMessage {
         }
 
         static TransactionStatus valueOf(byte b) {
-            return Arrays.stream(values())
-                .filter(type -> type.discriminator == b)
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(String.format("%c is not a valid transaction status", b)));
+            for (TransactionStatus transactionStatus : values()) {
+                if (transactionStatus.discriminator == b) {
+                    return transactionStatus;
+                }
+            }
+            throw new IllegalArgumentException(String.format("%c is not a valid transaction status", b));
         }
 
     }
