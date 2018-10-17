@@ -19,8 +19,6 @@ package io.r2dbc.postgresql.message;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 
-import java.util.Arrays;
-
 /**
  * An enumeration of argument formats as used by {@link BackendMessage}s and {@link FrontendMessage}s.
  */
@@ -49,10 +47,12 @@ public enum Format {
      * @return the enum constant of this type with the specified discriminator
      */
     public static Format valueOf(short s) {
-        return Arrays.stream(values())
-            .filter(type -> type.discriminator == s)
-            .findFirst()
-            .orElseThrow(() -> new IllegalArgumentException(String.format("%d is not a valid format", s)));
+        for (Format format : values()) {
+            if (format.discriminator == s) {
+                return format;
+            }
+        }
+        throw new IllegalArgumentException(String.format("%d is not a valid format", s));
     }
 
     /**

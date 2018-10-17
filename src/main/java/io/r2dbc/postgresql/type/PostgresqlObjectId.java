@@ -16,7 +16,6 @@
 
 package io.r2dbc.postgresql.type;
 
-import java.util.Arrays;
 
 /**
  * Object IDs for well know PostgreSQL data types.
@@ -337,10 +336,12 @@ public enum PostgresqlObjectId {
      * @throws IllegalArgumentException if {@code objectId} isn't a valid object id
      */
     public static PostgresqlObjectId valueOf(int objectId) {
-        return Arrays.stream(values())
-            .filter(type -> type.objectId == objectId)
-            .findFirst()
-            .orElseThrow(() -> new IllegalArgumentException(String.format("%d is not a valid object id", objectId)));
+        for (PostgresqlObjectId type : values()) {
+            if (type.objectId == objectId) {
+                return type;
+            }
+        }
+        throw new IllegalArgumentException(String.format("%d is not a valid object id", objectId));
     }
 
     /**

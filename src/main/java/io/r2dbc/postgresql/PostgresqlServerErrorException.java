@@ -23,11 +23,11 @@ import io.r2dbc.postgresql.message.backend.Field.FieldType;
 import io.r2dbc.spi.R2dbcException;
 import reactor.core.publisher.SynchronousSink;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static io.r2dbc.postgresql.message.backend.Field.FieldType.CODE;
 import static io.r2dbc.postgresql.message.backend.Field.FieldType.COLUMN_NAME;
@@ -356,8 +356,11 @@ public final class PostgresqlServerErrorException extends R2dbcException {
     private static Map<FieldType, String> convertToMap(List<Field> fields) {
         Objects.requireNonNull(fields, "fields must not be null");
 
-        return fields.stream()
-            .collect(Collectors.toMap(Field::getType, Field::getValue));
+        Map<FieldType, String> fieldMap = new HashMap<>(fields.size());
+        for (Field field : fields) {
+            fieldMap.put(field.getType(), field.getValue());
+        }
+        return fieldMap;
     }
 
     private static PostgresqlServerErrorException toException(ErrorResponse errorResponse) {

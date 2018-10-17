@@ -22,7 +22,6 @@ import io.netty.util.ReferenceCountUtil;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.SynchronousSink;
 
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -209,10 +208,12 @@ public final class BackendMessageDecoder {
         }
 
         static AuthenticationType valueOf(int i) {
-            return Arrays.stream(values())
-                .filter(type -> type.discriminator == i)
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(String.format("%d is not a valid authentication type", i)));
+            for (AuthenticationType authType : values()) {
+                if (authType.discriminator == i) {
+                    return authType;
+                }
+            }
+            throw new IllegalArgumentException(String.format("%d is not a valid authentication type", i));
         }
 
     }
@@ -250,10 +251,12 @@ public final class BackendMessageDecoder {
         }
 
         static MessageType valueOf(byte b) {
-            return Arrays.stream(values())
-                .filter(type -> type.discriminator == b)
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(String.format("%c is not a valid message type", b)));
+            for (MessageType messageType : values()) {
+                if (messageType.discriminator == b) {
+                    return messageType;
+                }
+            }
+            throw new IllegalArgumentException(String.format("%c is not a valid message type", b));
         }
 
     }
