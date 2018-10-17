@@ -23,11 +23,12 @@ import io.r2dbc.postgresql.message.backend.Field.FieldType;
 import io.r2dbc.spi.R2dbcException;
 import reactor.core.publisher.SynchronousSink;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
+
 
 import static io.r2dbc.postgresql.message.backend.Field.FieldType.CODE;
 import static io.r2dbc.postgresql.message.backend.Field.FieldType.COLUMN_NAME;
@@ -166,17 +167,15 @@ public final class PostgresqlServerErrorException extends R2dbcException {
      *
      * @return the value of the {@link FieldType#COLUMN_NAME} field
      */
-    public Optional<String> getColumnName() {
-        return Optional.ofNullable(this.columnName);
-    }
+    public Optional<String> getColumnName() { return Optional.ofNullable(this.columnName); }
 
     /**
      * Returns the value of the {@link FieldType#CONSTRAINT_NAME} field.
      *
      * @return the value of the {@link FieldType#CONSTRAINT_NAME} field
      */
-    public Optional<String> getConstraintName() {
-        return Optional.ofNullable(this.constraintName);
+    public String getConstraintName() {
+        return this.constraintName;
     }
 
     /**
@@ -184,8 +183,8 @@ public final class PostgresqlServerErrorException extends R2dbcException {
      *
      * @return the value of the {@link FieldType#DATA_TYPE_NAME} field
      */
-    public Optional<String> getDataTypeName() {
-        return Optional.ofNullable(this.dataTypeName);
+    public String getDataTypeName() {
+        return this.dataTypeName;
     }
 
     /**
@@ -193,8 +192,8 @@ public final class PostgresqlServerErrorException extends R2dbcException {
      *
      * @return the value of the {@link FieldType#DETAIL} field
      */
-    public Optional<String> getDetail() {
-        return Optional.ofNullable(this.detail);
+    public String getDetail() {
+        return this.detail;
     }
 
     /**
@@ -202,8 +201,8 @@ public final class PostgresqlServerErrorException extends R2dbcException {
      *
      * @return the value of the {@link FieldType#FILE} field
      */
-    public Optional<String> getFile() {
-        return Optional.ofNullable(this.file);
+    public String getFile() {
+        return this.file;
     }
 
     /**
@@ -211,8 +210,8 @@ public final class PostgresqlServerErrorException extends R2dbcException {
      *
      * @return the value of the {@link FieldType#HINT} field
      */
-    public Optional<String> getHint() {
-        return Optional.ofNullable(this.hint);
+    public String getHint() {
+        return this.hint;
     }
 
     /**
@@ -220,8 +219,8 @@ public final class PostgresqlServerErrorException extends R2dbcException {
      *
      * @return the value of the {@link FieldType#INTERNAL_POSITION} field
      */
-    public Optional<String> getInternalPosition() {
-        return Optional.ofNullable(this.internalPosition);
+    public String getInternalPosition() {
+        return this.internalPosition;
     }
 
     /**
@@ -229,8 +228,8 @@ public final class PostgresqlServerErrorException extends R2dbcException {
      *
      * @return the value of the {@link FieldType#INTERNAL_QUERY} field
      */
-    public Optional<String> getInternalQuery() {
-        return Optional.ofNullable(this.internalQuery);
+    public String getInternalQuery() {
+        return this.internalQuery;
     }
 
     /**
@@ -238,8 +237,8 @@ public final class PostgresqlServerErrorException extends R2dbcException {
      *
      * @return the value of the {@link FieldType#LINE} field
      */
-    public Optional<String> getLine() {
-        return Optional.ofNullable(this.line);
+    public String getLine() {
+        return this.line;
     }
 
     /**
@@ -257,8 +256,8 @@ public final class PostgresqlServerErrorException extends R2dbcException {
      *
      * @return the value of the {@link FieldType#POSITION} field
      */
-    public Optional<String> getPosition() {
-        return Optional.ofNullable(this.position);
+    public String getPosition() {
+        return this.position;
     }
 
     /**
@@ -266,8 +265,8 @@ public final class PostgresqlServerErrorException extends R2dbcException {
      *
      * @return the value of the {@link FieldType#ROUTINE} field
      */
-    public Optional<String> getRoutine() {
-        return Optional.ofNullable(this.routine);
+    public String getRoutine() {
+        return this.routine;
     }
 
     /**
@@ -275,8 +274,8 @@ public final class PostgresqlServerErrorException extends R2dbcException {
      *
      * @return the value of the {@link FieldType#SCHEMA_NAME} field
      */
-    public Optional<String> getSchemaName() {
-        return Optional.ofNullable(this.schemaName);
+    public String getSchemaName() {
+        return this.schemaName;
     }
 
     /**
@@ -302,8 +301,8 @@ public final class PostgresqlServerErrorException extends R2dbcException {
      *
      * @return the value of the {@link FieldType#TABLE_NAME} field
      */
-    public Optional<String> getTableName() {
-        return Optional.ofNullable(this.tableName);
+    public String getTableName() {
+        return this.tableName;
     }
 
     /**
@@ -311,8 +310,8 @@ public final class PostgresqlServerErrorException extends R2dbcException {
      *
      * @return the value of the {@link FieldType#WHERE} field
      */
-    public Optional<String> getWhere() {
-        return Optional.ofNullable(this.where);
+    public String getWhere() {
+        return this.where;
     }
 
     @Override
@@ -356,8 +355,11 @@ public final class PostgresqlServerErrorException extends R2dbcException {
     private static Map<FieldType, String> convertToMap(List<Field> fields) {
         Objects.requireNonNull(fields, "fields must not be null");
 
-        return fields.stream()
-            .collect(Collectors.toMap(Field::getType, Field::getValue));
+        Map <FieldType, String> fieldMap = new HashMap<FieldType, String>(fields.size());
+        for ( Field field : fields ){
+            fieldMap.put( field.getType(), field.getValue() );
+        }
+        return fieldMap;
     }
 
     private static PostgresqlServerErrorException toException(ErrorResponse errorResponse) {
