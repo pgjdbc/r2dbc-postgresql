@@ -27,6 +27,8 @@ import reactor.util.annotation.Nullable;
 import java.util.Objects;
 
 import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.CHAR;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.UNKNOWN;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 
 final class StringCodec extends AbstractCodec<String> {
@@ -48,7 +50,7 @@ final class StringCodec extends AbstractCodec<String> {
         Objects.requireNonNull(format, "format must not be null");
         Objects.requireNonNull(type, "type must not be null");
 
-        return TEXT == format && VARCHAR == type;
+        return TEXT == format && (CHAR == type || PostgresqlObjectId.TEXT == type || UNKNOWN == type || VARCHAR == type);
     }
 
     @Override
