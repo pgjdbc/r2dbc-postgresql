@@ -49,8 +49,8 @@ public enum TransactionStatus {
     static TransactionStatus valueOf(ReadyForQuery.TransactionStatus t) {
         Objects.requireNonNull(t, "t must not be null");
 
-        for ( TransactionStatus transactionStatus : values() ) {
-            if (transactionStatus.discriminator == t ) {
+        for (TransactionStatus transactionStatus : values()) {
+            if (transactionStatus.discriminator == t) {
                 return transactionStatus;
             }
         }

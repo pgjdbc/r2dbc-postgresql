@@ -95,10 +95,10 @@ public final class DataRow implements BackendMessage {
     static DataRow decode(ByteBuf in) {
         Objects.requireNonNull(in, "in must not be null");
 
-        int numColumns = in.readShort();
-        List<ByteBuf> columns = new ArrayList<ByteBuf>(numColumns);
+        int columnCount = in.readShort();
+        List<ByteBuf> columns = new ArrayList<ByteBuf>(columnCount);
 
-        for (int i=0; i < numColumns; i++) {
+        for (int i = 0; i < columnCount; i++) {
             columns.add(decodeColumn(in));
         }
         return new DataRow(columns);

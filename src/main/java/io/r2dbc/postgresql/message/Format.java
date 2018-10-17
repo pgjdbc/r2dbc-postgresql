@@ -47,7 +47,7 @@ public enum Format {
      * @return the enum constant of this type with the specified discriminator
      */
     public static Format valueOf(short s) {
-        for ( Format format: values()) {
+        for (Format format : values()) {
             if (format.discriminator == s) {
                 return format;
             }

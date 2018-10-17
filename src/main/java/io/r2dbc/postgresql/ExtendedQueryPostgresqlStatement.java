@@ -174,7 +174,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement<Exte
         }
 
         private Binding first() {
-            if (this.bindings.isEmpty()){
+            if (this.bindings.isEmpty()) {
                 throw new IllegalStateException("No parameters have been bound");
             }
             return this.bindings.get(0);

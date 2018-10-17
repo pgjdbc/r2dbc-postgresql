@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-
 import static io.r2dbc.postgresql.message.backend.Field.FieldType.CODE;
 import static io.r2dbc.postgresql.message.backend.Field.FieldType.COLUMN_NAME;
 import static io.r2dbc.postgresql.message.backend.Field.FieldType.CONSTRAINT_NAME;
@@ -357,9 +356,9 @@ public final class PostgresqlServerErrorException extends R2dbcException {
     private static Map<FieldType, String> convertToMap(List<Field> fields) {
         Objects.requireNonNull(fields, "fields must not be null");
 
-        Map <FieldType, String> fieldMap = new HashMap<FieldType, String>(fields.size());
-        for ( Field field : fields ){
-            fieldMap.put( field.getType(), field.getValue() );
+        Map<FieldType, String> fieldMap = new HashMap<>(fields.size());
+        for (Field field : fields) {
+            fieldMap.put(field.getType(), field.getValue());
         }
         return fieldMap;
     }

@@ -336,10 +336,9 @@ public enum PostgresqlObjectId {
      * @throws IllegalArgumentException if {@code objectId} isn't a valid object id
      */
     public static PostgresqlObjectId valueOf(int objectId) {
-
-        for (PostgresqlObjectId oid : values() ){
-            if (objectId == oid.objectId ) {
-                return oid;
+        for (PostgresqlObjectId type : values()) {
+            if (type.objectId == objectId) {
+                return type;
             }
         }
         throw new IllegalArgumentException(String.format("%d is not a valid object id", objectId));

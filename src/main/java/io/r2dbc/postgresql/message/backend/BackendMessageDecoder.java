@@ -22,7 +22,6 @@ import io.netty.util.ReferenceCountUtil;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.SynchronousSink;
 
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -209,8 +208,8 @@ public final class BackendMessageDecoder {
         }
 
         static AuthenticationType valueOf(int i) {
-            for ( AuthenticationType authType : values() ){
-                if (authType.discriminator == i ){
+            for (AuthenticationType authType : values()) {
+                if (authType.discriminator == i) {
                     return authType;
                 }
             }
@@ -253,7 +252,7 @@ public final class BackendMessageDecoder {
 
         static MessageType valueOf(byte b) {
             for (MessageType messageType : values()) {
-                if (messageType.discriminator == b ) {
+                if (messageType.discriminator == b) {
                     return messageType;
                 }
             }
