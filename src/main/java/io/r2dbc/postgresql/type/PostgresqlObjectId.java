@@ -273,9 +273,19 @@ public enum PostgresqlObjectId {
     TIMETZ_ARRAY(1270),
 
     /**
-     * The unspecified object id.
+     * UNKNOWN type
+     * PostgreSQL will sometimes return this type
+     * an example might be select 'hello' as foo
+     * newer versions return TEXT but some older
+     * versions will return UNKNOWN
      */
-    UNSPECIFIED(2),
+    UNKNOWN(705),
+    /**
+     * The unspecified object id.
+     * This can be sent as a parameter type
+     * to tell the backend to infer the type
+     */
+    UNSPECIFIED(0),
 
     /**
      * The UUID object id.
