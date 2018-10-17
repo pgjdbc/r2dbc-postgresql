@@ -19,7 +19,6 @@ package io.r2dbc.postgresql.message.frontend;
 import io.netty.buffer.ByteBuf;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.Objects;
 
 import static io.netty.util.CharsetUtil.UTF_8;
@@ -39,8 +38,9 @@ final class FrontendMessageUtils {
         Objects.requireNonNull(out, "out must not be null");
         Objects.requireNonNull(values, "values must not be null");
 
-        Arrays.stream(values)
-            .forEach(out::writeByte);
+        for (int value : values) {
+            out.writeByte(value);
+        }
         return out;
     }
 
@@ -82,8 +82,9 @@ final class FrontendMessageUtils {
         Objects.requireNonNull(out, "out must not be null");
         Objects.requireNonNull(values, "values must not be null");
 
-        Arrays.stream(values)
-            .forEach(out::writeInt);
+        for (int value : values) {
+            out.writeInt(value);
+        }
         return out;
     }
 
@@ -98,8 +99,9 @@ final class FrontendMessageUtils {
         Objects.requireNonNull(out, "out must not be null");
         Objects.requireNonNull(values, "values must not be null");
 
-        Arrays.stream(values)
-            .forEach(out::writeShort);
+        for (int value : values) {
+            out.writeShort(value);
+        }
         return out;
     }
 
