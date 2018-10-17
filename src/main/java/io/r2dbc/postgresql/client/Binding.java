@@ -17,8 +17,11 @@
 package io.r2dbc.postgresql.client;
 
 import io.netty.buffer.ByteBuf;
+import io.r2dbc.postgresql.PostgresqlBindingException;
 import io.r2dbc.postgresql.message.Format;
+import io.r2dbc.spi.R2dbcException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.SortedMap;
@@ -37,7 +40,7 @@ public final class Binding {
 
     private static final Parameter UNSPECIFIED_PARAMETER = new Parameter(TEXT, UNSPECIFIED.getObjectId(), null);
 
-    private final SortedMap<Integer, Parameter> parameters = new TreeMap<>();
+    private final List<Parameter> parameters = new ArrayList<>();
 
     /**
      * Add a {@link Parameter} to the binding.
@@ -51,8 +54,17 @@ public final class Binding {
         Objects.requireNonNull(index, "index must not be null");
         Objects.requireNonNull(parameter, "parameter must not be null");
 
-        this.parameters.put(index, parameter);
+        // ensure that any skipped parameters are set to null
+        int curSize = parameters.size();
 
+        if (curSize < index) {
+            while (curSize < index) {
+                this.parameters.add(curSize++, null);
+            }
+            this.parameters.add(index, parameter);
+        } else {
+            this.parameters.set(index, parameter);
+        }
         return this;
     }
 
@@ -73,10 +85,16 @@ public final class Binding {
      *
      * @return the formats of the parameters in the binding
      */
-    public List<Format> getParameterFormats() {
-        return getParameters()
-            .map(Parameter::getFormat)
-            .collect(Collectors.toList());
+
+    public List<Format> getParameterFormats()  {
+        List <Format> formats = new ArrayList<>();
+        for (Parameter parameter : parameters ){
+            if (parameter == null) {
+                throw new PostgresqlBindingException( "Null parameter found");
+            }
+            formats.add( parameter.getFormat() );
+        }
+        return formats;
     }
 
     /**
@@ -84,10 +102,15 @@ public final class Binding {
      *
      * @return the types of the parameters in the binding
      */
-    public List<Integer> getParameterTypes() {
-        return getParameters()
-            .map(Parameter::getType)
-            .collect(Collectors.toList());
+    public List<Integer> getParameterTypes()  {
+        List <Integer> types = new ArrayList<>();
+        for (Parameter parameter : parameters ){
+            if (parameter == null) {
+                throw new PostgresqlBindingException( "Null parameter found");
+            }
+            types.add( parameter.getType() );
+        }
+        return types;
     }
 
     /**
@@ -95,10 +118,15 @@ public final class Binding {
      *
      * @return the values of the parameters in the binding
      */
-    public List<ByteBuf> getParameterValues() {
-        return getParameters()
-            .map(Parameter::getValue)
-            .collect(Collectors.toList());
+    public List<ByteBuf> getParameterValues()  {
+        List <ByteBuf> values = new ArrayList<>();
+        for (Parameter parameter : parameters ){
+            if (parameter == null) {
+                throw new PostgresqlBindingException( "Null parameter found");
+            }
+            values.add( parameter.getValue() );
+        }
+        return values;
     }
 
     @Override
@@ -113,17 +141,8 @@ public final class Binding {
             '}';
     }
 
-    private Parameter get(Integer identifier) {
-        return this.parameters.getOrDefault(identifier, UNSPECIFIED_PARAMETER);
-    }
-
-    private Stream<Parameter> getParameters() {
-        return IntStream.range(0, size())
-            .mapToObj(this::get);
-    }
-
-    private int size() {
-        return this.parameters.isEmpty() ? 0 : this.parameters.lastKey() + 1;
+    public boolean isEmpty() {
+        return this.parameters.isEmpty();
     }
 
 }
