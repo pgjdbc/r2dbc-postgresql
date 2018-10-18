@@ -44,11 +44,16 @@ public final class Binding {
         Objects.requireNonNull(index, "index must not be null");
         Objects.requireNonNull(parameter, "parameter must not be null");
 
-        for (int i = this.parameters.size(); i < index; i++) {
-            this.parameters.add(i, null);
+        if (this.parameters.size() > index) {
+            this.parameters.set(index, parameter);
+        } else {
+            for (int i = this.parameters.size(); i < index; i++) {
+                this.parameters.add(null);
+            }
+
+            this.parameters.add(parameter);
         }
 
-        this.parameters.add(index, parameter);
         return this;
     }
 

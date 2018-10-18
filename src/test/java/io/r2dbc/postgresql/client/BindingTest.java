@@ -51,9 +51,9 @@ final class BindingTest {
     @Test
     void getParameterFormats() {
         Binding binding = new Binding();
+        binding.add(2, new Parameter(BINARY, 100, TEST.buffer(4).writeInt(300)));
         binding.add(0, new Parameter(BINARY, 100, TEST.buffer(4).writeInt(200)));
         binding.add(1, new Parameter(TEXT, VARCHAR.getObjectId(), TEST.buffer().writeBytes("Hello".getBytes())));
-        binding.add(2, new Parameter(BINARY, 100, TEST.buffer(4).writeInt(300)));
 
         assertThat(binding.getParameterFormats()).containsExactly(BINARY, TEXT, BINARY);
     }
@@ -69,9 +69,9 @@ final class BindingTest {
     @Test
     void getParameterTypes() {
         Binding binding = new Binding();
+        binding.add(2, new Parameter(BINARY, 100, TEST.buffer(4).writeInt(300)));
         binding.add(0, new Parameter(BINARY, 100, TEST.buffer(4).writeInt(200)));
         binding.add(1, new Parameter(TEXT, VARCHAR.getObjectId(), TEST.buffer().writeBytes("Hello".getBytes())));
-        binding.add(2, new Parameter(BINARY, 100, TEST.buffer(4).writeInt(300)));
 
         assertThat(binding.getParameterTypes()).containsExactly(100, VARCHAR.getObjectId(), 100);
     }
@@ -87,9 +87,9 @@ final class BindingTest {
     @Test
     void getParameterValues() {
         Binding binding = new Binding();
+        binding.add(2, new Parameter(BINARY, 100, TEST.buffer(4).writeInt(300)));
         binding.add(0, new Parameter(BINARY, 100, TEST.buffer(4).writeInt(200)));
         binding.add(1, new Parameter(TEXT, VARCHAR.getObjectId(), TEST.buffer().writeBytes("Hello".getBytes())));
-        binding.add(2, new Parameter(BINARY, 100, TEST.buffer(4).writeInt(300)));
 
         assertThat(binding.getParameterValues()).containsExactly(TEST.buffer(4).writeInt(200), TEST.buffer().writeBytes("Hello".getBytes()), TEST.buffer(4).writeInt(300));
     }
