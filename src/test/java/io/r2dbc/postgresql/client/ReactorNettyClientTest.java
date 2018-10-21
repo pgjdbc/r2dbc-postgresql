@@ -29,6 +29,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.Arrays;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -83,6 +84,25 @@ final class ReactorNettyClientTest {
             .as(StepVerifier::create)
             .assertNext(message -> assertThat(message).isInstanceOf(RowDescription.class))
             .assertNext(message -> assertThat(message).isInstanceOf(DataRow.class))
+            .expectNext(new CommandComplete("SELECT", null, 1))
+            .verifyComplete();
+    }
+
+    @Test
+    void parallelExchange() {
+        SERVER.getJdbcOperations().execute("INSERT INTO test VALUES (100)");
+        SERVER.getJdbcOperations().execute("INSERT INTO test VALUES (1000)");
+
+        this.client
+            .exchange(Mono.just(new Query("SELECT value FROM test LIMIT 1")))
+            .zipWith(this.client.exchange(Mono.just(new Query("SELECT value FROM test LIMIT 1 OFFSET 1"))))
+            .flatMapIterable(t -> Arrays.asList(t.getT1(), t.getT2()))
+            .as(StepVerifier::create)
+            .assertNext(message -> assertThat(message).isInstanceOf(RowDescription.class))
+            .assertNext(message -> assertThat(message).isInstanceOf(RowDescription.class))
+            .assertNext(message -> assertThat(message).isInstanceOf(DataRow.class))
+            .assertNext(message -> assertThat(message).isInstanceOf(DataRow.class))
+            .expectNext(new CommandComplete("SELECT", null, 1))
             .expectNext(new CommandComplete("SELECT", null, 1))
             .verifyComplete();
     }
