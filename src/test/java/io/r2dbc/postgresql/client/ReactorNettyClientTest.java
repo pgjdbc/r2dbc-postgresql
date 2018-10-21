@@ -99,7 +99,10 @@ final class ReactorNettyClientTest {
             .flatMapIterable(t -> Arrays.asList(t.getT1(), t.getT2()))
             .as(StepVerifier::create)
             .assertNext(message -> assertThat(message).isInstanceOf(RowDescription.class))
+            .assertNext(message -> assertThat(message).isInstanceOf(RowDescription.class))
             .assertNext(message -> assertThat(message).isInstanceOf(DataRow.class))
+            .assertNext(message -> assertThat(message).isInstanceOf(DataRow.class))
+            .expectNext(new CommandComplete("SELECT", null, 1))
             .expectNext(new CommandComplete("SELECT", null, 1))
             .verifyComplete();
     }
