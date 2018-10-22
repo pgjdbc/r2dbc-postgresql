@@ -44,9 +44,10 @@ final class BooleanCodecTest {
         BooleanCodec codec = new BooleanCodec(TEST);
 
         Arrays.asList("1", "True", "T", "Yes", "Y", "On")
-                .forEach(input -> assertThat(codec.decode(encode(TEST, input), TEXT, Boolean.class)).isTrue());
+            .forEach(input -> assertThat(codec.decode(encode(TEST, input), TEXT, Boolean.class)).isTrue());
+
         Arrays.asList("0", "False", "F", "No", "N", "Off")
-                .forEach(input -> assertThat(codec.decode(encode(TEST, input), TEXT, Boolean.class)).isFalse());
+            .forEach(input -> assertThat(codec.decode(encode(TEST, input), TEXT, Boolean.class)).isFalse());
     }
 
     @Test

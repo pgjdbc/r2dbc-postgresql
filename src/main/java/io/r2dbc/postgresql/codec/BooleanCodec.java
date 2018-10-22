@@ -56,9 +56,12 @@ final class BooleanCodec extends AbstractCodec<Boolean> {
         Objects.requireNonNull(byteBuf, "byteBuf must not be null");
 
         String decoded = ByteBufUtils.decode(byteBuf);
-        return "1".equals(decoded) || "true".equalsIgnoreCase(decoded)
-                || "t".equalsIgnoreCase(decoded) || "yes".equalsIgnoreCase(decoded)
-                || "y".equalsIgnoreCase(decoded) || "on".equalsIgnoreCase(decoded);
+        return "1".equals(decoded)
+            || "true".equalsIgnoreCase(decoded)
+            || "t".equalsIgnoreCase(decoded)
+            || "yes".equalsIgnoreCase(decoded)
+            || "y".equalsIgnoreCase(decoded)
+            || "on".equalsIgnoreCase(decoded);
     }
 
     @Override
