@@ -19,6 +19,8 @@ package io.r2dbc.postgresql.codec;
 import io.r2dbc.postgresql.client.Parameter;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+
 import static io.r2dbc.postgresql.message.Format.BINARY;
 import static io.r2dbc.postgresql.message.Format.TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.BOOL;
@@ -41,8 +43,11 @@ final class BooleanCodecTest {
     void decode() {
         BooleanCodec codec = new BooleanCodec(TEST);
 
-        assertThat(codec.decode(encode(TEST, "TRUE"), TEXT, Boolean.class)).isTrue();
-        assertThat(codec.decode(encode(TEST, "FALSE"), TEXT, Boolean.class)).isFalse();
+        Arrays.asList("1", "True", "T", "Yes", "Y", "On")
+            .forEach(input -> assertThat(codec.decode(encode(TEST, input), TEXT, Boolean.class)).isTrue());
+
+        Arrays.asList("0", "False", "F", "No", "N", "Off")
+            .forEach(input -> assertThat(codec.decode(encode(TEST, input), TEXT, Boolean.class)).isFalse());
     }
 
     @Test
