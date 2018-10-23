@@ -163,12 +163,6 @@ final class SimpleQueryPostgresqlStatementTest {
     }
 
     @Test
-    void executeReturningGeneratedKeys() {
-        assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> new SimpleQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), "test-query").executeReturningGeneratedKeys())
-            .withMessage("Returning generated keys is not supported for the statement 'test-query'");
-    }
-
-    @Test
     void executeRowDescriptionRows() {
         Client client = TestClient.builder()
             .expectRequest(new Query("test-query"))

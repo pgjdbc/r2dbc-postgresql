@@ -43,7 +43,4 @@ public interface PostgresqlStatement<SELF extends PostgresqlStatement<SELF>> ext
     @Override
     Flux<PostgresqlResult> execute();
 
-    @Override
-    Flux<PostgresqlResult> executeReturningGeneratedKeys();
-
 }

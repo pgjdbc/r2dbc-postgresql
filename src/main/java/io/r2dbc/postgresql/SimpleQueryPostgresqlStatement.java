@@ -78,11 +78,6 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement<Simple
     }
 
     @Override
-    public Flux<PostgresqlResult> executeReturningGeneratedKeys() {
-        throw new UnsupportedOperationException(String.format("Returning generated keys is not supported for the statement '%s'", this.sql));
-    }
-
-    @Override
     public String toString() {
         return "SimpleQueryPostgresqlStatement{" +
             "client=" + this.client +

@@ -107,15 +107,6 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement<Exte
     }
 
     @Override
-    public Flux<PostgresqlResult> executeReturningGeneratedKeys() {
-        if (INSERT.matcher(this.sql).matches() && !RETURNING.matcher(this.sql).matches()) {
-            return execute(String.format("%s RETURNING *", this.sql));
-        }
-
-        return execute(this.sql);
-    }
-
-    @Override
     public String toString() {
         return "ExtendedQueryPostgresqlStatement{" +
             "bindings=" + this.bindings +
