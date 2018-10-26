@@ -17,6 +17,8 @@
 package io.r2dbc.postgresql.client;
 
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelHandlerContext;
 import io.r2dbc.postgresql.message.backend.BackendKeyData;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.BackendMessageDecoder;
@@ -111,6 +113,18 @@ public final class ReactorNettyClient implements Client {
             sink.next(message);
         });
 
+    private class EnsureSubscribersCompleteChannelHandler extends ChannelDuplexHandler {
+
+        @Override
+        public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
+            super.channelUnregistered(ctx);
+            requestProcessor.onComplete();
+            for (MonoSink<Flux<BackendMessage>> responseReceiver = responseReceivers.poll(); responseReceiver != null; ) {
+                responseReceiver.success(Flux.empty());
+            }
+        }
+    }
+
     /**
      * Creates a new frame processor connected to a given TCP connection.
      *
@@ -119,6 +133,8 @@ public final class ReactorNettyClient implements Client {
      */
     private ReactorNettyClient(Connection connection) {
         Objects.requireNonNull(connection, "Connection must not be null");
+
+        connection.addHandler(new EnsureSubscribersCompleteChannelHandler());
 
         BackendMessageDecoder decoder = new BackendMessageDecoder();
 
