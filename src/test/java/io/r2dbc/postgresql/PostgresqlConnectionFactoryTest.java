@@ -20,11 +20,14 @@ import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.TestClient;
 import io.r2dbc.postgresql.message.backend.AuthenticationMD5Password;
 import io.r2dbc.postgresql.message.backend.AuthenticationOk;
+import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.frontend.PasswordMessage;
 import io.r2dbc.postgresql.message.frontend.StartupMessage;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+
+import java.util.Collections;
 
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -73,6 +76,28 @@ final class PostgresqlConnectionFactoryTest {
             .as(StepVerifier::create)
             .assertNext(connection -> assertThat(connection.getParameterStatus()).containsEntry("test-key", "test-value"))
             .verifyComplete();
+    }
+
+    @Test
+    void createError() {
+        // @formatter:off
+        Client client = TestClient.builder()
+            .parameterStatus("test-key", "test-value")
+            .window()
+                .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username")).thenRespond(new ErrorResponse(Collections.emptyList()))
+                .done()
+            .build();
+        // @formatter:on
+
+        PostgresqlConnectionConfiguration configuration = PostgresqlConnectionConfiguration.builder()
+            .applicationName("test-application-name")
+            .database("test-database")
+            .host("test-host")
+            .username("test-username")
+            .password("test-password")
+            .build();
+
+        new PostgresqlConnectionFactory(Mono.just(client), configuration).create().as(StepVerifier::create).verifyErrorMatches(PostgresqlServerErrorException.class::isInstance);
     }
 
     @Test
