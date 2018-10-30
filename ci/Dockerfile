@@ -1,4 +1,4 @@
-FROM openjdk@sha256:ff7bfa31983e9b8be5e3853dafbe99a66937fe19bbcd7489bf5c205614e494ed
+FROM openjdk:8-jdk
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
     apt-transport-https \
