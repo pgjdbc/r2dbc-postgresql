@@ -177,7 +177,7 @@ public final class ReactorNettyClient implements Client {
 
         return connection.map(ReactorNettyClient::new);
     }
-    
+
     @Override
     public Mono<Void> close() {
         return Mono.defer(() -> {

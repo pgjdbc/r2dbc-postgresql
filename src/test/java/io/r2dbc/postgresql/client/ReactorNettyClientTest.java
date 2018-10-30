@@ -89,25 +89,6 @@ final class ReactorNettyClientTest {
     }
 
     @Test
-    void parallelExchange() {
-        SERVER.getJdbcOperations().execute("INSERT INTO test VALUES (100)");
-        SERVER.getJdbcOperations().execute("INSERT INTO test VALUES (1000)");
-
-        this.client
-            .exchange(Mono.just(new Query("SELECT value FROM test LIMIT 1")))
-            .zipWith(this.client.exchange(Mono.just(new Query("SELECT value FROM test LIMIT 1 OFFSET 1"))))
-            .flatMapIterable(t -> Arrays.asList(t.getT1(), t.getT2()))
-            .as(StepVerifier::create)
-            .assertNext(message -> assertThat(message).isInstanceOf(RowDescription.class))
-            .assertNext(message -> assertThat(message).isInstanceOf(RowDescription.class))
-            .assertNext(message -> assertThat(message).isInstanceOf(DataRow.class))
-            .assertNext(message -> assertThat(message).isInstanceOf(DataRow.class))
-            .expectNext(new CommandComplete("SELECT", null, 1))
-            .expectNext(new CommandComplete("SELECT", null, 1))
-            .verifyComplete();
-    }
-
-    @Test
     void exchangeNoPublisher() {
         assertThatNullPointerException().isThrownBy(() -> this.client.exchange(null))
             .withMessage("requests must not be null");
@@ -144,6 +125,25 @@ final class ReactorNettyClientTest {
             .exchange(Mono.just(new Query("SELECT value FROM test")))
             .as(StepVerifier::create)
             .expectNextCount(1 + 1_000 + 1)
+            .verifyComplete();
+    }
+
+    @Test
+    void parallelExchange() {
+        SERVER.getJdbcOperations().execute("INSERT INTO test VALUES (100)");
+        SERVER.getJdbcOperations().execute("INSERT INTO test VALUES (1000)");
+
+        this.client
+            .exchange(Mono.just(new Query("SELECT value FROM test LIMIT 1")))
+            .zipWith(this.client.exchange(Mono.just(new Query("SELECT value FROM test LIMIT 1 OFFSET 1"))))
+            .flatMapIterable(t -> Arrays.asList(t.getT1(), t.getT2()))
+            .as(StepVerifier::create)
+            .assertNext(message -> assertThat(message).isInstanceOf(RowDescription.class))
+            .assertNext(message -> assertThat(message).isInstanceOf(RowDescription.class))
+            .assertNext(message -> assertThat(message).isInstanceOf(DataRow.class))
+            .assertNext(message -> assertThat(message).isInstanceOf(DataRow.class))
+            .expectNext(new CommandComplete("SELECT", null, 1))
+            .expectNext(new CommandComplete("SELECT", null, 1))
             .verifyComplete();
     }
 
