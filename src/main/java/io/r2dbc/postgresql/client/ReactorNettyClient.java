@@ -113,18 +113,6 @@ public final class ReactorNettyClient implements Client {
             sink.next(message);
         });
 
-    private class EnsureSubscribersCompleteChannelHandler extends ChannelDuplexHandler {
-
-        @Override
-        public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
-            super.channelUnregistered(ctx);
-            requestProcessor.onComplete();
-            for (MonoSink<Flux<BackendMessage>> responseReceiver = responseReceivers.poll(); responseReceiver != null; ) {
-                responseReceiver.success(Flux.empty());
-            }
-        }
-    }
-
     /**
      * Creates a new frame processor connected to a given TCP connection.
      *
@@ -134,7 +122,7 @@ public final class ReactorNettyClient implements Client {
     private ReactorNettyClient(Connection connection) {
         Objects.requireNonNull(connection, "Connection must not be null");
 
-        connection.addHandler(new EnsureSubscribersCompleteChannelHandler());
+        connection.addHandler(new EnsureSubscribersCompleteChannelHandler(this.requestProcessor, this.responseReceivers));
 
         BackendMessageDecoder decoder = new BackendMessageDecoder();
 
@@ -150,8 +138,8 @@ public final class ReactorNettyClient implements Client {
             .handle(this.handleParameterStatus)
             .handle(this.handleReadyForQuery)
             .windowWhile(not(ReadyForQuery.class::isInstance))
-            .doOnNext(fluxOfMessages -> responseReceivers.poll().success(fluxOfMessages))
-            .doOnComplete(() -> responseReceivers.poll().success(Flux.empty()))
+            .doOnNext(fluxOfMessages -> this.responseReceivers.poll().success(fluxOfMessages))
+            .doOnComplete(() -> this.responseReceivers.poll().success(Flux.empty()))
             .subscribe();
 
         this.requestProcessor
@@ -228,7 +216,7 @@ public final class ReactorNettyClient implements Client {
                     .subscribe(message -> {
                         if (once.get() == 0 && once.compareAndSet(0, 1)) {
                             synchronized (this) {
-                                responseReceivers.add(sink);
+                                this.responseReceivers.add(sink);
                                 this.requests.next(message);
                             }
                             return;
@@ -281,6 +269,29 @@ public final class ReactorNettyClient implements Client {
         return fields.stream()
             .map(field -> String.format("%s=%s", field.getType().name(), field.getValue()))
             .collect(Collectors.joining(", "));
+    }
+
+    private static final class EnsureSubscribersCompleteChannelHandler extends ChannelDuplexHandler {
+
+        private final EmitterProcessor<FrontendMessage> requestProcessor;
+
+        private final Queue<MonoSink<Flux<BackendMessage>>> responseReceivers;
+
+        private EnsureSubscribersCompleteChannelHandler(EmitterProcessor<FrontendMessage> requestProcessor, Queue<MonoSink<Flux<BackendMessage>>> responseReceivers) {
+            this.requestProcessor = requestProcessor;
+            this.responseReceivers = responseReceivers;
+        }
+
+        @Override
+        public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
+            super.channelUnregistered(ctx);
+
+            this.requestProcessor.onComplete();
+
+            for (MonoSink<Flux<BackendMessage>> responseReceiver = this.responseReceivers.poll(); responseReceiver != null; responseReceiver = this.responseReceivers.poll()) {
+                responseReceiver.success(Flux.empty());
+            }
+        }
     }
 
 }
