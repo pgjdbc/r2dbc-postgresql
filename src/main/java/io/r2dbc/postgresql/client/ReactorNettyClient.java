@@ -113,13 +113,15 @@ public final class ReactorNettyClient implements Client {
             sink.next(message);
         });
 
-    private class EnsureSubsribersCompleteChannelHandler extends ChannelDuplexHandler {
+    private class EnsureSubscribersCompleteChannelHandler extends ChannelDuplexHandler {
 
         @Override
         public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
             super.channelUnregistered(ctx);
             requestProcessor.onComplete();
-            responseProcessor.onComplete();
+            for (MonoSink<Flux<BackendMessage>> responseReceiver = responseReceivers.poll(); responseReceiver != null; ) {
+                responseReceiver.success(Flux.empty());
+            }
         }
     }
 
@@ -132,7 +134,7 @@ public final class ReactorNettyClient implements Client {
     private ReactorNettyClient(Connection connection) {
         Objects.requireNonNull(connection, "Connection must not be null");
 
-        connection.addHandler(new EnsureSubsribersCompleteChannelHandler());
+        connection.addHandler(new EnsureSubscribersCompleteChannelHandler());
 
         BackendMessageDecoder decoder = new BackendMessageDecoder();
 
