@@ -33,19 +33,23 @@ import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.MonoSink;
 import reactor.core.publisher.SynchronousSink;
 import reactor.netty.Connection;
 import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.tcp.TcpClient;
+import reactor.util.concurrent.Queues;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -89,7 +93,7 @@ public final class ReactorNettyClient implements Client {
 
     private final FluxSink<FrontendMessage> requests = this.requestProcessor.sink();
 
-    private final EmitterProcessor<Flux<BackendMessage>> responseProcessor = EmitterProcessor.create(false);
+    private final Queue<MonoSink<Flux<BackendMessage>>> responseReceivers = Queues.<MonoSink<Flux<BackendMessage>>>unbounded().get();
 
     private final AtomicReference<Integer> secretKey = new AtomicReference<>();
 
@@ -117,7 +121,6 @@ public final class ReactorNettyClient implements Client {
         Objects.requireNonNull(connection, "Connection must not be null");
 
         BackendMessageDecoder decoder = new BackendMessageDecoder();
-        FluxSink<Flux<BackendMessage>> responses = this.responseProcessor.sink();
 
         this.byteBufAllocator.set(connection.outbound().alloc());
 
@@ -131,7 +134,9 @@ public final class ReactorNettyClient implements Client {
             .handle(this.handleParameterStatus)
             .handle(this.handleReadyForQuery)
             .windowWhile(not(ReadyForQuery.class::isInstance))
-            .subscribe(responses::next, responses::error, responses::complete);
+            .doOnNext(fluxOfMessages -> responseReceivers.poll().success(fluxOfMessages))
+            .doOnComplete(() -> responseReceivers.poll().success(Flux.empty()))
+            .subscribe();
 
         this.requestProcessor
             .doOnNext(message -> this.logger.debug("Request:  {}", message))
@@ -172,7 +177,7 @@ public final class ReactorNettyClient implements Client {
 
         return connection.map(ReactorNettyClient::new);
     }
-    
+
     @Override
     public Mono<Void> close() {
         return Mono.defer(() -> {
@@ -195,18 +200,29 @@ public final class ReactorNettyClient implements Client {
     public Flux<BackendMessage> exchange(Publisher<FrontendMessage> requests) {
         Objects.requireNonNull(requests, "requests must not be null");
 
-        return Flux.defer(() -> {
-            if (this.isClosed.get()) {
-                return Flux.error(new IllegalStateException("Cannot exchange messages because the connection is closed"));
-            }
+        return Mono
+            .<Flux<BackendMessage>>create(sink -> {
+                if (this.isClosed.get()) {
+                    sink.error(new IllegalStateException("Cannot exchange messages because the connection is closed"));
+                }
 
-            return this.responseProcessor
-                .doOnSubscribe(s ->
-                    Flux.from(requests)
-                        .subscribe(this.requests::next, this.requests::error))
-                .next()
-                .flatMapMany(Function.identity());
-        });
+                final AtomicInteger once = new AtomicInteger();
+
+                Flux.from(requests)
+                    .subscribe(message -> {
+                        if (once.get() == 0 && once.compareAndSet(0, 1)) {
+                            synchronized (this) {
+                                responseReceivers.add(sink);
+                                this.requests.next(message);
+                            }
+                            return;
+                        }
+
+                        this.requests.next(message);
+                    }, this.requests::error);
+
+            })
+            .flatMapMany(Function.identity());
     }
 
     @Override
