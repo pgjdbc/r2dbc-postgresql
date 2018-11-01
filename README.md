@@ -18,7 +18,7 @@ Both milestone and snapshot artifacts (library, source, and javadoc) can be foun
 </dependency>
 ```
 
-Artifacts can bound found at the following repositories.
+Artifacts can be found at the following repositories.
 
 ### Repositories
 ```xml
