@@ -19,7 +19,6 @@ package io.r2dbc.postgresql.message.backend;
 import io.netty.buffer.ByteBuf;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -222,8 +221,8 @@ public final class Field {
         }
 
         static FieldType valueOf(byte b) {
-            for ( FieldType fieldType : values() ){
-                if ( b == fieldType.discriminator ){
+            for (FieldType fieldType : values()) {
+                if (b == fieldType.discriminator) {
                     return fieldType;
                 }
             }
