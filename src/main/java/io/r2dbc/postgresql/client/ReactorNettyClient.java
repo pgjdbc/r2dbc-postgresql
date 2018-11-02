@@ -39,7 +39,6 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 import reactor.core.publisher.SynchronousSink;
 import reactor.netty.Connection;
-import reactor.netty.NettyOutbound;
 import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.tcp.TcpClient;
 import reactor.util.concurrent.Queues;
@@ -140,8 +139,18 @@ public final class ReactorNettyClient implements Client {
             .handle(this.handleParameterStatus)
             .handle(this.handleReadyForQuery)
             .windowWhile(not(ReadyForQuery.class::isInstance))
-            .doOnNext(fluxOfMessages -> this.responseReceivers.poll().success(fluxOfMessages))
-            .doOnComplete(() -> this.responseReceivers.poll().success(Flux.empty()))
+            .doOnNext(fluxOfMessages -> {
+                MonoSink<Flux<BackendMessage>> receiver = this.responseReceivers.poll();
+                if (receiver != null) {
+                    receiver.success(fluxOfMessages);
+                }
+            })
+            .doOnComplete(() -> {
+                MonoSink<Flux<BackendMessage>> receiver = this.responseReceivers.poll();
+                if (receiver != null) {
+                    receiver.success(Flux.empty());
+                }
+            })
             .subscribe();
 
         this.requestProcessor
@@ -193,17 +202,13 @@ public final class ReactorNettyClient implements Client {
                 return Mono.empty();
             }
 
-            // https://www.postgresql.org/docs/current/static/protocol-flow.html#id-1.10.5.7.10
-            // Frontend sends a Terminate message and immediately closes the connection. 
-            FrontendMessage message = Terminate.INSTANCE;
-            this.logger.debug("Request:  {}", message);
-            NettyOutbound outbound = connection.outbound().send(message.encode(connection.outbound().alloc()));
-            return outbound.then().doOnSuccess((v) -> {
-                connection.dispose();
-            }).then(connection.onDispose()).doOnSuccess((v) -> {
-                this.isClosed.set(true);
-            });
-
+            return Flux.just(Terminate.INSTANCE)
+                .doOnNext(message -> this.logger.debug("Request:  {}", message))
+                .concatMap(message -> connection.outbound().send(message.encode(connection.outbound().alloc())))
+                .then()
+                .doOnSuccess(v -> connection.dispose())
+                .then(connection.onDispose())
+                .doOnSuccess(v -> this.isClosed.set(true));
         });
     }
 
