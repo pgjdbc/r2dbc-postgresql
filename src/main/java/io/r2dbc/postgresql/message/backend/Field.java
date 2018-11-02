@@ -222,10 +222,12 @@ public final class Field {
         }
 
         static FieldType valueOf(byte b) {
-            return Arrays.stream(FieldType.values())
-                .filter(type -> type.discriminator == b)
-                .findFirst()
-                .orElse(UNKNOWN);
+            for ( FieldType fieldType : values() ){
+                if ( b == fieldType.discriminator ){
+                    return fieldType;
+                }
+            }
+            return UNKNOWN;
         }
 
     }
