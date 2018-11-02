@@ -28,6 +28,7 @@ import io.r2dbc.postgresql.message.backend.NoticeResponse;
 import io.r2dbc.postgresql.message.backend.ParameterStatus;
 import io.r2dbc.postgresql.message.backend.ReadyForQuery;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
+import io.r2dbc.postgresql.message.frontend.Terminate;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +39,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 import reactor.core.publisher.SynchronousSink;
 import reactor.netty.Connection;
+import reactor.netty.NettyOutbound;
 import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.tcp.TcpClient;
 import reactor.util.concurrent.Queues;
@@ -191,12 +193,17 @@ public final class ReactorNettyClient implements Client {
                 return Mono.empty();
             }
 
-            return TerminationMessageFlow.exchange(this)
-                .doOnComplete(() -> {
-                    connection.disposeNow();
-                    this.isClosed.set(true);
-                })
-                .then();
+            // https://www.postgresql.org/docs/current/static/protocol-flow.html#id-1.10.5.7.10
+            // Frontend sends a Terminate message and immediately closes the connection. 
+            FrontendMessage message = Terminate.INSTANCE;
+            this.logger.debug("Request:  {}", message);
+            NettyOutbound outbound = connection.outbound().send(message.encode(connection.outbound().alloc()));
+            return outbound.then().doOnSuccess((v) -> {
+                connection.dispose();
+            }).then(connection.onDispose()).doOnSuccess((v) -> {
+                this.isClosed.set(true);
+            });
+
         });
     }
 
