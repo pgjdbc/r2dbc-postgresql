@@ -19,7 +19,6 @@ package io.r2dbc.postgresql.message.backend;
 import io.netty.buffer.ByteBuf;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -222,10 +221,12 @@ public final class Field {
         }
 
         static FieldType valueOf(byte b) {
-            return Arrays.stream(FieldType.values())
-                .filter(type -> type.discriminator == b)
-                .findFirst()
-                .orElse(UNKNOWN);
+            for (FieldType fieldType : values()) {
+                if (b == fieldType.discriminator) {
+                    return fieldType;
+                }
+            }
+            return UNKNOWN;
         }
 
     }
