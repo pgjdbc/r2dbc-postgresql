@@ -28,6 +28,7 @@ import io.r2dbc.postgresql.message.backend.NoticeResponse;
 import io.r2dbc.postgresql.message.backend.ParameterStatus;
 import io.r2dbc.postgresql.message.backend.ReadyForQuery;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
+import io.r2dbc.postgresql.message.frontend.Terminate;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -138,8 +139,18 @@ public final class ReactorNettyClient implements Client {
             .handle(this.handleParameterStatus)
             .handle(this.handleReadyForQuery)
             .windowWhile(not(ReadyForQuery.class::isInstance))
-            .doOnNext(fluxOfMessages -> this.responseReceivers.poll().success(fluxOfMessages))
-            .doOnComplete(() -> this.responseReceivers.poll().success(Flux.empty()))
+            .doOnNext(fluxOfMessages -> {
+                MonoSink<Flux<BackendMessage>> receiver = this.responseReceivers.poll();
+                if (receiver != null) {
+                    receiver.success(fluxOfMessages);
+                }
+            })
+            .doOnComplete(() -> {
+                MonoSink<Flux<BackendMessage>> receiver = this.responseReceivers.poll();
+                if (receiver != null) {
+                    receiver.success(Flux.empty());
+                }
+            })
             .subscribe();
 
         this.requestProcessor
@@ -191,12 +202,13 @@ public final class ReactorNettyClient implements Client {
                 return Mono.empty();
             }
 
-            return TerminationMessageFlow.exchange(this)
-                .doOnComplete(() -> {
-                    connection.disposeNow();
-                    this.isClosed.set(true);
-                })
-                .then();
+            return Flux.just(Terminate.INSTANCE)
+                .doOnNext(message -> this.logger.debug("Request:  {}", message))
+                .concatMap(message -> connection.outbound().send(message.encode(connection.outbound().alloc())))
+                .then()
+                .doOnSuccess(v -> connection.dispose())
+                .then(connection.onDispose())
+                .doOnSuccess(v -> this.isClosed.set(true));
         });
     }
 
