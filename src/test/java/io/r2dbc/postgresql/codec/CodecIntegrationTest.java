@@ -579,6 +579,7 @@ public class CodecIntegrationTest {
                 .single()
                 .flatMap(result -> result
                     .map((row, meta) -> row.get("zoned_date_time_value", ZonedDateTime.class))
+                    .map(zdt -> ZonedDateTime.ofInstant(zdt.toInstant(), ZoneId.systemDefault()))
                     .single()))
             .as(StepVerifier::create)
             .expectNext(zonedDateTime)

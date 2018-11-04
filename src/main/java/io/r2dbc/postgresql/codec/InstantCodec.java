@@ -25,6 +25,9 @@ import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Objects;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
@@ -55,8 +58,7 @@ final class InstantCodec extends AbstractCodec<Instant> {
     @Override
     Instant doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends Instant> type) {
         Objects.requireNonNull(byteBuf, "byteBuf must not be null");
-
-        return Instant.parse(ByteBufUtils.decode(byteBuf));
+        return PostgresqlDateTimeFormatter.INSTANCE.parse(ByteBufUtils.decode(byteBuf), temporal -> ZonedDateTime.of(LocalDateTime.from(temporal), ZoneOffset.UTC).toInstant());
     }
 
     @Override

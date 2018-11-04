@@ -41,9 +41,9 @@ final class ZonedDateTimeCodecTest {
 
     @Test
     void decode() {
-        ZonedDateTime zonedDateTime = ZonedDateTime.now();
+        ZonedDateTime zonedDateTime = ZonedDateTime.parse("2018-11-05T00:20:25.039883+09:00[Asia/Tokyo]");
 
-        assertThat(new ZonedDateTimeCodec(TEST).decode(encode(TEST, zonedDateTime.toString()), FORMAT_TEXT, ZonedDateTime.class))
+        assertThat(new ZonedDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:20:25.039883+09"), FORMAT_TEXT, ZonedDateTime.class))
             .isEqualTo(zonedDateTime);
     }
 
@@ -78,7 +78,7 @@ final class ZonedDateTimeCodecTest {
         ZonedDateTime zonedDateTime = ZonedDateTime.now();
 
         assertThat(new ZonedDateTimeCodec(TEST).doEncode(zonedDateTime))
-            .isEqualTo(new Parameter(FORMAT_TEXT, TIMESTAMPTZ.getObjectId(), encode(TEST, zonedDateTime.toString())));
+            .isEqualTo(new Parameter(FORMAT_TEXT, TIMESTAMPTZ.getObjectId(), encode(TEST, zonedDateTime.toOffsetDateTime().toString())));
     }
 
     @Test
