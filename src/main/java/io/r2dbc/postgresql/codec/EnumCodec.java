@@ -21,49 +21,57 @@ import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
-import reactor.util.annotation.Nullable;
 
 import java.util.Objects;
 
 @SuppressWarnings("rawtypes")
-final class EnumCodec extends AbstractCodec<Enum> {
+final class EnumCodec implements Codec<Enum> {
 
     private final StringCodec delegate;
 
     EnumCodec(ByteBufAllocator byteBufAllocator) {
-        super(Enum.class);
-
         Objects.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
         this.delegate = new StringCodec(byteBufAllocator);
+    }
+
+    @Override
+    public boolean canDecode(int dataType, Format format, Class<?> type) {
+        Objects.requireNonNull(format, "format must not be null");
+        Objects.requireNonNull(type, "type must not be null");
+        return Enum.class.isAssignableFrom(type) && this.delegate.doCanDecode(format, PostgresqlObjectId.valueOf(dataType));
+    }
+
+    @Override
+    public boolean canEncode(Object value) {
+        Objects.requireNonNull(value, "value must not be null");
+        return Enum.class.isInstance(value);
+    }
+
+    @Override
+    public boolean canEncodeNull(Class<?> type) {
+        Objects.requireNonNull(type, "type must not be null");
+        return Enum.class.isAssignableFrom(type);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Enum decode(ByteBuf byteBuf, Format format, Class<? extends Enum> type) {
+        Objects.requireNonNull(format, "format must not be null");
+        Objects.requireNonNull(type, "type must not be null");
+        if (byteBuf == null) {
+            return null;
+        }
+        return Enum.valueOf(type, this.delegate.doDecode(byteBuf, format, String.class));
+    }
+
+    @Override
+    public Parameter encode(Object value) {
+        Objects.requireNonNull(value, "value must not be null");
+        return this.delegate.encode(((Enum) value).name());
     }
 
     @Override
     public Parameter encodeNull() {
         return this.delegate.encodeNull();
     }
-
-    @Override
-    boolean doCanDecode(Format format, PostgresqlObjectId type) {
-        Objects.requireNonNull(format, "format must not be null");
-        Objects.requireNonNull(type, "type must not be null");
-
-        return this.delegate.doCanDecode(format, type);
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    Enum doDecode(ByteBuf byteBuf, @Nullable Format format, Class<? extends Enum> type) {
-        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
-        Objects.requireNonNull(type, "type must not be null");
-
-        return Enum.valueOf(type, this.delegate.doDecode(byteBuf, format, String.class));
-    }
-
-    @Override
-    Parameter doEncode(Enum value) {
-        Objects.requireNonNull(value, "value must not be null");
-
-        return this.delegate.doEncode(value.name());
-    }
-
 }

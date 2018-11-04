@@ -41,9 +41,9 @@ final class InstantCodecTest {
 
     @Test
     void decode() {
-        Instant instant = Instant.now();
+        Instant instant = Instant.parse("2018-11-04T11:57:56.159600Z");
 
-        assertThat(new InstantCodec(TEST).decode(encode(TEST, instant.toString()), FORMAT_TEXT, Instant.class))
+        assertThat(new InstantCodec(TEST).decode(encode(TEST, "2018-11-04 11:57:56.159600"), FORMAT_TEXT, Instant.class))
             .isEqualTo(instant);
     }
 

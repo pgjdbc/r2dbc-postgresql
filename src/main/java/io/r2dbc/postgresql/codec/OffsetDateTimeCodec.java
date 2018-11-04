@@ -56,7 +56,7 @@ final class OffsetDateTimeCodec extends AbstractCodec<OffsetDateTime> {
     OffsetDateTime doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends OffsetDateTime> type) {
         Objects.requireNonNull(byteBuf, "byteBuf must not be null");
 
-        return OffsetDateTime.parse(ByteBufUtils.decode(byteBuf));
+        return PostgresqlDateTimeFormatter.INSTANCE.parse(ByteBufUtils.decode(byteBuf), OffsetDateTime::from);
     }
 
     @Override

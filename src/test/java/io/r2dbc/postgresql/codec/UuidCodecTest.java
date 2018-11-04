@@ -18,6 +18,7 @@ package io.r2dbc.postgresql.codec;
 
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
+import io.r2dbc.postgresql.util.ByteBufUtils;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
@@ -42,7 +43,7 @@ final class UuidCodecTest {
     void decode() {
         UUID uuid = UUID.randomUUID();
 
-        assertThat(new UuidCodec(TEST).decode(TEST.buffer(16).writeLong(uuid.getMostSignificantBits()).writeLong(uuid.getLeastSignificantBits()), FORMAT_TEXT, UUID.class))
+        assertThat(new UuidCodec(TEST).decode(ByteBufUtils.encode(TEST, uuid.toString()), FORMAT_TEXT, UUID.class))
             .isEqualTo(uuid);
     }
 
@@ -55,9 +56,9 @@ final class UuidCodecTest {
     void doCanDecode() {
         UuidCodec codec = new UuidCodec(TEST);
 
-        assertThat(codec.doCanDecode(FORMAT_TEXT, PostgresqlObjectId.UUID)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, PostgresqlObjectId.UUID)).isTrue();
         assertThat(codec.doCanDecode(FORMAT_BINARY, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_BINARY, PostgresqlObjectId.UUID)).isTrue();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, PostgresqlObjectId.UUID)).isFalse();
     }
 
     @Test
@@ -77,7 +78,7 @@ final class UuidCodecTest {
         UUID uuid = UUID.randomUUID();
 
         assertThat(new UuidCodec(TEST).doEncode(uuid))
-            .isEqualTo(new Parameter(FORMAT_BINARY, PostgresqlObjectId.UUID.getObjectId(), TEST.buffer(16).writeLong(uuid.getMostSignificantBits()).writeLong(uuid.getLeastSignificantBits())));
+            .isEqualTo(new Parameter(FORMAT_TEXT, PostgresqlObjectId.UUID.getObjectId(), ByteBufUtils.encode(TEST, uuid.toString())));
     }
 
     @Test
@@ -89,7 +90,7 @@ final class UuidCodecTest {
     @Test
     void encodeNull() {
         assertThat(new UuidCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(FORMAT_BINARY, PostgresqlObjectId.UUID.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_TEXT, PostgresqlObjectId.UUID.getObjectId(), null));
     }
 
 }
