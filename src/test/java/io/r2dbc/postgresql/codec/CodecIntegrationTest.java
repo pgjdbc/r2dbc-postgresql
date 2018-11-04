@@ -27,6 +27,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.math.BigDecimal;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -56,6 +57,29 @@ public class CodecIntegrationTest {
         .build();
 
     private final PostgresqlConnectionFactory connectionFactory = new PostgresqlConnectionFactory(this.configuration);
+
+    @Test
+    void testBigDecimal() {
+        this.connectionFactory.create()
+            .flatMap(c -> c.createStatement("INSERT INTO codec (big_decimal_value) VALUES($1)").
+                bind("$1", new BigDecimal("1000.0"))
+                .execute()
+                .flatMap(PostgresqlResult::getRowsUpdated)
+                .single())
+            .as(StepVerifier::create)
+            .expectNext(1)
+            .verifyComplete();
+        this.connectionFactory.create()
+            .flatMap(c -> c.createStatement("SELECT big_decimal_value FROM codec LIMIT 1")
+                .execute()
+                .single()
+                .flatMap(result -> result
+                    .map((row, meta) -> row.get("big_decimal_value", BigDecimal.class))
+                    .single()))
+            .as(StepVerifier::create)
+            .expectNext(new BigDecimal("1000.0"))
+            .verifyComplete();
+    }
 
     @Test
     void testBoolean() {
@@ -587,7 +611,9 @@ public class CodecIntegrationTest {
 
     @BeforeEach
     void createTable() {
-        SERVER.getJdbcOperations().execute("CREATE TABLE codec ( boolean_value BOOL " + //
+        SERVER.getJdbcOperations().execute("CREATE TABLE codec ( " + //
+            "  big_decimal_value NUMERIC " + //
+            ", boolean_value BOOL " + //
             ", byte_value INT2 " + //
             ", character_value VARCHAR(1) " + //
             ", date_value TIMESTAMP " + //
