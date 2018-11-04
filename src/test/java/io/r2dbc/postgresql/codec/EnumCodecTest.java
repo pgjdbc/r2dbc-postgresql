@@ -57,20 +57,20 @@ final class EnumCodecTest {
     void doCanDecode() {
         EnumCodec codec = new EnumCodec(TEST);
 
-        assertThat(codec.doCanDecode(FORMAT_BINARY, VARCHAR)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, VARCHAR)).isTrue();
+        assertThat(codec.canDecode(VARCHAR.getObjectId(), FORMAT_BINARY, TimeUnit.class)).isFalse();
+        assertThat(codec.canDecode(MONEY.getObjectId(), FORMAT_TEXT, TimeUnit.class)).isFalse();
+        assertThat(codec.canDecode(VARCHAR.getObjectId(), FORMAT_TEXT, TimeUnit.class)).isTrue();
     }
 
     @Test
     void doCanDecodeNoFormat() {
-        assertThatNullPointerException().isThrownBy(() -> new EnumCodec(TEST).doCanDecode(null, VARCHAR))
+        assertThatNullPointerException().isThrownBy(() -> new EnumCodec(TEST).decode(null, null, TimeUnit.class))
             .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new EnumCodec(TEST).doCanDecode(FORMAT_TEXT, null))
+        assertThatNullPointerException().isThrownBy(() -> new EnumCodec(TEST).decode(null, FORMAT_TEXT, null))
             .withMessage("type must not be null");
     }
 
@@ -78,13 +78,13 @@ final class EnumCodecTest {
     void doEncode() {
         TimeUnit timeUnit = TimeUnit.DAYS;
 
-        assertThat(new EnumCodec(TEST).doEncode(timeUnit))
+        assertThat(new EnumCodec(TEST).encode(timeUnit))
             .isEqualTo(new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), encode(TEST, timeUnit.name())));
     }
 
     @Test
     void doEncodeNoValue() {
-        assertThatNullPointerException().isThrownBy(() -> new EnumCodec(TEST).doEncode(null))
+        assertThatNullPointerException().isThrownBy(() -> new EnumCodec(TEST).encode(null))
             .withMessage("value must not be null");
     }
 
