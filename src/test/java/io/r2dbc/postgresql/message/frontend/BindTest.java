@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Collections;
 
 import static io.netty.util.CharsetUtil.UTF_8;
-import static io.r2dbc.postgresql.message.Format.BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageAssert.assertThat;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
@@ -30,39 +30,39 @@ final class BindTest {
 
     @Test
     void constructorNoNames() {
-        assertThatNullPointerException().isThrownBy(() -> new Bind(null, Collections.singletonList(BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)),
-            Collections.singletonList(BINARY), "test-source"))
+        assertThatNullPointerException().isThrownBy(() -> new Bind(null, Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)),
+            Collections.singletonList(FORMAT_BINARY), "test-source"))
             .withMessage("name must not be null");
     }
 
     @Test
     void constructorNoParameterFormats() {
-        assertThatNullPointerException().isThrownBy(() -> new Bind("test-name", null, Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.singletonList(BINARY), "test-source"))
+        assertThatNullPointerException().isThrownBy(() -> new Bind("test-name", null, Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.singletonList(FORMAT_BINARY), "test-source"))
             .withMessage("parameterFormats must not be null");
     }
 
     @Test
     void constructorNoParameters() {
-        assertThatNullPointerException().isThrownBy(() -> new Bind("test-name", Collections.singletonList(BINARY), null, Collections.singletonList(BINARY), "test-source"))
+        assertThatNullPointerException().isThrownBy(() -> new Bind("test-name", Collections.singletonList(FORMAT_BINARY), null, Collections.singletonList(FORMAT_BINARY), "test-source"))
             .withMessage("parameters must not be null");
     }
 
     @Test
     void constructorNoResultFormats() {
-        assertThatNullPointerException().isThrownBy(() -> new Bind("test-name", Collections.singletonList(BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), null, "test-source"))
+        assertThatNullPointerException().isThrownBy(() -> new Bind("test-name", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), null, "test-source"))
             .withMessage("resultFormats must not be null");
     }
 
     @Test
     void constructorNoSource() {
-        assertThatNullPointerException().isThrownBy(() -> new Bind("test-name", Collections.singletonList(BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)),
-            Collections.singletonList(BINARY), null))
+        assertThatNullPointerException().isThrownBy(() -> new Bind("test-name", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)),
+            Collections.singletonList(FORMAT_BINARY), null))
             .withMessage("source must not be null");
     }
 
     @Test
     void encode() {
-        assertThat(new Bind("test-name", Collections.singletonList(BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.singletonList(BINARY), "test-source")).encoded()
+        assertThat(new Bind("test-name", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.singletonList(FORMAT_BINARY), "test-source")).encoded()
             .isDeferred()
             .isEncodedAs(buffer -> {
                 buffer
@@ -90,7 +90,7 @@ final class BindTest {
 
     @Test
     void encodeNullParameter() {
-        assertThat(new Bind("test-name", Collections.singletonList(BINARY), Collections.singletonList(null), Collections.singletonList(BINARY), "test-source")).encoded()
+        assertThat(new Bind("test-name", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(null), Collections.singletonList(FORMAT_BINARY), "test-source")).encoded()
             .isDeferred()
             .isEncodedAs(buffer -> {
                 buffer

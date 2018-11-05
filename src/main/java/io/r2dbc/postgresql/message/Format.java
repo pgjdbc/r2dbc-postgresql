@@ -27,12 +27,12 @@ public enum Format {
     /**
      * The binary data format, represented by the {@code 1} byte.
      */
-    BINARY((byte) 1),
+    FORMAT_BINARY((byte) 1),
 
     /**
      * The text data format, represented by the {@code 0} byte.
      */
-    TEXT((byte) 0);
+    FORMAT_TEXT((byte) 0);
 
     private final byte discriminator;
 

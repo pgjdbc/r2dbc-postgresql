@@ -26,7 +26,7 @@ import reactor.util.annotation.Nullable;
 
 import java.util.Objects;
 
-import static io.r2dbc.postgresql.message.Format.BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.FLOAT4;
 
 final class FloatCodec extends AbstractCodec<Float> {
@@ -40,7 +40,7 @@ final class FloatCodec extends AbstractCodec<Float> {
 
     @Override
     public Parameter encodeNull() {
-        return createNull(BINARY, FLOAT4);
+        return createNull(FORMAT_BINARY, FLOAT4);
     }
 
     @Override
@@ -55,7 +55,7 @@ final class FloatCodec extends AbstractCodec<Float> {
         Objects.requireNonNull(byteBuf, "byteBuf must not be null");
         Objects.requireNonNull(format, "format must not be null");
 
-        if (BINARY == format) {
+        if (FORMAT_BINARY == format) {
             return byteBuf.readFloat();
         } else {
             return Float.parseFloat(ByteBufUtils.decode(byteBuf));
@@ -67,6 +67,6 @@ final class FloatCodec extends AbstractCodec<Float> {
         Objects.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = this.byteBufAllocator.buffer(4).writeFloat(value);
-        return create(BINARY, FLOAT4, encoded);
+        return create(FORMAT_BINARY, FLOAT4, encoded);
     }
 }

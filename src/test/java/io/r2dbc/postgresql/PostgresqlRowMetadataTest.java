@@ -16,7 +16,6 @@
 
 package io.r2dbc.postgresql;
 
-import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.postgresql.message.backend.RowDescription.Field;
 import org.junit.jupiter.api.Test;
@@ -25,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
@@ -88,7 +88,7 @@ final class PostgresqlRowMetadataTest {
     @Test
     void toRowMetadata() {
         PostgresqlRowMetadata rowMetadata = PostgresqlRowMetadata.toRowMetadata(
-            new RowDescription(Collections.singletonList(new Field((short) 100, 200, 300, (short) 400, Format.TEXT, "test-name", 500))));
+            new RowDescription(Collections.singletonList(new Field((short) 100, 200, 300, (short) 400, FORMAT_TEXT, "test-name", 500))));
 
         assertThat(rowMetadata.getColumnMetadatas()).hasSize(1);
     }

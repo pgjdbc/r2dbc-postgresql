@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Collections;
 
 import static io.netty.util.CharsetUtil.UTF_8;
-import static io.r2dbc.postgresql.message.Format.BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.backend.BackendMessageAssert.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
@@ -52,7 +52,7 @@ final class RowDescriptionTest {
 
                 return buffer;
             })
-            .isEqualTo(new RowDescription(Collections.singletonList(new RowDescription.Field((short) 100, 200, 300, (short) 400, BINARY, "test-name", 500))));
+            .isEqualTo(new RowDescription(Collections.singletonList(new RowDescription.Field((short) 100, 200, 300, (short) 400, FORMAT_BINARY, "test-name", 500))));
     }
 
 
@@ -64,7 +64,7 @@ final class RowDescriptionTest {
 
     @Test
     void fieldConstructorNoName() {
-        assertThatNullPointerException().isThrownBy(() -> new RowDescription.Field((short) 100, 200, 300, (short) 400, BINARY, null, 500))
+        assertThatNullPointerException().isThrownBy(() -> new RowDescription.Field((short) 100, 200, 300, (short) 400, FORMAT_BINARY, null, 500))
             .withMessage("name must not be null");
     }
 

@@ -21,8 +21,8 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 
-import static io.r2dbc.postgresql.message.Format.BINARY;
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMP;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
@@ -43,22 +43,22 @@ final class InstantCodecTest {
     void decode() {
         Instant instant = Instant.now();
 
-        assertThat(new InstantCodec(TEST).decode(encode(TEST, instant.toString()), TEXT, Instant.class))
+        assertThat(new InstantCodec(TEST).decode(encode(TEST, instant.toString()), FORMAT_TEXT, Instant.class))
             .isEqualTo(instant);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new InstantCodec(TEST).decode(null, TEXT, Instant.class)).isNull();
+        assertThat(new InstantCodec(TEST).decode(null, FORMAT_TEXT, Instant.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         InstantCodec codec = new InstantCodec(TEST);
 
-        assertThat(codec.doCanDecode(BINARY, TIMESTAMP)).isFalse();
-        assertThat(codec.doCanDecode(TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(TEXT, TIMESTAMP)).isTrue();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, TIMESTAMP)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, TIMESTAMP)).isTrue();
     }
 
     @Test
@@ -69,7 +69,7 @@ final class InstantCodecTest {
 
     @Test
     void doCanDecodeNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new InstantCodec(TEST).doCanDecode(TEXT, null))
+        assertThatNullPointerException().isThrownBy(() -> new InstantCodec(TEST).doCanDecode(FORMAT_TEXT, null))
             .withMessage("type must not be null");
     }
 
@@ -78,7 +78,7 @@ final class InstantCodecTest {
         Instant instant = Instant.now();
 
         assertThat(new InstantCodec(TEST).doEncode(instant))
-            .isEqualTo(new Parameter(TEXT, TIMESTAMP.getObjectId(), encode(TEST, instant.toString())));
+            .isEqualTo(new Parameter(FORMAT_TEXT, TIMESTAMP.getObjectId(), encode(TEST, instant.toString())));
     }
 
     @Test
@@ -90,7 +90,7 @@ final class InstantCodecTest {
     @Test
     void encodeNull() {
         assertThat(new InstantCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(TEXT, TIMESTAMP.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_TEXT, TIMESTAMP.getObjectId(), null));
     }
 
 }

@@ -27,7 +27,7 @@ import reactor.util.annotation.Nullable;
 import java.math.BigDecimal;
 import java.util.Objects;
 
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.NUMERIC;
 
 final class BigDecimalCodec extends AbstractCodec<BigDecimal> {
@@ -41,7 +41,7 @@ final class BigDecimalCodec extends AbstractCodec<BigDecimal> {
 
     @Override
     public Parameter encodeNull() {
-        return createNull(TEXT, NUMERIC);
+        return createNull(FORMAT_TEXT, NUMERIC);
     }
 
     @Override
@@ -49,7 +49,7 @@ final class BigDecimalCodec extends AbstractCodec<BigDecimal> {
         Objects.requireNonNull(format, "format must not be null");
         Objects.requireNonNull(type, "type must not be null");
 
-        return TEXT == format && NUMERIC == type;
+        return FORMAT_TEXT == format && NUMERIC == type;
     }
 
     @Override
@@ -64,7 +64,7 @@ final class BigDecimalCodec extends AbstractCodec<BigDecimal> {
         Objects.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toString());
-        return create(TEXT, NUMERIC, encoded);
+        return create(FORMAT_TEXT, NUMERIC, encoded);
     }
 
 }

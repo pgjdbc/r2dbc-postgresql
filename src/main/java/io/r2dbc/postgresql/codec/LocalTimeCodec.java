@@ -27,7 +27,7 @@ import reactor.util.annotation.Nullable;
 import java.time.LocalTime;
 import java.util.Objects;
 
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIME;
 
 final class LocalTimeCodec extends AbstractCodec<LocalTime> {
@@ -41,7 +41,7 @@ final class LocalTimeCodec extends AbstractCodec<LocalTime> {
 
     @Override
     public Parameter encodeNull() {
-        return createNull(TEXT, TIME);
+        return createNull(FORMAT_TEXT, TIME);
     }
 
     @Override
@@ -49,7 +49,7 @@ final class LocalTimeCodec extends AbstractCodec<LocalTime> {
         Objects.requireNonNull(format, "format must not be null");
         Objects.requireNonNull(type, "type must not be null");
 
-        return TEXT == format && TIME == type;
+        return FORMAT_TEXT == format && TIME == type;
     }
 
     @Override
@@ -64,7 +64,7 @@ final class LocalTimeCodec extends AbstractCodec<LocalTime> {
         Objects.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toString());
-        return create(TEXT, TIME, encoded);
+        return create(FORMAT_TEXT, TIME, encoded);
     }
 
 }

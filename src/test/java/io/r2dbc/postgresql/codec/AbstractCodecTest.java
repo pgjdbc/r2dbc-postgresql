@@ -19,8 +19,8 @@ package io.r2dbc.postgresql.codec;
 import io.r2dbc.postgresql.client.Parameter;
 import org.junit.jupiter.api.Test;
 
-import static io.r2dbc.postgresql.message.Format.BINARY;
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
@@ -32,11 +32,11 @@ final class AbstractCodecTest {
     @Test
     void canDecode() {
         MockCodec<String> codec = MockCodec.builder(String.class)
-            .canDecode(BINARY, VARCHAR)
+            .canDecode(FORMAT_BINARY, VARCHAR)
             .build();
 
-        assertThat(codec.canDecode(VARCHAR.getObjectId(), BINARY, String.class)).isTrue();
-        assertThat(codec.canDecode(VARCHAR.getObjectId(), BINARY, Void.class)).isFalse();
+        assertThat(codec.canDecode(VARCHAR.getObjectId(), FORMAT_BINARY, String.class)).isTrue();
+        assertThat(codec.canDecode(VARCHAR.getObjectId(), FORMAT_BINARY, Void.class)).isFalse();
     }
 
     @Test
@@ -47,7 +47,7 @@ final class AbstractCodecTest {
 
     @Test
     void canDecodeNoType() {
-        assertThatNullPointerException().isThrownBy(() -> MockCodec.empty(String.class).canDecode(100, BINARY, null))
+        assertThatNullPointerException().isThrownBy(() -> MockCodec.empty(String.class).canDecode(100, FORMAT_BINARY, null))
             .withMessage("type must not be null");
     }
 
@@ -83,9 +83,9 @@ final class AbstractCodecTest {
 
     @Test
     void create() {
-        Parameter parameter = AbstractCodec.create(TEXT, INT4, TEST.buffer(4).writeInt(100));
+        Parameter parameter = AbstractCodec.create(FORMAT_TEXT, INT4, TEST.buffer(4).writeInt(100));
 
-        assertThat(parameter).isEqualTo(new Parameter(TEXT, INT4.getObjectId(), TEST.buffer(4).writeInt(100)));
+        assertThat(parameter).isEqualTo(new Parameter(FORMAT_TEXT, INT4.getObjectId(), TEST.buffer(4).writeInt(100)));
     }
 
     @Test
@@ -96,15 +96,15 @@ final class AbstractCodecTest {
 
     @Test
     void createNoType() {
-        assertThatNullPointerException().isThrownBy(() -> AbstractCodec.create(TEXT, null, null))
+        assertThatNullPointerException().isThrownBy(() -> AbstractCodec.create(FORMAT_TEXT, null, null))
             .withMessage("type must not be null");
     }
 
     @Test
     void createNull() {
-        Parameter parameter = AbstractCodec.createNull(TEXT, INT4);
+        Parameter parameter = AbstractCodec.createNull(FORMAT_TEXT, INT4);
 
-        assertThat(parameter).isEqualTo(new Parameter(TEXT, INT4.getObjectId(), null));
+        assertThat(parameter).isEqualTo(new Parameter(FORMAT_TEXT, INT4.getObjectId(), null));
     }
 
     @Test
@@ -115,13 +115,13 @@ final class AbstractCodecTest {
 
     @Test
     void createNullNoType() {
-        assertThatNullPointerException().isThrownBy(() -> AbstractCodec.createNull(TEXT, null))
+        assertThatNullPointerException().isThrownBy(() -> AbstractCodec.createNull(FORMAT_TEXT, null))
             .withMessage("type must not be null");
     }
 
     @Test
     void encode() {
-        Parameter parameter = new Parameter(TEXT, INT4.getObjectId(), TEST.buffer(4).writeInt(100));
+        Parameter parameter = new Parameter(FORMAT_TEXT, INT4.getObjectId(), TEST.buffer(4).writeInt(100));
         Object value = new Object();
 
         MockCodec<Object> codec = MockCodec.builder(Object.class)

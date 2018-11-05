@@ -20,8 +20,8 @@ import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import org.junit.jupiter.api.Test;
 
-import static io.r2dbc.postgresql.message.Format.BINARY;
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
@@ -40,13 +40,13 @@ final class IntegerCodecTest {
     void decode() {
         IntegerCodec codec = new IntegerCodec(TEST);
 
-        assertThat(codec.decode(TEST.buffer(4).writeInt(100), BINARY, Integer.class)).isEqualTo(100);
-        assertThat(codec.decode(ByteBufUtils.encode(TEST, "100"), TEXT, Integer.class)).isEqualTo(100);
+        assertThat(codec.decode(TEST.buffer(4).writeInt(100), FORMAT_BINARY, Integer.class)).isEqualTo(100);
+        assertThat(codec.decode(ByteBufUtils.encode(TEST, "100"), FORMAT_TEXT, Integer.class)).isEqualTo(100);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new IntegerCodec(TEST).decode(null, BINARY, Integer.class)).isNull();
+        assertThat(new IntegerCodec(TEST).decode(null, FORMAT_BINARY, Integer.class)).isNull();
     }
 
     @Test
@@ -59,9 +59,9 @@ final class IntegerCodecTest {
     void doCanDecode() {
         IntegerCodec codec = new IntegerCodec(TEST);
 
-        assertThat(codec.doCanDecode(BINARY, VARCHAR)).isFalse();
-        assertThat(codec.doCanDecode(BINARY, INT4)).isTrue();
-        assertThat(codec.doCanDecode(TEXT, INT4)).isTrue();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, VARCHAR)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, INT4)).isTrue();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, INT4)).isTrue();
     }
 
     @Test
@@ -73,7 +73,7 @@ final class IntegerCodecTest {
     @Test
     void doEncode() {
         assertThat(new IntegerCodec(TEST).doEncode(100))
-            .isEqualTo(new Parameter(BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(100)));
+            .isEqualTo(new Parameter(FORMAT_BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(100)));
     }
 
     @Test
@@ -85,7 +85,7 @@ final class IntegerCodecTest {
     @Test
     void encodeNull() {
         assertThat(new IntegerCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(BINARY, INT4.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_BINARY, INT4.getObjectId(), null));
     }
 
 }

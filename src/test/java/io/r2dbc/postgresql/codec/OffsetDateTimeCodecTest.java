@@ -21,8 +21,8 @@ import org.junit.jupiter.api.Test;
 
 import java.time.OffsetDateTime;
 
-import static io.r2dbc.postgresql.message.Format.BINARY;
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMPTZ;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
@@ -43,22 +43,22 @@ final class OffsetDateTimeCodecTest {
     void decode() {
         OffsetDateTime offsetDateTime = OffsetDateTime.now();
 
-        assertThat(new OffsetDateTimeCodec(TEST).decode(encode(TEST, offsetDateTime.toString()), TEXT, OffsetDateTime.class))
+        assertThat(new OffsetDateTimeCodec(TEST).decode(encode(TEST, offsetDateTime.toString()), FORMAT_TEXT, OffsetDateTime.class))
             .isEqualTo(offsetDateTime);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new OffsetDateTimeCodec(TEST).decode(null, TEXT, OffsetDateTime.class)).isNull();
+        assertThat(new OffsetDateTimeCodec(TEST).decode(null, FORMAT_TEXT, OffsetDateTime.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         OffsetDateTimeCodec codec = new OffsetDateTimeCodec(TEST);
 
-        assertThat(codec.doCanDecode(BINARY, TIMESTAMPTZ)).isFalse();
-        assertThat(codec.doCanDecode(TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(TEXT, TIMESTAMPTZ)).isTrue();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, TIMESTAMPTZ)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, TIMESTAMPTZ)).isTrue();
     }
 
     @Test
@@ -69,7 +69,7 @@ final class OffsetDateTimeCodecTest {
 
     @Test
     void doCanDecodeNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new OffsetDateTimeCodec(TEST).doCanDecode(TEXT, null))
+        assertThatNullPointerException().isThrownBy(() -> new OffsetDateTimeCodec(TEST).doCanDecode(FORMAT_TEXT, null))
             .withMessage("type must not be null");
     }
 
@@ -78,7 +78,7 @@ final class OffsetDateTimeCodecTest {
         OffsetDateTime offsetDateTime = OffsetDateTime.now();
 
         assertThat(new OffsetDateTimeCodec(TEST).doEncode(offsetDateTime))
-            .isEqualTo(new Parameter(TEXT, TIMESTAMPTZ.getObjectId(), encode(TEST, offsetDateTime.toString())));
+            .isEqualTo(new Parameter(FORMAT_TEXT, TIMESTAMPTZ.getObjectId(), encode(TEST, offsetDateTime.toString())));
     }
 
     @Test
@@ -90,7 +90,7 @@ final class OffsetDateTimeCodecTest {
     @Test
     void encodeNull() {
         assertThat(new OffsetDateTimeCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(TEXT, TIMESTAMPTZ.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_TEXT, TIMESTAMPTZ.getObjectId(), null));
     }
 
 }

@@ -26,7 +26,7 @@ import reactor.util.annotation.Nullable;
 
 import java.util.Objects;
 
-import static io.r2dbc.postgresql.message.Format.BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT8;
 
 final class LongCodec extends AbstractCodec<Long> {
@@ -40,7 +40,7 @@ final class LongCodec extends AbstractCodec<Long> {
 
     @Override
     public Parameter encodeNull() {
-        return createNull(BINARY, INT8);
+        return createNull(FORMAT_BINARY, INT8);
     }
 
     @Override
@@ -55,7 +55,7 @@ final class LongCodec extends AbstractCodec<Long> {
         Objects.requireNonNull(byteBuf, "byteBuf must not be null");
         Objects.requireNonNull(format, "format must not be null");
 
-        if (BINARY == format) {
+        if (FORMAT_BINARY == format) {
             return byteBuf.readLong();
         } else {
             return Long.parseLong(ByteBufUtils.decode(byteBuf));
@@ -67,7 +67,7 @@ final class LongCodec extends AbstractCodec<Long> {
         Objects.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = this.byteBufAllocator.buffer(8).writeLong(value);
-        return create(BINARY, INT8, encoded);
+        return create(FORMAT_BINARY, INT8, encoded);
     }
 
 }

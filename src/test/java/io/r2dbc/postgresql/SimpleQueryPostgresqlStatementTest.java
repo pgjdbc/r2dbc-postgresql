@@ -31,7 +31,7 @@ import reactor.test.StepVerifier;
 import java.util.Collections;
 
 import static io.r2dbc.postgresql.client.TestClient.NO_OP;
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -167,7 +167,7 @@ final class SimpleQueryPostgresqlStatementTest {
         Client client = TestClient.builder()
             .expectRequest(new Query("test-query"))
             .thenRespond(
-                new RowDescription(Collections.singletonList(new RowDescription.Field((short) 100, 200, 300, (short) 400, TEXT, "test-name", 500))),
+                new RowDescription(Collections.singletonList(new RowDescription.Field((short) 100, 200, 300, (short) 400, FORMAT_TEXT, "test-name", 500))),
                 new DataRow(Collections.singletonList(TEST.buffer(4).writeInt(100))),
                 new CommandComplete("test", null, null))
             .build();
@@ -176,7 +176,7 @@ final class SimpleQueryPostgresqlStatementTest {
             .execute()
             .flatMap(result -> result.map((row, rowMetadata) -> row))
             .as(StepVerifier::create)
-            .expectNext(new PostgresqlRow(MockCodecs.empty(), Collections.singletonList(new PostgresqlRow.Column(TEST.buffer(4).writeInt(100), 200, TEXT, "test-name"))))
+            .expectNext(new PostgresqlRow(MockCodecs.empty(), Collections.singletonList(new PostgresqlRow.Column(TEST.buffer(4).writeInt(100), 200, FORMAT_TEXT, "test-name"))))
             .verifyComplete();
     }
 
@@ -185,7 +185,7 @@ final class SimpleQueryPostgresqlStatementTest {
         Client client = TestClient.builder()
             .expectRequest(new Query("test-query"))
             .thenRespond(
-                new RowDescription(Collections.singletonList(new RowDescription.Field((short) 100, 200, 300, (short) 400, TEXT, "test-name", 500))),
+                new RowDescription(Collections.singletonList(new RowDescription.Field((short) 100, 200, 300, (short) 400, FORMAT_TEXT, "test-name", 500))),
                 new DataRow(Collections.singletonList(TEST.buffer(4).writeInt(100))),
                 new CommandComplete("test", null, null))
             .build();

@@ -21,8 +21,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
 
-import static io.r2dbc.postgresql.message.Format.BINARY;
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
@@ -43,23 +43,23 @@ final class EnumCodecTest {
     void decode() {
         TimeUnit timeUnit = TimeUnit.DAYS;
 
-        assertThat(new EnumCodec(TEST).decode(encode(TEST, timeUnit.name()), TEXT, TimeUnit.class))
+        assertThat(new EnumCodec(TEST).decode(encode(TEST, timeUnit.name()), FORMAT_TEXT, TimeUnit.class))
             .isEqualTo(timeUnit);
     }
 
     @SuppressWarnings("unchecked")
     @Test
     void decodeNoByteBuf() {
-        assertThat(new EnumCodec(TEST).decode(null, TEXT, TimeUnit.class)).isNull();
+        assertThat(new EnumCodec(TEST).decode(null, FORMAT_TEXT, TimeUnit.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         EnumCodec codec = new EnumCodec(TEST);
 
-        assertThat(codec.doCanDecode(BINARY, VARCHAR)).isFalse();
-        assertThat(codec.doCanDecode(TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(TEXT, VARCHAR)).isTrue();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, VARCHAR)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, VARCHAR)).isTrue();
     }
 
     @Test
@@ -70,7 +70,7 @@ final class EnumCodecTest {
 
     @Test
     void doCanDecodeNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new EnumCodec(TEST).doCanDecode(TEXT, null))
+        assertThatNullPointerException().isThrownBy(() -> new EnumCodec(TEST).doCanDecode(FORMAT_TEXT, null))
             .withMessage("type must not be null");
     }
 
@@ -79,7 +79,7 @@ final class EnumCodecTest {
         TimeUnit timeUnit = TimeUnit.DAYS;
 
         assertThat(new EnumCodec(TEST).doEncode(timeUnit))
-            .isEqualTo(new Parameter(TEXT, VARCHAR.getObjectId(), encode(TEST, timeUnit.name())));
+            .isEqualTo(new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), encode(TEST, timeUnit.name())));
     }
 
     @Test
@@ -91,7 +91,7 @@ final class EnumCodecTest {
     @Test
     void encodeNull() {
         assertThat(new EnumCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(TEXT, VARCHAR.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), null));
     }
 
 }

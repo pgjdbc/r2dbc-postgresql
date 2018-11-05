@@ -21,8 +21,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
-import static io.r2dbc.postgresql.message.Format.BINARY;
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.BOOL;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
@@ -44,24 +44,24 @@ final class BooleanCodecTest {
         BooleanCodec codec = new BooleanCodec(TEST);
 
         Arrays.asList("1", "True", "T", "Yes", "Y", "On")
-            .forEach(input -> assertThat(codec.decode(encode(TEST, input), TEXT, Boolean.class)).isTrue());
+            .forEach(input -> assertThat(codec.decode(encode(TEST, input), FORMAT_TEXT, Boolean.class)).isTrue());
 
         Arrays.asList("0", "False", "F", "No", "N", "Off")
-            .forEach(input -> assertThat(codec.decode(encode(TEST, input), TEXT, Boolean.class)).isFalse());
+            .forEach(input -> assertThat(codec.decode(encode(TEST, input), FORMAT_TEXT, Boolean.class)).isFalse());
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new BooleanCodec(TEST).decode(null, TEXT, Boolean.class)).isNull();
+        assertThat(new BooleanCodec(TEST).decode(null, FORMAT_TEXT, Boolean.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         BooleanCodec codec = new BooleanCodec(TEST);
 
-        assertThat(codec.doCanDecode(BINARY, BOOL)).isFalse();
-        assertThat(codec.doCanDecode(TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(TEXT, BOOL)).isTrue();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, BOOL)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, BOOL)).isTrue();
     }
 
     @Test
@@ -72,7 +72,7 @@ final class BooleanCodecTest {
 
     @Test
     void doCanDecodeNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new BooleanCodec(TEST).doCanDecode(TEXT, null))
+        assertThatNullPointerException().isThrownBy(() -> new BooleanCodec(TEST).doCanDecode(FORMAT_TEXT, null))
             .withMessage("type must not be null");
     }
 
@@ -81,10 +81,10 @@ final class BooleanCodecTest {
         BooleanCodec codec = new BooleanCodec(TEST);
 
         assertThat(codec.doEncode(true))
-            .isEqualTo(new Parameter(TEXT, BOOL.getObjectId(), encode(TEST, "TRUE")));
+            .isEqualTo(new Parameter(FORMAT_TEXT, BOOL.getObjectId(), encode(TEST, "TRUE")));
 
         assertThat(codec.doEncode(false))
-            .isEqualTo(new Parameter(TEXT, BOOL.getObjectId(), encode(TEST, "FALSE")));
+            .isEqualTo(new Parameter(FORMAT_TEXT, BOOL.getObjectId(), encode(TEST, "FALSE")));
     }
 
     @Test
@@ -96,7 +96,7 @@ final class BooleanCodecTest {
     @Test
     void encodeNull() {
         assertThat(new BooleanCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(TEXT, BOOL.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_TEXT, BOOL.getObjectId(), null));
     }
 
 }

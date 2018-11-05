@@ -41,7 +41,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 
 import static io.r2dbc.postgresql.client.TestClient.NO_OP;
-import static io.r2dbc.postgresql.message.Format.BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -54,7 +54,7 @@ import static org.mockito.Mockito.when;
 
 final class ExtendedQueryPostgresqlStatementTest {
 
-    private final Parameter parameter = new Parameter(BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(100));
+    private final Parameter parameter = new Parameter(FORMAT_BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(100));
 
     private final MockCodecs codecs = MockCodecs.builder().encoding(100, this.parameter).build();
 
@@ -93,13 +93,13 @@ final class ExtendedQueryPostgresqlStatementTest {
     @Test
     void bindNull() {
         MockCodecs codecs = MockCodecs.builder()
-            .encoding(Integer.class, new Parameter(BINARY, INT4.getObjectId(), null))
+            .encoding(Integer.class, new Parameter(FORMAT_BINARY, INT4.getObjectId(), null))
             .build();
 
         ExtendedQueryPostgresqlStatement statement = new ExtendedQueryPostgresqlStatement(NO_OP, codecs, () -> "", "test-query-$1", this.statementCache);
 
         assertThat(statement.bindNull("$1", Integer.class).getCurrentBinding())
-            .isEqualTo(new Binding().add(0, new Parameter(BINARY, INT4.getObjectId(), null)));
+            .isEqualTo(new Binding().add(0, new Parameter(FORMAT_BINARY, INT4.getObjectId(), null)));
     }
 
     @Test
@@ -178,11 +178,11 @@ final class ExtendedQueryPostgresqlStatementTest {
     void execute() {
         Client client = TestClient.builder()
             .expectRequest(
-                new Bind("B_0", Collections.singletonList(BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
+                new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
                 new Describe("B_0", ExecutionType.PORTAL),
                 new Execute("B_0", 0),
                 new Close("B_0", ExecutionType.PORTAL),
-                new Bind("B_1", Collections.singletonList(BINARY), Collections.singletonList(TEST.buffer(4).writeInt(200)), Collections.emptyList(), "test-name"),
+                new Bind("B_1", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(200)), Collections.emptyList(), "test-name"),
                 new Describe("B_1", ExecutionType.PORTAL),
                 new Execute("B_1", 0),
                 new Close("B_1", ExecutionType.PORTAL),
@@ -194,14 +194,14 @@ final class ExtendedQueryPostgresqlStatementTest {
             .build();
 
         MockCodecs codecs = MockCodecs.builder()
-            .encoding(100, new Parameter(BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(100)))
-            .encoding(200, new Parameter(BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(200)))
+            .encoding(100, new Parameter(FORMAT_BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(100)))
+            .encoding(200, new Parameter(FORMAT_BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(200)))
             .build();
 
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
 
-        when(this.statementCache.getName(new Binding().add(0, new Parameter(BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(100))), "test-query-$1")).thenReturn(Mono.just("test-name"));
-        when(this.statementCache.getName(new Binding().add(0, new Parameter(BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(200))), "test-query-$1")).thenReturn(Mono.just("test-name"));
+        when(this.statementCache.getName(new Binding().add(0, new Parameter(FORMAT_BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(100))), "test-query-$1")).thenReturn(Mono.just("test-name"));
+        when(this.statementCache.getName(new Binding().add(0, new Parameter(FORMAT_BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(200))), "test-query-$1")).thenReturn(Mono.just("test-name"));
 
         new ExtendedQueryPostgresqlStatement(client, codecs, portalNameSupplier, "test-query-$1", this.statementCache)
             .bind("$1", 100)
@@ -224,7 +224,7 @@ final class ExtendedQueryPostgresqlStatementTest {
     void executeWithoutAdd() {
         Client client = TestClient.builder()
             .expectRequest(
-                new Bind("B_0", Collections.singletonList(BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
+                new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
                 new Describe("B_0", ExecutionType.PORTAL),
                 new Execute("B_0", 0),
                 new Close("B_0", ExecutionType.PORTAL),
@@ -234,12 +234,12 @@ final class ExtendedQueryPostgresqlStatementTest {
             .build();
 
         MockCodecs codecs = MockCodecs.builder()
-            .encoding(100, new Parameter(BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(100)))
+            .encoding(100, new Parameter(FORMAT_BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(100)))
             .build();
 
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
 
-        when(this.statementCache.getName(new Binding().add(0, new Parameter(BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(100))), "test-query-$1")).thenReturn(Mono.just("test-name"));
+        when(this.statementCache.getName(new Binding().add(0, new Parameter(FORMAT_BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(100))), "test-query-$1")).thenReturn(Mono.just("test-name"));
 
         new ExtendedQueryPostgresqlStatement(client, codecs, portalNameSupplier, "test-query-$1", this.statementCache)
             .bind("$1", 100)

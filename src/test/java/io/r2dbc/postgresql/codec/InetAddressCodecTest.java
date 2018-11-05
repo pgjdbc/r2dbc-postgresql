@@ -22,8 +22,8 @@ import org.junit.jupiter.api.Test;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import static io.r2dbc.postgresql.message.Format.BINARY;
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.UNSPECIFIED;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
@@ -44,22 +44,22 @@ final class InetAddressCodecTest {
     void decode() throws UnknownHostException {
         InetAddress inetAddress = InetAddress.getByName("localhost");
 
-        assertThat(new InetAddressCodec(TEST).decode(encode(TEST, inetAddress.getHostAddress()), TEXT, InetAddress.class))
+        assertThat(new InetAddressCodec(TEST).decode(encode(TEST, inetAddress.getHostAddress()), FORMAT_TEXT, InetAddress.class))
             .isEqualTo(inetAddress);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new InetAddressCodec(TEST).decode(null, TEXT, InetAddress.class)).isNull();
+        assertThat(new InetAddressCodec(TEST).decode(null, FORMAT_TEXT, InetAddress.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         InetAddressCodec codec = new InetAddressCodec(TEST);
 
-        assertThat(codec.doCanDecode(BINARY, UNSPECIFIED)).isFalse();
-        assertThat(codec.doCanDecode(TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(TEXT, UNSPECIFIED)).isTrue();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, UNSPECIFIED)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, UNSPECIFIED)).isTrue();
     }
 
     @Test
@@ -70,7 +70,7 @@ final class InetAddressCodecTest {
 
     @Test
     void doCanDecodeNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new InetAddressCodec(TEST).doCanDecode(TEXT, null))
+        assertThatNullPointerException().isThrownBy(() -> new InetAddressCodec(TEST).doCanDecode(FORMAT_TEXT, null))
             .withMessage("type must not be null");
     }
 
@@ -79,7 +79,7 @@ final class InetAddressCodecTest {
         InetAddress inetAddress = InetAddress.getByName("localhost");
 
         assertThat(new InetAddressCodec(TEST).doEncode(inetAddress))
-            .isEqualTo(new Parameter(TEXT, UNSPECIFIED.getObjectId(), encode(TEST, inetAddress.getHostAddress())));
+            .isEqualTo(new Parameter(FORMAT_TEXT, UNSPECIFIED.getObjectId(), encode(TEST, inetAddress.getHostAddress())));
     }
 
     @Test
@@ -91,7 +91,7 @@ final class InetAddressCodecTest {
     @Test
     void encodeNull() {
         assertThat(new InetAddressCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(TEXT, UNSPECIFIED.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_TEXT, UNSPECIFIED.getObjectId(), null));
     }
 
 }

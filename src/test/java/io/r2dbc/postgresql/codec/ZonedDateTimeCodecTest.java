@@ -21,8 +21,8 @@ import org.junit.jupiter.api.Test;
 
 import java.time.ZonedDateTime;
 
-import static io.r2dbc.postgresql.message.Format.BINARY;
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMPTZ;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
@@ -43,22 +43,22 @@ final class ZonedDateTimeCodecTest {
     void decode() {
         ZonedDateTime zonedDateTime = ZonedDateTime.now();
 
-        assertThat(new ZonedDateTimeCodec(TEST).decode(encode(TEST, zonedDateTime.toString()), TEXT, ZonedDateTime.class))
+        assertThat(new ZonedDateTimeCodec(TEST).decode(encode(TEST, zonedDateTime.toString()), FORMAT_TEXT, ZonedDateTime.class))
             .isEqualTo(zonedDateTime);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new ZonedDateTimeCodec(TEST).decode(null, TEXT, ZonedDateTime.class)).isNull();
+        assertThat(new ZonedDateTimeCodec(TEST).decode(null, FORMAT_TEXT, ZonedDateTime.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         ZonedDateTimeCodec codec = new ZonedDateTimeCodec(TEST);
 
-        assertThat(codec.doCanDecode(BINARY, TIMESTAMPTZ)).isFalse();
-        assertThat(codec.doCanDecode(TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(TEXT, TIMESTAMPTZ)).isTrue();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, TIMESTAMPTZ)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, TIMESTAMPTZ)).isTrue();
     }
 
     @Test
@@ -69,7 +69,7 @@ final class ZonedDateTimeCodecTest {
 
     @Test
     void doCanDecodeNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new ZonedDateTimeCodec(TEST).doCanDecode(TEXT, null))
+        assertThatNullPointerException().isThrownBy(() -> new ZonedDateTimeCodec(TEST).doCanDecode(FORMAT_TEXT, null))
             .withMessage("type must not be null");
     }
 
@@ -78,7 +78,7 @@ final class ZonedDateTimeCodecTest {
         ZonedDateTime zonedDateTime = ZonedDateTime.now();
 
         assertThat(new ZonedDateTimeCodec(TEST).doEncode(zonedDateTime))
-            .isEqualTo(new Parameter(TEXT, TIMESTAMPTZ.getObjectId(), encode(TEST, zonedDateTime.toString())));
+            .isEqualTo(new Parameter(FORMAT_TEXT, TIMESTAMPTZ.getObjectId(), encode(TEST, zonedDateTime.toString())));
     }
 
     @Test
@@ -90,7 +90,7 @@ final class ZonedDateTimeCodecTest {
     @Test
     void encodeNull() {
         assertThat(new ZonedDateTimeCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(TEXT, TIMESTAMPTZ.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_TEXT, TIMESTAMPTZ.getObjectId(), null));
     }
 
 }

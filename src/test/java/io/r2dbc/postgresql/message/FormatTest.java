@@ -18,8 +18,8 @@ package io.r2dbc.postgresql.message;
 
 import org.junit.jupiter.api.Test;
 
-import static io.r2dbc.postgresql.message.Format.BINARY;
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
@@ -27,17 +27,17 @@ final class FormatTest {
 
     @Test
     void getDiscriminatorBinary() {
-        assertThat(BINARY.getDiscriminator()).isEqualTo((byte) 1);
+        assertThat(FORMAT_BINARY.getDiscriminator()).isEqualTo((byte) 1);
     }
 
     @Test
     void getDiscriminatorText() {
-        assertThat(TEXT.getDiscriminator()).isEqualTo((byte) 0);
+        assertThat(FORMAT_TEXT.getDiscriminator()).isEqualTo((byte) 0);
     }
 
     @Test
     void valueOfBinary() {
-        assertThat(Format.valueOf((short) 1)).isEqualTo(BINARY);
+        assertThat(Format.valueOf((short) 1)).isEqualTo(FORMAT_BINARY);
     }
 
     @Test
@@ -48,7 +48,7 @@ final class FormatTest {
 
     @Test
     void valueOfText() {
-        assertThat(Format.valueOf((short) 0)).isEqualTo(TEXT);
+        assertThat(Format.valueOf((short) 0)).isEqualTo(FORMAT_TEXT);
     }
 
 }
