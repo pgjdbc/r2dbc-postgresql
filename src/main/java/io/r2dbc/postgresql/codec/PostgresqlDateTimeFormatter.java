@@ -28,7 +28,7 @@ import static java.time.temporal.ChronoField.NANO_OF_SECOND;
 import static java.time.temporal.ChronoField.SECOND_OF_MINUTE;
 import static java.time.temporal.ChronoField.YEAR;
 
-public class PostgresqlDateTimeFormatter {
+class PostgresqlDateTimeFormatter {
 
     static final DateTimeFormatter INSTANCE =
         new DateTimeFormatterBuilder()

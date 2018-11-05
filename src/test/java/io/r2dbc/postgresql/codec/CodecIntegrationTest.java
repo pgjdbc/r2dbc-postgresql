@@ -20,8 +20,8 @@ import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.postgresql.PostgresqlResult;
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
+import io.r2dbc.spi.Connection;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import reactor.core.publisher.Mono;
@@ -42,8 +42,12 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.UUID;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
-public class CodecIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+final class CodecIntegrationTest {
 
     @RegisterExtension
     static final PostgresqlServerExtension SERVER = new PostgresqlServerExtension();
@@ -59,593 +63,168 @@ public class CodecIntegrationTest {
     private final PostgresqlConnectionFactory connectionFactory = new PostgresqlConnectionFactory(this.configuration);
 
     @Test
-    void testBigDecimal() {
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("INSERT INTO codec (big_decimal_value) VALUES($1)").
-                bind("$1", new BigDecimal("1000.0"))
-                .execute()
-                .flatMap(PostgresqlResult::getRowsUpdated)
-                .single())
-            .as(StepVerifier::create)
-            .expectNext(1)
-            .verifyComplete();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("SELECT big_decimal_value FROM codec LIMIT 1")
-                .execute()
-                .single()
-                .flatMap(result -> result
-                    .map((row, meta) -> row.get("big_decimal_value", BigDecimal.class))
-                    .single()))
-            .as(StepVerifier::create)
-            .expectNext(new BigDecimal("1000.0"))
-            .verifyComplete();
+    void bigDecimal() {
+        testCodec(BigDecimal.class, new BigDecimal("1000.0"), "NUMERIC");
     }
 
     @Test
-    void testBoolean() {
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("INSERT INTO codec (boolean_value) VALUES($1)").
-                bind("$1", true)
-                .execute()
-                .flatMap(PostgresqlResult::getRowsUpdated)
-                .single())
-            .as(StepVerifier::create)
-            .expectNext(1)
-            .verifyComplete();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("SELECT boolean_value FROM codec LIMIT 1")
-                .execute()
-                .single()
-                .flatMap(result -> result
-                    .map((row, meta) -> row.get("boolean_value", Boolean.class))
-                    .single()))
-            .as(StepVerifier::create)
-            .expectNext(true)
-            .verifyComplete();
+    void booleanPrimitive() {
+        testCodec(Boolean.class, true, "BOOL");
     }
 
     @Test
-    void testByte() {
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("INSERT INTO codec (byte_value) VALUES($1)").
-                bind("$1", (byte) 10)
-                .execute()
-                .flatMap(PostgresqlResult::getRowsUpdated)
-                .single())
-            .as(StepVerifier::create)
-            .expectNext(1)
-            .verifyComplete();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("SELECT byte_value FROM codec LIMIT 1")
-                .execute()
-                .single()
-                .flatMap(result -> result
-                    .map((row, meta) -> row.get("byte_value", Byte.class))
-                    .single()))
-            .as(StepVerifier::create)
-            .expectNext((byte) 10)
-            .verifyComplete();
+    void bytePrimitive() {
+        testCodec(Byte.class, (byte) 10, "INT2");
     }
 
     @Test
-    void testCharacter() {
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("INSERT INTO codec (character_value) VALUES($1)").
-                bind("$1", 'a')
-                .execute()
-                .flatMap(PostgresqlResult::getRowsUpdated)
-                .single())
-            .as(StepVerifier::create)
-            .expectNext(1)
-            .verifyComplete();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("SELECT character_value FROM codec LIMIT 1")
-                .execute()
-                .single()
-                .flatMap(result -> result
-                    .map((row, meta) -> row.get("character_value", Character.class))
-                    .single()))
-            .as(StepVerifier::create)
-            .expectNext('a')
-            .verifyComplete();
+    void charPrimitive() {
+        testCodec(Character.class, 'a', "VARCHAR(1)");
     }
 
     @Test
-    void testDate() {
-        Date date = new Date();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("INSERT INTO codec (date_value) VALUES($1)").
-                bind("$1", date)
-                .execute()
-                .flatMap(PostgresqlResult::getRowsUpdated)
-                .single())
-            .as(StepVerifier::create)
-            .expectNext(1)
-            .verifyComplete();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("SELECT date_value FROM codec LIMIT 1")
-                .execute()
-                .single()
-                .flatMap(result -> result
-                    .map((row, meta) -> row.get("date_value", Date.class))
-                    .single()))
-            .as(StepVerifier::create)
-            .expectNext(date)
-            .verifyComplete();
+    void date() {
+        testCodec(Date.class, new Date(), "TIMESTAMP");
     }
 
     @Test
-    void testDouble() {
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("INSERT INTO codec (double_value) VALUES($1)").
-                bind("$1", 100.0)
-                .execute()
-                .flatMap(PostgresqlResult::getRowsUpdated)
-                .single())
-            .as(StepVerifier::create)
-            .expectNext(1)
-            .verifyComplete();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("SELECT double_value FROM codec LIMIT 1")
-                .execute()
-                .single()
-                .flatMap(result -> result
-                    .map((row, meta) -> row.get("double_value", Double.class))
-                    .single()))
-            .as(StepVerifier::create)
-            .expectNext(100.0)
-            .verifyComplete();
-    }
-
-    @Test
-    void testEnum() {
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("INSERT INTO codec (enum_value) VALUES($1)").
-                bind("$1", Color.RED)
-                .execute()
-                .flatMap(PostgresqlResult::getRowsUpdated)
-                .single())
-            .as(StepVerifier::create)
-            .expectNext(1)
-            .verifyComplete();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("SELECT enum_value FROM codec LIMIT 1")
-                .execute()
-                .single()
-                .flatMap(result -> result
-                    .map((row, meta) -> row.get("enum_value", Color.class))
-                    .single()))
-            .as(StepVerifier::create)
-            .expectNext(Color.RED)
-            .verifyComplete();
-    }
-
-    @Test
-    void testFloat() {
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("INSERT INTO codec (float_value) VALUES($1)").
-                bind("$1", 100.0f)
-                .execute()
-                .flatMap(PostgresqlResult::getRowsUpdated)
-                .single())
-            .as(StepVerifier::create)
-            .expectNext(1)
-            .verifyComplete();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("SELECT float_value FROM codec LIMIT 1")
-                .execute()
-                .single()
-                .flatMap(result -> result
-                    .map((row, meta) -> row.get("float_value", Float.class))
-                    .single()))
-            .as(StepVerifier::create)
-            .expectNext(100.0f)
-            .verifyComplete();
-    }
-
-    @Test
-    void testInetAddress() throws UnknownHostException {
-        this.connectionFactory.create()
-            .flatMap(c -> {
-                try {
-                    return c.createStatement("INSERT INTO codec (inet_address_value) VALUES($1)").
-                        bind("$1", InetAddress.getByName("127.0.0.1"))
-                        .execute()
-                        .flatMap(PostgresqlResult::getRowsUpdated)
-                        .single();
-                } catch (UnknownHostException e) {
-                    return Mono.error(e);
-                }
-            })
-            .as(StepVerifier::create)
-            .expectNext(1)
-            .verifyComplete();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("SELECT inet_address_value FROM codec LIMIT 1")
-                .execute()
-                .single()
-                .flatMap(result -> result
-                    .map((row, meta) -> row.get("inet_address_value", InetAddress.class))
-                    .single()))
-            .as(StepVerifier::create)
-            .expectNext(InetAddress.getByName("127.0.0.1"))
-            .verifyComplete();
-    }
-
-    @Test
-    void testInstant() {
-        Instant instant = Instant.now();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("INSERT INTO codec (instant_value) VALUES($1)").
-                bind("$1", instant)
-                .execute()
-                .flatMap(PostgresqlResult::getRowsUpdated)
-                .single())
-            .as(StepVerifier::create)
-            .expectNext(1)
-            .verifyComplete();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("SELECT instant_value FROM codec LIMIT 1")
-                .execute()
-                .single()
-                .flatMap(result -> result
-                    .map((row, meta) -> row.get("instant_value", Instant.class))
-                    .single()))
-            .as(StepVerifier::create)
-            .expectNext(instant)
-            .verifyComplete();
-    }
-
-    @Test
-    void testInteger() {
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("INSERT INTO codec (integer_value) VALUES($1)").
-                bind("$1", 100)
-                .execute()
-                .flatMap(PostgresqlResult::getRowsUpdated)
-                .single())
-            .as(StepVerifier::create)
-            .expectNext(1)
-            .verifyComplete();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("SELECT integer_value FROM codec LIMIT 1")
-                .execute()
-                .single()
-                .flatMap(result -> result
-                    .map((row, meta) -> row.get("integer_value", Integer.class))
-                    .single()))
-            .as(StepVerifier::create)
-            .expectNext(100)
-            .verifyComplete();
-    }
-
-    @Test
-    void testLocalDate() {
-        LocalDate localDate = LocalDate.now();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("INSERT INTO codec (local_date_value) VALUES($1)").
-                bind("$1", localDate)
-                .execute()
-                .flatMap(PostgresqlResult::getRowsUpdated)
-                .single())
-            .as(StepVerifier::create)
-            .expectNext(1)
-            .verifyComplete();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("SELECT local_date_value FROM codec LIMIT 1")
-                .execute()
-                .single()
-                .flatMap(result -> result
-                    .map((row, meta) -> row.get("local_date_value", LocalDate.class))
-                    .single()))
-            .as(StepVerifier::create)
-            .expectNext(localDate)
-            .verifyComplete();
-    }
-
-    @Test
-    void testLocalDateTime() {
-        LocalDateTime localDateTime = LocalDateTime.now();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("INSERT INTO codec (local_date_time_value) VALUES($1)").
-                bind("$1", localDateTime)
-                .execute()
-                .flatMap(PostgresqlResult::getRowsUpdated)
-                .single())
-            .as(StepVerifier::create)
-            .expectNext(1)
-            .verifyComplete();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("SELECT local_date_time_value FROM codec LIMIT 1")
-                .execute()
-                .single()
-                .flatMap(result -> result
-                    .map((row, meta) -> row.get("local_date_time_value", LocalDateTime.class))
-                    .single()))
-            .as(StepVerifier::create)
-            .expectNext(localDateTime)
-            .verifyComplete();
-    }
-
-    @Test
-    void testLocalTime() {
-        LocalTime localTime = LocalTime.now();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("INSERT INTO codec (local_time_value) VALUES($1)").
-                bind("$1", localTime)
-                .execute()
-                .flatMap(PostgresqlResult::getRowsUpdated)
-                .single())
-            .as(StepVerifier::create)
-            .expectNext(1)
-            .verifyComplete();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("SELECT local_time_value FROM codec LIMIT 1")
-                .execute()
-                .single()
-                .flatMap(result -> result
-                    .map((row, meta) -> row.get("local_time_value", LocalTime.class))
-                    .single()))
-            .as(StepVerifier::create)
-            .expectNext(localTime)
-            .verifyComplete();
-    }
-
-    @Test
-    void testLong() {
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("INSERT INTO codec (long_value) VALUES($1)").
-                bind("$1", 100L)
-                .execute()
-                .flatMap(PostgresqlResult::getRowsUpdated)
-                .single())
-            .as(StepVerifier::create)
-            .expectNext(1)
-            .verifyComplete();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("SELECT long_value FROM codec LIMIT 1")
-                .execute()
-                .single()
-                .flatMap(result -> result
-                    .map((row, meta) -> row.get("long_value", Long.class))
-                    .single()))
-            .as(StepVerifier::create)
-            .expectNext(100L)
-            .verifyComplete();
-    }
-
-    @Test
-    void testOffsetDateTime() {
-        OffsetDateTime offsetDateTime = OffsetDateTime.now();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("INSERT INTO codec (offset_date_time_value) VALUES($1)").
-                bind("$1", offsetDateTime)
-                .execute()
-                .flatMap(PostgresqlResult::getRowsUpdated)
-                .single())
-            .as(StepVerifier::create)
-            .expectNext(1)
-            .verifyComplete();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("SELECT offset_date_time_value FROM codec LIMIT 1")
-                .execute()
-                .single()
-                .flatMap(result -> result
-                    .map((row, meta) -> row.get("offset_date_time_value", OffsetDateTime.class))
-                    .map(odt -> OffsetDateTime.ofInstant(odt.toInstant(), ZoneId.systemDefault()))
-                    .single()))
-            .as(StepVerifier::create)
-            .expectNext(offsetDateTime)
-            .verifyComplete();
-    }
-
-    @Test
-    void testShort() {
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("INSERT INTO codec (short_value) VALUES($1)").
-                bind("$1", (short) 100)
-                .execute()
-                .flatMap(PostgresqlResult::getRowsUpdated)
-                .single())
-            .as(StepVerifier::create)
-            .expectNext(1)
-            .verifyComplete();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("SELECT short_value FROM codec LIMIT 1")
-                .execute()
-                .single()
-                .flatMap(result -> result
-                    .map((row, meta) -> row.get("short_value", Short.class))
-                    .single()))
-            .as(StepVerifier::create)
-            .expectNext((short) 100)
-            .verifyComplete();
-    }
-
-    @Test
-    void testString() {
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("INSERT INTO codec (string_value) VALUES($1)").
-                bind("$1", "foo")
-                .execute()
-                .flatMap(PostgresqlResult::getRowsUpdated)
-                .single())
-            .as(StepVerifier::create)
-            .expectNext(1)
-            .verifyComplete();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("SELECT string_value FROM codec LIMIT 1")
-                .execute()
-                .single()
-                .flatMap(result -> result
-                    .map((row, meta) -> row.get("string_value", String.class))
-                    .single()))
-            .as(StepVerifier::create)
-            .expectNext("foo")
-            .verifyComplete();
-    }
-
-    @Test
-    void testUri() {
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("INSERT INTO codec (uri_value) VALUES($1)").
-                bind("$1", URI.create("http://example.com"))
-                .execute()
-                .flatMap(PostgresqlResult::getRowsUpdated)
-                .single())
-            .as(StepVerifier::create)
-            .expectNext(1)
-            .verifyComplete();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("SELECT uri_value FROM codec LIMIT 1")
-                .execute()
-                .single()
-                .flatMap(result -> result
-                    .map((row, meta) -> row.get("uri_value", URI.class))
-                    .single()))
-            .as(StepVerifier::create)
-            .expectNext(URI.create("http://example.com"))
-            .verifyComplete();
-    }
-
-    @Test
-    void testUrl() throws MalformedURLException {
-        this.connectionFactory.create()
-            .flatMap(c -> {
-                try {
-                    return c.createStatement("INSERT INTO codec (url_value) VALUES($1)").
-                        bind("$1", new URL("http://example.com"))
-                        .execute()
-                        .flatMap(PostgresqlResult::getRowsUpdated)
-                        .single();
-                } catch (MalformedURLException e) {
-                    return Mono.error(e);
-                }
-            })
-            .as(StepVerifier::create)
-            .expectNext(1)
-            .verifyComplete();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("SELECT url_value FROM codec LIMIT 1")
-                .execute()
-                .single()
-                .flatMap(result -> result
-                    .map((row, meta) -> row.get("url_value", URL.class))
-                    .single()))
-            .as(StepVerifier::create)
-            .expectNext(new URL("http://example.com"))
-            .verifyComplete();
-    }
-
-    @Test
-    void testUuid() throws MalformedURLException {
-        UUID uuid = UUID.randomUUID();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("INSERT INTO codec (uuid_value) VALUES($1)").
-                bind("$1", uuid)
-                .execute()
-                .flatMap(PostgresqlResult::getRowsUpdated)
-                .single())
-            .as(StepVerifier::create)
-            .expectNext(1)
-            .verifyComplete();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("SELECT uuid_value FROM codec LIMIT 1")
-                .execute()
-                .single()
-                .flatMap(result -> result
-                    .map((row, meta) -> row.get("uuid_value", UUID.class))
-                    .single()))
-            .as(StepVerifier::create)
-            .expectNext(uuid)
-            .verifyComplete();
-    }
-
-    @Test
-    void testZonedDateTime() {
-        ZonedDateTime zonedDateTime = ZonedDateTime.now();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("INSERT INTO codec (zoned_date_time_value) VALUES($1)").
-                bind("$1", zonedDateTime)
-                .execute()
-                .flatMap(PostgresqlResult::getRowsUpdated)
-                .single())
-            .as(StepVerifier::create)
-            .expectNext(1)
-            .verifyComplete();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("SELECT zoned_date_time_value FROM codec LIMIT 1")
-                .execute()
-                .single()
-                .flatMap(result -> result
-                    .map((row, meta) -> row.get("zoned_date_time_value", ZonedDateTime.class))
-                    .map(zdt -> ZonedDateTime.ofInstant(zdt.toInstant(), ZoneId.systemDefault()))
-                    .single()))
-            .as(StepVerifier::create)
-            .expectNext(zonedDateTime)
-            .verifyComplete();
-    }
-
-    @Test
-    void testZoneId() {
-        ZoneId zoneId = ZoneId.systemDefault();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("INSERT INTO codec (zone_id_value) VALUES($1)").
-                bind("$1", zoneId)
-                .execute()
-                .flatMap(PostgresqlResult::getRowsUpdated)
-                .single())
-            .as(StepVerifier::create)
-            .expectNext(1)
-            .verifyComplete();
-        this.connectionFactory.create()
-            .flatMap(c -> c.createStatement("SELECT zone_id_value FROM codec LIMIT 1")
-                .execute()
-                .single()
-                .flatMap(result -> result
-                    .map((row, meta) -> row.get("zone_id_value", ZoneId.class))
-                    .single()))
-            .as(StepVerifier::create)
-            .expectNext(zoneId)
-            .verifyComplete();
-    }
-
-    @BeforeEach
-    void createTable() {
-        SERVER.getJdbcOperations().execute("CREATE TABLE codec ( " + //
-            "  big_decimal_value NUMERIC " + //
-            ", boolean_value BOOL " + //
-            ", byte_value INT2 " + //
-            ", character_value VARCHAR(1) " + //
-            ", date_value TIMESTAMP " + //
-            ", double_value FLOAT8 " + //
-            ", enum_value VARCHAR(16) " + //
-            ", float_value FLOAT4 " + //
-            ", inet_address_value VARCHAR(128) " + //
-            ", instant_value TIMESTAMP " + //
-            ", integer_value INT4 " + //
-            ", local_date_value DATE " + //
-            ", local_date_time_value TIMESTAMP" + //
-            ", local_time_value TIME" + //
-            ", long_value INT8" + //
-            ", offset_date_time_value TIMESTAMP WITH TIME ZONE" + //
-            ", short_value INT2 " + //
-            ", string_value VARCHAR(128) " + //
-            ", uri_value VARCHAR(128) " + //
-            ", url_value VARCHAR(128) " + //
-            ", uuid_value UUID " + //
-            ", zoned_date_time_value TIMESTAMP WITH TIME ZONE" + //
-            ", zone_id_value VARCHAR(32)" + //
-            ")");
+    void doublePrimitive() {
+        testCodec(Double.class, 100.0, "FLOAT8");
     }
 
     @AfterEach
     void dropTable() {
-        SERVER.getJdbcOperations().execute("DROP TABLE codec");
+        SERVER.getJdbcOperations().execute("DROP TABLE test");
     }
 
+    @Test
+    void enumPrimitive() {
+        testCodec(Color.class, Color.RED, "VARCHAR(16)");
+    }
 
-    public enum Color {
+    @Test
+    void floatPrimitive() {
+        testCodec(Float.class, 100.0F, "FLOAT4");
+    }
+
+    @Test
+    void inetAddress() throws UnknownHostException {
+        testCodec(InetAddress.class, InetAddress.getLocalHost(), "VARCHAR(128)");
+    }
+
+    @Test
+    void instant() {
+        testCodec(Instant.class, Instant.now(), "TIMESTAMP");
+    }
+
+    @Test
+    void intPrimitive() {
+        testCodec(Integer.class, 100, "INT4");
+    }
+
+    @Test
+    void localDate() {
+        testCodec(LocalDate.class, LocalDate.now(), "DATE");
+    }
+
+    @Test
+    void localDateTime() {
+        testCodec(LocalDateTime.class, LocalDateTime.now(), "TIMESTAMP");
+    }
+
+    @Test
+    void localTime() {
+        testCodec(LocalTime.class, LocalTime.now(), "TIME");
+    }
+
+    @Test
+    void longPrimitive() {
+        testCodec(Long.class, 100L, "INT8");
+    }
+
+    @Test
+    void offsetDateTime() {
+        testCodec(OffsetDateTime.class, OffsetDateTime.now(), (actual, expected) -> assertThat(actual.isEqual(expected)).isTrue(), "TIMESTAMP WITH TIME ZONE");
+    }
+
+    @Test
+    void shortPrimitive() {
+        testCodec(Short.class, (short) 100, "INT2");
+    }
+
+    @Test
+    void string() {
+        testCodec(String.class, "test-value", "VARCHAR(128)");
+    }
+
+    @Test
+    void uri() {
+        testCodec(URI.class, URI.create("https://localhost"), "VARCHAR(128)");
+    }
+
+    @Test
+    void url() throws MalformedURLException {
+        testCodec(URL.class, new URL("https://localhost"), "VARCHAR(128)");
+    }
+
+    @Test
+    void uuid() {
+        testCodec(UUID.class, UUID.randomUUID(), "UUID");
+    }
+
+    @Test
+    void zoneId() {
+        testCodec(ZoneId.class, ZoneId.systemDefault(), "VARCHAR(32)");
+    }
+
+    @Test
+    void zonedDateTime() {
+        testCodec(ZonedDateTime.class, ZonedDateTime.now(), (actual, expected) -> assertThat(actual.isEqual(expected)).isTrue(), "TIMESTAMP WITH TIME ZONE");
+    }
+
+    private static <T> Mono<T> close(Connection connection) {
+        return Mono.from(connection
+            .close())
+            .then(Mono.empty());
+    }
+
+    private <T> void testCodec(Class<T> javaType, T value, String sqlType) {
+        testCodec(javaType, value, (actual, expected) -> assertThat(actual).isEqualTo(expected), sqlType);
+    }
+
+    private <T> void testCodec(Class<T> javaType, T value, BiConsumer<T, T> equality, String sqlType) {
+        SERVER.getJdbcOperations().execute(String.format("CREATE TABLE test ( value %s )", sqlType));
+
+        this.connectionFactory.create()
+            .flatMapMany(connection -> connection
+
+                .createStatement("INSERT INTO test VALUES ($1)")
+                .bind("$1", value)
+                .execute()
+
+                .flatMap(PostgresqlResult::getRowsUpdated)
+
+                .concatWith(close(connection)))
+            .as(StepVerifier::create)
+            .expectNext(1)
+            .verifyComplete();
+
+        this.connectionFactory.create()
+            .flatMapMany(connection -> connection
+
+                .createStatement("SELECT value FROM test")
+                .execute()
+
+                .map(result -> result.map((row, metadata) -> row.get("value", javaType)))
+                .flatMap(Function.identity())
+
+                .concatWith(close(connection)))
+            .as(StepVerifier::create)
+            .assertNext(r2dbc -> equality.accept(r2dbc, value))
+            .verifyComplete();
+    }
+
+    private enum Color {
         RED
     }
 }

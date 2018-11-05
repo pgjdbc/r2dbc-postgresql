@@ -42,7 +42,7 @@ final class DateCodecTest {
 
     @Test
     void decode() {
-        Date date = new Date(Instant.parse("2018-11-04T15:37:31.177Z").toEpochMilli());
+        Date date = Date.from(Instant.parse("2018-11-04T15:37:31.177Z"));
 
         assertThat(new DateCodec(TEST).decode(encode(TEST, "2018-11-04 15:37:31.177"), FORMAT_TEXT, Date.class))
             .isEqualTo(date);
