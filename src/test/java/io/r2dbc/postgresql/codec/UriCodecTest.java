@@ -21,8 +21,8 @@ import org.junit.jupiter.api.Test;
 
 import java.net.URI;
 
-import static io.r2dbc.postgresql.message.Format.BINARY;
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
@@ -40,22 +40,22 @@ final class UriCodecTest {
 
     @Test
     void decode() {
-        assertThat(new UriCodec(TEST).decode(encode(TEST, "http://localhost"), TEXT, URI.class))
+        assertThat(new UriCodec(TEST).decode(encode(TEST, "http://localhost"), FORMAT_TEXT, URI.class))
             .isEqualTo(URI.create("http://localhost"));
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new UriCodec(TEST).decode(null, TEXT, URI.class)).isNull();
+        assertThat(new UriCodec(TEST).decode(null, FORMAT_TEXT, URI.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         UriCodec codec = new UriCodec(TEST);
 
-        assertThat(codec.doCanDecode(BINARY, VARCHAR)).isFalse();
-        assertThat(codec.doCanDecode(TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(TEXT, VARCHAR)).isTrue();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, VARCHAR)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, VARCHAR)).isTrue();
     }
 
     @Test
@@ -66,7 +66,7 @@ final class UriCodecTest {
 
     @Test
     void doCanDecodeNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new UriCodec(TEST).doCanDecode(TEXT, null))
+        assertThatNullPointerException().isThrownBy(() -> new UriCodec(TEST).doCanDecode(FORMAT_TEXT, null))
             .withMessage("type must not be null");
     }
 
@@ -75,7 +75,7 @@ final class UriCodecTest {
         URI uri = URI.create("http://localhost");
 
         assertThat(new UriCodec(TEST).doEncode(uri))
-            .isEqualTo(new Parameter(TEXT, VARCHAR.getObjectId(), encode(TEST, "http://localhost")));
+            .isEqualTo(new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), encode(TEST, "http://localhost")));
     }
 
     @Test
@@ -87,7 +87,7 @@ final class UriCodecTest {
     @Test
     void encodeNull() {
         assertThat(new UriCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(TEXT, VARCHAR.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), null));
     }
 
 }

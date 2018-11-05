@@ -27,7 +27,7 @@ import reactor.util.annotation.Nullable;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMPTZ;
 
 final class OffsetDateTimeCodec extends AbstractCodec<OffsetDateTime> {
@@ -41,7 +41,7 @@ final class OffsetDateTimeCodec extends AbstractCodec<OffsetDateTime> {
 
     @Override
     public Parameter encodeNull() {
-        return createNull(TEXT, TIMESTAMPTZ);
+        return createNull(FORMAT_TEXT, TIMESTAMPTZ);
     }
 
     @Override
@@ -49,7 +49,7 @@ final class OffsetDateTimeCodec extends AbstractCodec<OffsetDateTime> {
         Objects.requireNonNull(format, "format must not be null");
         Objects.requireNonNull(type, "type must not be null");
 
-        return TEXT == format && TIMESTAMPTZ == type;
+        return FORMAT_TEXT == format && TIMESTAMPTZ == type;
     }
 
     @Override
@@ -64,7 +64,7 @@ final class OffsetDateTimeCodec extends AbstractCodec<OffsetDateTime> {
         Objects.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toString());
-        return create(TEXT, TIMESTAMPTZ, encoded);
+        return create(FORMAT_TEXT, TIMESTAMPTZ, encoded);
     }
 
 }

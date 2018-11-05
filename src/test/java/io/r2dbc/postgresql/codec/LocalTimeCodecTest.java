@@ -21,8 +21,8 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalTime;
 
-import static io.r2dbc.postgresql.message.Format.BINARY;
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIME;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
@@ -43,22 +43,22 @@ final class LocalTimeCodecTest {
     void decode() {
         LocalTime localTime = LocalTime.now();
 
-        assertThat(new LocalTimeCodec(TEST).decode(encode(TEST, localTime.toString()), TEXT, LocalTime.class))
+        assertThat(new LocalTimeCodec(TEST).decode(encode(TEST, localTime.toString()), FORMAT_TEXT, LocalTime.class))
             .isEqualTo(localTime);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new LocalTimeCodec(TEST).decode(null, TEXT, LocalTime.class)).isNull();
+        assertThat(new LocalTimeCodec(TEST).decode(null, FORMAT_TEXT, LocalTime.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         LocalTimeCodec codec = new LocalTimeCodec(TEST);
 
-        assertThat(codec.doCanDecode(BINARY, TIME)).isFalse();
-        assertThat(codec.doCanDecode(TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(TEXT, TIME)).isTrue();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, TIME)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, TIME)).isTrue();
     }
 
     @Test
@@ -69,7 +69,7 @@ final class LocalTimeCodecTest {
 
     @Test
     void doCanDecodeNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new LocalTimeCodec(TEST).doCanDecode(TEXT, null))
+        assertThatNullPointerException().isThrownBy(() -> new LocalTimeCodec(TEST).doCanDecode(FORMAT_TEXT, null))
             .withMessage("type must not be null");
     }
 
@@ -78,7 +78,7 @@ final class LocalTimeCodecTest {
         LocalTime localTime = LocalTime.now();
 
         assertThat(new LocalTimeCodec(TEST).doEncode(localTime))
-            .isEqualTo(new Parameter(TEXT, TIME.getObjectId(), encode(TEST, localTime.toString())));
+            .isEqualTo(new Parameter(FORMAT_TEXT, TIME.getObjectId(), encode(TEST, localTime.toString())));
     }
 
     @Test
@@ -90,7 +90,7 @@ final class LocalTimeCodecTest {
     @Test
     void encodeNull() {
         assertThat(new LocalTimeCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(TEXT, TIME.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_TEXT, TIME.getObjectId(), null));
     }
 
 }

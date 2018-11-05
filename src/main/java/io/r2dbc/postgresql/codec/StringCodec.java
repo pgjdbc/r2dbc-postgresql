@@ -26,7 +26,7 @@ import reactor.util.annotation.Nullable;
 
 import java.util.Objects;
 
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.CHAR;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.UNKNOWN;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
@@ -42,7 +42,7 @@ final class StringCodec extends AbstractCodec<String> {
 
     @Override
     public Parameter encodeNull() {
-        return createNull(TEXT, VARCHAR);
+        return createNull(FORMAT_TEXT, VARCHAR);
     }
 
     @Override
@@ -50,7 +50,7 @@ final class StringCodec extends AbstractCodec<String> {
         Objects.requireNonNull(format, "format must not be null");
         Objects.requireNonNull(type, "type must not be null");
 
-        return TEXT == format && (CHAR == type || PostgresqlObjectId.TEXT == type || UNKNOWN == type || VARCHAR == type);
+        return FORMAT_TEXT == format && (CHAR == type || PostgresqlObjectId.TEXT == type || UNKNOWN == type || VARCHAR == type);
     }
 
     @Override
@@ -65,7 +65,7 @@ final class StringCodec extends AbstractCodec<String> {
         Objects.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value);
-        return create(TEXT, VARCHAR, encoded);
+        return create(FORMAT_TEXT, VARCHAR, encoded);
     }
 
 }

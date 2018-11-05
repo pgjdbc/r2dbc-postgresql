@@ -22,8 +22,8 @@ import org.junit.jupiter.api.Test;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import static io.r2dbc.postgresql.message.Format.BINARY;
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
@@ -41,22 +41,22 @@ final class UrlCodecTest {
 
     @Test
     void decode() throws MalformedURLException {
-        assertThat(new UrlCodec(TEST).decode(encode(TEST, "http://localhost"), TEXT, URL.class))
+        assertThat(new UrlCodec(TEST).decode(encode(TEST, "http://localhost"), FORMAT_TEXT, URL.class))
             .isEqualTo(new URL("http://localhost"));
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new UrlCodec(TEST).decode(null, TEXT, URL.class)).isNull();
+        assertThat(new UrlCodec(TEST).decode(null, FORMAT_TEXT, URL.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         UrlCodec codec = new UrlCodec(TEST);
 
-        assertThat(codec.doCanDecode(BINARY, VARCHAR)).isFalse();
-        assertThat(codec.doCanDecode(TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(TEXT, VARCHAR)).isTrue();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, VARCHAR)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, VARCHAR)).isTrue();
     }
 
     @Test
@@ -67,7 +67,7 @@ final class UrlCodecTest {
 
     @Test
     void doCanDecodeNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new UrlCodec(TEST).doCanDecode(TEXT, null))
+        assertThatNullPointerException().isThrownBy(() -> new UrlCodec(TEST).doCanDecode(FORMAT_TEXT, null))
             .withMessage("type must not be null");
     }
 
@@ -76,7 +76,7 @@ final class UrlCodecTest {
         URL url = new URL("http://localhost");
 
         assertThat(new UrlCodec(TEST).doEncode(url))
-            .isEqualTo(new Parameter(TEXT, VARCHAR.getObjectId(), encode(TEST, "http://localhost")));
+            .isEqualTo(new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), encode(TEST, "http://localhost")));
     }
 
     @Test
@@ -88,7 +88,7 @@ final class UrlCodecTest {
     @Test
     void encodeNull() {
         assertThat(new UrlCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(TEXT, VARCHAR.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), null));
     }
 
 }

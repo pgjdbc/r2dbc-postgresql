@@ -18,7 +18,7 @@ package io.r2dbc.postgresql.client;
 
 import org.junit.jupiter.api.Test;
 
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
@@ -33,15 +33,15 @@ final class ParameterTest {
 
     @Test
     void constructorNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new Parameter(TEXT, null, null))
+        assertThatNullPointerException().isThrownBy(() -> new Parameter(FORMAT_TEXT, null, null))
             .withMessage("type must not be null");
     }
 
     @Test
     void getters() {
-        Parameter parameter = new Parameter(TEXT, 100, TEST.buffer(4).writeInt(200));
+        Parameter parameter = new Parameter(FORMAT_TEXT, 100, TEST.buffer(4).writeInt(200));
 
-        assertThat(parameter.getFormat()).isEqualTo(TEXT);
+        assertThat(parameter.getFormat()).isEqualTo(FORMAT_TEXT);
         assertThat(parameter.getType()).isEqualTo(100);
         assertThat(parameter.getValue()).isEqualTo(TEST.buffer(4).writeInt(200));
     }

@@ -19,8 +19,8 @@ package io.r2dbc.postgresql.codec;
 import io.r2dbc.postgresql.client.Parameter;
 import org.junit.jupiter.api.Test;
 
-import static io.r2dbc.postgresql.message.Format.BINARY;
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.FLOAT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
@@ -40,13 +40,13 @@ final class FloatCodecTest {
     void decode() {
         FloatCodec codec = new FloatCodec(TEST);
 
-        assertThat(codec.decode(TEST.buffer(4).writeFloat(100.0f), BINARY, Float.class)).isEqualTo(100.0f);
-        assertThat(codec.decode(encode(TEST, "100.0"), TEXT, Float.class)).isEqualTo(100.0f);
+        assertThat(codec.decode(TEST.buffer(4).writeFloat(100.0f), FORMAT_BINARY, Float.class)).isEqualTo(100.0f);
+        assertThat(codec.decode(encode(TEST, "100.0"), FORMAT_TEXT, Float.class)).isEqualTo(100.0f);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new FloatCodec(TEST).decode(null, BINARY, Float.class)).isNull();
+        assertThat(new FloatCodec(TEST).decode(null, FORMAT_BINARY, Float.class)).isNull();
     }
 
     @Test
@@ -59,9 +59,9 @@ final class FloatCodecTest {
     void doCanDecode() {
         FloatCodec codec = new FloatCodec(TEST);
 
-        assertThat(codec.doCanDecode(BINARY, VARCHAR)).isFalse();
-        assertThat(codec.doCanDecode(BINARY, FLOAT4)).isTrue();
-        assertThat(codec.doCanDecode(TEXT, FLOAT4)).isTrue();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, VARCHAR)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, FLOAT4)).isTrue();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, FLOAT4)).isTrue();
     }
 
     @Test
@@ -73,7 +73,7 @@ final class FloatCodecTest {
     @Test
     void doEncode() {
         assertThat(new FloatCodec(TEST).doEncode(100f))
-            .isEqualTo(new Parameter(BINARY, FLOAT4.getObjectId(), TEST.buffer(4).writeFloat(100)));
+            .isEqualTo(new Parameter(FORMAT_BINARY, FLOAT4.getObjectId(), TEST.buffer(4).writeFloat(100)));
     }
 
     @Test
@@ -85,7 +85,7 @@ final class FloatCodecTest {
     @Test
     void encodeNull() {
         assertThat(new FloatCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(BINARY, FLOAT4.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_BINARY, FLOAT4.getObjectId(), null));
     }
 
 }

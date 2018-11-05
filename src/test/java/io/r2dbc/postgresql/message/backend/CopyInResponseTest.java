@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 
-import static io.r2dbc.postgresql.message.Format.BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.backend.BackendMessageAssert.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
@@ -28,13 +28,13 @@ final class CopyInResponseTest {
 
     @Test
     void constructorNoColumnFormats() {
-        assertThatNullPointerException().isThrownBy(() -> new CopyInResponse(Collections.singletonList(BINARY), null))
+        assertThatNullPointerException().isThrownBy(() -> new CopyInResponse(Collections.singletonList(FORMAT_BINARY), null))
             .withMessage("overallFormat must not be null");
     }
 
     @Test
     void constructorNoOverallFormat() {
-        assertThatNullPointerException().isThrownBy(() -> new CopyInResponse(null, BINARY))
+        assertThatNullPointerException().isThrownBy(() -> new CopyInResponse(null, FORMAT_BINARY))
             .withMessage("columnFormats must not be null");
     }
 
@@ -45,7 +45,7 @@ final class CopyInResponseTest {
                 .writeByte(1)
                 .writeShort(1)
                 .writeShort(1))
-            .isEqualTo(new CopyInResponse(Collections.singletonList(BINARY), BINARY));
+            .isEqualTo(new CopyInResponse(Collections.singletonList(FORMAT_BINARY), FORMAT_BINARY));
     }
 
 }

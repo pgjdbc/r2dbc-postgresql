@@ -26,7 +26,7 @@ import reactor.util.annotation.Nullable;
 
 import java.util.Objects;
 
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.BOOL;
 
 final class BooleanCodec extends AbstractCodec<Boolean> {
@@ -40,7 +40,7 @@ final class BooleanCodec extends AbstractCodec<Boolean> {
 
     @Override
     public Parameter encodeNull() {
-        return createNull(TEXT, BOOL);
+        return createNull(FORMAT_TEXT, BOOL);
     }
 
     @Override
@@ -48,7 +48,7 @@ final class BooleanCodec extends AbstractCodec<Boolean> {
         Objects.requireNonNull(format, "format must not be null");
         Objects.requireNonNull(type, "type must not be null");
 
-        return TEXT == format && BOOL == type;
+        return FORMAT_TEXT == format && BOOL == type;
     }
 
     @Override
@@ -69,7 +69,7 @@ final class BooleanCodec extends AbstractCodec<Boolean> {
         Objects.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value ? "TRUE" : "FALSE");
-        return create(TEXT, BOOL, encoded);
+        return create(FORMAT_TEXT, BOOL, encoded);
     }
 
 }

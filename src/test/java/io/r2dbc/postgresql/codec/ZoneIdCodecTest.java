@@ -21,8 +21,8 @@ import org.junit.jupiter.api.Test;
 
 import java.time.ZoneId;
 
-import static io.r2dbc.postgresql.message.Format.BINARY;
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
@@ -42,22 +42,22 @@ final class ZoneIdCodecTest {
     void decode() {
         ZoneId zoneId = ZoneId.systemDefault();
 
-        assertThat(new ZoneIdCodec(TEST).decode(encode(TEST, zoneId.getId()), TEXT, ZoneId.class))
+        assertThat(new ZoneIdCodec(TEST).decode(encode(TEST, zoneId.getId()), FORMAT_TEXT, ZoneId.class))
             .isEqualTo(zoneId);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new ZoneIdCodec(TEST).decode(null, TEXT, ZoneId.class)).isNull();
+        assertThat(new ZoneIdCodec(TEST).decode(null, FORMAT_TEXT, ZoneId.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         ZoneIdCodec codec = new ZoneIdCodec(TEST);
 
-        assertThat(codec.doCanDecode(BINARY, VARCHAR)).isFalse();
-        assertThat(codec.doCanDecode(TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(TEXT, VARCHAR)).isTrue();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, VARCHAR)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, VARCHAR)).isTrue();
     }
 
     @Test
@@ -68,7 +68,7 @@ final class ZoneIdCodecTest {
 
     @Test
     void doCanDecodeNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new ZoneIdCodec(TEST).doCanDecode(TEXT, null))
+        assertThatNullPointerException().isThrownBy(() -> new ZoneIdCodec(TEST).doCanDecode(FORMAT_TEXT, null))
             .withMessage("type must not be null");
     }
 
@@ -77,7 +77,7 @@ final class ZoneIdCodecTest {
         ZoneId zoneId = ZoneId.systemDefault();
 
         assertThat(new ZoneIdCodec(TEST).doEncode(zoneId))
-            .isEqualTo(new Parameter(TEXT, VARCHAR.getObjectId(), encode(TEST, zoneId.getId())));
+            .isEqualTo(new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), encode(TEST, zoneId.getId())));
     }
 
     @Test
@@ -89,7 +89,7 @@ final class ZoneIdCodecTest {
     @Test
     void encodeNull() {
         assertThat(new ZoneIdCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(TEXT, VARCHAR.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), null));
     }
 
 }

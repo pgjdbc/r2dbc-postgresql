@@ -26,8 +26,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static io.r2dbc.postgresql.message.Format.BINARY;
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -37,9 +37,9 @@ import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 final class PostgresqlRowTest {
 
     private final List<Column> columns = Arrays.asList(
-        new Column(TEST.buffer(4).writeInt(100), 200, BINARY, "test-name-1"),
-        new Column(TEST.buffer(4).writeInt(300), 400, TEXT, "test-name-2"),
-        new Column(null, 400, TEXT, "test-name-3")
+        new Column(TEST.buffer(4).writeInt(100), 200, FORMAT_BINARY, "test-name-1"),
+        new Column(TEST.buffer(4).writeInt(300), 400, FORMAT_TEXT, "test-name-2"),
+        new Column(null, 400, FORMAT_TEXT, "test-name-3")
     );
 
     @Test
@@ -59,7 +59,7 @@ final class PostgresqlRowTest {
         Object value = new Object();
 
         MockCodecs codecs = MockCodecs.builder()
-            .decoding(TEST.buffer(4).writeInt(300), 400, TEXT, Object.class, value)
+            .decoding(TEST.buffer(4).writeInt(300), 400, FORMAT_TEXT, Object.class, value)
             .build();
 
         assertThat(new PostgresqlRow(codecs, this.columns).get("test-name-2")).isSameAs(value);
@@ -70,7 +70,7 @@ final class PostgresqlRowTest {
         Object value = new Object();
 
         MockCodecs codecs = MockCodecs.builder()
-            .decoding(TEST.buffer(4).writeInt(300), 400, TEXT, Object.class, value)
+            .decoding(TEST.buffer(4).writeInt(300), 400, FORMAT_TEXT, Object.class, value)
             .build();
 
         PostgresqlRow row = new PostgresqlRow(codecs, this.columns);
@@ -85,7 +85,7 @@ final class PostgresqlRowTest {
         Object value = new Object();
 
         MockCodecs codecs = MockCodecs.builder()
-            .decoding(TEST.buffer(4).writeInt(300), 400, TEXT, Object.class, value)
+            .decoding(TEST.buffer(4).writeInt(300), 400, FORMAT_TEXT, Object.class, value)
             .build();
 
         assertThat(new PostgresqlRow(codecs, this.columns).get(1, Object.class)).isSameAs(value);
@@ -108,7 +108,7 @@ final class PostgresqlRowTest {
         Object value = new Object();
 
         MockCodecs codecs = MockCodecs.builder()
-            .decoding(TEST.buffer(4).writeInt(300), 400, TEXT, Object.class, value)
+            .decoding(TEST.buffer(4).writeInt(300), 400, FORMAT_TEXT, Object.class, value)
             .build();
 
         assertThat(new PostgresqlRow(codecs, this.columns).get("test-name-2", Object.class)).isSameAs(value);
@@ -129,7 +129,7 @@ final class PostgresqlRowTest {
     @Test
     void getNull() {
         MockCodecs codecs = MockCodecs.builder()
-            .decoding(null, 400, TEXT, Object.class, null)
+            .decoding(null, 400, FORMAT_TEXT, Object.class, null)
             .build();
 
         assertThat(new PostgresqlRow(codecs, this.columns).get("test-name-3", Object.class)).isNull();
@@ -148,11 +148,11 @@ final class PostgresqlRowTest {
         Object value = new Object();
 
         MockCodecs codecs = MockCodecs.builder()
-            .decoding(TEST.buffer(4).writeInt(100), 300, TEXT, Object.class, value)
+            .decoding(TEST.buffer(4).writeInt(100), 300, FORMAT_TEXT, Object.class, value)
             .build();
 
         PostgresqlRow row = PostgresqlRow.toRow(codecs, new DataRow(Collections.singletonList(TEST.buffer(4).writeInt(100))),
-            new RowDescription(Collections.singletonList(new RowDescription.Field((short) 200, 300, (short) 400, (short) 500, TEXT, "test-name-1", 600))));
+            new RowDescription(Collections.singletonList(new RowDescription.Field((short) 200, 300, (short) 400, (short) 500, FORMAT_TEXT, "test-name-1", 600))));
 
         assertThat(row.get(0, Object.class)).isSameAs(value);
     }

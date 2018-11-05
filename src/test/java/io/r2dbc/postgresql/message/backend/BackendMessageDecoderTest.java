@@ -28,7 +28,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static io.netty.util.CharsetUtil.UTF_8;
-import static io.r2dbc.postgresql.message.Format.BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.backend.Field.FieldType.CODE;
 import static io.r2dbc.postgresql.message.backend.ReadyForQuery.TransactionStatus.IDLE;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
@@ -161,7 +161,7 @@ final class BackendMessageDecoderTest {
             .writeByte(1)
             .writeShort(1)
             .writeShort(1))
-            .expectNext(new CopyBothResponse(Collections.singletonList(BINARY), BINARY))
+            .expectNext(new CopyBothResponse(Collections.singletonList(FORMAT_BINARY), FORMAT_BINARY))
             .verifyComplete();
     }
 
@@ -185,7 +185,7 @@ final class BackendMessageDecoderTest {
             .writeByte(1)
             .writeShort(1)
             .writeShort(1))
-            .expectNext(new CopyInResponse(Collections.singletonList(BINARY), BINARY))
+            .expectNext(new CopyInResponse(Collections.singletonList(FORMAT_BINARY), FORMAT_BINARY))
             .verifyComplete();
     }
 
@@ -195,7 +195,7 @@ final class BackendMessageDecoderTest {
             .writeByte(1)
             .writeShort(1)
             .writeShort(1))
-            .expectNext(new CopyOutResponse(Collections.singletonList(BINARY), BINARY))
+            .expectNext(new CopyOutResponse(Collections.singletonList(FORMAT_BINARY), FORMAT_BINARY))
             .verifyComplete();
     }
 
@@ -361,7 +361,7 @@ final class BackendMessageDecoderTest {
 
             return buffer;
         })
-            .expectNext(new RowDescription(Collections.singletonList(new RowDescription.Field((short) 100, 200, 300, (short) 400, BINARY, "test-name", 500))))
+            .expectNext(new RowDescription(Collections.singletonList(new RowDescription.Field((short) 100, 200, 300, (short) 400, FORMAT_BINARY, "test-name", 500))))
             .verifyComplete();
     }
 

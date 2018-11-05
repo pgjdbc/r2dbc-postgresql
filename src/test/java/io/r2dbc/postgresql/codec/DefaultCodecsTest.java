@@ -23,8 +23,8 @@ import org.junit.jupiter.api.Test;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 
-import static io.r2dbc.postgresql.message.Format.BINARY;
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT2;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMP;
@@ -45,13 +45,13 @@ final class DefaultCodecsTest {
 
     @Test
     void decode() {
-        assertThat(new DefaultCodecs(TEST).decode(TEST.buffer(4).writeInt(100), INT4.getObjectId(), BINARY, Integer.class))
+        assertThat(new DefaultCodecs(TEST).decode(TEST.buffer(4).writeInt(100), INT4.getObjectId(), FORMAT_BINARY, Integer.class))
             .isEqualTo(100);
     }
 
     @Test
     void decodeDefaultType() {
-        assertThat(new DefaultCodecs(TEST).decode(TEST.buffer(4).writeInt(100), INT4.getObjectId(), BINARY, Object.class))
+        assertThat(new DefaultCodecs(TEST).decode(TEST.buffer(4).writeInt(100), INT4.getObjectId(), FORMAT_BINARY, Object.class))
             .isEqualTo(100);
     }
 
@@ -63,19 +63,19 @@ final class DefaultCodecsTest {
 
     @Test
     void decodeNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new DefaultCodecs(TEST).decode(TEST.buffer(4), INT4.getObjectId(), BINARY, null))
+        assertThatNullPointerException().isThrownBy(() -> new DefaultCodecs(TEST).decode(TEST.buffer(4), INT4.getObjectId(), FORMAT_BINARY, null))
             .withMessage("type must not be null");
     }
 
     @Test
     void decodeNull() {
-        assertThat(new DefaultCodecs(TEST).decode(null, INT4.getObjectId(), BINARY, Integer.class))
+        assertThat(new DefaultCodecs(TEST).decode(null, INT4.getObjectId(), FORMAT_BINARY, Integer.class))
             .isNull();
     }
 
     @Test
     void decodeUnsupportedType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new DefaultCodecs(TEST).decode(TEST.buffer(4), INT4.getObjectId(), BINARY, Void.class))
+        assertThatIllegalArgumentException().isThrownBy(() -> new DefaultCodecs(TEST).decode(TEST.buffer(4), INT4.getObjectId(), FORMAT_BINARY, Void.class))
             .withMessage("Cannot decode value of type java.lang.Void");
     }
 
@@ -83,18 +83,18 @@ final class DefaultCodecsTest {
     void delegatePriority() {
         Codecs codecs = new DefaultCodecs(TEST);
 
-        assertThat(codecs.decode(TEST.buffer(2).writeShort((byte) 100), INT2.getObjectId(), BINARY, Object.class)).isInstanceOf(Short.class);
-        assertThat(codecs.decode(ByteBufUtils.encode(TEST, "100"), INT2.getObjectId(), TEXT, Object.class)).isInstanceOf(Short.class);
-        assertThat(codecs.decode(ByteBufUtils.encode(TEST, "test"), VARCHAR.getObjectId(), TEXT, Object.class)).isInstanceOf(String.class);
-        assertThat(codecs.decode(ByteBufUtils.encode(TEST, Instant.now().toString()), TIMESTAMP.getObjectId(), TEXT, Object.class)).isInstanceOf(Instant.class);
-        assertThat(codecs.decode(ByteBufUtils.encode(TEST, ZonedDateTime.now().toString()), TIMESTAMPTZ.getObjectId(), TEXT, Object.class)).isInstanceOf(ZonedDateTime.class);
+        assertThat(codecs.decode(TEST.buffer(2).writeShort((byte) 100), INT2.getObjectId(), FORMAT_BINARY, Object.class)).isInstanceOf(Short.class);
+        assertThat(codecs.decode(ByteBufUtils.encode(TEST, "100"), INT2.getObjectId(), FORMAT_TEXT, Object.class)).isInstanceOf(Short.class);
+        assertThat(codecs.decode(ByteBufUtils.encode(TEST, "test"), VARCHAR.getObjectId(), FORMAT_TEXT, Object.class)).isInstanceOf(String.class);
+        assertThat(codecs.decode(ByteBufUtils.encode(TEST, Instant.now().toString()), TIMESTAMP.getObjectId(), FORMAT_TEXT, Object.class)).isInstanceOf(Instant.class);
+        assertThat(codecs.decode(ByteBufUtils.encode(TEST, ZonedDateTime.now().toString()), TIMESTAMPTZ.getObjectId(), FORMAT_TEXT, Object.class)).isInstanceOf(ZonedDateTime.class);
     }
 
     @Test
     void encode() {
         Parameter parameter = new DefaultCodecs(TEST).encode(100);
 
-        assertThat(parameter).isEqualTo(new Parameter(BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(100)));
+        assertThat(parameter).isEqualTo(new Parameter(FORMAT_BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(100)));
     }
 
     @Test
@@ -107,7 +107,7 @@ final class DefaultCodecsTest {
     void encodeNull() {
         Parameter parameter = new DefaultCodecs(TEST).encodeNull(Integer.class);
 
-        assertThat(parameter).isEqualTo(new Parameter(BINARY, INT4.getObjectId(), null));
+        assertThat(parameter).isEqualTo(new Parameter(FORMAT_BINARY, INT4.getObjectId(), null));
     }
 
     @Test

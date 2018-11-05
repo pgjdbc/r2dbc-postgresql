@@ -19,8 +19,8 @@ package io.r2dbc.postgresql.codec;
 import io.r2dbc.postgresql.client.Parameter;
 import org.junit.jupiter.api.Test;
 
-import static io.r2dbc.postgresql.message.Format.BINARY;
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT8;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
@@ -40,13 +40,13 @@ final class LongCodecTest {
     void decode() {
         LongCodec codec = new LongCodec(TEST);
 
-        assertThat(codec.decode(TEST.buffer(8).writeLong(100L), BINARY, Long.class)).isEqualTo(100L);
-        assertThat(codec.decode(encode(TEST, "100"), TEXT, Long.class)).isEqualTo(100L);
+        assertThat(codec.decode(TEST.buffer(8).writeLong(100L), FORMAT_BINARY, Long.class)).isEqualTo(100L);
+        assertThat(codec.decode(encode(TEST, "100"), FORMAT_TEXT, Long.class)).isEqualTo(100L);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new LongCodec(TEST).decode(null, BINARY, Long.class)).isNull();
+        assertThat(new LongCodec(TEST).decode(null, FORMAT_BINARY, Long.class)).isNull();
     }
 
     @Test
@@ -59,9 +59,9 @@ final class LongCodecTest {
     void doCanDecode() {
         LongCodec codec = new LongCodec(TEST);
 
-        assertThat(codec.doCanDecode(BINARY, VARCHAR)).isFalse();
-        assertThat(codec.doCanDecode(BINARY, INT8)).isTrue();
-        assertThat(codec.doCanDecode(TEXT, INT8)).isTrue();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, VARCHAR)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, INT8)).isTrue();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, INT8)).isTrue();
     }
 
     @Test
@@ -73,7 +73,7 @@ final class LongCodecTest {
     @Test
     void doEncode() {
         assertThat(new LongCodec(TEST).doEncode(100L))
-            .isEqualTo(new Parameter(BINARY, INT8.getObjectId(), TEST.buffer(8).writeLong(100)));
+            .isEqualTo(new Parameter(FORMAT_BINARY, INT8.getObjectId(), TEST.buffer(8).writeLong(100)));
     }
 
     @Test
@@ -85,7 +85,7 @@ final class LongCodecTest {
     @Test
     void encodeNull() {
         assertThat(new LongCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(BINARY, INT8.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_BINARY, INT8.getObjectId(), null));
     }
 
 }

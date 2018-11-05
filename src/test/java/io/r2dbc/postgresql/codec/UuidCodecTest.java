@@ -22,8 +22,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
-import static io.r2dbc.postgresql.message.Format.BINARY;
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
@@ -42,22 +42,22 @@ final class UuidCodecTest {
     void decode() {
         UUID uuid = UUID.randomUUID();
 
-        assertThat(new UuidCodec(TEST).decode(TEST.buffer(16).writeLong(uuid.getMostSignificantBits()).writeLong(uuid.getLeastSignificantBits()), TEXT, UUID.class))
+        assertThat(new UuidCodec(TEST).decode(TEST.buffer(16).writeLong(uuid.getMostSignificantBits()).writeLong(uuid.getLeastSignificantBits()), FORMAT_TEXT, UUID.class))
             .isEqualTo(uuid);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new UuidCodec(TEST).decode(null, TEXT, UUID.class)).isNull();
+        assertThat(new UuidCodec(TEST).decode(null, FORMAT_TEXT, UUID.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         UuidCodec codec = new UuidCodec(TEST);
 
-        assertThat(codec.doCanDecode(TEXT, PostgresqlObjectId.UUID)).isFalse();
-        assertThat(codec.doCanDecode(BINARY, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(BINARY, PostgresqlObjectId.UUID)).isTrue();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, PostgresqlObjectId.UUID)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, MONEY)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, PostgresqlObjectId.UUID)).isTrue();
     }
 
     @Test
@@ -68,7 +68,7 @@ final class UuidCodecTest {
 
     @Test
     void doCanDecodeNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new UuidCodec(TEST).doCanDecode(TEXT, null))
+        assertThatNullPointerException().isThrownBy(() -> new UuidCodec(TEST).doCanDecode(FORMAT_TEXT, null))
             .withMessage("type must not be null");
     }
 
@@ -77,7 +77,7 @@ final class UuidCodecTest {
         UUID uuid = UUID.randomUUID();
 
         assertThat(new UuidCodec(TEST).doEncode(uuid))
-            .isEqualTo(new Parameter(BINARY, PostgresqlObjectId.UUID.getObjectId(), TEST.buffer(16).writeLong(uuid.getMostSignificantBits()).writeLong(uuid.getLeastSignificantBits())));
+            .isEqualTo(new Parameter(FORMAT_BINARY, PostgresqlObjectId.UUID.getObjectId(), TEST.buffer(16).writeLong(uuid.getMostSignificantBits()).writeLong(uuid.getLeastSignificantBits())));
     }
 
     @Test
@@ -89,7 +89,7 @@ final class UuidCodecTest {
     @Test
     void encodeNull() {
         assertThat(new UuidCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(BINARY, PostgresqlObjectId.UUID.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_BINARY, PostgresqlObjectId.UUID.getObjectId(), null));
     }
 
 }

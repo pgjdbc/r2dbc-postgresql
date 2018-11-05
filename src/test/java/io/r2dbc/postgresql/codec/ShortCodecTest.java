@@ -20,8 +20,8 @@ import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import org.junit.jupiter.api.Test;
 
-import static io.r2dbc.postgresql.message.Format.BINARY;
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT2;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
@@ -40,13 +40,13 @@ final class ShortCodecTest {
     void decode() {
         ShortCodec codec = new ShortCodec(TEST);
 
-        assertThat(codec.decode(TEST.buffer(2).writeShort((short) 100), BINARY, Short.class)).isEqualTo((short) 100);
-        assertThat(codec.decode(ByteBufUtils.encode(TEST, "100"), TEXT, Short.class)).isEqualTo((short) 100);
+        assertThat(codec.decode(TEST.buffer(2).writeShort((short) 100), FORMAT_BINARY, Short.class)).isEqualTo((short) 100);
+        assertThat(codec.decode(ByteBufUtils.encode(TEST, "100"), FORMAT_TEXT, Short.class)).isEqualTo((short) 100);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new ShortCodec(TEST).decode(null, BINARY, Short.class)).isNull();
+        assertThat(new ShortCodec(TEST).decode(null, FORMAT_BINARY, Short.class)).isNull();
     }
 
     @Test
@@ -59,9 +59,9 @@ final class ShortCodecTest {
     void doCanDecode() {
         ShortCodec codec = new ShortCodec(TEST);
 
-        assertThat(codec.doCanDecode(BINARY, VARCHAR)).isFalse();
-        assertThat(codec.doCanDecode(BINARY, INT2)).isTrue();
-        assertThat(codec.doCanDecode(TEXT, INT2)).isTrue();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, VARCHAR)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, INT2)).isTrue();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, INT2)).isTrue();
     }
 
     @Test
@@ -73,7 +73,7 @@ final class ShortCodecTest {
     @Test
     void doEncode() {
         assertThat(new ShortCodec(TEST).doEncode((short) 100))
-            .isEqualTo(new Parameter(BINARY, INT2.getObjectId(), TEST.buffer(2).writeShort(100)));
+            .isEqualTo(new Parameter(FORMAT_BINARY, INT2.getObjectId(), TEST.buffer(2).writeShort(100)));
     }
 
     @Test
@@ -85,6 +85,6 @@ final class ShortCodecTest {
     @Test
     void encodeNull() {
         assertThat(new ShortCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(BINARY, INT2.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_BINARY, INT2.getObjectId(), null));
     }
 }

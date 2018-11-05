@@ -21,8 +21,8 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 
-import static io.r2dbc.postgresql.message.Format.BINARY;
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.NUMERIC;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
@@ -43,22 +43,22 @@ final class BigDecimalCodecTest {
     void decode() {
         BigDecimal bigDecimal = new BigDecimal("100");
 
-        assertThat(new BigDecimalCodec(TEST).decode(encode(TEST, bigDecimal.toString()), TEXT, BigDecimal.class))
+        assertThat(new BigDecimalCodec(TEST).decode(encode(TEST, bigDecimal.toString()), FORMAT_TEXT, BigDecimal.class))
             .isEqualTo(bigDecimal);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new BigDecimalCodec(TEST).decode(null, TEXT, BigDecimal.class)).isNull();
+        assertThat(new BigDecimalCodec(TEST).decode(null, FORMAT_TEXT, BigDecimal.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         BigDecimalCodec codec = new BigDecimalCodec(TEST);
 
-        assertThat(codec.doCanDecode(BINARY, NUMERIC)).isFalse();
-        assertThat(codec.doCanDecode(TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(TEXT, NUMERIC)).isTrue();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, NUMERIC)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, NUMERIC)).isTrue();
     }
 
     @Test
@@ -69,7 +69,7 @@ final class BigDecimalCodecTest {
 
     @Test
     void doCanDecodeNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new BigDecimalCodec(TEST).doCanDecode(TEXT, null))
+        assertThatNullPointerException().isThrownBy(() -> new BigDecimalCodec(TEST).doCanDecode(FORMAT_TEXT, null))
             .withMessage("type must not be null");
     }
 
@@ -78,7 +78,7 @@ final class BigDecimalCodecTest {
         BigDecimal bigDecimal = new BigDecimal("100");
 
         assertThat(new BigDecimalCodec(TEST).doEncode(bigDecimal))
-            .isEqualTo(new Parameter(TEXT, NUMERIC.getObjectId(), encode(TEST, "100")));
+            .isEqualTo(new Parameter(FORMAT_TEXT, NUMERIC.getObjectId(), encode(TEST, "100")));
     }
 
     @Test
@@ -90,7 +90,7 @@ final class BigDecimalCodecTest {
     @Test
     void encodeNull() {
         assertThat(new BigDecimalCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(TEXT, NUMERIC.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_TEXT, NUMERIC.getObjectId(), null));
     }
 
 }

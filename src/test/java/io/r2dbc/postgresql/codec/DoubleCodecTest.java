@@ -20,8 +20,8 @@ import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import org.junit.jupiter.api.Test;
 
-import static io.r2dbc.postgresql.message.Format.BINARY;
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.FLOAT8;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
@@ -40,13 +40,13 @@ final class DoubleCodecTest {
     void decode() {
         DoubleCodec codec = new DoubleCodec(TEST);
 
-        assertThat(codec.decode(TEST.buffer(8).writeDouble(100.0d), BINARY, Double.class)).isEqualTo(100.0d);
-        assertThat(codec.decode(ByteBufUtils.encode(TEST, "100.0"), TEXT, Double.class)).isEqualTo(100.0d);
+        assertThat(codec.decode(TEST.buffer(8).writeDouble(100.0d), FORMAT_BINARY, Double.class)).isEqualTo(100.0d);
+        assertThat(codec.decode(ByteBufUtils.encode(TEST, "100.0"), FORMAT_TEXT, Double.class)).isEqualTo(100.0d);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new DoubleCodec(TEST).decode(null, BINARY, Double.class)).isNull();
+        assertThat(new DoubleCodec(TEST).decode(null, FORMAT_BINARY, Double.class)).isNull();
     }
 
     @Test
@@ -59,9 +59,9 @@ final class DoubleCodecTest {
     void doCanDecode() {
         DoubleCodec codec = new DoubleCodec(TEST);
 
-        assertThat(codec.doCanDecode(BINARY, VARCHAR)).isFalse();
-        assertThat(codec.doCanDecode(BINARY, FLOAT8)).isTrue();
-        assertThat(codec.doCanDecode(TEXT, FLOAT8)).isTrue();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, VARCHAR)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, FLOAT8)).isTrue();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, FLOAT8)).isTrue();
     }
 
     @Test
@@ -73,7 +73,7 @@ final class DoubleCodecTest {
     @Test
     void doEncode() {
         assertThat(new DoubleCodec(TEST).doEncode(100d))
-            .isEqualTo(new Parameter(BINARY, FLOAT8.getObjectId(), TEST.buffer(8).writeDouble(100)));
+            .isEqualTo(new Parameter(FORMAT_BINARY, FLOAT8.getObjectId(), TEST.buffer(8).writeDouble(100)));
     }
 
     @Test
@@ -85,7 +85,7 @@ final class DoubleCodecTest {
     @Test
     void encodeNull() {
         assertThat(new DoubleCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(BINARY, FLOAT8.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_BINARY, FLOAT8.getObjectId(), null));
     }
 
 }

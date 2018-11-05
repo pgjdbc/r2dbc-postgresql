@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 
-import static io.r2dbc.postgresql.message.Format.BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageAssert.assertThat;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
@@ -29,25 +29,25 @@ final class FunctionCallTest {
 
     @Test
     void constructorNoArgumentFormats() {
-        assertThatNullPointerException().isThrownBy(() -> new FunctionCall(null, Collections.singletonList(TEST.buffer(4).writeInt(100)), 200, BINARY))
+        assertThatNullPointerException().isThrownBy(() -> new FunctionCall(null, Collections.singletonList(TEST.buffer(4).writeInt(100)), 200, FORMAT_BINARY))
             .withMessage("argumentFormats must not be null");
     }
 
     @Test
     void constructorNoArguments() {
-        assertThatNullPointerException().isThrownBy(() -> new FunctionCall(Collections.singletonList(BINARY), null, 200, BINARY))
+        assertThatNullPointerException().isThrownBy(() -> new FunctionCall(Collections.singletonList(FORMAT_BINARY), null, 200, FORMAT_BINARY))
             .withMessage("arguments must not be null");
     }
 
     @Test
     void constructorNoResultFormat() {
-        assertThatNullPointerException().isThrownBy(() -> new FunctionCall(Collections.singletonList(BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), 200, null))
+        assertThatNullPointerException().isThrownBy(() -> new FunctionCall(Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), 200, null))
             .withMessage("resultFormat must not be null");
     }
 
     @Test
     void encode() {
-        assertThat(new FunctionCall(Collections.singletonList(BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), 200, BINARY)).encoded()
+        assertThat(new FunctionCall(Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), 200, FORMAT_BINARY)).encoded()
             .isDeferred()
             .isEncodedAs(buffer -> buffer
                 .writeByte('F')
@@ -63,7 +63,7 @@ final class FunctionCallTest {
 
     @Test
     void encodeNullArgument() {
-        assertThat(new FunctionCall(Collections.singletonList(BINARY), Collections.singletonList(null), 200, BINARY)).encoded()
+        assertThat(new FunctionCall(Collections.singletonList(FORMAT_BINARY), Collections.singletonList(null), 200, FORMAT_BINARY)).encoded()
             .isDeferred()
             .isEncodedAs(buffer -> buffer
                 .writeByte('F')

@@ -21,8 +21,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Date;
 
-import static io.r2dbc.postgresql.message.Format.BINARY;
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMP;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
@@ -43,22 +43,22 @@ final class DateCodecTest {
     void decode() {
         Date date = new Date();
 
-        assertThat(new DateCodec(TEST).decode(encode(TEST, date.toInstant().toString()), TEXT, Date.class))
+        assertThat(new DateCodec(TEST).decode(encode(TEST, date.toInstant().toString()), FORMAT_TEXT, Date.class))
             .isEqualTo(date);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new DateCodec(TEST).decode(null, TEXT, Date.class)).isNull();
+        assertThat(new DateCodec(TEST).decode(null, FORMAT_TEXT, Date.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         DateCodec codec = new DateCodec(TEST);
 
-        assertThat(codec.doCanDecode(BINARY, TIMESTAMP)).isFalse();
-        assertThat(codec.doCanDecode(TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(TEXT, TIMESTAMP)).isTrue();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, TIMESTAMP)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, TIMESTAMP)).isTrue();
     }
 
     @Test
@@ -69,7 +69,7 @@ final class DateCodecTest {
 
     @Test
     void doCanDecodeNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new DateCodec(TEST).doCanDecode(TEXT, null))
+        assertThatNullPointerException().isThrownBy(() -> new DateCodec(TEST).doCanDecode(FORMAT_TEXT, null))
             .withMessage("type must not be null");
     }
 
@@ -78,7 +78,7 @@ final class DateCodecTest {
         Date date = new Date();
 
         assertThat(new DateCodec(TEST).doEncode(date))
-            .isEqualTo(new Parameter(TEXT, TIMESTAMP.getObjectId(), encode(TEST, date.toInstant().toString())));
+            .isEqualTo(new Parameter(FORMAT_TEXT, TIMESTAMP.getObjectId(), encode(TEST, date.toInstant().toString())));
     }
 
     @Test
@@ -90,7 +90,7 @@ final class DateCodecTest {
     @Test
     void encodeNull() {
         assertThat(new DateCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(TEXT, TIMESTAMP.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_TEXT, TIMESTAMP.getObjectId(), null));
     }
 
 }

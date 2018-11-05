@@ -27,7 +27,7 @@ import reactor.util.annotation.Nullable;
 import java.time.Instant;
 import java.util.Objects;
 
-import static io.r2dbc.postgresql.message.Format.TEXT;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMP;
 
 final class InstantCodec extends AbstractCodec<Instant> {
@@ -41,7 +41,7 @@ final class InstantCodec extends AbstractCodec<Instant> {
 
     @Override
     public Parameter encodeNull() {
-        return createNull(TEXT, TIMESTAMP);
+        return createNull(FORMAT_TEXT, TIMESTAMP);
     }
 
     @Override
@@ -49,7 +49,7 @@ final class InstantCodec extends AbstractCodec<Instant> {
         Objects.requireNonNull(format, "format must not be null");
         Objects.requireNonNull(type, "type must not be null");
 
-        return TEXT == format && TIMESTAMP == type;
+        return FORMAT_TEXT == format && TIMESTAMP == type;
     }
 
     @Override
@@ -64,7 +64,7 @@ final class InstantCodec extends AbstractCodec<Instant> {
         Objects.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toString());
-        return create(TEXT, TIMESTAMP, encoded);
+        return create(FORMAT_TEXT, TIMESTAMP, encoded);
     }
 
 }
