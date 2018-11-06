@@ -41,9 +41,9 @@ final class LocalDateTimeCodecTest {
 
     @Test
     void decode() {
-        LocalDateTime localDateTime = LocalDateTime.now();
+        LocalDateTime localDateTime = LocalDateTime.parse("2018-11-05T00:06:31.700426");
 
-        assertThat(new LocalDateTimeCodec(TEST).decode(encode(TEST, localDateTime.toString()), FORMAT_TEXT, LocalDateTime.class))
+        assertThat(new LocalDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:06:31.700426"), FORMAT_TEXT, LocalDateTime.class))
             .isEqualTo(localDateTime);
     }
 

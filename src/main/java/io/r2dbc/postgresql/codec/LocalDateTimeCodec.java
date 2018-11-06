@@ -56,7 +56,7 @@ final class LocalDateTimeCodec extends AbstractCodec<LocalDateTime> {
     LocalDateTime doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends LocalDateTime> type) {
         Objects.requireNonNull(byteBuf, "byteBuf must not be null");
 
-        return LocalDateTime.parse(ByteBufUtils.decode(byteBuf));
+        return PostgresqlDateTimeFormatter.INSTANCE.parse(ByteBufUtils.decode(byteBuf), LocalDateTime::from);
     }
 
     @Override

@@ -19,6 +19,7 @@ package io.r2dbc.postgresql.codec;
 import io.r2dbc.postgresql.client.Parameter;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
 import java.util.Date;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
@@ -41,9 +42,9 @@ final class DateCodecTest {
 
     @Test
     void decode() {
-        Date date = new Date();
+        Date date = Date.from(Instant.parse("2018-11-04T15:37:31.177Z"));
 
-        assertThat(new DateCodec(TEST).decode(encode(TEST, date.toInstant().toString()), FORMAT_TEXT, Date.class))
+        assertThat(new DateCodec(TEST).decode(encode(TEST, "2018-11-04 15:37:31.177"), FORMAT_TEXT, Date.class))
             .isEqualTo(date);
     }
 

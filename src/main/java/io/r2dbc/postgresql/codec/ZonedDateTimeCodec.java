@@ -56,14 +56,14 @@ final class ZonedDateTimeCodec extends AbstractCodec<ZonedDateTime> {
     ZonedDateTime doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends ZonedDateTime> type) {
         Objects.requireNonNull(byteBuf, "byteBuf must not be null");
 
-        return ZonedDateTime.parse(ByteBufUtils.decode(byteBuf));
+        return PostgresqlDateTimeFormatter.INSTANCE.parse(ByteBufUtils.decode(byteBuf), ZonedDateTime::from);
     }
 
     @Override
     Parameter doEncode(ZonedDateTime value) {
         Objects.requireNonNull(value, "value must not be null");
 
-        ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toString());
+        ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toOffsetDateTime().toString());
         return create(FORMAT_TEXT, TIMESTAMPTZ, encoded);
     }
 
