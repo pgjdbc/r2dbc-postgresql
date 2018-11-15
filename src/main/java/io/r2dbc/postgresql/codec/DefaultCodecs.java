@@ -67,7 +67,12 @@ public final class DefaultCodecs implements Codecs {
             new UriCodec(byteBufAllocator),
             new UrlCodec(byteBufAllocator),
             new UuidCodec(byteBufAllocator),
-            new ZoneIdCodec(byteBufAllocator)
+            new ZoneIdCodec(byteBufAllocator),
+
+            new ShortArrayCodec(byteBufAllocator),
+            new StringArrayCodec(byteBufAllocator),
+            new IntegerArrayCodec(byteBufAllocator),
+            new LongArrayCodec(byteBufAllocator)
         );
     }
 
