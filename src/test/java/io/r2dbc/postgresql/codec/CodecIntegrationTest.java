@@ -24,7 +24,9 @@ import io.r2dbc.spi.Connection;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.netty.ByteBufFlux;
 import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
@@ -40,7 +42,9 @@ import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -180,6 +184,26 @@ final class CodecIntegrationTest {
     @Test
     void zonedDateTime() {
         testCodec(ZonedDateTime.class, ZonedDateTime.now(), (actual, expected) -> assertThat(actual.isEqual(expected)).isTrue(), "TIMESTAMP WITH TIME ZONE");
+    }
+
+    @Test
+    void shortArray() {
+        testCodec(Short[].class, new Short[]{100, 200, 300}, "INT2[]");
+    }
+
+    @Test
+    void stringArray() {
+        testCodec(String[].class, new String[]{"test-value1", "test-value2", "test-value3"}, "VARCHAR[]");
+    }
+
+    @Test
+    void intArray() {
+        testCodec(Integer[].class, new Integer[]{100, 200, 300}, "INT4[]");
+    }
+
+    @Test
+    void longArray() {
+        testCodec(Long[].class, new Long[]{100L, 200L, 300L}, "INT8[]");
     }
 
     private static <T> Mono<T> close(Connection connection) {
