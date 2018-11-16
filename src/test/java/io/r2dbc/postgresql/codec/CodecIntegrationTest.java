@@ -16,6 +16,8 @@
 
 package io.r2dbc.postgresql.codec;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.postgresql.PostgresqlResult;
@@ -41,6 +43,8 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -200,6 +204,35 @@ final class CodecIntegrationTest {
     @Test
     void zonedDateTime() {
         testCodec(ZonedDateTime.class, ZonedDateTime.now(), (actual, expected) -> assertThat(actual.isEqual(expected)).isTrue(), "TIMESTAMP WITH TIME ZONE");
+    }
+
+
+    @Test
+    void jsonElement() {
+        JsonObject json = new JsonObject();
+        json.addProperty("test-property", "test-value");
+        testCodec(JsonElement.class, json, "JSON");
+    }
+
+    @Test
+    void jsonbElement() {
+        JsonObject json = new JsonObject();
+        json.addProperty("test-property", "test-value");
+        testCodec(JsonElement.class, json, "JSONB");
+    }
+
+    @Test
+    void jsonObject() {
+        Map<String, String> map = new HashMap<>();
+        map.put("test-property", "test-value");
+        testCodec(Map.class, map, "JSON");
+    }
+
+    @Test
+    void jsonbObject() {
+        Map<String, String> map = new HashMap<>();
+        map.put("test-property", "test-value");
+        testCodec(Map.class, map, "JSONB");
     }
 
     private static <T> Mono<T> close(Connection connection) {

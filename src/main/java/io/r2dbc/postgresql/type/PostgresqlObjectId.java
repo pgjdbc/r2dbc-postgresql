@@ -158,6 +158,11 @@ public enum PostgresqlObjectId {
     JSON_ARRAY(199),
 
     /**
+     * The JSONB object id.
+     */
+    JSONB(3802),
+
+    /**
      * The JSONB array object id.
      */
     JSONB_ARRAY(3807),
