@@ -118,6 +118,11 @@ final class CodecIntegrationTest {
     }
 
     @Test
+    void intArray() {
+        testCodec(Integer[].class, new Integer[]{100, 200, 300}, "INT4[]");
+    }
+
+    @Test
     void intPrimitive() {
         testCodec(Integer.class, 100, "INT4");
     }
@@ -138,6 +143,11 @@ final class CodecIntegrationTest {
     }
 
     @Test
+    void longArray() {
+        testCodec(Long[].class, new Long[]{100L, 200L, 300L}, "INT8[]");
+    }
+
+    @Test
     void longPrimitive() {
         testCodec(Long.class, 100L, "INT8");
     }
@@ -148,6 +158,11 @@ final class CodecIntegrationTest {
     }
 
     @Test
+    void shortArray() {
+        testCodec(Short[].class, new Short[]{100, 200, 300}, "INT2[]");
+    }
+
+    @Test
     void shortPrimitive() {
         testCodec(Short.class, (short) 100, "INT2");
     }
@@ -155,6 +170,11 @@ final class CodecIntegrationTest {
     @Test
     void string() {
         testCodec(String.class, "test-value", "VARCHAR(128)");
+    }
+
+    @Test
+    void stringArray() {
+        testCodec(String[].class, new String[]{"test-value1", "test-value2", "test-value3"}, "VARCHAR[]");
     }
 
     @Test
