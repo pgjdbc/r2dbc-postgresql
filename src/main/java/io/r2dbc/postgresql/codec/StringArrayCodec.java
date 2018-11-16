@@ -28,7 +28,9 @@ import java.util.Objects;
 
 import static io.netty.util.CharsetUtil.UTF_8;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.*;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.CHAR_ARRAY;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.TEXT_ARRAY;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR_ARRAY;
 
 final class StringArrayCodec extends AbstractArrayCodec<String> {
 
@@ -37,32 +39,38 @@ final class StringArrayCodec extends AbstractArrayCodec<String> {
     }
 
     @Override
-    boolean doCanDecode(Format format, PostgresqlObjectId type) {
-        return FORMAT_TEXT == format && (CHAR_ARRAY == type || TEXT_ARRAY == type || VARCHAR_ARRAY == type);
-    }
-
-    @Override
     public String decodeItem(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<?> type) {
         Objects.requireNonNull(byteBuf, "byteBuf must not be null");
-        Objects.requireNonNull(format, "format must not be null");
 
         return byteBuf.toString(UTF_8);
     }
 
     @Override
+    public Parameter encodeNull() {
+        return createNull(FORMAT_TEXT, TEXT_ARRAY);
+    }
+
+    @Override
+    boolean doCanDecode(Format format, PostgresqlObjectId type) {
+        Objects.requireNonNull(format, "format must not be null");
+        Objects.requireNonNull(type, "type must not be null");
+
+        return FORMAT_TEXT == format && (CHAR_ARRAY == type || TEXT_ARRAY == type || VARCHAR_ARRAY == type);
+    }
+
+    @Override
+    Parameter encodeArray(ByteBuf byteBuf) {
+        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
+
+        return create(FORMAT_TEXT, TEXT_ARRAY, byteBuf);
+    }
+
+    @Override
     void encodeItem(ByteBuf byteBuf, String value) {
+        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
         Objects.requireNonNull(value, "value must not be null");
 
         ByteBufUtil.writeUtf8(byteBuf, value);
     }
 
-    @Override
-    public Parameter encodeNull() {
-        return createNull(FORMAT_TEXT, VARCHAR_ARRAY);
-    }
-
-    @Override
-    Parameter encodeArray(ByteBuf byteBuf) {
-        return create(FORMAT_TEXT, VARCHAR_ARRAY, byteBuf);
-    }
 }

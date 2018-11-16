@@ -58,9 +58,10 @@ public final class MockCodec<T> extends AbstractCodec<T> {
 
     @Override
     public String toString() {
-        return "StubCodec{" +
-            "decodings=" + this.decodings +
-            ", encodings=" + this.encodings +
+        return "MockCodec{" +
+            "canDecodes=" + canDecodes +
+            ", decodings=" + decodings +
+            ", encodings=" + encodings +
             "} " + super.toString();
     }
 

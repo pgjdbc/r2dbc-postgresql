@@ -21,11 +21,15 @@ import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
 
-@SuppressWarnings("rawtypes")
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+
 abstract class AbstractArrayCodec<T> extends AbstractCodec<T[]> {
+
+    private static final byte DELIMITER = ',';
 
     private final ByteBufAllocator byteBufAllocator;
 
@@ -34,26 +38,37 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<T[]> {
         this.byteBufAllocator = Objects.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
     }
 
+    abstract T decodeItem(ByteBuf byteBuf, Format format, Class<?> type);
+
     @Override
     @SuppressWarnings("unchecked")
-    T[] doDecode(ByteBuf byteBuf, Format format, Class<? extends T[]> type) {
+    final T[] doDecode(ByteBuf byteBuf, Format format, Class<? extends T[]> type) {
         Objects.requireNonNull(byteBuf, "byteBuf must not be null");
+        Objects.requireNonNull(format, "format must not be null");
+        Objects.requireNonNull(type, "type must not be null");
 
-        Stream.Builder<T> builder = Stream.builder();
-        byteBuf.skipBytes(1);
-        for (int size = byteBuf.bytesBefore((byte) ','); size != -1; size = byteBuf.bytesBefore((byte) ',')) {
-            T item = decodeItem(byteBuf.readSlice(size), format, type.getComponentType());
-            builder.accept(item);
-            byteBuf.skipBytes(1); // skip delimiter
+        List<T> items = new ArrayList<>();
+
+        if (FORMAT_BINARY == format) {
+            while (byteBuf.readableBytes() != 0) {
+                items.add(decodeItem(byteBuf, format, type));
+            }
+        } else {
+            byteBuf.skipBytes(1);
+
+            for (int size = byteBuf.bytesBefore(DELIMITER); size != -1; size = byteBuf.bytesBefore(DELIMITER)) {
+                items.add(decodeItem(byteBuf.readSlice(size), format, type.getComponentType()));
+                byteBuf.skipBytes(1); // skip delimiter
+            }
+
+            items.add(decodeItem(byteBuf.readSlice(byteBuf.readableBytes() - 1), format, type.getComponentType()));
         }
-        T item = decodeItem(byteBuf.readSlice(byteBuf.readableBytes() - 1), format, type.getComponentType());
-        builder.accept(item);
 
-        return (T[]) builder.build().toArray();
+        return (T[]) items.toArray();
     }
 
     @Override
-    Parameter doEncode(T[] value) {
+    final Parameter doEncode(T[] value) {
         Objects.requireNonNull(value, "value must not be null");
 
         ByteBuf byteBuf = byteBufAllocator.buffer();
@@ -61,19 +76,21 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<T[]> {
 
         if (value.length > 0) {
             encodeItem(byteBuf, value[0]);
+
             for (int i = 1; i < value.length; i++) {
-                byteBuf.writeByte(',');
+                byteBuf.writeByte(DELIMITER);
                 encodeItem(byteBuf, value[i]);
             }
         }
+
         byteBuf.writeByte('}');
 
         return encodeArray(byteBuf);
     }
 
-    abstract T decodeItem(ByteBuf byteBuf, Format format, Class<?> type);
+    abstract Parameter encodeArray(ByteBuf byteBuf);
 
     abstract void encodeItem(ByteBuf byteBuf, T value);
 
-    abstract Parameter encodeArray(ByteBuf byteBuf);
+
 }

@@ -38,12 +38,7 @@ final class LongArrayCodec extends AbstractArrayCodec<Long> {
     }
 
     @Override
-    boolean doCanDecode(Format format, PostgresqlObjectId type) {
-        return INT8_ARRAY == type;
-    }
-
-    @Override
-    public Long decodeItem(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<?> type) {
+    public Long decodeItem(ByteBuf byteBuf, Format format, @Nullable Class<?> type) {
         Objects.requireNonNull(byteBuf, "byteBuf must not be null");
         Objects.requireNonNull(format, "format must not be null");
 
@@ -55,19 +50,30 @@ final class LongArrayCodec extends AbstractArrayCodec<Long> {
     }
 
     @Override
-    void encodeItem(ByteBuf byteBuf, Long value) {
-        Objects.requireNonNull(value, "value must not be null");
-
-        ByteBufUtil.writeUtf8(byteBuf, value.toString());
-    }
-
-    @Override
     public Parameter encodeNull() {
         return createNull(FORMAT_TEXT, INT8_ARRAY);
     }
 
     @Override
+    boolean doCanDecode(Format format, PostgresqlObjectId type) {
+        Objects.requireNonNull(type, "type must not be null");
+
+        return INT8_ARRAY == type;
+    }
+
+    @Override
     Parameter encodeArray(ByteBuf byteBuf) {
+        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
+
         return create(FORMAT_TEXT, INT8_ARRAY, byteBuf);
     }
+
+    @Override
+    void encodeItem(ByteBuf byteBuf, Long value) {
+        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
+        Objects.requireNonNull(value, "value must not be null");
+
+        ByteBufUtil.writeUtf8(byteBuf, value.toString());
+    }
+
 }

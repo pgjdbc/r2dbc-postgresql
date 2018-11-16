@@ -27,10 +27,9 @@ import reactor.util.annotation.Nullable;
 
 import java.util.Objects;
 
-import static io.netty.util.CharsetUtil.UTF_8;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.*;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4_ARRAY;
 
 final class IntegerArrayCodec extends AbstractArrayCodec<Integer> {
 
@@ -39,12 +38,7 @@ final class IntegerArrayCodec extends AbstractArrayCodec<Integer> {
     }
 
     @Override
-    boolean doCanDecode(Format format, PostgresqlObjectId type) {
-        return INT4_ARRAY == type;
-    }
-
-    @Override
-    public Integer decodeItem(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<?> type) {
+    public Integer decodeItem(ByteBuf byteBuf, Format format, @Nullable Class<?> type) {
         Objects.requireNonNull(byteBuf, "byteBuf must not be null");
         Objects.requireNonNull(format, "format must not be null");
 
@@ -56,19 +50,30 @@ final class IntegerArrayCodec extends AbstractArrayCodec<Integer> {
     }
 
     @Override
-    void encodeItem(ByteBuf byteBuf, Integer value) {
-        Objects.requireNonNull(value, "value must not be null");
-
-        ByteBufUtil.writeUtf8(byteBuf, value.toString());
-    }
-
-    @Override
     public Parameter encodeNull() {
         return createNull(FORMAT_TEXT, INT4_ARRAY);
     }
 
     @Override
+    boolean doCanDecode(Format format, PostgresqlObjectId type) {
+        Objects.requireNonNull(type, "type must not be null");
+
+        return INT4_ARRAY == type;
+    }
+
+    @Override
     Parameter encodeArray(ByteBuf byteBuf) {
+        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
+
         return create(FORMAT_TEXT, INT4_ARRAY, byteBuf);
     }
+
+    @Override
+    void encodeItem(ByteBuf byteBuf, Integer value) {
+        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
+        Objects.requireNonNull(value, "value must not be null");
+
+        ByteBufUtil.writeUtf8(byteBuf, value.toString());
+    }
+
 }
