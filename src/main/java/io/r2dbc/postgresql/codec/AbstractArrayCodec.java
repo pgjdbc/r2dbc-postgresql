@@ -22,6 +22,7 @@ import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,7 +65,8 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<T[]> {
             items.add(decodeItem(byteBuf.readSlice(byteBuf.readableBytes() - 1), format, type.getComponentType()));
         }
 
-        return (T[]) items.toArray();
+        T[] a = (T[]) Array.newInstance(type.getComponentType(), items.size());
+        return items.toArray(a);
     }
 
     @Override
