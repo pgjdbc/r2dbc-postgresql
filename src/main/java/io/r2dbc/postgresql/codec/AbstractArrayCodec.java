@@ -21,6 +21,7 @@ import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -64,7 +65,8 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<T[]> {
             items.add(decodeItem(byteBuf.readSlice(byteBuf.readableBytes() - 1), format, type.getComponentType()));
         }
 
-        return (T[]) items.toArray();
+        T[] a = (T[]) Array.newInstance(type.getComponentType(), items.size());
+        return items.toArray(a);
     }
 
     @Override
