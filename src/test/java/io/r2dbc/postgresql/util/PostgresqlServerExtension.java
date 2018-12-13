@@ -26,8 +26,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
 import reactor.util.annotation.Nullable;
 
-import java.io.IOException;
-
 public final class PostgresqlServerExtension implements BeforeAllCallback, AfterAllCallback {
 
     private final PostgreSQLContainer<?> container = new PostgreSQLContainer<>();
