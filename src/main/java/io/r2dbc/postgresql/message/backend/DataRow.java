@@ -96,7 +96,7 @@ public final class DataRow implements BackendMessage {
         Objects.requireNonNull(in, "in must not be null");
 
         int columnCount = in.readShort();
-        List<ByteBuf> columns = new ArrayList<ByteBuf>(columnCount);
+        List<ByteBuf> columns = new ArrayList<>(columnCount);
 
         for (int i = 0; i < columnCount; i++) {
             columns.add(decodeColumn(in));
