@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.UnpooledByteBufAllocator;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
@@ -384,7 +385,7 @@ final class BackendMessageDecoderTest {
                     .writeBytes(payload))
             .reduce(TEST.buffer(), ByteBuf::writeBytes);
 
-        BackendMessageDecoder decoder = new BackendMessageDecoder();
+        BackendMessageDecoder decoder = new BackendMessageDecoder(UnpooledByteBufAllocator.DEFAULT);
 
         return Flux.just(data.readRetainedSlice(data.readableBytes() / 2), data)
             .concatMap(decoder::decode)
