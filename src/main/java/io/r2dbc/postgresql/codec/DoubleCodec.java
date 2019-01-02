@@ -21,6 +21,7 @@ import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
+import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
@@ -35,7 +36,7 @@ final class DoubleCodec extends AbstractCodec<Double> {
 
     DoubleCodec(ByteBufAllocator byteBufAllocator) {
         super(Double.class);
-        this.byteBufAllocator = Objects.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
     }
 
     @Override
@@ -45,15 +46,15 @@ final class DoubleCodec extends AbstractCodec<Double> {
 
     @Override
     boolean doCanDecode(@Nullable Format format, PostgresqlObjectId type) {
-        Objects.requireNonNull(type, "type must not be null");
+        Assert.requireNonNull(type, "type must not be null");
 
         return FLOAT8 == type;
     }
 
     @Override
     Double doDecode(ByteBuf byteBuf, Format format, @Nullable Class<? extends Double> type) {
-        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
-        Objects.requireNonNull(format, "format must not be null");
+        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+        Assert.requireNonNull(format, "format must not be null");
 
         if (FORMAT_BINARY == format) {
             return byteBuf.readDouble();
@@ -64,7 +65,7 @@ final class DoubleCodec extends AbstractCodec<Double> {
 
     @Override
     Parameter doEncode(Double value) {
-        Objects.requireNonNull(value, "value must not be null");
+        Assert.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = this.byteBufAllocator.buffer(8).writeDouble(value);
         return create(FORMAT_BINARY, FLOAT8, encoded);

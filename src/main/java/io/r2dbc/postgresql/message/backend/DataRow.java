@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
+import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
 import java.util.ArrayList;
@@ -36,10 +37,10 @@ public final class DataRow implements BackendMessage {
      * Creates a new message.
      *
      * @param columns the values of the columns
-     * @throws NullPointerException if {@code columns} is {@code null}
+     * @throws IllegalArgumentException if {@code columns} is {@code null}
      */
     public DataRow(List<ByteBuf> columns) {
-        this.columns = Objects.requireNonNull(columns, "columns must not be null");
+        this.columns = Assert.requireNonNull(columns, "columns must not be null");
 
         for (ByteBuf column : this.columns) {
             if (column != null) {
@@ -93,7 +94,7 @@ public final class DataRow implements BackendMessage {
     }
 
     static DataRow decode(ByteBuf in) {
-        Objects.requireNonNull(in, "in must not be null");
+        Assert.requireNonNull(in, "in must not be null");
 
         int columnCount = in.readShort();
         List<ByteBuf> columns = new ArrayList<>(columnCount);
@@ -106,7 +107,7 @@ public final class DataRow implements BackendMessage {
 
     @Nullable
     private static ByteBuf decodeColumn(ByteBuf in) {
-        Objects.requireNonNull(in);
+        Assert.requireNonNull(in, "in must not be null");
 
         int length = in.readInt();
         return NULL == length ? null : in.readSlice(length);

@@ -22,13 +22,13 @@ import java.util.Collections;
 
 import static io.r2dbc.postgresql.message.backend.BackendMessageAssert.assertThat;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class DataRowTest {
 
     @Test
     void constructorNoColumns() {
-        assertThatNullPointerException().isThrownBy(() -> new DataRow(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new DataRow(null))
             .withMessage("columns must not be null");
     }
 

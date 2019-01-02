@@ -34,7 +34,7 @@ import static io.r2dbc.postgresql.client.TransactionStatus.OPEN;
 import static io.r2dbc.spi.IsolationLevel.READ_COMMITTED;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.Mockito.RETURNS_SMART_NULLS;
 import static org.mockito.Mockito.mock;
 
@@ -131,25 +131,25 @@ final class PostgresqlConnectionTest {
 
     @Test
     void constructorNoClient() {
-        assertThatNullPointerException().isThrownBy(() -> new PostgresqlConnection(null, MockCodecs.empty(), () -> "", this.statementCache))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlConnection(null, MockCodecs.empty(), () -> "", this.statementCache))
             .withMessage("client must not be null");
     }
 
     @Test
     void constructorNoCodec() {
-        assertThatNullPointerException().isThrownBy(() -> new PostgresqlConnection(NO_OP, null, () -> "", this.statementCache))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlConnection(NO_OP, null, () -> "", this.statementCache))
             .withMessage("codecs must not be null");
     }
 
     @Test
     void constructorNoPortalNameSupplier() {
-        assertThatNullPointerException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), null, this.statementCache))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), null, this.statementCache))
             .withMessage("portalNameSupplier must not be null");
     }
 
     @Test
     void constructorNoStatementCache() {
-        assertThatNullPointerException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), () -> "", null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), () -> "", null))
             .withMessage("statementCache must not be null");
     }
 
@@ -186,7 +186,7 @@ final class PostgresqlConnectionTest {
 
     @Test
     void createSavepointNoName() {
-        assertThatNullPointerException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), () -> "", this.statementCache).createSavepoint(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), () -> "", this.statementCache).createSavepoint(null))
             .withMessage("name must not be null");
     }
 
@@ -255,7 +255,7 @@ final class PostgresqlConnectionTest {
 
     @Test
     void releaseSavepointNoName() {
-        assertThatNullPointerException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), () -> "", this.statementCache).releaseSavepoint(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), () -> "", this.statementCache).releaseSavepoint(null))
             .withMessage("name must not be null");
     }
 
@@ -337,7 +337,7 @@ final class PostgresqlConnectionTest {
 
     @Test
     void rollbackTransactionToSavepointNoName() {
-        assertThatNullPointerException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), () -> "", this.statementCache).rollbackTransactionToSavepoint(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), () -> "", this.statementCache).rollbackTransactionToSavepoint(null))
             .withMessage("name must not be null");
     }
 
@@ -381,7 +381,7 @@ final class PostgresqlConnectionTest {
 
     @Test
     void setTransactionIsolationLevelNoIsolationLevel() {
-        assertThatNullPointerException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), () -> "", this.statementCache).setTransactionIsolationLevel(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), () -> "", this.statementCache).setTransactionIsolationLevel(null))
             .withMessage("isolationLevel must not be null");
     }
 

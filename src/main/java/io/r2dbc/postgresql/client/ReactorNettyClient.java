@@ -29,6 +29,7 @@ import io.r2dbc.postgresql.message.backend.ParameterStatus;
 import io.r2dbc.postgresql.message.backend.ReadyForQuery;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.message.frontend.Terminate;
+import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,10 +119,10 @@ public final class ReactorNettyClient implements Client {
      * Creates a new frame processor connected to a given TCP connection.
      *
      * @param connection the TCP connection
-     * @throws NullPointerException if {@code connection} is {@code null}
+     * @throws IllegalArgumentException if {@code connection} is {@code null}
      */
     private ReactorNettyClient(Connection connection) {
-        Objects.requireNonNull(connection, "Connection must not be null");
+        Assert.requireNonNull(connection, "Connection must not be null");
 
         connection.addHandler(new EnsureSubscribersCompleteChannelHandler(this.requestProcessor, this.responseReceivers));
 
@@ -166,10 +167,10 @@ public final class ReactorNettyClient implements Client {
      *
      * @param host the host to connect to
      * @param port the port to connect to
-     * @throws NullPointerException if {@code host} is {@code null}
+     * @throws IllegalArgumentException if {@code host} is {@code null}
      */
     public static Mono<ReactorNettyClient> connect(String host, int port) {
-        Objects.requireNonNull(host, "host must not be null");
+        Assert.requireNonNull(host, "host must not be null");
 
         return connect(ConnectionProvider.newConnection(), host, port);
     }
@@ -180,11 +181,11 @@ public final class ReactorNettyClient implements Client {
      * @param connectionProvider the connection provider resources
      * @param host               the host to connect to
      * @param port               the port to connect to
-     * @throws NullPointerException if {@code host} is {@code null}
+     * @throws IllegalArgumentException if {@code host} is {@code null}
      */
     public static Mono<ReactorNettyClient> connect(ConnectionProvider connectionProvider, String host, int port) {
-        Objects.requireNonNull(connectionProvider, "connectionProvider must not be null");
-        Objects.requireNonNull(host, "host must not be null");
+        Assert.requireNonNull(connectionProvider, "connectionProvider must not be null");
+        Assert.requireNonNull(host, "host must not be null");
 
         Mono<? extends Connection> connection = TcpClient.create(connectionProvider)
             .host(host).port(port)
@@ -214,7 +215,7 @@ public final class ReactorNettyClient implements Client {
 
     @Override
     public Flux<BackendMessage> exchange(Publisher<FrontendMessage> requests) {
-        Objects.requireNonNull(requests, "requests must not be null");
+        Assert.requireNonNull(requests, "requests must not be null");
 
         return Mono
             .<Flux<BackendMessage>>create(sink -> {

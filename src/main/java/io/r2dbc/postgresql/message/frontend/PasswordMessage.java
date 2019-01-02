@@ -18,6 +18,7 @@ package io.r2dbc.postgresql.message.frontend;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
@@ -39,15 +40,15 @@ public final class PasswordMessage implements FrontendMessage {
      * Creates a new message.
      *
      * @param password the password (encrypted, if requested)
-     * @throws NullPointerException if {@code password} is {@code null}
+     * @throws IllegalArgumentException if {@code password} is {@code null}
      */
     public PasswordMessage(String password) {
-        this.password = Objects.requireNonNull(password, "password must not be null");
+        this.password = Assert.requireNonNull(password, "password must not be null");
     }
 
     @Override
     public Publisher<ByteBuf> encode(ByteBufAllocator byteBufAllocator) {
-        Objects.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
 
         return Mono.defer(() -> {
             ByteBuf out = byteBufAllocator.ioBuffer();

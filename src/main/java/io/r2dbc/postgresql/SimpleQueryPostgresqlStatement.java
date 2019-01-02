@@ -22,6 +22,7 @@ import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.EmptyQueryResponse;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
+import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.util.annotation.Nullable;
 
@@ -39,9 +40,9 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement<Simple
     private final String sql;
 
     SimpleQueryPostgresqlStatement(Client client, Codecs codecs, String sql) {
-        this.client = Objects.requireNonNull(client, "client must not be null");
-        this.codecs = Objects.requireNonNull(codecs, "codecs must not be null");
-        this.sql = Objects.requireNonNull(sql, "sql must not be null");
+        this.client = Assert.requireNonNull(client, "client must not be null");
+        this.codecs = Assert.requireNonNull(codecs, "codecs must not be null");
+        this.sql = Assert.requireNonNull(sql, "sql must not be null");
     }
 
     @Override
@@ -87,7 +88,7 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement<Simple
     }
 
     static boolean supports(String sql) {
-        Objects.requireNonNull(sql, "sql must not be null");
+        Assert.requireNonNull(sql, "sql must not be null");
 
         return sql.trim().isEmpty() || !PARAMETER_SYMBOL.matcher(sql).matches();
     }

@@ -25,19 +25,19 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class BindingTest {
 
     @Test
     void addNoIndex() {
-        assertThatNullPointerException().isThrownBy(() -> new Binding().add(null, new Parameter(FORMAT_TEXT, 100, null)))
+        assertThatIllegalArgumentException().isThrownBy(() -> new Binding().add(null, new Parameter(FORMAT_TEXT, 100, null)))
             .withMessage("index must not be null");
     }
 
     @Test
     void addNoParameter() {
-        assertThatNullPointerException().isThrownBy(() -> new Binding().add(1, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new Binding().add(1, null))
             .withMessage("parameter must not be null");
     }
 

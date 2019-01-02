@@ -23,6 +23,7 @@ import io.r2dbc.postgresql.client.ReactorNettyClient;
 import io.r2dbc.postgresql.client.StartupMessageFlow;
 import io.r2dbc.postgresql.codec.DefaultCodecs;
 import io.r2dbc.postgresql.message.backend.AuthenticationMessage;
+import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ConnectionFactory;
 import reactor.core.publisher.Mono;
 
@@ -41,19 +42,19 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
      * Creates a new connection factory.
      *
      * @param configuration the configuration to use connections
-     * @throws NullPointerException if {@code configuration} is {@code null}
+     * @throws IllegalArgumentException if {@code configuration} is {@code null}
      */
     public PostgresqlConnectionFactory(PostgresqlConnectionConfiguration configuration) {
         this(Mono.defer(() -> {
-            Objects.requireNonNull(configuration, "configuration must not be null");
+            Assert.requireNonNull(configuration, "configuration must not be null");
 
             return ReactorNettyClient.connect(configuration.getHost(), configuration.getPort()).cast(Client.class);
         }), configuration);
     }
 
     PostgresqlConnectionFactory(Mono<? extends Client> clientFactory, PostgresqlConnectionConfiguration configuration) {
-        this.clientFactory = Objects.requireNonNull(clientFactory, "clientFactory must not be null");
-        this.configuration = Objects.requireNonNull(configuration, "configuration must not be null");
+        this.clientFactory = Assert.requireNonNull(clientFactory, "clientFactory must not be null");
+        this.configuration = Assert.requireNonNull(configuration, "configuration must not be null");
     }
 
     @Override

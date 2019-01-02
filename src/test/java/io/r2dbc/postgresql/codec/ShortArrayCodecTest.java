@@ -27,7 +27,7 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT2;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT2_ARRAY;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class ShortArrayCodecTest {
 
@@ -41,13 +41,13 @@ final class ShortArrayCodecTest {
 
     @Test
     void decodeItemNoByteBuf() {
-        assertThatNullPointerException().isThrownBy(() -> new ShortArrayCodec(TEST).decodeItem(null, FORMAT_TEXT, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ShortArrayCodec(TEST).decodeItem(null, FORMAT_TEXT, null))
             .withMessage("byteBuf must not be null");
     }
 
     @Test
     void decodeItemNoFormat() {
-        assertThatNullPointerException().isThrownBy(() -> new ShortArrayCodec(TEST).decodeItem(TEST.buffer(0), null, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ShortArrayCodec(TEST).decodeItem(TEST.buffer(0), null, null))
             .withMessage("format must not be null");
     }
 
@@ -62,7 +62,7 @@ final class ShortArrayCodecTest {
 
     @Test
     void doCanDecodeNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new ShortArrayCodec(TEST).doCanDecode(null, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ShortArrayCodec(TEST).doCanDecode(null, null))
             .withMessage("type must not be null");
     }
 
@@ -74,7 +74,7 @@ final class ShortArrayCodecTest {
 
     @Test
     void encodeArrayNoByteBuf() {
-        assertThatNullPointerException().isThrownBy(() -> new ShortArrayCodec(TEST).encodeArray(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ShortArrayCodec(TEST).encodeArray(null))
             .withMessage("byteBuf must not be null");
     }
 
@@ -89,13 +89,13 @@ final class ShortArrayCodecTest {
 
     @Test
     void encodeItemNoByteBuf() {
-        assertThatNullPointerException().isThrownBy(() -> new ShortArrayCodec(TEST).encodeItem(null, (short) 100))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ShortArrayCodec(TEST).encodeItem(null, (short) 100))
             .withMessage("byteBuf must not be null");
     }
 
     @Test
     void encodeItemNoValue() {
-        assertThatNullPointerException().isThrownBy(() -> new ShortArrayCodec(TEST).encodeItem(TEST.buffer(0), null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ShortArrayCodec(TEST).encodeItem(TEST.buffer(0), null))
             .withMessage("value must not be null");
     }
 

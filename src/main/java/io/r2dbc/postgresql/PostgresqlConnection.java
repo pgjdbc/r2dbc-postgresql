@@ -21,6 +21,7 @@ import io.r2dbc.postgresql.client.PortalNameSupplier;
 import io.r2dbc.postgresql.client.SimpleQueryMessageFlow;
 import io.r2dbc.postgresql.client.TransactionStatus;
 import io.r2dbc.postgresql.codec.Codecs;
+import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.IsolationLevel;
 import org.reactivestreams.Publisher;
@@ -52,10 +53,10 @@ public final class PostgresqlConnection implements Connection {
     private final StatementCache statementCache;
 
     PostgresqlConnection(Client client, Codecs codecs, PortalNameSupplier portalNameSupplier, StatementCache statementCache) {
-        this.client = Objects.requireNonNull(client, "client must not be null");
-        this.codecs = Objects.requireNonNull(codecs, "codecs must not be null");
-        this.portalNameSupplier = Objects.requireNonNull(portalNameSupplier, "portalNameSupplier must not be null");
-        this.statementCache = Objects.requireNonNull(statementCache, "statementCache must not be null");
+        this.client = Assert.requireNonNull(client, "client must not be null");
+        this.codecs = Assert.requireNonNull(codecs, "codecs must not be null");
+        this.portalNameSupplier = Assert.requireNonNull(portalNameSupplier, "portalNameSupplier must not be null");
+        this.statementCache = Assert.requireNonNull(statementCache, "statementCache must not be null");
     }
 
     @Override
@@ -97,7 +98,7 @@ public final class PostgresqlConnection implements Connection {
 
     @Override
     public Mono<Void> createSavepoint(String name) {
-        Objects.requireNonNull(name, "name must not be null");
+        Assert.requireNonNull(name, "name must not be null");
 
         return useTransactionStatus(transactionStatus -> {
             if (OPEN == transactionStatus) {
@@ -112,7 +113,7 @@ public final class PostgresqlConnection implements Connection {
 
     @Override
     public PostgresqlStatement<?> createStatement(String sql) {
-        Objects.requireNonNull(sql, "sql must not be null");
+        Assert.requireNonNull(sql, "sql must not be null");
 
         if (SimpleQueryPostgresqlStatement.supports(sql)) {
             return new SimpleQueryPostgresqlStatement(this.client, this.codecs, sql);
@@ -134,7 +135,7 @@ public final class PostgresqlConnection implements Connection {
 
     @Override
     public Mono<Void> releaseSavepoint(String name) {
-        Objects.requireNonNull(name, "name must not be null");
+        Assert.requireNonNull(name, "name must not be null");
 
         return useTransactionStatus(transactionStatus -> {
             if (OPEN == transactionStatus) {
@@ -162,7 +163,7 @@ public final class PostgresqlConnection implements Connection {
 
     @Override
     public Mono<Void> rollbackTransactionToSavepoint(String name) {
-        Objects.requireNonNull(name, "name must not be null");
+        Assert.requireNonNull(name, "name must not be null");
 
         return useTransactionStatus(transactionStatus -> {
             if (OPEN == transactionStatus) {
@@ -177,7 +178,7 @@ public final class PostgresqlConnection implements Connection {
 
     @Override
     public Mono<Void> setTransactionIsolationLevel(IsolationLevel isolationLevel) {
-        Objects.requireNonNull(isolationLevel, "isolationLevel must not be null");
+        Assert.requireNonNull(isolationLevel, "isolationLevel must not be null");
 
         return withTransactionStatus(getTransactionIsolationLevelQuery(isolationLevel))
             .flatMapMany(query -> SimpleQueryMessageFlow.exchange(this.client, query))

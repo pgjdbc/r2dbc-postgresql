@@ -29,31 +29,31 @@ import reactor.test.StepVerifier;
 
 import java.util.Collections;
 
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class PostgresqlResultTest {
 
     @Test
     void constructorNoCodec() {
-        assertThatNullPointerException().isThrownBy(() -> new PostgresqlResult(null, Mono.empty(), Flux.empty(), Mono.empty()))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlResult(null, Mono.empty(), Flux.empty(), Mono.empty()))
             .withMessage("codecs must not be null");
     }
 
     @Test
     void constructorNoRowMetadata() {
-        assertThatNullPointerException().isThrownBy(() -> new PostgresqlResult(MockCodecs.empty(), null, Flux.empty(), Mono.empty()))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlResult(MockCodecs.empty(), null, Flux.empty(), Mono.empty()))
             .withMessage("rowMetadata must not be null");
     }
 
     @Test
     void constructorNoRows() {
-        assertThatNullPointerException().isThrownBy(() -> new PostgresqlResult(MockCodecs.empty(), Mono.empty(), null, Mono.empty()))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlResult(MockCodecs.empty(), Mono.empty(), null, Mono.empty()))
             .withMessage("rows must not be null");
     }
 
     @Test
     void constructorNoRowsUpdated() {
-        assertThatNullPointerException().isThrownBy(() -> new PostgresqlResult(MockCodecs.empty(), Mono.empty(), Flux.empty(), null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlResult(MockCodecs.empty(), Mono.empty(), Flux.empty(), null))
             .withMessage("rowsUpdated must not be null");
     }
 
@@ -100,13 +100,13 @@ final class PostgresqlResultTest {
 
     @Test
     void toResultNoCodecs() {
-        assertThatNullPointerException().isThrownBy(() -> PostgresqlResult.toResult(null, Flux.empty()))
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlResult.toResult(null, Flux.empty()))
             .withMessage("codecs must not be null");
     }
 
     @Test
     void toResultNoMessages() {
-        assertThatNullPointerException().isThrownBy(() -> PostgresqlResult.toResult(MockCodecs.empty(), null))
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlResult.toResult(MockCodecs.empty(), null))
             .withMessage("messages must not be null");
     }
 

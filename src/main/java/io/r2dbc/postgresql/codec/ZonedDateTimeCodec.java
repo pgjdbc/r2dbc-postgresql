@@ -21,6 +21,7 @@ import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
+import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
@@ -36,7 +37,7 @@ final class ZonedDateTimeCodec extends AbstractCodec<ZonedDateTime> {
 
     ZonedDateTimeCodec(ByteBufAllocator byteBufAllocator) {
         super(ZonedDateTime.class);
-        this.byteBufAllocator = Objects.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
     }
 
     @Override
@@ -46,22 +47,22 @@ final class ZonedDateTimeCodec extends AbstractCodec<ZonedDateTime> {
 
     @Override
     boolean doCanDecode(Format format, PostgresqlObjectId type) {
-        Objects.requireNonNull(format, "format must not be null");
-        Objects.requireNonNull(type, "type must not be null");
+        Assert.requireNonNull(format, "format must not be null");
+        Assert.requireNonNull(type, "type must not be null");
 
         return FORMAT_TEXT == format && TIMESTAMPTZ == type;
     }
 
     @Override
     ZonedDateTime doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends ZonedDateTime> type) {
-        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
+        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
 
         return PostgresqlDateTimeFormatter.INSTANCE.parse(ByteBufUtils.decode(byteBuf), ZonedDateTime::from);
     }
 
     @Override
     Parameter doEncode(ZonedDateTime value) {
-        Objects.requireNonNull(value, "value must not be null");
+        Assert.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toOffsetDateTime().toString());
         return create(FORMAT_TEXT, TIMESTAMPTZ, encoded);

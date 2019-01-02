@@ -20,6 +20,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
+import io.r2dbc.postgresql.util.Assert;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +36,7 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<T[]> {
 
     AbstractArrayCodec(ByteBufAllocator byteBufAllocator, Class<T[]> type) {
         super(type);
-        this.byteBufAllocator = Objects.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
     }
 
     abstract T decodeItem(ByteBuf byteBuf, Format format, Class<?> type);
@@ -43,9 +44,9 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<T[]> {
     @Override
     @SuppressWarnings("unchecked")
     final T[] doDecode(ByteBuf byteBuf, Format format, Class<? extends T[]> type) {
-        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
-        Objects.requireNonNull(format, "format must not be null");
-        Objects.requireNonNull(type, "type must not be null");
+        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+        Assert.requireNonNull(format, "format must not be null");
+        Assert.requireNonNull(type, "type must not be null");
 
         List<T> items = new ArrayList<>();
 
@@ -69,7 +70,7 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<T[]> {
 
     @Override
     final Parameter doEncode(T[] value) {
-        Objects.requireNonNull(value, "value must not be null");
+        Assert.requireNonNull(value, "value must not be null");
 
         ByteBuf byteBuf = byteBufAllocator.buffer();
         byteBuf.writeByte('{');

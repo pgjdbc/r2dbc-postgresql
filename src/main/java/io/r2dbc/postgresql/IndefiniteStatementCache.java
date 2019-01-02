@@ -19,6 +19,7 @@ package io.r2dbc.postgresql;
 import io.r2dbc.postgresql.client.Binding;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.ExtendedQueryMessageFlow;
+import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
@@ -40,13 +41,13 @@ final class IndefiniteStatementCache implements StatementCache {
     private final AtomicInteger counter = new AtomicInteger();
 
     IndefiniteStatementCache(Client client) {
-        this.client = Objects.requireNonNull(client, "client must not be null");
+        this.client = Assert.requireNonNull(client, "client must not be null");
     }
 
     @Override
     public Mono<String> getName(Binding binding, String sql) {
-        Objects.requireNonNull(binding, "binding must not be null");
-        Objects.requireNonNull(sql, "sql must not be null");
+        Assert.requireNonNull(binding, "binding must not be null");
+        Assert.requireNonNull(sql, "sql must not be null");
 
         return this.cache.computeIfAbsent(Tuples.of(sql, binding.getParameterTypes()), function(this::parse));
     }

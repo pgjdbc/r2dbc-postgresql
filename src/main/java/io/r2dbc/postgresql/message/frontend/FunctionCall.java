@@ -19,6 +19,7 @@ package io.r2dbc.postgresql.message.frontend;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.message.Format;
+import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
@@ -54,18 +55,18 @@ public final class FunctionCall implements FrontendMessage {
      * @param arguments       the value of the arguments, in the format indicated by the associated format
      * @param functionId      the object ID of the function to call
      * @param resultFormat    the format code for the function result
-     * @throws NullPointerException if {@code argumentFormats}, {@code arguments}, or {@code resultFormat} is {@code null}
+     * @throws IllegalArgumentException if {@code argumentFormats}, {@code arguments}, or {@code resultFormat} is {@code null}
      */
     public FunctionCall(List<Format> argumentFormats, List<ByteBuf> arguments, int functionId, Format resultFormat) {
-        this.argumentFormats = Objects.requireNonNull(argumentFormats, "argumentFormats must not be null");
-        this.arguments = Objects.requireNonNull(arguments, "arguments must not be null");
+        this.argumentFormats = Assert.requireNonNull(argumentFormats, "argumentFormats must not be null");
+        this.arguments = Assert.requireNonNull(arguments, "arguments must not be null");
         this.functionId = functionId;
-        this.resultFormat = Objects.requireNonNull(resultFormat, "resultFormat must not be null");
+        this.resultFormat = Assert.requireNonNull(resultFormat, "resultFormat must not be null");
     }
 
     @Override
     public Publisher<ByteBuf> encode(ByteBufAllocator byteBufAllocator) {
-        Objects.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
 
         return Mono.defer(() -> {
             ByteBuf out = byteBufAllocator.ioBuffer();

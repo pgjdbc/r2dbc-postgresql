@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
+import io.r2dbc.postgresql.util.Assert;
 
 import java.util.Objects;
 
@@ -39,11 +40,11 @@ public final class NotificationResponse implements BackendMessage {
      * @param name      the name of the channel that the notify has been raised on
      * @param payload   the “payload” string passed from the notifying process
      * @param processId the process ID of the notifying backend process
-     * @throws NullPointerException if {@code name} or {@code payload} is {@code null}
+     * @throws IllegalArgumentException if {@code name} or {@code payload} is {@code null}
      */
     public NotificationResponse(String name, String payload, int processId) {
-        this.name = Objects.requireNonNull(name, "name must not be null");
-        this.payload = Objects.requireNonNull(payload, "payload must not be null");
+        this.name = Assert.requireNonNull(name, "name must not be null");
+        this.payload = Assert.requireNonNull(payload, "payload must not be null");
         this.processId = processId;
     }
 
@@ -104,7 +105,7 @@ public final class NotificationResponse implements BackendMessage {
     }
 
     static NotificationResponse decode(ByteBuf in) {
-        Objects.requireNonNull(in, "in must not be null");
+        Assert.requireNonNull(in, "in must not be null");
 
         int processId = in.readInt();
         String name = readCStringUTF8(in);

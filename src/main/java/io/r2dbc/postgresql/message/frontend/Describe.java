@@ -18,6 +18,7 @@ package io.r2dbc.postgresql.message.frontend;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
@@ -47,17 +48,17 @@ public final class Describe implements FrontendMessage {
      *
      * @param name The name of the prepared statement or portal to describe (an empty string selects the unnamed prepared statement or portal)
      * @param type the type to close
-     * @throws NullPointerException if {@code name} or {@code type} is {@code null}
+     * @throws IllegalArgumentException if {@code name} or {@code type} is {@code null}
      * @see #UNNAMED
      */
     public Describe(String name, ExecutionType type) {
-        this.name = Objects.requireNonNull(name, "name must not be null");
-        this.type = Objects.requireNonNull(type, "type must not be null");
+        this.name = Assert.requireNonNull(name, "name must not be null");
+        this.type = Assert.requireNonNull(type, "type must not be null");
     }
 
     @Override
     public Publisher<ByteBuf> encode(ByteBufAllocator byteBufAllocator) {
-        Objects.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
 
         return Mono.defer(() -> {
             ByteBuf out = byteBufAllocator.ioBuffer();

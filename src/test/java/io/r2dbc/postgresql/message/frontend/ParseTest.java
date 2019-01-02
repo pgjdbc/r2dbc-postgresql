@@ -23,25 +23,25 @@ import java.util.Collections;
 import static io.netty.util.CharsetUtil.UTF_8;
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageAssert.assertThat;
 import static io.r2dbc.postgresql.message.frontend.Parse.UNSPECIFIED;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class ParseTest {
 
     @Test
     void constructorNoName() {
-        assertThatNullPointerException().isThrownBy(() -> new Parse(null, Collections.emptyList(), "test-query"))
+        assertThatIllegalArgumentException().isThrownBy(() -> new Parse(null, Collections.emptyList(), "test-query"))
             .withMessage("name must not be null");
     }
 
     @Test
     void constructorNoParameters() {
-        assertThatNullPointerException().isThrownBy(() -> new Parse("test-name", null, "test-query"))
+        assertThatIllegalArgumentException().isThrownBy(() -> new Parse("test-name", null, "test-query"))
             .withMessage("parameters must not be null");
     }
 
     @Test
     void constructorNoQuery() {
-        assertThatNullPointerException().isThrownBy(() -> new Parse("test-name", Collections.emptyList(), null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new Parse("test-name", Collections.emptyList(), null))
             .withMessage("query must not be null");
     }
 

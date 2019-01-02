@@ -19,6 +19,7 @@ package io.r2dbc.postgresql.codec;
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
+import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
 import java.util.HashMap;
@@ -32,8 +33,8 @@ public final class MockCodecs implements Codecs {
     private final Map<Object, Parameter> encodings;
 
     private MockCodecs(Map<Decoding, Object> decodings, Map<Object, Parameter> encodings) {
-        this.decodings = Objects.requireNonNull(decodings);
-        this.encodings = Objects.requireNonNull(encodings);
+        this.decodings = Assert.requireNonNull(decodings, "decodings must not be null");
+        this.encodings = Assert.requireNonNull(encodings, "encodings must not be null");
     }
 
     public static Builder builder() {
@@ -48,8 +49,8 @@ public final class MockCodecs implements Codecs {
     @Nullable
     @SuppressWarnings("unchecked")
     public <T> T decode(@Nullable ByteBuf byteBuf, int dataType, Format format, Class<? extends T> type) {
-        Objects.requireNonNull(format);
-        Objects.requireNonNull(type);
+        Assert.requireNonNull(format, "format must not be null");
+        Assert.requireNonNull(type, "type must not be null");
 
         Decoding decoding = new Decoding(byteBuf, dataType, format, type);
 
@@ -62,7 +63,7 @@ public final class MockCodecs implements Codecs {
 
     @Override
     public Parameter encode(Object value) {
-        Objects.requireNonNull(value);
+        Assert.requireNonNull(value, "value must not be null");
 
         if (!this.encodings.containsKey(value)) {
             throw new AssertionError(String.format("Unexpected call to encode(Object) with value '%s'", value));
@@ -73,7 +74,7 @@ public final class MockCodecs implements Codecs {
 
     @Override
     public Parameter encodeNull(Class<?> type) {
-        Objects.requireNonNull(type);
+        Assert.requireNonNull(type, "type must not be null");
 
         if (!this.encodings.containsKey(type)) {
             throw new AssertionError(String.format("Unexpected call to encodeNull(Class<?>) with value '%s'", type));
@@ -104,15 +105,15 @@ public final class MockCodecs implements Codecs {
         }
 
         public <T> Builder decoding(@Nullable ByteBuf byteBuf, int dataType, Format format, Class<T> type, T value) {
-            Objects.requireNonNull(format);
-            Objects.requireNonNull(type);
+            Assert.requireNonNull(format, "format must not be null");
+            Assert.requireNonNull(type, "type must not be null");
 
             this.decodings.put(new Decoding(byteBuf, dataType, format, type), value);
             return this;
         }
 
         public Builder encoding(@Nullable Object value, Parameter parameter) {
-            Objects.requireNonNull(parameter);
+            Assert.requireNonNull(parameter, "parameter must not be null");
 
             this.encodings.put(value, parameter);
             return this;
@@ -141,8 +142,8 @@ public final class MockCodecs implements Codecs {
         private Decoding(@Nullable ByteBuf byteBuf, int dataType, Format format, Class<?> type) {
             this.byteBuf = byteBuf;
             this.dataType = dataType;
-            this.format = Objects.requireNonNull(format);
-            this.type = Objects.requireNonNull(type);
+            this.format = Assert.requireNonNull(format, "format must not be null");
+            this.type = Assert.requireNonNull(type, "type must not be null");
         }
 
         @Override

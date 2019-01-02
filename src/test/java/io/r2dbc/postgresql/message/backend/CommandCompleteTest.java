@@ -20,13 +20,13 @@ import org.junit.jupiter.api.Test;
 
 import static io.netty.util.CharsetUtil.UTF_8;
 import static io.r2dbc.postgresql.message.backend.BackendMessageAssert.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class CommandCompleteTest {
 
     @Test
     void constructorNoCommand() {
-        assertThatNullPointerException().isThrownBy(() -> new CommandComplete(null, 100, 200))
+        assertThatIllegalArgumentException().isThrownBy(() -> new CommandComplete(null, 100, 200))
             .withMessage("command must not be null");
     }
 

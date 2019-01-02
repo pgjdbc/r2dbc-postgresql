@@ -22,6 +22,7 @@ import io.netty.buffer.ByteBufUtil;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
+import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
 import java.util.Objects;
@@ -40,7 +41,7 @@ final class StringArrayCodec extends AbstractArrayCodec<String> {
 
     @Override
     public String decodeItem(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<?> type) {
-        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
+        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
 
         return byteBuf.toString(UTF_8);
     }
@@ -52,23 +53,23 @@ final class StringArrayCodec extends AbstractArrayCodec<String> {
 
     @Override
     boolean doCanDecode(Format format, PostgresqlObjectId type) {
-        Objects.requireNonNull(format, "format must not be null");
-        Objects.requireNonNull(type, "type must not be null");
+        Assert.requireNonNull(format, "format must not be null");
+        Assert.requireNonNull(type, "type must not be null");
 
         return FORMAT_TEXT == format && (CHAR_ARRAY == type || TEXT_ARRAY == type || VARCHAR_ARRAY == type);
     }
 
     @Override
     Parameter encodeArray(ByteBuf byteBuf) {
-        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
+        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
 
         return create(FORMAT_TEXT, TEXT_ARRAY, byteBuf);
     }
 
     @Override
     void encodeItem(ByteBuf byteBuf, String value) {
-        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
-        Objects.requireNonNull(value, "value must not be null");
+        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+        Assert.requireNonNull(value, "value must not be null");
 
         ByteBufUtil.writeUtf8(byteBuf, value);
     }

@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.client;
 
 import io.r2dbc.postgresql.message.backend.ReadyForQuery;
+import io.r2dbc.postgresql.util.Assert;
 
 import java.util.Objects;
 
@@ -43,11 +44,11 @@ public enum TransactionStatus {
     private final ReadyForQuery.TransactionStatus discriminator;
 
     TransactionStatus(ReadyForQuery.TransactionStatus discriminator) {
-        this.discriminator = Objects.requireNonNull(discriminator, "discriminator must not be null");
+        this.discriminator = Assert.requireNonNull(discriminator, "discriminator must not be null");
     }
 
     static TransactionStatus valueOf(ReadyForQuery.TransactionStatus t) {
-        Objects.requireNonNull(t, "t must not be null");
+        Assert.requireNonNull(t, "t must not be null");
 
         for (TransactionStatus transactionStatus : values()) {
             if (transactionStatus.discriminator == t) {

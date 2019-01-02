@@ -18,6 +18,7 @@ package io.r2dbc.postgresql.client;
 
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.frontend.Query;
+import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -37,11 +38,11 @@ public final class SimpleQueryMessageFlow {
      * @param client the {@link Client} to exchange messages with
      * @param query  the query to execute
      * @return the messages received in response to this exchange
-     * @throws NullPointerException if {@code client} or {@code query} is {@code null}
+     * @throws IllegalArgumentException if {@code client} or {@code query} is {@code null}
      */
     public static Flux<BackendMessage> exchange(Client client, String query) {
-        Objects.requireNonNull(client, "client must not be null");
-        Objects.requireNonNull(query, "query must not be null");
+        Assert.requireNonNull(client, "client must not be null");
+        Assert.requireNonNull(query, "query must not be null");
 
         return client.exchange(Mono.just(new Query(query)));
     }

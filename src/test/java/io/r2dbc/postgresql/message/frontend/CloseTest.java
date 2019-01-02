@@ -22,19 +22,19 @@ import static io.netty.util.CharsetUtil.UTF_8;
 import static io.r2dbc.postgresql.message.frontend.ExecutionType.PORTAL;
 import static io.r2dbc.postgresql.message.frontend.ExecutionType.STATEMENT;
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageAssert.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class CloseTest {
 
     @Test
     void constructorNoName() {
-        assertThatNullPointerException().isThrownBy(() -> new Close(null, STATEMENT))
+        assertThatIllegalArgumentException().isThrownBy(() -> new Close(null, STATEMENT))
             .withMessage("name must not be null");
     }
 
     @Test
     void constructorNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new Close("test-name", null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new Close("test-name", null))
             .withMessage("type must not be null");
     }
 

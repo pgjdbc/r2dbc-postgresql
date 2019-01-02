@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
+import io.r2dbc.postgresql.util.Assert;
 
 import java.util.Objects;
 
@@ -36,11 +37,11 @@ public final class ParameterStatus implements BackendMessage {
      *
      * @param name  the name of the run-time parameter being reported
      * @param value the current value of the parameter
-     * @throws NullPointerException if {@code status} or {@code value} is {@code null}
+     * @throws IllegalArgumentException if {@code status} or {@code value} is {@code null}
      */
     public ParameterStatus(String name, String value) {
-        this.name = Objects.requireNonNull(name, "name must not be null");
-        this.value = Objects.requireNonNull(value, "value must not be null");
+        this.name = Assert.requireNonNull(name, "name must not be null");
+        this.value = Assert.requireNonNull(value, "value must not be null");
     }
 
     @Override
@@ -88,7 +89,7 @@ public final class ParameterStatus implements BackendMessage {
     }
 
     static ParameterStatus decode(ByteBuf in) {
-        Objects.requireNonNull(in, "in must not be null");
+        Assert.requireNonNull(in, "in must not be null");
 
         return new ParameterStatus(readCStringUTF8(in), readCStringUTF8(in));
     }

@@ -28,13 +28,13 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class ZoneIdCodecTest {
 
     @Test
     void constructorNoByteBufAllocator() {
-        assertThatNullPointerException().isThrownBy(() -> new ZoneIdCodec(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ZoneIdCodec(null))
             .withMessage("byteBufAllocator must not be null");
     }
 
@@ -62,13 +62,13 @@ final class ZoneIdCodecTest {
 
     @Test
     void doCanDecodeNoFormat() {
-        assertThatNullPointerException().isThrownBy(() -> new ZoneIdCodec(TEST).doCanDecode(null, VARCHAR))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ZoneIdCodec(TEST).doCanDecode(null, VARCHAR))
             .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new ZoneIdCodec(TEST).doCanDecode(FORMAT_TEXT, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ZoneIdCodec(TEST).doCanDecode(FORMAT_TEXT, null))
             .withMessage("type must not be null");
     }
 
@@ -82,7 +82,7 @@ final class ZoneIdCodecTest {
 
     @Test
     void doEncodeNoValue() {
-        assertThatNullPointerException().isThrownBy(() -> new ZoneIdCodec(TEST).doEncode(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ZoneIdCodec(TEST).doEncode(null))
             .withMessage("value must not be null");
     }
 

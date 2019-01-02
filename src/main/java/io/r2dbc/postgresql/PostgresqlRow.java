@@ -21,6 +21,7 @@ import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.message.backend.DataRow;
 import io.r2dbc.postgresql.message.backend.RowDescription;
+import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Row;
 import reactor.util.annotation.Nullable;
 
@@ -45,8 +46,8 @@ public final class PostgresqlRow implements Row {
     private final Map<String, Column> nameKeyedColumns;
 
     PostgresqlRow(Codecs codecs, List<Column> columns) {
-        this.codecs = Objects.requireNonNull(codecs, "codecs must not be null");
-        this.columns = Objects.requireNonNull(columns, "columns must not be null");
+        this.codecs = Assert.requireNonNull(codecs, "codecs must not be null");
+        this.columns = Assert.requireNonNull(columns, "columns must not be null");
 
         this.nameKeyedColumns = getNameKeyedColumns(this.columns);
     }
@@ -66,8 +67,8 @@ public final class PostgresqlRow implements Row {
     @Nullable
     @Override
     public <T> T get(Object identifier, Class<T> type) {
-        Objects.requireNonNull(identifier, "identifier must not be null");
-        Objects.requireNonNull(type, "type must not be null");
+        Assert.requireNonNull(identifier, "identifier must not be null");
+        Assert.requireNonNull(type, "type must not be null");
         requireNotReleased();
 
         Column column;
@@ -98,9 +99,9 @@ public final class PostgresqlRow implements Row {
     }
 
     static PostgresqlRow toRow(Codecs codecs, DataRow dataRow, RowDescription rowDescription) {
-        Objects.requireNonNull(codecs, "codecs must not be null");
-        Objects.requireNonNull(dataRow, "dataRow must not be null");
-        Objects.requireNonNull(rowDescription, "rowDescription must not be null");
+        Assert.requireNonNull(codecs, "codecs must not be null");
+        Assert.requireNonNull(dataRow, "dataRow must not be null");
+        Assert.requireNonNull(rowDescription, "rowDescription must not be null");
 
         List<Column> columns = getColumns(dataRow.getColumns(), rowDescription.getFields());
         dataRow.release();
@@ -170,9 +171,9 @@ public final class PostgresqlRow implements Row {
 
         Column(@Nullable ByteBuf byteBuf, Integer dataType, Format format, String name) {
             this.byteBuf = byteBuf == null ? null : byteBuf.retain();
-            this.dataType = Objects.requireNonNull(dataType, "dataType must not be null");
-            this.format = Objects.requireNonNull(format, "format must not be null");
-            this.name = Objects.requireNonNull(name, "name must not be null");
+            this.dataType = Assert.requireNonNull(dataType, "dataType must not be null");
+            this.format = Assert.requireNonNull(format, "format must not be null");
+            this.name = Assert.requireNonNull(name, "name must not be null");
         }
 
         @Override

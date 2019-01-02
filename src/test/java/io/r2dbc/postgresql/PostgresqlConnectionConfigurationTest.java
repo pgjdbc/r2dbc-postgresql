@@ -19,31 +19,31 @@ package io.r2dbc.postgresql;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class PostgresqlConnectionConfigurationTest {
 
     @Test
     void builderNoApplicationName() {
-        assertThatNullPointerException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().applicationName(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().applicationName(null))
             .withMessage("applicationName must not be null");
     }
 
     @Test
     void builderNoHost() {
-        assertThatNullPointerException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().host(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().host(null))
             .withMessage("host must not be null");
     }
 
     @Test
     void builderNoPassword() {
-        assertThatNullPointerException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().password(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().password(null))
             .withMessage("password must not be null");
     }
 
     @Test
     void builderNoUsername() {
-        assertThatNullPointerException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().username(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().username(null))
             .withMessage("username must not be null");
     }
 
@@ -87,7 +87,7 @@ final class PostgresqlConnectionConfigurationTest {
 
     @Test
     void constructorNoNoHost() {
-        assertThatNullPointerException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder()
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder()
             .password("test-password")
             .username("test-username")
             .build())
@@ -96,7 +96,7 @@ final class PostgresqlConnectionConfigurationTest {
 
     @Test
     void constructorNoPassword() {
-        assertThatNullPointerException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder()
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder()
             .host("test-host")
             .username("test-username")
             .build())
@@ -105,7 +105,7 @@ final class PostgresqlConnectionConfigurationTest {
 
     @Test
     void constructorNoUsername() {
-        assertThatNullPointerException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder()
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder()
             .host("test-host")
             .password("test-password")
             .build())

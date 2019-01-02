@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.message.backend.RowDescription;
+import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ColumnMetadata;
 import io.r2dbc.spi.RowMetadata;
 
@@ -37,7 +38,7 @@ public final class PostgresqlRowMetadata implements RowMetadata {
     private final Map<String, PostgresqlColumnMetadata> nameKeyedColumnMetadatas;
 
     PostgresqlRowMetadata(List<PostgresqlColumnMetadata> columnMetadatas) {
-        this.columnMetadatas = Objects.requireNonNull(columnMetadatas, "columnMetadatas must not be null");
+        this.columnMetadatas = Assert.requireNonNull(columnMetadatas, "columnMetadatas must not be null");
 
         this.nameKeyedColumnMetadatas = getNameKeyedColumnMetadatas(columnMetadatas);
     }
@@ -61,7 +62,7 @@ public final class PostgresqlRowMetadata implements RowMetadata {
      */
     @Override
     public ColumnMetadata getColumnMetadata(Object identifier) {
-        Objects.requireNonNull(identifier, "identifier must not be null");
+        Assert.requireNonNull(identifier, "identifier must not be null");
 
         if (identifier instanceof Integer) {
             return getColumnMetadata((Integer) identifier);
@@ -91,7 +92,7 @@ public final class PostgresqlRowMetadata implements RowMetadata {
     }
 
     static PostgresqlRowMetadata toRowMetadata(RowDescription rowDescription) {
-        Objects.requireNonNull(rowDescription, "rowDescription must not be null");
+        Assert.requireNonNull(rowDescription, "rowDescription must not be null");
 
         return new PostgresqlRowMetadata(getColumnMetadatas(rowDescription));
     }

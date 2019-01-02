@@ -21,8 +21,7 @@ import io.r2dbc.postgresql.message.backend.AuthenticationMD5Password;
 import io.r2dbc.postgresql.message.backend.AuthenticationMessage;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.message.frontend.PasswordMessage;
-
-import java.util.Objects;
+import io.r2dbc.postgresql.util.Assert;
 
 /**
  * An implementation of {@link AuthenticationHandler} that handles {@link AuthenticationCleartextPassword} and {@link AuthenticationMD5Password} messages.
@@ -38,11 +37,11 @@ public final class PasswordAuthenticationHandler implements AuthenticationHandle
      *
      * @param password the password to use for authentication
      * @param username the username to use for authentication
-     * @throws NullPointerException if {@code password} or {@code user} is {@code null}
+     * @throws IllegalArgumentException if {@code password} or {@code user} is {@code null}
      */
     public PasswordAuthenticationHandler(String password, String username) {
-        this.password = Objects.requireNonNull(password, "password must not be null");
-        this.username = Objects.requireNonNull(username, "username must not be null");
+        this.password = Assert.requireNonNull(password, "password must not be null");
+        this.username = Assert.requireNonNull(username, "username must not be null");
     }
 
     /**
@@ -50,17 +49,17 @@ public final class PasswordAuthenticationHandler implements AuthenticationHandle
      *
      * @param message the message to inspect
      * @return whether this {@link AuthenticationHandler} can support authentication for a given authentication message response
-     * @throws NullPointerException if {@code message} is {@code null}
+     * @throws IllegalArgumentException if {@code message} is {@code null}
      */
     public static boolean supports(AuthenticationMessage message) {
-        Objects.requireNonNull(message, "message must not be null");
+        Assert.requireNonNull(message, "message must not be null");
 
         return message instanceof AuthenticationCleartextPassword || message instanceof AuthenticationMD5Password;
     }
 
     @Override
     public FrontendMessage handle(AuthenticationMessage message) {
-        Objects.requireNonNull(message, "message must not be null");
+        Assert.requireNonNull(message, "message must not be null");
 
         if (message instanceof AuthenticationCleartextPassword) {
             return handleAuthenticationClearTextPassword();

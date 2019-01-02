@@ -20,13 +20,13 @@ import org.junit.jupiter.api.Test;
 
 import static io.r2dbc.postgresql.message.backend.BackendMessageAssert.assertThat;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class AuthenticationGSSContinueTest {
 
     @Test
     void constructorNoAuthenticationData() {
-        assertThatNullPointerException().isThrownBy(() -> new AuthenticationGSSContinue(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new AuthenticationGSSContinue(null))
             .withMessage("authenticationData must not be null");
     }
 

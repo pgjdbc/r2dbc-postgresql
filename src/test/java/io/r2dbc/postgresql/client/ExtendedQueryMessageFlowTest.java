@@ -38,7 +38,7 @@ import java.util.LinkedList;
 import static io.r2dbc.postgresql.client.TestClient.NO_OP;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class ExtendedQueryMessageFlowTest {
 
@@ -78,25 +78,25 @@ final class ExtendedQueryMessageFlowTest {
 
     @Test
     void executeNoBindings() {
-        assertThatNullPointerException().isThrownBy(() -> ExtendedQueryMessageFlow.execute(null, NO_OP, () -> "", "test-statement"))
+        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryMessageFlow.execute(null, NO_OP, () -> "", "test-statement"))
             .withMessage("bindings must not be null");
     }
 
     @Test
     void executeNoClient() {
-        assertThatNullPointerException().isThrownBy(() -> ExtendedQueryMessageFlow.execute(Flux.empty(), null, () -> "", "test-statement"))
+        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryMessageFlow.execute(Flux.empty(), null, () -> "", "test-statement"))
             .withMessage("client must not be null");
     }
 
     @Test
     void executeNoPortalNameSupplier() {
-        assertThatNullPointerException().isThrownBy(() -> ExtendedQueryMessageFlow.execute(Flux.empty(), NO_OP, null, "test-statement"))
+        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryMessageFlow.execute(Flux.empty(), NO_OP, null, "test-statement"))
             .withMessage("portalNameSupplier must not be null");
     }
 
     @Test
     void executeNoStatement() {
-        assertThatNullPointerException().isThrownBy(() -> ExtendedQueryMessageFlow.execute(Flux.empty(), NO_OP, () -> "", null))
+        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryMessageFlow.execute(Flux.empty(), NO_OP, () -> "", null))
             .withMessage("statement must not be null");
     }
 
@@ -116,25 +116,25 @@ final class ExtendedQueryMessageFlowTest {
 
     @Test
     void parseNoClient() {
-        assertThatNullPointerException().isThrownBy(() -> ExtendedQueryMessageFlow.parse(null, "test-name", "test-query", Collections.emptyList()))
+        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryMessageFlow.parse(null, "test-name", "test-query", Collections.emptyList()))
             .withMessage("client must not be null");
     }
 
     @Test
     void parseNoName() {
-        assertThatNullPointerException().isThrownBy(() -> ExtendedQueryMessageFlow.parse(NO_OP, null, "test-query", Collections.emptyList()))
+        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryMessageFlow.parse(NO_OP, null, "test-query", Collections.emptyList()))
             .withMessage("name must not be null");
     }
 
     @Test
     void parseNoQuery() {
-        assertThatNullPointerException().isThrownBy(() -> ExtendedQueryMessageFlow.parse(NO_OP, "test-name", null, Collections.emptyList()))
+        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryMessageFlow.parse(NO_OP, "test-name", null, Collections.emptyList()))
             .withMessage("query must not be null");
     }
 
     @Test
     void parseNoTypes() {
-        assertThatNullPointerException().isThrownBy(() -> ExtendedQueryMessageFlow.parse(NO_OP, "test-name", "test-query", null))
+        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryMessageFlow.parse(NO_OP, "test-name", "test-query", null))
             .withMessage("types must not be null");
     }
 

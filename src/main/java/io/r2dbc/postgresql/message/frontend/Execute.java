@@ -18,6 +18,7 @@ package io.r2dbc.postgresql.message.frontend;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
@@ -53,18 +54,18 @@ public final class Execute implements FrontendMessage {
      *
      * @param name the name of the portal to execute (an empty string selects the unnamed portal)
      * @param rows maximum number of rows to return, if portal contains a query that returns rows (ignored otherwise). Zero denotes “no limit”.
-     * @throws NullPointerException if {@code name} is {@code null}
+     * @throws IllegalArgumentException if {@code name} is {@code null}
      * @see #UNNAMED_PORTAL
      * @see #NO_LIMIT
      */
     public Execute(String name, int rows) {
-        this.name = Objects.requireNonNull(name, "name must not be null");
+        this.name = Assert.requireNonNull(name, "name must not be null");
         this.rows = rows;
     }
 
     @Override
     public Publisher<ByteBuf> encode(ByteBufAllocator byteBufAllocator) {
-        Objects.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
 
         return Mono.defer(() -> {
             ByteBuf out = byteBufAllocator.ioBuffer();

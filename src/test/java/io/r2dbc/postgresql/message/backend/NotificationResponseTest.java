@@ -20,19 +20,19 @@ import org.junit.jupiter.api.Test;
 
 import static io.netty.util.CharsetUtil.UTF_8;
 import static io.r2dbc.postgresql.message.backend.BackendMessageAssert.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class NotificationResponseTest {
 
     @Test
     void constructorNoName() {
-        assertThatNullPointerException().isThrownBy(() -> new NotificationResponse(null, "test-payload", 100))
+        assertThatIllegalArgumentException().isThrownBy(() -> new NotificationResponse(null, "test-payload", 100))
             .withMessage("name must not be null");
     }
 
     @Test
     void constructorNoPayload() {
-        assertThatNullPointerException().isThrownBy(() -> new NotificationResponse(null, "test-payload", 100))
+        assertThatIllegalArgumentException().isThrownBy(() -> new NotificationResponse(null, "test-payload", 100))
             .withMessage("name must not be null");
     }
 

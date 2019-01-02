@@ -20,13 +20,13 @@ import org.junit.jupiter.api.Test;
 
 import static io.netty.util.CharsetUtil.UTF_8;
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageAssert.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class CopyFailTest {
 
     @Test
     void constructorNoMessage() {
-        assertThatNullPointerException().isThrownBy(() -> new CopyFail(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new CopyFail(null))
             .withMessage("message must not be null");
     }
 

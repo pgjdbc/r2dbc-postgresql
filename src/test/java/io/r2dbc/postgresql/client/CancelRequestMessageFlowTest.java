@@ -20,8 +20,8 @@ import io.r2dbc.postgresql.message.frontend.CancelRequest;
 import org.junit.jupiter.api.Test;
 import reactor.test.StepVerifier;
 
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 final class CancelRequestMessageFlowTest {
 
@@ -41,7 +41,7 @@ final class CancelRequestMessageFlowTest {
 
     @Test
     void exchangeNoClient() {
-        assertThatNullPointerException().isThrownBy(() -> CancelRequestMessageFlow.exchange(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> CancelRequestMessageFlow.exchange(null))
             .withMessage("client must not be null");
     }
 

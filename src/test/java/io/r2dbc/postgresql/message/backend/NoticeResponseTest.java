@@ -23,13 +23,13 @@ import java.util.Collections;
 import static io.netty.util.CharsetUtil.UTF_8;
 import static io.r2dbc.postgresql.message.backend.BackendMessageAssert.assertThat;
 import static io.r2dbc.postgresql.message.backend.Field.FieldType.CODE;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class NoticeResponseTest {
 
     @Test
     void constructorNoFields() {
-        assertThatNullPointerException().isThrownBy(() -> new NoticeResponse(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new NoticeResponse(null))
             .withMessage("fields must not be null");
     }
 

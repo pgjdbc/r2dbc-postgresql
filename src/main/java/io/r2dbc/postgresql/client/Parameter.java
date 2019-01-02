@@ -18,6 +18,7 @@ package io.r2dbc.postgresql.client;
 
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.message.Format;
+import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
 import java.util.Objects;
@@ -39,11 +40,11 @@ public final class Parameter {
      * @param format the {@link Format} of the parameter
      * @param type   the type of the parameter
      * @param value  the value of the parameter
-     * @throws NullPointerException if {@code format}, or {@code type} is {@code null}
+     * @throws IllegalArgumentException if {@code format}, or {@code type} is {@code null}
      */
     public Parameter(Format format, Integer type, @Nullable ByteBuf value) {
-        this.format = Objects.requireNonNull(format, "format must not be null");
-        this.type = Objects.requireNonNull(type, "type must not be null");
+        this.format = Assert.requireNonNull(format, "format must not be null");
+        this.type = Assert.requireNonNull(type, "type must not be null");
         this.value = value;
     }
 

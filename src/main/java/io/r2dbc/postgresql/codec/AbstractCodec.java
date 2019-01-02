@@ -20,6 +20,7 @@ import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
+import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
 import java.util.Objects;
@@ -29,13 +30,13 @@ abstract class AbstractCodec<T> implements Codec<T> {
     private final Class<T> type;
 
     AbstractCodec(Class<T> type) {
-        this.type = Objects.requireNonNull(type, "type must not be null");
+        this.type = Assert.requireNonNull(type, "type must not be null");
     }
 
     @Override
     public final boolean canDecode(int dataType, Format format, Class<?> type) {
-        Objects.requireNonNull(format, "format must not be null");
-        Objects.requireNonNull(type, "type must not be null");
+        Assert.requireNonNull(format, "format must not be null");
+        Assert.requireNonNull(type, "type must not be null");
 
         return type.isAssignableFrom(this.type) &&
             doCanDecode(format, PostgresqlObjectId.valueOf(dataType));
@@ -43,14 +44,14 @@ abstract class AbstractCodec<T> implements Codec<T> {
 
     @Override
     public final boolean canEncode(Object value) {
-        Objects.requireNonNull(value, "value must not be null");
+        Assert.requireNonNull(value, "value must not be null");
 
         return this.type.isInstance(value);
     }
 
     @Override
     public final boolean canEncodeNull(Class<?> type) {
-        Objects.requireNonNull(type, "type must not be null");
+        Assert.requireNonNull(type, "type must not be null");
 
         return this.type.isAssignableFrom(type);
     }
@@ -68,14 +69,14 @@ abstract class AbstractCodec<T> implements Codec<T> {
     @Override
     @SuppressWarnings("unchecked")
     public final Parameter encode(Object value) {
-        Objects.requireNonNull(value, "value must not be null");
+        Assert.requireNonNull(value, "value must not be null");
 
         return doEncode((T) value);
     }
 
     static Parameter create(Format format, PostgresqlObjectId type, @Nullable ByteBuf value) {
-        Objects.requireNonNull(format, "format must not be null");
-        Objects.requireNonNull(type, "type must not be null");
+        Assert.requireNonNull(format, "format must not be null");
+        Assert.requireNonNull(type, "type must not be null");
 
         return new Parameter(format, type.getObjectId(), value);
     }

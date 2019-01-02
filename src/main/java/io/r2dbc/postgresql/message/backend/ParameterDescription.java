@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
+import io.r2dbc.postgresql.util.Assert;
 
 import java.util.List;
 import java.util.Objects;
@@ -34,10 +35,10 @@ public final class ParameterDescription implements BackendMessage {
      * Creates a new message.
      *
      * @param parameters the object IDs of the parameter data types
-     * @throws NullPointerException if {@code parameters} is {@code null}
+     * @throws IllegalArgumentException if {@code parameters} is {@code null}
      */
     public ParameterDescription(List<Integer> parameters) {
-        this.parameters = Objects.requireNonNull(parameters, "parameters must not be null");
+        this.parameters = Assert.requireNonNull(parameters, "parameters must not be null");
     }
 
     @Override
@@ -74,7 +75,7 @@ public final class ParameterDescription implements BackendMessage {
     }
 
     static ParameterDescription decode(ByteBuf in) {
-        Objects.requireNonNull(in, "in must not be null");
+        Assert.requireNonNull(in, "in must not be null");
 
         List<Integer> parameters = IntStream.range(0, in.readShort())
             .map(i -> in.readInt())

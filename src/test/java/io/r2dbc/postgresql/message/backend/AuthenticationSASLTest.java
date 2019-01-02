@@ -22,13 +22,13 @@ import java.util.Collections;
 
 import static io.netty.util.CharsetUtil.UTF_8;
 import static io.r2dbc.postgresql.message.backend.BackendMessageAssert.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class AuthenticationSASLTest {
 
     @Test
     void constructorNoAuthenticationMechanisms() {
-        assertThatNullPointerException().isThrownBy(() -> new AuthenticationSASL(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new AuthenticationSASL(null))
             .withMessage("authenticationMechanisms must not be null");
     }
 

@@ -30,7 +30,7 @@ public interface AuthenticationHandler {
      *
      * @param message the message to handle
      * @return the next outbound message to send
-     * @throws NullPointerException if {@code message} is {@code null}
+     * @throws IllegalArgumentException if {@code message} is {@code null}
      */
     FrontendMessage handle(AuthenticationMessage message);
 

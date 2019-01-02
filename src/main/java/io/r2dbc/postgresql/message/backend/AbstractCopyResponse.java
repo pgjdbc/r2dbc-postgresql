@@ -18,6 +18,7 @@ package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.message.Format;
+import io.r2dbc.postgresql.util.Assert;
 
 import java.util.List;
 import java.util.Objects;
@@ -31,8 +32,8 @@ abstract class AbstractCopyResponse implements BackendMessage {
     private final Format overallFormat;
 
     AbstractCopyResponse(List<Format> columnFormats, Format overallFormat) {
-        this.columnFormats = Objects.requireNonNull(columnFormats, "columnFormats must not be null");
-        this.overallFormat = Objects.requireNonNull(overallFormat, "overallFormat must not be null");
+        this.columnFormats = Assert.requireNonNull(columnFormats, "columnFormats must not be null");
+        this.overallFormat = Assert.requireNonNull(overallFormat, "overallFormat must not be null");
     }
 
     @Override
@@ -80,7 +81,7 @@ abstract class AbstractCopyResponse implements BackendMessage {
     }
 
     static List<Format> readColumnFormats(ByteBuf in) {
-        Objects.requireNonNull(in, "in must not be null");
+        Assert.requireNonNull(in, "in must not be null");
 
         return IntStream.range(0, in.readShort())
             .mapToObj(i -> Format.valueOf(in.readShort()))

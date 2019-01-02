@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
+import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
 import java.nio.ByteBuffer;
@@ -74,7 +75,7 @@ public final class FunctionCallResponse implements BackendMessage {
     }
 
     static FunctionCallResponse decode(ByteBuf in) {
-        Objects.requireNonNull(in, "in must not be null");
+        Assert.requireNonNull(in, "in must not be null");
 
         int length = in.readInt();
         ByteBuf value = NULL == length ? null : in.readSlice(length);

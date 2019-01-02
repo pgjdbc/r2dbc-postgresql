@@ -21,6 +21,7 @@ import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
+import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
@@ -37,7 +38,7 @@ final class InetAddressCodec extends AbstractCodec<InetAddress> {
 
     InetAddressCodec(ByteBufAllocator byteBufAllocator) {
         super(InetAddress.class);
-        this.byteBufAllocator = Objects.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
     }
 
     @Override
@@ -47,15 +48,15 @@ final class InetAddressCodec extends AbstractCodec<InetAddress> {
 
     @Override
     boolean doCanDecode(Format format, PostgresqlObjectId type) {
-        Objects.requireNonNull(format, "format must not be null");
-        Objects.requireNonNull(type, "type must not be null");
+        Assert.requireNonNull(format, "format must not be null");
+        Assert.requireNonNull(type, "type must not be null");
 
         return FORMAT_TEXT == format && VARCHAR == type;
     }
 
     @Override
     InetAddress doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends InetAddress> type) {
-        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
+        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
 
         try {
             return InetAddress.getByName(ByteBufUtils.decode(byteBuf));
@@ -66,7 +67,7 @@ final class InetAddressCodec extends AbstractCodec<InetAddress> {
 
     @Override
     Parameter doEncode(InetAddress value) {
-        Objects.requireNonNull(value, "value must not be null");
+        Assert.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.getHostAddress());
         return create(FORMAT_TEXT, VARCHAR, encoded);

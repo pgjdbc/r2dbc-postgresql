@@ -33,7 +33,7 @@ import java.util.Arrays;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class ReactorNettyClientTest {
 
@@ -61,7 +61,7 @@ final class ReactorNettyClientTest {
 
     @Test
     void constructorNoHost() {
-        assertThatNullPointerException().isThrownBy(() -> ReactorNettyClient.connect(null, SERVER.getPort()))
+        assertThatIllegalArgumentException().isThrownBy(() -> ReactorNettyClient.connect(null, SERVER.getPort()))
             .withMessage("host must not be null");
     }
 
@@ -90,7 +90,7 @@ final class ReactorNettyClientTest {
 
     @Test
     void exchangeNoPublisher() {
-        assertThatNullPointerException().isThrownBy(() -> this.client.exchange(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> this.client.exchange(null))
             .withMessage("requests must not be null");
     }
 

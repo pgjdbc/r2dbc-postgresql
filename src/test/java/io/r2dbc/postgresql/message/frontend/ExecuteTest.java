@@ -21,13 +21,13 @@ import org.junit.jupiter.api.Test;
 import static io.r2dbc.postgresql.message.frontend.Execute.NO_LIMIT;
 import static io.r2dbc.postgresql.message.frontend.Execute.UNNAMED_PORTAL;
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageAssert.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class ExecuteTest {
 
     @Test
     void constructorNoName() {
-        assertThatNullPointerException().isThrownBy(() -> new Execute(null, NO_LIMIT))
+        assertThatIllegalArgumentException().isThrownBy(() -> new Execute(null, NO_LIMIT))
             .withMessage("name must not be null");
     }
 

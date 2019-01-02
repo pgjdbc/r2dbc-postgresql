@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
+import io.r2dbc.postgresql.util.Assert;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -32,10 +33,10 @@ public final class AuthenticationMD5Password implements AuthenticationMessage {
      * Creates a new message.
      *
      * @param salt the salt to use when encrypting the password
-     * @throws NullPointerException if {@code salt} is {@code null}
+     * @throws IllegalArgumentException if {@code salt} is {@code null}
      */
     public AuthenticationMD5Password(ByteBuf salt) {
-        Objects.requireNonNull(salt, "salt must not be null");
+        Assert.requireNonNull(salt, "salt must not be null");
 
         this.salt = salt.nioBuffer();
     }
@@ -74,7 +75,7 @@ public final class AuthenticationMD5Password implements AuthenticationMessage {
     }
 
     static AuthenticationMD5Password decode(ByteBuf in) {
-        Objects.requireNonNull(in, "in must not be null");
+        Assert.requireNonNull(in, "in must not be null");
 
         return new AuthenticationMD5Password(in.readSlice(4));
     }

@@ -20,6 +20,7 @@ import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.Field;
 import io.r2dbc.postgresql.message.backend.Field.FieldType;
+import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.R2dbcException;
 import reactor.core.publisher.SynchronousSink;
 
@@ -94,7 +95,7 @@ public final class PostgresqlServerErrorException extends R2dbcException {
      * Creates a new exception.
      *
      * @param fields the fields to be used to populate the exception
-     * @throws NullPointerException if {@code fields} is {@code null}
+     * @throws IllegalArgumentException if {@code fields} is {@code null}
      */
     public PostgresqlServerErrorException(List<Field> fields) {
         this(convertToMap(fields));
@@ -354,7 +355,7 @@ public final class PostgresqlServerErrorException extends R2dbcException {
     }
 
     private static Map<FieldType, String> convertToMap(List<Field> fields) {
-        Objects.requireNonNull(fields, "fields must not be null");
+        Assert.requireNonNull(fields, "fields must not be null");
 
         Map<FieldType, String> fieldMap = new HashMap<>(fields.size());
         for (Field field : fields) {
@@ -364,7 +365,7 @@ public final class PostgresqlServerErrorException extends R2dbcException {
     }
 
     private static PostgresqlServerErrorException toException(ErrorResponse errorResponse) {
-        Objects.requireNonNull(errorResponse, "errorResponse must not be null");
+        Assert.requireNonNull(errorResponse, "errorResponse must not be null");
 
         return new PostgresqlServerErrorException(errorResponse.getFields());
     }

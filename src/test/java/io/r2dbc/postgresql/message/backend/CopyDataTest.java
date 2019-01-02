@@ -20,13 +20,13 @@ import org.junit.jupiter.api.Test;
 
 import static io.r2dbc.postgresql.message.backend.BackendMessageAssert.assertThat;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class CopyDataTest {
 
     @Test
     void constructorNoData() {
-        assertThatNullPointerException().isThrownBy(() -> new CopyData(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new CopyData(null))
             .withMessage("data must not be null");
     }
 

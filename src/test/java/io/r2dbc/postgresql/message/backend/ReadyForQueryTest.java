@@ -24,13 +24,13 @@ import static io.r2dbc.postgresql.message.backend.ReadyForQuery.TransactionStatu
 import static io.r2dbc.postgresql.message.backend.ReadyForQuery.TransactionStatus.TRANSACTION;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class ReadyForQueryTest {
 
     @Test
     void constructorNoTransactionStatus() {
-        assertThatNullPointerException().isThrownBy(() -> new ReadyForQuery(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ReadyForQuery(null))
             .withMessage("transactionStatus must not be null");
     }
 

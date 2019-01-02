@@ -19,6 +19,7 @@ package io.r2dbc.postgresql.client;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
+import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.TestByteBufAllocator;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.EmitterProcessor;
@@ -32,7 +33,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -60,14 +60,14 @@ public final class TestClient implements Client {
 
     private TestClient(boolean expectClose, Map<String, String> parameterStatus, @Nullable Integer processId, @Nullable Integer secretKey, Flux<Window> windows, TransactionStatus transactionStatus) {
         this.expectClose = expectClose;
-        this.parameterStatus = Objects.requireNonNull(parameterStatus);
+        this.parameterStatus = Assert.requireNonNull(parameterStatus, "parameterStatus must not be null");
         this.processId = processId;
         this.secretKey = secretKey;
-        this.transactionStatus = Objects.requireNonNull(transactionStatus);
+        this.transactionStatus = Assert.requireNonNull(transactionStatus, "transactionStatus must not be null");
 
         FluxSink<Flux<BackendMessage>> responses = this.responseProcessor.sink();
 
-        Objects.requireNonNull(windows)
+        Assert.requireNonNull(windows, "windows must not be null")
             .map(window -> window.exchanges)
             .map(exchanges -> exchanges
                 .concatMap(exchange ->
@@ -96,7 +96,7 @@ public final class TestClient implements Client {
 
     @Override
     public Flux<BackendMessage> exchange(Publisher<FrontendMessage> requests) {
-        Objects.requireNonNull(requests, "requests must not be null");
+        Assert.requireNonNull(requests, "requests must not be null");
 
         return this.responseProcessor
             .doOnSubscribe(s ->
@@ -158,7 +158,7 @@ public final class TestClient implements Client {
         }
 
         public Exchange.Builder<Builder> expectRequest(FrontendMessage... requests) {
-            Objects.requireNonNull(requests);
+            Assert.requireNonNull(requests, "requests must not be null");
 
             Window.Builder<Builder> window = new Window.Builder<>(this);
             this.windows.add(window);
@@ -170,25 +170,25 @@ public final class TestClient implements Client {
         }
 
         public Builder parameterStatus(String key, String value) {
-            Objects.requireNonNull(key);
-            Objects.requireNonNull(value);
+            Assert.requireNonNull(key, "key must not be null");
+            Assert.requireNonNull(value, "value must not be null");
 
             this.parameterStatus.put(key, value);
             return this;
         }
 
         public Builder processId(Integer processId) {
-            this.processId = Objects.requireNonNull(processId);
+            this.processId = Assert.requireNonNull(processId, "processId must not be null");
             return this;
         }
 
         public Builder secretKey(Integer secretKey) {
-            this.secretKey = Objects.requireNonNull(secretKey);
+            this.secretKey = Assert.requireNonNull(secretKey, "secretKey must not be null");
             return this;
         }
 
         public Builder transactionStatus(TransactionStatus transactionStatus) {
-            this.transactionStatus = Objects.requireNonNull(transactionStatus);
+            this.transactionStatus = Assert.requireNonNull(transactionStatus, "transactionStatus must not be null");
             return this;
         }
 
@@ -207,8 +207,8 @@ public final class TestClient implements Client {
         private final Publisher<BackendMessage> responses;
 
         private Exchange(Flux<FrontendMessage> requests, Publisher<BackendMessage> responses) {
-            this.requests = Objects.requireNonNull(requests);
-            this.responses = Objects.requireNonNull(responses);
+            this.requests = Assert.requireNonNull(requests, "requests must not be null");
+            this.responses = Assert.requireNonNull(responses, "responses must not be null");
         }
 
         public static final class Builder<T> {
@@ -220,18 +220,18 @@ public final class TestClient implements Client {
             private Publisher<BackendMessage> responses;
 
             private Builder(T chain, FrontendMessage... requests) {
-                this.chain = Objects.requireNonNull(chain);
-                this.requests = Flux.just(Objects.requireNonNull(requests));
+                this.chain = Assert.requireNonNull(chain, "chain must not be null");
+                this.requests = Flux.just(Assert.requireNonNull(requests, "requests must not be null"));
             }
 
             public T thenRespond(BackendMessage... responses) {
-                Objects.requireNonNull(responses);
+                Assert.requireNonNull(responses, "responses must not be null");
 
                 return thenRespond(Flux.just(responses));
             }
 
             T thenRespond(Publisher<BackendMessage> responses) {
-                Objects.requireNonNull(responses);
+                Assert.requireNonNull(responses, "responses must not be null");
 
                 this.responses = responses;
                 return this.chain;
@@ -250,7 +250,7 @@ public final class TestClient implements Client {
         private final Flux<Exchange> exchanges;
 
         private Window(Flux<Exchange> exchanges) {
-            this.exchanges = Objects.requireNonNull(exchanges);
+            this.exchanges = Assert.requireNonNull(exchanges, "exchanges must not be null");
         }
 
         public static final class Builder<T> {
@@ -260,7 +260,7 @@ public final class TestClient implements Client {
             private final List<Exchange.Builder<?>> exchanges = new ArrayList<>();
 
             private Builder(T chain) {
-                this.chain = Objects.requireNonNull(chain);
+                this.chain = Assert.requireNonNull(chain, "chain must not be null");
             }
 
             public T done() {
@@ -268,7 +268,7 @@ public final class TestClient implements Client {
             }
 
             public Exchange.Builder<Builder<T>> expectRequest(FrontendMessage request) {
-                Objects.requireNonNull(request);
+                Assert.requireNonNull(request, "request must not be null");
 
                 Exchange.Builder<Builder<T>> exchange = new Exchange.Builder<>(this, request);
                 this.exchanges.add(exchange);

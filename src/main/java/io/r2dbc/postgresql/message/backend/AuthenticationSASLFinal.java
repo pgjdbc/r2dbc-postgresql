@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
+import io.r2dbc.postgresql.util.Assert;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -32,10 +33,10 @@ public final class AuthenticationSASLFinal implements AuthenticationMessage {
      * Creates a new message.
      *
      * @param additionalData SASL outcome "additional data", specific to the SASL mechanism being used
-     * @throws NullPointerException if {@code additionalData} is {@code null}
+     * @throws IllegalArgumentException if {@code additionalData} is {@code null}
      */
     public AuthenticationSASLFinal(ByteBuf additionalData) {
-        Objects.requireNonNull(additionalData, "additionalData must not be null");
+        Assert.requireNonNull(additionalData, "additionalData must not be null");
 
         this.additionalData = additionalData.nioBuffer();
     }
@@ -74,7 +75,7 @@ public final class AuthenticationSASLFinal implements AuthenticationMessage {
     }
 
     static AuthenticationSASLFinal decode(ByteBuf in) {
-        Objects.requireNonNull(in, "in must not be null");
+        Assert.requireNonNull(in, "in must not be null");
 
         return new AuthenticationSASLFinal(in.readSlice(in.readableBytes()));
     }

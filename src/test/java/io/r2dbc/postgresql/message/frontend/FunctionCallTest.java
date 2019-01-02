@@ -23,25 +23,25 @@ import java.util.Collections;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageAssert.assertThat;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class FunctionCallTest {
 
     @Test
     void constructorNoArgumentFormats() {
-        assertThatNullPointerException().isThrownBy(() -> new FunctionCall(null, Collections.singletonList(TEST.buffer(4).writeInt(100)), 200, FORMAT_BINARY))
+        assertThatIllegalArgumentException().isThrownBy(() -> new FunctionCall(null, Collections.singletonList(TEST.buffer(4).writeInt(100)), 200, FORMAT_BINARY))
             .withMessage("argumentFormats must not be null");
     }
 
     @Test
     void constructorNoArguments() {
-        assertThatNullPointerException().isThrownBy(() -> new FunctionCall(Collections.singletonList(FORMAT_BINARY), null, 200, FORMAT_BINARY))
+        assertThatIllegalArgumentException().isThrownBy(() -> new FunctionCall(Collections.singletonList(FORMAT_BINARY), null, 200, FORMAT_BINARY))
             .withMessage("arguments must not be null");
     }
 
     @Test
     void constructorNoResultFormat() {
-        assertThatNullPointerException().isThrownBy(() -> new FunctionCall(Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), 200, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new FunctionCall(Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), 200, null))
             .withMessage("resultFormat must not be null");
     }
 

@@ -21,6 +21,7 @@ import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
+import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
 import java.util.Objects;
@@ -32,7 +33,7 @@ final class ByteCodec extends AbstractCodec<Byte> {
     ByteCodec(ByteBufAllocator byteBufAllocator) {
         super(Byte.class);
 
-        Objects.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
         this.delegate = new ShortCodec(byteBufAllocator);
     }
 
@@ -43,22 +44,22 @@ final class ByteCodec extends AbstractCodec<Byte> {
 
     @Override
     boolean doCanDecode(@Nullable Format format, PostgresqlObjectId type) {
-        Objects.requireNonNull(type, "type must not be null");
+        Assert.requireNonNull(type, "type must not be null");
 
         return this.delegate.doCanDecode(format, type);
     }
 
     @Override
     Byte doDecode(ByteBuf byteBuf, Format format, @Nullable Class<? extends Byte> type) {
-        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
-        Objects.requireNonNull(format, "format must not be null");
+        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+        Assert.requireNonNull(format, "format must not be null");
 
         return this.delegate.doDecode(byteBuf, format, Short.class).byteValue();
     }
 
     @Override
     Parameter doEncode(Byte value) {
-        Objects.requireNonNull(value, "value must not be null");
+        Assert.requireNonNull(value, "value must not be null");
 
         return this.delegate.doEncode((short) value);
     }

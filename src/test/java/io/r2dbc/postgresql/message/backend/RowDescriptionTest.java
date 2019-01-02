@@ -23,13 +23,13 @@ import java.util.Collections;
 import static io.netty.util.CharsetUtil.UTF_8;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.backend.BackendMessageAssert.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class RowDescriptionTest {
 
     @Test
     void constructorNoFields() {
-        assertThatNullPointerException().isThrownBy(() -> new RowDescription(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new RowDescription(null))
             .withMessage("fields must not be null");
     }
 
@@ -58,13 +58,13 @@ final class RowDescriptionTest {
 
     @Test
     void fiedlConstructorNoFormat() {
-        assertThatNullPointerException().isThrownBy(() -> new RowDescription.Field((short) 100, 200, 300, (short) 400, null, "test-name", 500))
+        assertThatIllegalArgumentException().isThrownBy(() -> new RowDescription.Field((short) 100, 200, 300, (short) 400, null, "test-name", 500))
             .withMessage("format must not be null");
     }
 
     @Test
     void fieldConstructorNoName() {
-        assertThatNullPointerException().isThrownBy(() -> new RowDescription.Field((short) 100, 200, 300, (short) 400, FORMAT_BINARY, null, 500))
+        assertThatIllegalArgumentException().isThrownBy(() -> new RowDescription.Field((short) 100, 200, 300, (short) 400, FORMAT_BINARY, null, 500))
             .withMessage("name must not be null");
     }
 

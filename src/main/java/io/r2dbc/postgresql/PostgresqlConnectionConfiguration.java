@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql;
 
 
+import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
 import java.util.Objects;
@@ -40,12 +41,12 @@ public final class PostgresqlConnectionConfiguration {
     private final String username;
 
     private PostgresqlConnectionConfiguration(String applicationName, @Nullable String database, String host, String password, int port, String username) {
-        this.applicationName = Objects.requireNonNull(applicationName);
+        this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
         this.database = database;
-        this.host = Objects.requireNonNull(host, "host must not be null");
-        this.password = Objects.requireNonNull(password, "password must not be null");
+        this.host = Assert.requireNonNull(host, "host must not be null");
+        this.password = Assert.requireNonNull(password, "password must not be null");
         this.port = port;
-        this.username = Objects.requireNonNull(username, "username must not be null");
+        this.username = Assert.requireNonNull(username, "username must not be null");
     }
 
     /**
@@ -120,10 +121,10 @@ public final class PostgresqlConnectionConfiguration {
          *
          * @param applicationName the application name
          * @return this {@link Builder}
-         * @throws NullPointerException if {@code applicationName} is {@code null}
+         * @throws IllegalArgumentException if {@code applicationName} is {@code null}
          */
         public Builder applicationName(String applicationName) {
-            this.applicationName = Objects.requireNonNull(applicationName, "applicationName must not be null");
+            this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
             return this;
         }
 
@@ -152,10 +153,10 @@ public final class PostgresqlConnectionConfiguration {
          *
          * @param host the host
          * @return this {@link Builder}
-         * @throws NullPointerException if {@code host} is {@code null}
+         * @throws IllegalArgumentException if {@code host} is {@code null}
          */
         public Builder host(String host) {
-            this.host = Objects.requireNonNull(host, "host must not be null");
+            this.host = Assert.requireNonNull(host, "host must not be null");
             return this;
         }
 
@@ -164,10 +165,10 @@ public final class PostgresqlConnectionConfiguration {
          *
          * @param password the password
          * @return this {@link Builder}
-         * @throws NullPointerException if {@code password} is {@code null}
+         * @throws IllegalArgumentException if {@code password} is {@code null}
          */
         public Builder password(String password) {
-            this.password = Objects.requireNonNull(password, "password must not be null");
+            this.password = Assert.requireNonNull(password, "password must not be null");
             return this;
         }
 
@@ -199,10 +200,10 @@ public final class PostgresqlConnectionConfiguration {
          *
          * @param username the username
          * @return this {@link Builder}
-         * @throws NullPointerException if {@code username} is {@code null}
+         * @throws IllegalArgumentException if {@code username} is {@code null}
          */
         public Builder username(String username) {
-            this.username = Objects.requireNonNull(username, "username must not be null");
+            this.username = Assert.requireNonNull(username, "username must not be null");
             return this;
         }
 

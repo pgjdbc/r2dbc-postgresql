@@ -25,7 +25,7 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class AbstractCodecTest {
 
@@ -41,13 +41,13 @@ final class AbstractCodecTest {
 
     @Test
     void canDecodeNoFormat() {
-        assertThatNullPointerException().isThrownBy(() -> MockCodec.empty(String.class).canDecode(100, null, String.class))
+        assertThatIllegalArgumentException().isThrownBy(() -> MockCodec.empty(String.class).canDecode(100, null, String.class))
             .withMessage("format must not be null");
     }
 
     @Test
     void canDecodeNoType() {
-        assertThatNullPointerException().isThrownBy(() -> MockCodec.empty(String.class).canDecode(100, FORMAT_BINARY, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> MockCodec.empty(String.class).canDecode(100, FORMAT_BINARY, null))
             .withMessage("type must not be null");
     }
 
@@ -59,13 +59,13 @@ final class AbstractCodecTest {
 
     @Test
     void canEncodeNoValue() {
-        assertThatNullPointerException().isThrownBy(() -> MockCodec.empty(String.class).canEncode(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> MockCodec.empty(String.class).canEncode(null))
             .withMessage("value must not be null");
     }
 
     @Test
     void canEncodeNull() {
-        assertThatNullPointerException().isThrownBy(() -> MockCodec.empty(String.class).canEncodeNull(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> MockCodec.empty(String.class).canEncodeNull(null))
             .withMessage("type must not be null");
     }
 
@@ -77,7 +77,7 @@ final class AbstractCodecTest {
 
     @Test
     void constructorNoType() {
-        assertThatNullPointerException().isThrownBy(() -> MockCodec.empty(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> MockCodec.empty(null))
             .withMessage("type must not be null");
     }
 
@@ -90,13 +90,13 @@ final class AbstractCodecTest {
 
     @Test
     void createNoFormat() {
-        assertThatNullPointerException().isThrownBy(() -> AbstractCodec.create(null, INT4, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> AbstractCodec.create(null, INT4, null))
             .withMessage("format must not be null");
     }
 
     @Test
     void createNoType() {
-        assertThatNullPointerException().isThrownBy(() -> AbstractCodec.create(FORMAT_TEXT, null, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> AbstractCodec.create(FORMAT_TEXT, null, null))
             .withMessage("type must not be null");
     }
 
@@ -109,13 +109,13 @@ final class AbstractCodecTest {
 
     @Test
     void createNullNoFormat() {
-        assertThatNullPointerException().isThrownBy(() -> AbstractCodec.createNull(null, INT4))
+        assertThatIllegalArgumentException().isThrownBy(() -> AbstractCodec.createNull(null, INT4))
             .withMessage("format must not be null");
     }
 
     @Test
     void createNullNoType() {
-        assertThatNullPointerException().isThrownBy(() -> AbstractCodec.createNull(FORMAT_TEXT, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> AbstractCodec.createNull(FORMAT_TEXT, null))
             .withMessage("type must not be null");
     }
 
@@ -133,7 +133,7 @@ final class AbstractCodecTest {
 
     @Test
     void encodeNoValue() {
-        assertThatNullPointerException().isThrownBy(() -> MockCodec.empty(Object.class).encode(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> MockCodec.empty(Object.class).encode(null))
             .withMessage("value must not be null");
     }
 

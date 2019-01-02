@@ -26,6 +26,7 @@ import io.r2dbc.postgresql.message.frontend.Execute;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.message.frontend.Parse;
 import io.r2dbc.postgresql.message.frontend.Sync;
+import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -61,13 +62,13 @@ public final class ExtendedQueryMessageFlow {
      * @param portalNameSupplier supplier unique portal names for each binding
      * @param statement          the name of the statement to execute
      * @return the messages received in response to the exchange
-     * @throws NullPointerException if {@code bindings}, {@code client}, {@code portalNameSupplier}, or {@code statement} is {@code null}
+     * @throws IllegalArgumentException if {@code bindings}, {@code client}, {@code portalNameSupplier}, or {@code statement} is {@code null}
      */
     public static Flux<BackendMessage> execute(Publisher<Binding> bindings, Client client, PortalNameSupplier portalNameSupplier, String statement) {
-        Objects.requireNonNull(bindings, "bindings must not be null");
-        Objects.requireNonNull(client, "client must not be null");
-        Objects.requireNonNull(portalNameSupplier, "portalNameSupplier must not be null");
-        Objects.requireNonNull(statement, "statement must not be null");
+        Assert.requireNonNull(bindings, "bindings must not be null");
+        Assert.requireNonNull(client, "client must not be null");
+        Assert.requireNonNull(portalNameSupplier, "portalNameSupplier must not be null");
+        Assert.requireNonNull(statement, "statement must not be null");
 
         return client.exchange(Flux.from(bindings)
             .flatMap(binding -> toBindFlow(binding, portalNameSupplier, statement))
@@ -82,13 +83,13 @@ public final class ExtendedQueryMessageFlow {
      * @param query  the query to execute
      * @param types  the parameter types for the query
      * @return the messages received in response to this exchange
-     * @throws NullPointerException if {@code client}, {@code name}, {@code query}, or {@code types} is {@code null}
+     * @throws IllegalArgumentException if {@code client}, {@code name}, {@code query}, or {@code types} is {@code null}
      */
     public static Flux<BackendMessage> parse(Client client, String name, String query, List<Integer> types) {
-        Objects.requireNonNull(client, "client must not be null");
-        Objects.requireNonNull(name, "name must not be null");
-        Objects.requireNonNull(query, "query must not be null");
-        Objects.requireNonNull(types, "types must not be null");
+        Assert.requireNonNull(client, "client must not be null");
+        Assert.requireNonNull(name, "name must not be null");
+        Assert.requireNonNull(query, "query must not be null");
+        Assert.requireNonNull(types, "types must not be null");
 
         return client.exchange(Flux.just(new Parse(name, types, query), new Describe(name, STATEMENT), Sync.INSTANCE))
             .takeUntil(or(RowDescription.class::isInstance, NoData.class::isInstance));

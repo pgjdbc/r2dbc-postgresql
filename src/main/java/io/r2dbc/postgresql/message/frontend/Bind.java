@@ -19,6 +19,7 @@ package io.r2dbc.postgresql.message.frontend;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.message.Format;
+import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
@@ -68,21 +69,21 @@ public final class Bind implements FrontendMessage {
      * @param parameters       the value of the parameters, in the format indicated by the associated format
      * @param resultFormats    the result formats
      * @param source           the name of the source prepared statement (an empty string selects the unnamed prepared statement)
-     * @throws NullPointerException if {@code name}, {@code parameterFormats}, {@code parameters}, {@code resultFormats}, or {@code source} is {@code null}
+     * @throws IllegalArgumentException if {@code name}, {@code parameterFormats}, {@code parameters}, {@code resultFormats}, or {@code source} is {@code null}
      * @see #UNNAMED_PORTAL
      * @see #UNNAMED_STATEMENT
      */
     public Bind(String name, List<Format> parameterFormats, List<ByteBuf> parameters, List<Format> resultFormats, String source) {
-        this.name = Objects.requireNonNull(name, "name must not be null");
-        this.parameterFormats = Objects.requireNonNull(parameterFormats, "parameterFormats must not be null");
-        this.parameters = Objects.requireNonNull(parameters, "parameters must not be null");
-        this.resultFormats = Objects.requireNonNull(resultFormats, "resultFormats must not be null");
-        this.source = Objects.requireNonNull(source, "source must not be null");
+        this.name = Assert.requireNonNull(name, "name must not be null");
+        this.parameterFormats = Assert.requireNonNull(parameterFormats, "parameterFormats must not be null");
+        this.parameters = Assert.requireNonNull(parameters, "parameters must not be null");
+        this.resultFormats = Assert.requireNonNull(resultFormats, "resultFormats must not be null");
+        this.source = Assert.requireNonNull(source, "source must not be null");
     }
 
     @Override
     public Publisher<ByteBuf> encode(ByteBufAllocator byteBufAllocator) {
-        Objects.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
 
         return Mono.defer(() -> {
             ByteBuf out = byteBufAllocator.ioBuffer();

@@ -30,7 +30,7 @@ import java.util.Collections;
 
 import static io.r2dbc.postgresql.client.TestClient.NO_OP;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class PostgresqlBatchTest {
 
@@ -51,7 +51,7 @@ final class PostgresqlBatchTest {
 
     @Test
     void addNoSql() {
-        assertThatNullPointerException().isThrownBy(() -> new PostgresqlBatch(NO_OP, MockCodecs.empty()).add(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlBatch(NO_OP, MockCodecs.empty()).add(null))
             .withMessage("sql must not be null");
     }
 
@@ -63,13 +63,13 @@ final class PostgresqlBatchTest {
 
     @Test
     void constructorNoClient() {
-        assertThatNullPointerException().isThrownBy(() -> new PostgresqlBatch(null, MockCodecs.empty()))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlBatch(null, MockCodecs.empty()))
             .withMessage("client must not be null");
     }
 
     @Test
     void constructorNoCodecs() {
-        assertThatNullPointerException().isThrownBy(() -> new PostgresqlBatch(NO_OP, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlBatch(NO_OP, null))
             .withMessage("codecs must not be null");
     }
 

@@ -29,13 +29,13 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class LocalDateCodecTest {
 
     @Test
     void constructorNoByteBufAllocator() {
-        assertThatNullPointerException().isThrownBy(() -> new LocalDateCodec(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new LocalDateCodec(null))
             .withMessage("byteBufAllocator must not be null");
     }
 
@@ -63,13 +63,13 @@ final class LocalDateCodecTest {
 
     @Test
     void doCanDecodeNoFormat() {
-        assertThatNullPointerException().isThrownBy(() -> new LocalDateCodec(TEST).doCanDecode(null, VARCHAR))
+        assertThatIllegalArgumentException().isThrownBy(() -> new LocalDateCodec(TEST).doCanDecode(null, VARCHAR))
             .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new LocalDateCodec(TEST).doCanDecode(FORMAT_TEXT, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new LocalDateCodec(TEST).doCanDecode(FORMAT_TEXT, null))
             .withMessage("type must not be null");
     }
 
@@ -83,7 +83,7 @@ final class LocalDateCodecTest {
 
     @Test
     void doEncodeNoValue() {
-        assertThatNullPointerException().isThrownBy(() -> new LocalDateCodec(TEST).doEncode(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new LocalDateCodec(TEST).doEncode(null))
             .withMessage("value must not be null");
     }
 
