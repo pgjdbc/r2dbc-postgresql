@@ -18,6 +18,7 @@ package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.message.Format;
+import io.r2dbc.postgresql.util.Assert;
 
 import java.util.List;
 import java.util.Objects;
@@ -37,10 +38,10 @@ public final class RowDescription implements BackendMessage {
      * Creates a new message.
      *
      * @param fields the fields
-     * @throws NullPointerException if {@code fields} is {@code null}
+     * @throws IllegalArgumentException if {@code fields} is {@code null}
      */
     public RowDescription(List<Field> fields) {
-        this.fields = Objects.requireNonNull(fields, "fields must not be null");
+        this.fields = Assert.requireNonNull(fields, "fields must not be null");
     }
 
     @Override
@@ -77,7 +78,7 @@ public final class RowDescription implements BackendMessage {
     }
 
     static RowDescription decode(ByteBuf in) {
-        Objects.requireNonNull(in, "in must not be null");
+        Assert.requireNonNull(in, "in must not be null");
 
         List<Field> fields = IntStream.range(0, in.readShort())
             .mapToObj(i -> Field.decode(in))
@@ -115,15 +116,15 @@ public final class RowDescription implements BackendMessage {
          * @param format           the format
          * @param name             the field name
          * @param table            the object ID of the table
-         * @throws NullPointerException if {@code format} or {@code name} is {@code null}
+         * @throws IllegalArgumentException if {@code format} or {@code name} is {@code null}
          */
         public Field(short column, int dataType, int dataTypeModifier, short dataTypeSize, Format format, String name, int table) {
             this.column = column;
             this.dataType = dataType;
             this.dataTypeModifier = dataTypeModifier;
             this.dataTypeSize = dataTypeSize;
-            this.format = Objects.requireNonNull(format, "format must not be null");
-            this.name = Objects.requireNonNull(name, "name must not be null");
+            this.format = Assert.requireNonNull(format, "format must not be null");
+            this.name = Assert.requireNonNull(name, "name must not be null");
             this.table = table;
         }
 
@@ -227,7 +228,7 @@ public final class RowDescription implements BackendMessage {
         }
 
         static Field decode(ByteBuf in) {
-            Objects.requireNonNull(in, "in must not be null");
+            Assert.requireNonNull(in, "in must not be null");
 
             String name = readCStringUTF8(in);
             int table = in.readInt();

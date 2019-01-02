@@ -26,13 +26,13 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT2;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class ByteCodecTest {
 
     @Test
     void constructorNoByteBufAllocator() {
-        assertThatNullPointerException().isThrownBy(() -> new ByteCodec(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ByteCodec(null))
             .withMessage("byteBufAllocator must not be null");
     }
 
@@ -51,7 +51,7 @@ final class ByteCodecTest {
 
     @Test
     void decodeNoFormat() {
-        assertThatNullPointerException().isThrownBy(() -> new ByteCodec(TEST).decode(TEST.buffer(0), null, Byte.class))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ByteCodec(TEST).decode(TEST.buffer(0), null, Byte.class))
             .withMessage("format must not be null");
     }
 
@@ -66,7 +66,7 @@ final class ByteCodecTest {
 
     @Test
     void doCanDecodeNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new ByteCodec(TEST).doCanDecode(null, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ByteCodec(TEST).doCanDecode(null, null))
             .withMessage("type must not be null");
     }
 
@@ -78,7 +78,7 @@ final class ByteCodecTest {
 
     @Test
     void doEncodeNoValue() {
-        assertThatNullPointerException().isThrownBy(() -> new ByteCodec(TEST).doEncode(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ByteCodec(TEST).doEncode(null))
             .withMessage("value must not be null");
     }
 

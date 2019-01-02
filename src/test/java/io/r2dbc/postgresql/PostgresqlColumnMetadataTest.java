@@ -21,25 +21,25 @@ import org.junit.jupiter.api.Test;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class PostgresqlColumnMetadataTest {
 
     @Test
     void constructorNoName() {
-        assertThatNullPointerException().isThrownBy(() -> new PostgresqlColumnMetadata(null, (short) 100, 200))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlColumnMetadata(null, (short) 100, 200))
             .withMessage("name must not be null");
     }
 
     @Test
     void constructorNoPrecision() {
-        assertThatNullPointerException().isThrownBy(() -> new PostgresqlColumnMetadata("test-name", null, 200))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlColumnMetadata("test-name", null, 200))
             .withMessage("precision must not be null");
     }
 
     @Test
     void constructorNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new PostgresqlColumnMetadata("test-name", (short) 100, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlColumnMetadata("test-name", (short) 100, null))
             .withMessage("type must not be null");
     }
 
@@ -54,7 +54,7 @@ final class PostgresqlColumnMetadataTest {
 
     @Test
     void toColumnMetadataNoField() {
-        assertThatNullPointerException().isThrownBy(() -> PostgresqlColumnMetadata.toColumnMetadata(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlColumnMetadata.toColumnMetadata(null))
             .withMessage("field must not be null");
     }
 

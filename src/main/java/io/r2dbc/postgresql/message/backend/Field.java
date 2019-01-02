@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
+import io.r2dbc.postgresql.util.Assert;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,11 +39,11 @@ public final class Field {
      *
      * @param type  the type
      * @param value the value
-     * @throws NullPointerException if {@code type} or {@code value} is {@code null}
+     * @throws IllegalArgumentException if {@code type} or {@code value} is {@code null}
      */
     public Field(FieldType type, String value) {
-        this.type = Objects.requireNonNull(type, "type must not be null");
-        this.value = Objects.requireNonNull(value, "value must not be null");
+        this.type = Assert.requireNonNull(type, "type must not be null");
+        this.value = Assert.requireNonNull(value, "value must not be null");
     }
 
     @Override
@@ -90,7 +91,7 @@ public final class Field {
     }
 
     static List<Field> decode(ByteBuf in) {
-        Objects.requireNonNull(in, "in must not be null");
+        Assert.requireNonNull(in, "in must not be null");
 
         List<Field> fields = new ArrayList<>();
 

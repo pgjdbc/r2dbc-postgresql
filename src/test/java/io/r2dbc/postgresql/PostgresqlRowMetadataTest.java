@@ -27,7 +27,7 @@ import java.util.List;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class PostgresqlRowMetadataTest {
 
@@ -38,7 +38,7 @@ final class PostgresqlRowMetadataTest {
 
     @Test
     void constructorNoColumnMetadata() {
-        assertThatNullPointerException().isThrownBy(() -> new PostgresqlRowMetadata(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRowMetadata(null))
             .withMessage("columnMetadatas must not be null");
     }
 
@@ -68,7 +68,7 @@ final class PostgresqlRowMetadataTest {
 
     @Test
     void getColumnMetadataNoIdentifier() {
-        assertThatNullPointerException().isThrownBy(() -> new PostgresqlRowMetadata(this.columnMetadatas).getColumnMetadata(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRowMetadata(this.columnMetadatas).getColumnMetadata(null))
             .withMessage("identifier must not be null");
     }
 
@@ -95,7 +95,7 @@ final class PostgresqlRowMetadataTest {
 
     @Test
     void toRowMetadataNoRowDescription() {
-        assertThatNullPointerException().isThrownBy(() -> PostgresqlRowMetadata.toRowMetadata(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlRowMetadata.toRowMetadata(null))
             .withMessage("rowDescription must not be null");
     }
 

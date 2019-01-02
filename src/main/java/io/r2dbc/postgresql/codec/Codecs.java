@@ -35,7 +35,7 @@ public interface Codecs {
      * @param type     the type to decode to
      * @param <T>      the type of item being returned
      * @return the decoded value
-     * @throws NullPointerException if {@code format} or {@code type} is {@code null}
+     * @throws IllegalArgumentException if {@code format} or {@code type} is {@code null}
      */
     @Nullable
     <T> T decode(@Nullable ByteBuf byteBuf, int dataType, Format format, Class<? extends T> type);
@@ -45,7 +45,7 @@ public interface Codecs {
      *
      * @param value the value to encode
      * @return the encoded value
-     * @throws NullPointerException if {@code value} is {@code null}
+     * @throws IllegalArgumentException if {@code value} is {@code null}
      */
     Parameter encode(Object value);
 
@@ -54,7 +54,7 @@ public interface Codecs {
      *
      * @param type the type to encode
      * @return the encoded value
-     * @throws NullPointerException if {@code type} is {@code null}
+     * @throws IllegalArgumentException if {@code type} is {@code null}
      */
     Parameter encodeNull(Class<?> type);
 

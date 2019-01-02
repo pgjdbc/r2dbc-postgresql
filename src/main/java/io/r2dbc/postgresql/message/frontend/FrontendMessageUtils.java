@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.message.frontend;
 
 import io.netty.buffer.ByteBuf;
+import io.r2dbc.postgresql.util.Assert;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -35,8 +36,8 @@ final class FrontendMessageUtils {
     }
 
     static ByteBuf writeByte(ByteBuf out, int... values) {
-        Objects.requireNonNull(out, "out must not be null");
-        Objects.requireNonNull(values, "values must not be null");
+        Assert.requireNonNull(out, "out must not be null");
+        Assert.requireNonNull(values, "values must not be null");
 
         for (int value : values) {
             out.writeByte(value);
@@ -45,24 +46,24 @@ final class FrontendMessageUtils {
     }
 
     static ByteBuf writeBytes(ByteBuf out, ByteBuf in) {
-        Objects.requireNonNull(out, "out must not be null");
-        Objects.requireNonNull(in, "in must not be null");
+        Assert.requireNonNull(out, "out must not be null");
+        Assert.requireNonNull(in, "in must not be null");
 
         out.writeBytes(in);
         return out;
     }
 
     static ByteBuf writeBytes(ByteBuf out, ByteBuffer in) {
-        Objects.requireNonNull(out, "out must not be null");
-        Objects.requireNonNull(in, "in must not be null");
+        Assert.requireNonNull(out, "out must not be null");
+        Assert.requireNonNull(in, "in must not be null");
 
         out.writeBytes(in);
         return out;
     }
 
     static ByteBuf writeCString(ByteBuf out, ByteBuf in) {
-        Objects.requireNonNull(out, "out must not be null");
-        Objects.requireNonNull(in, "in must not be null");
+        Assert.requireNonNull(out, "out must not be null");
+        Assert.requireNonNull(in, "in must not be null");
 
         out.writeBytes(in, in.readerIndex(), in.readableBytes());
         out.writeByte(TERMINAL);
@@ -70,8 +71,8 @@ final class FrontendMessageUtils {
     }
 
     static ByteBuf writeCStringUTF8(ByteBuf out, String s) {
-        Objects.requireNonNull(out, "out must not be null");
-        Objects.requireNonNull(s, "s must not be null");
+        Assert.requireNonNull(out, "out must not be null");
+        Assert.requireNonNull(s, "s must not be null");
 
         out.writeCharSequence(s, UTF_8);
         out.writeByte(TERMINAL);
@@ -79,8 +80,8 @@ final class FrontendMessageUtils {
     }
 
     static ByteBuf writeInt(ByteBuf out, int... values) {
-        Objects.requireNonNull(out, "out must not be null");
-        Objects.requireNonNull(values, "values must not be null");
+        Assert.requireNonNull(out, "out must not be null");
+        Assert.requireNonNull(values, "values must not be null");
 
         for (int value : values) {
             out.writeInt(value);
@@ -89,15 +90,15 @@ final class FrontendMessageUtils {
     }
 
     static ByteBuf writeLengthPlaceholder(ByteBuf out) {
-        Objects.requireNonNull(out, "out must not be null");
+        Assert.requireNonNull(out, "out must not be null");
 
         out.writeInt(LENGTH_PLACEHOLDER);
         return out;
     }
 
     static ByteBuf writeShort(ByteBuf out, int... values) {
-        Objects.requireNonNull(out, "out must not be null");
-        Objects.requireNonNull(values, "values must not be null");
+        Assert.requireNonNull(out, "out must not be null");
+        Assert.requireNonNull(values, "values must not be null");
 
         for (int value : values) {
             out.writeShort(value);
@@ -106,13 +107,13 @@ final class FrontendMessageUtils {
     }
 
     static ByteBuf writeSize(ByteBuf out) {
-        Objects.requireNonNull(out, "out must not be null");
+        Assert.requireNonNull(out, "out must not be null");
 
         return writeSize(out, 1);
     }
 
     static ByteBuf writeSize(ByteBuf out, int startIndex) {
-        Objects.requireNonNull(out, "out must not be null");
+        Assert.requireNonNull(out, "out must not be null");
 
         out.setInt(startIndex, out.writerIndex() - startIndex);
         return out;

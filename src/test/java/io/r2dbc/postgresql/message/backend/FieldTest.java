@@ -42,19 +42,19 @@ import static io.r2dbc.postgresql.message.backend.Field.FieldType.UNKNOWN;
 import static io.r2dbc.postgresql.message.backend.Field.FieldType.WHERE;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class FieldTest {
 
     @Test
     void constructorNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new Field(null, "test-value"))
+        assertThatIllegalArgumentException().isThrownBy(() -> new Field(null, "test-value"))
             .withMessage("type must not be null");
     }
 
     @Test
     void constructorNoValue() {
-        assertThatNullPointerException().isThrownBy(() -> new Field(CODE, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new Field(CODE, null))
             .withMessage("value must not be null");
     }
 

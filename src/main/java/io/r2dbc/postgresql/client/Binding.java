@@ -19,6 +19,7 @@ package io.r2dbc.postgresql.client;
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.PostgresqlBindingException;
 import io.r2dbc.postgresql.message.Format;
+import io.r2dbc.postgresql.util.Assert;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,11 +39,11 @@ public final class Binding {
      * @param index     the index of the {@link Parameter}
      * @param parameter the {@link Parameter}
      * @return this {@link Binding}
-     * @throws NullPointerException if {@code index} or {@code parameter} is {@code null}
+     * @throws IllegalArgumentException if {@code index} or {@code parameter} is {@code null}
      */
     public Binding add(Integer index, Parameter parameter) {
-        Objects.requireNonNull(index, "index must not be null");
-        Objects.requireNonNull(parameter, "parameter must not be null");
+        Assert.requireNonNull(index, "index must not be null");
+        Assert.requireNonNull(parameter, "parameter must not be null");
 
         if (this.parameters.size() > index) {
             this.parameters.set(index, parameter);

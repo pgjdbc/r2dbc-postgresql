@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
+import io.r2dbc.postgresql.util.Assert;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,10 +38,10 @@ public final class AuthenticationSASL implements AuthenticationMessage {
      * Creates a new message.
      *
      * @param authenticationMechanisms the names of SASL authentication mechanisms
-     * @throws NullPointerException if {@code authenticationMechanisms} is {@code null}
+     * @throws IllegalArgumentException if {@code authenticationMechanisms} is {@code null}
      */
     public AuthenticationSASL(List<String> authenticationMechanisms) {
-        this.authenticationMechanisms = Objects.requireNonNull(authenticationMechanisms, "authenticationMechanisms must not be null");
+        this.authenticationMechanisms = Assert.requireNonNull(authenticationMechanisms, "authenticationMechanisms must not be null");
     }
 
     @Override
@@ -77,7 +78,7 @@ public final class AuthenticationSASL implements AuthenticationMessage {
     }
 
     static AuthenticationSASL decode(ByteBuf in) {
-        Objects.requireNonNull(in, "in must not be null");
+        Assert.requireNonNull(in, "in must not be null");
 
         List<String> authenticationMechanisms = new ArrayList<>();
 

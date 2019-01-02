@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
+import io.r2dbc.postgresql.util.Assert;
 
 import java.util.Objects;
 
@@ -85,7 +86,7 @@ public final class BackendKeyData implements BackendMessage {
     }
 
     static BackendKeyData decode(ByteBuf in) {
-        Objects.requireNonNull(in, "in must not be null");
+        Assert.requireNonNull(in, "in must not be null");
 
         return new BackendKeyData(in.readInt(), in.readInt());
     }

@@ -18,6 +18,7 @@ package io.r2dbc.postgresql.authentication;
 
 import io.r2dbc.postgresql.message.backend.AuthenticationMessage;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
+import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
 import java.util.Objects;
@@ -37,7 +38,7 @@ public final class TrustAuthenticationHandler implements AuthenticationHandler {
 
     @Override
     public FrontendMessage handle(@Nullable AuthenticationMessage message) {
-        Objects.requireNonNull(message, "message must not be null");
+        Assert.requireNonNull(message, "message must not be null");
 
         throw new IllegalArgumentException("Trust does not require a response");
     }

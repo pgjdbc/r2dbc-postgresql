@@ -28,13 +28,13 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class EnumCodecTest {
 
     @Test
     void constructorNoByteBufAllocator() {
-        assertThatNullPointerException().isThrownBy(() -> new EnumCodec(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new EnumCodec(null))
             .withMessage("byteBufAllocator must not be null");
     }
 
@@ -64,13 +64,13 @@ final class EnumCodecTest {
 
     @Test
     void doCanDecodeNoFormat() {
-        assertThatNullPointerException().isThrownBy(() -> new EnumCodec(TEST).decode(null, null, TimeUnit.class))
+        assertThatIllegalArgumentException().isThrownBy(() -> new EnumCodec(TEST).decode(null, null, TimeUnit.class))
             .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new EnumCodec(TEST).decode(null, FORMAT_TEXT, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new EnumCodec(TEST).decode(null, FORMAT_TEXT, null))
             .withMessage("type must not be null");
     }
 
@@ -84,7 +84,7 @@ final class EnumCodecTest {
 
     @Test
     void doEncodeNoValue() {
-        assertThatNullPointerException().isThrownBy(() -> new EnumCodec(TEST).encode(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new EnumCodec(TEST).encode(null))
             .withMessage("value must not be null");
     }
 

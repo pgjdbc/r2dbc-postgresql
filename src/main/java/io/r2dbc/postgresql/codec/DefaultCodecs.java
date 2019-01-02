@@ -20,6 +20,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
+import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
 import java.util.Arrays;
@@ -39,7 +40,7 @@ public final class DefaultCodecs implements Codecs {
      * @param byteBufAllocator the {@link ByteBufAllocator} to use for encoding
      */
     public DefaultCodecs(ByteBufAllocator byteBufAllocator) {
-        Objects.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
 
         this.codecs = Arrays.asList(
 
@@ -80,8 +81,8 @@ public final class DefaultCodecs implements Codecs {
     @Nullable
     @SuppressWarnings("unchecked")
     public <T> T decode(@Nullable ByteBuf byteBuf, int dataType, Format format, Class<? extends T> type) {
-        Objects.requireNonNull(format, "format must not be null");
-        Objects.requireNonNull(type, "type must not be null");
+        Assert.requireNonNull(format, "format must not be null");
+        Assert.requireNonNull(type, "type must not be null");
 
         if (byteBuf == null) {
             return null;
@@ -98,7 +99,7 @@ public final class DefaultCodecs implements Codecs {
 
     @Override
     public Parameter encode(Object value) {
-        Objects.requireNonNull(value, "value must not be null");
+        Assert.requireNonNull(value, "value must not be null");
 
         for (Codec<?> codec : this.codecs) {
             if (codec.canEncode(value)) {
@@ -111,7 +112,7 @@ public final class DefaultCodecs implements Codecs {
 
     @Override
     public Parameter encodeNull(Class<?> type) {
-        Objects.requireNonNull(type, "type must not be null");
+        Assert.requireNonNull(type, "type must not be null");
 
         for (Codec<?> codec : this.codecs) {
             if (codec.canEncodeNull(type)) {

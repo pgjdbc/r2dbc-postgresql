@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
+import io.r2dbc.postgresql.util.Assert;
 
 import java.util.Objects;
 
@@ -31,10 +32,10 @@ public final class ReadyForQuery implements BackendMessage {
      * Creates a new message.
      *
      * @param transactionStatus the current backend transaction status
-     * @throws NullPointerException if {@code transactionStatus} is {@code null}
+     * @throws IllegalArgumentException if {@code transactionStatus} is {@code null}
      */
     public ReadyForQuery(TransactionStatus transactionStatus) {
-        this.transactionStatus = Objects.requireNonNull(transactionStatus, "transactionStatus must not be null");
+        this.transactionStatus = Assert.requireNonNull(transactionStatus, "transactionStatus must not be null");
     }
 
     @Override
@@ -71,7 +72,7 @@ public final class ReadyForQuery implements BackendMessage {
     }
 
     static ReadyForQuery decode(ByteBuf in) {
-        Objects.requireNonNull(in, "in must not be null");
+        Assert.requireNonNull(in, "in must not be null");
 
         return new ReadyForQuery(TransactionStatus.valueOf(in.readByte()));
     }

@@ -19,6 +19,7 @@ package io.r2dbc.postgresql.message.backend;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.util.ReferenceCountUtil;
+import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.SynchronousSink;
 
@@ -43,7 +44,7 @@ public final class BackendMessageDecoder {
      * @return a {@link Flux} of {@link BackendMessage}s
      */
     public Flux<BackendMessage> decode(ByteBuf in) {
-        Objects.requireNonNull(in, "in must not be null");
+        Assert.requireNonNull(in, "in must not be null");
 
         return Flux.generate(
             () -> {

@@ -27,7 +27,7 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT8;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT8_ARRAY;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class LongArrayCodecTest {
 
@@ -42,14 +42,14 @@ final class LongArrayCodecTest {
 
     @Test
     void decodeItemNoByteBuf() {
-        assertThatNullPointerException().isThrownBy(() -> new LongArrayCodec(TEST).decodeItem(null, FORMAT_TEXT, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new LongArrayCodec(TEST).decodeItem(null, FORMAT_TEXT, null))
             .withMessage("byteBuf must not be null");
 
     }
 
     @Test
     void decodeItemNoFormat() {
-        assertThatNullPointerException().isThrownBy(() -> new LongArrayCodec(TEST).decodeItem(TEST.buffer(0), null, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new LongArrayCodec(TEST).decodeItem(TEST.buffer(0), null, null))
             .withMessage("format must not be null");
 
     }
@@ -65,7 +65,7 @@ final class LongArrayCodecTest {
 
     @Test
     void doCanDecodeNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new LongArrayCodec(TEST).doCanDecode(null, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new LongArrayCodec(TEST).doCanDecode(null, null))
             .withMessage("type must not be null");
     }
 
@@ -78,7 +78,7 @@ final class LongArrayCodecTest {
 
     @Test
     void encodeArrayNoByteBuf() {
-        assertThatNullPointerException().isThrownBy(() -> new LongArrayCodec(TEST).encodeArray(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new LongArrayCodec(TEST).encodeArray(null))
             .withMessage("byteBuf must not be null");
 
     }
@@ -94,13 +94,13 @@ final class LongArrayCodecTest {
 
     @Test
     void encodeItemNoByteBuf() {
-        assertThatNullPointerException().isThrownBy(() -> new LongArrayCodec(TEST).encodeItem(null, 100L))
+        assertThatIllegalArgumentException().isThrownBy(() -> new LongArrayCodec(TEST).encodeItem(null, 100L))
             .withMessage("byteBuf must not be null");
     }
 
     @Test
     void encodeItemNoValue() {
-        assertThatNullPointerException().isThrownBy(() -> new LongArrayCodec(TEST).encodeItem(TEST.buffer(0), null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new LongArrayCodec(TEST).encodeItem(TEST.buffer(0), null))
             .withMessage("value must not be null");
     }
 

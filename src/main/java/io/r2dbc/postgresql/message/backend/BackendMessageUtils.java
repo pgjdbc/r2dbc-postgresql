@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
+import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
 import java.util.Objects;
@@ -31,14 +32,14 @@ final class BackendMessageUtils {
     }
 
     static ByteBuf getBody(ByteBuf in) {
-        Objects.requireNonNull(in, "in must not be null");
+        Assert.requireNonNull(in, "in must not be null");
 
         return in.readSlice(in.readInt() - 4);
     }
 
     @Nullable
     static ByteBuf getEnvelope(ByteBuf in) {
-        Objects.requireNonNull(in, "in must not be null");
+        Assert.requireNonNull(in, "in must not be null");
 
         if (in.readableBytes() < 5) {
             return null;
@@ -53,7 +54,7 @@ final class BackendMessageUtils {
     }
 
     static String readCStringUTF8(ByteBuf src) {
-        Objects.requireNonNull(src, "src must not be null");
+        Assert.requireNonNull(src, "src must not be null");
 
         String s = src.readCharSequence(src.bytesBefore(TERMINAL), UTF_8).toString();
         src.readByte();

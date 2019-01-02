@@ -18,6 +18,7 @@ package io.r2dbc.postgresql.client;
 
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.frontend.CancelRequest;
+import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -36,10 +37,10 @@ public final class CancelRequestMessageFlow {
      *
      * @param client the {@link Client} to exchange messages with
      * @return the messages received after authentication is complete, in response to this exchange
-     * @throws NullPointerException if {@code Client} is {@code null}
+     * @throws IllegalArgumentException if {@code Client} is {@code null}
      */
     public static Flux<BackendMessage> exchange(Client client) {
-        Objects.requireNonNull(client, "client must not be null");
+        Assert.requireNonNull(client, "client must not be null");
 
         int processId = client.getProcessId().orElseThrow(() -> new IllegalStateException("Connection does not yet have a processId"));
         int secretKey = client.getSecretKey().orElseThrow(() -> new IllegalStateException("Connection does not yet have a secretKey"));

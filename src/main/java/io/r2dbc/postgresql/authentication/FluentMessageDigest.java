@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql.authentication;
 
+import io.r2dbc.postgresql.util.Assert;
 import reactor.core.Exceptions;
 
 import java.math.BigInteger;
@@ -31,7 +32,7 @@ final class FluentMessageDigest {
     private final MessageDigest messageDigest;
 
     FluentMessageDigest(String algorithm) {
-        Objects.requireNonNull(algorithm, "algorithm must not be null");
+        Assert.requireNonNull(algorithm, "algorithm must not be null");
 
         try {
             this.messageDigest = MessageDigest.getInstance(algorithm);
@@ -45,21 +46,21 @@ final class FluentMessageDigest {
     }
 
     FluentMessageDigest update(String s) {
-        Objects.requireNonNull(s, "s must not be null");
+        Assert.requireNonNull(s, "s must not be null");
 
         this.messageDigest.update(s.getBytes(UTF_8));
         return this;
     }
 
     FluentMessageDigest update(String format, Object... args) {
-        Objects.requireNonNull(format, "format must not be null");
-        Objects.requireNonNull(args, "args must not be null");
+        Assert.requireNonNull(format, "format must not be null");
+        Assert.requireNonNull(args, "args must not be null");
 
         return update(String.format(format, args));
     }
 
     FluentMessageDigest update(ByteBuffer buffer) {
-        Objects.requireNonNull(buffer, "buffer must not be null");
+        Assert.requireNonNull(buffer, "buffer must not be null");
 
         this.messageDigest.update(buffer);
         return this;

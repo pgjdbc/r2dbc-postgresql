@@ -35,7 +35,7 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class SimpleQueryPostgresqlStatementTest {
 
@@ -67,19 +67,19 @@ final class SimpleQueryPostgresqlStatementTest {
 
     @Test
     void constructorNoClient() {
-        assertThatNullPointerException().isThrownBy(() -> new SimpleQueryPostgresqlStatement(null, MockCodecs.empty(), "test-query"))
+        assertThatIllegalArgumentException().isThrownBy(() -> new SimpleQueryPostgresqlStatement(null, MockCodecs.empty(), "test-query"))
             .withMessage("client must not be null");
     }
 
     @Test
     void constructorNoCodecs() {
-        assertThatNullPointerException().isThrownBy(() -> new SimpleQueryPostgresqlStatement(NO_OP, null, "test-query"))
+        assertThatIllegalArgumentException().isThrownBy(() -> new SimpleQueryPostgresqlStatement(NO_OP, null, "test-query"))
             .withMessage("codecs must not be null");
     }
 
     @Test
     void constructorNoSql() {
-        assertThatNullPointerException().isThrownBy(() -> new SimpleQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new SimpleQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), null))
             .withMessage("sql must not be null");
     }
 
@@ -199,7 +199,7 @@ final class SimpleQueryPostgresqlStatementTest {
 
     @Test
     void supportsNoSql() {
-        assertThatNullPointerException().isThrownBy(() -> SimpleQueryPostgresqlStatement.supports(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> SimpleQueryPostgresqlStatement.supports(null))
             .withMessage("sql must not be null");
     }
 

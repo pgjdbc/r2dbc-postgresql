@@ -22,7 +22,7 @@ import io.r2dbc.postgresql.client.ExtendedQueryMessageFlow;
 import io.r2dbc.postgresql.client.PortalNameSupplier;
 import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.message.backend.CloseComplete;
-import io.r2dbc.postgresql.util.ObjectUtils;
+import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
@@ -53,11 +53,11 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement<Exte
     private final StatementCache statementCache;
 
     ExtendedQueryPostgresqlStatement(Client client, Codecs codecs, PortalNameSupplier portalNameSupplier, String sql, StatementCache statementCache) {
-        this.client = Objects.requireNonNull(client, "client must not be null");
-        this.codecs = Objects.requireNonNull(codecs, "codecs must not be null");
-        this.portalNameSupplier = Objects.requireNonNull(portalNameSupplier, "portalNameSupplier must not be null");
-        this.sql = Objects.requireNonNull(sql, "sql must not be null");
-        this.statementCache = Objects.requireNonNull(statementCache, "statementCache must not be null");
+        this.client = Assert.requireNonNull(client, "client must not be null");
+        this.codecs = Assert.requireNonNull(codecs, "codecs must not be null");
+        this.portalNameSupplier = Assert.requireNonNull(portalNameSupplier, "portalNameSupplier must not be null");
+        this.sql = Assert.requireNonNull(sql, "sql must not be null");
+        this.statementCache = Assert.requireNonNull(statementCache, "statementCache must not be null");
     }
 
     @Override
@@ -68,15 +68,15 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement<Exte
 
     @Override
     public ExtendedQueryPostgresqlStatement bind(Object identifier, Object value) {
-        Objects.requireNonNull(identifier, "identifier must not be null");
-        ObjectUtils.requireType(identifier, String.class, "identifier must be a String");
+        Assert.requireNonNull(identifier, "identifier must not be null");
+        Assert.requireType(identifier, String.class, "identifier must be a String");
 
         return bind(getIndex((String) identifier), value);
     }
 
     @Override
     public ExtendedQueryPostgresqlStatement bind(int index, Object value) {
-        Objects.requireNonNull(value, "value must not be null");
+        Assert.requireNonNull(value, "value must not be null");
 
         this.bindings.getCurrent().add(index, this.codecs.encode(value));
 
@@ -85,9 +85,9 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement<Exte
 
     @Override
     public ExtendedQueryPostgresqlStatement bindNull(Object identifier, Class<?> type) {
-        Objects.requireNonNull(identifier, "identifier must not be null");
-        ObjectUtils.requireType(identifier, String.class, "identifier must be a String");
-        Objects.requireNonNull(type, "type must not be null");
+        Assert.requireNonNull(identifier, "identifier must not be null");
+        Assert.requireType(identifier, String.class, "identifier must be a String");
+        Assert.requireNonNull(type, "type must not be null");
 
         bindNull(getIndex((String) identifier), type);
         return this;
@@ -95,7 +95,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement<Exte
 
     @Override
     public ExtendedQueryPostgresqlStatement bindNull(int index, Class<?> type) {
-        Objects.requireNonNull(type, "type must not be null");
+        Assert.requireNonNull(type, "type must not be null");
 
         this.bindings.getCurrent().add(index, this.codecs.encodeNull(type));
         return this;
@@ -119,7 +119,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement<Exte
     }
 
     static boolean supports(String sql) {
-        Objects.requireNonNull(sql, "sql must not be null");
+        Assert.requireNonNull(sql, "sql must not be null");
 
         return !sql.trim().isEmpty() && !sql.contains(";") && PARAMETER_SYMBOL.matcher(sql).matches();
     }

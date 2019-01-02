@@ -21,6 +21,7 @@ import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
+import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
@@ -35,7 +36,7 @@ final class BooleanCodec extends AbstractCodec<Boolean> {
 
     BooleanCodec(ByteBufAllocator byteBufAllocator) {
         super(Boolean.class);
-        this.byteBufAllocator = Objects.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
     }
 
     @Override
@@ -45,15 +46,15 @@ final class BooleanCodec extends AbstractCodec<Boolean> {
 
     @Override
     boolean doCanDecode(Format format, PostgresqlObjectId type) {
-        Objects.requireNonNull(format, "format must not be null");
-        Objects.requireNonNull(type, "type must not be null");
+        Assert.requireNonNull(format, "format must not be null");
+        Assert.requireNonNull(type, "type must not be null");
 
         return FORMAT_TEXT == format && BOOL == type;
     }
 
     @Override
     Boolean doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends Boolean> type) {
-        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
+        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
 
         String decoded = ByteBufUtils.decode(byteBuf);
         return "1".equals(decoded)
@@ -66,7 +67,7 @@ final class BooleanCodec extends AbstractCodec<Boolean> {
 
     @Override
     Parameter doEncode(Boolean value) {
-        Objects.requireNonNull(value, "value must not be null");
+        Assert.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value ? "TRUE" : "FALSE");
         return create(FORMAT_TEXT, BOOL, encoded);

@@ -18,6 +18,7 @@ package io.r2dbc.postgresql.message.frontend;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
@@ -41,17 +42,17 @@ public final class CopyData implements FrontendMessage {
      * Creates a new message.
      *
      * @param data data that forms part of a {@code COPY} data stream
-     * @throws NullPointerException if {@code data} is {@code null}
+     * @throws IllegalArgumentException if {@code data} is {@code null}
      */
     public CopyData(ByteBuffer data) {
-        Objects.requireNonNull(data, "data must not be null");
+        Assert.requireNonNull(data, "data must not be null");
 
         this.data = (ByteBuffer) data.flip();
     }
 
     @Override
     public Publisher<ByteBuf> encode(ByteBufAllocator byteBufAllocator) {
-        Objects.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
 
         return Mono.defer(() -> {
             ByteBuf out = byteBufAllocator.ioBuffer(MESSAGE_OVERHEAD + (this.data.remaining()));

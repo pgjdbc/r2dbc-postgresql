@@ -21,13 +21,13 @@ import org.junit.jupiter.api.Test;
 import java.util.Collections;
 
 import static io.r2dbc.postgresql.message.backend.BackendMessageAssert.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class ParameterDescriptionTest {
 
     @Test
     void constructorNoParameters() {
-        assertThatNullPointerException().isThrownBy(() -> new ParameterDescription(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ParameterDescription(null))
             .withMessage("parameters must not be null");
     }
 

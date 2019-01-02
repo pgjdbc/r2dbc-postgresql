@@ -21,13 +21,13 @@ import org.junit.jupiter.api.Test;
 import java.nio.ByteBuffer;
 
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageAssert.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class GSSResponseTest {
 
     @Test
     void constructorNoData() {
-        assertThatNullPointerException().isThrownBy(() -> new GSSResponse(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new GSSResponse(null))
             .withMessage("data must not be null");
     }
 

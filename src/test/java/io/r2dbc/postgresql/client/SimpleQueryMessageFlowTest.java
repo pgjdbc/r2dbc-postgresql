@@ -21,7 +21,7 @@ import io.r2dbc.postgresql.message.frontend.Query;
 import org.junit.jupiter.api.Test;
 import reactor.test.StepVerifier;
 
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.Mockito.mock;
 
 final class SimpleQueryMessageFlowTest {
@@ -41,13 +41,13 @@ final class SimpleQueryMessageFlowTest {
 
     @Test
     void exchangeNoClient() {
-        assertThatNullPointerException().isThrownBy(() -> SimpleQueryMessageFlow.exchange(null, "test-query"))
+        assertThatIllegalArgumentException().isThrownBy(() -> SimpleQueryMessageFlow.exchange(null, "test-query"))
             .withMessage("client must not be null");
     }
 
     @Test
     void exchangeNoQuery() {
-        assertThatNullPointerException().isThrownBy(() -> SimpleQueryMessageFlow.exchange(mock(Client.class), null))
+        assertThatIllegalArgumentException().isThrownBy(() -> SimpleQueryMessageFlow.exchange(mock(Client.class), null))
             .withMessage("query must not be null");
     }
 

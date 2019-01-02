@@ -20,7 +20,7 @@ import io.r2dbc.postgresql.message.backend.ReadyForQuery;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class TransactionStatusTest {
 
@@ -31,7 +31,7 @@ final class TransactionStatusTest {
 
     @Test
     void valueOfNoT() {
-        assertThatNullPointerException().isThrownBy(() -> TransactionStatus.valueOf((ReadyForQuery.TransactionStatus) null))
+        assertThatIllegalArgumentException().isThrownBy(() -> TransactionStatus.valueOf((ReadyForQuery.TransactionStatus) null))
             .withMessage("t must not be null");
     }
 

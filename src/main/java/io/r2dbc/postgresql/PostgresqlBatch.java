@@ -18,6 +18,7 @@ package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.codec.Codecs;
+import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Batch;
 import reactor.core.publisher.Flux;
 
@@ -37,13 +38,13 @@ public final class PostgresqlBatch implements Batch<PostgresqlBatch> {
     private final List<String> statements = new ArrayList<>();
 
     PostgresqlBatch(Client client, Codecs codecs) {
-        this.client = Objects.requireNonNull(client, "client must not be null");
-        this.codecs = Objects.requireNonNull(codecs, "codecs must not be null");
+        this.client = Assert.requireNonNull(client, "client must not be null");
+        this.codecs = Assert.requireNonNull(codecs, "codecs must not be null");
     }
 
     @Override
     public PostgresqlBatch add(String sql) {
-        Objects.requireNonNull(sql, "sql must not be null");
+        Assert.requireNonNull(sql, "sql must not be null");
 
         if (!SimpleQueryPostgresqlStatement.supports(sql)) {
             throw new IllegalArgumentException(String.format("Statement '%s' is not supported.  This is often due to the presence of parameters.", sql));

@@ -21,6 +21,7 @@ import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.DataRow;
 import io.r2dbc.postgresql.message.backend.RowDescription;
+import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
@@ -47,10 +48,10 @@ public final class PostgresqlResult implements Result {
     private final Mono<Integer> rowsUpdated;
 
     PostgresqlResult(Codecs codecs, Mono<PostgresqlRowMetadata> rowMetadata, Flux<PostgresqlRow> rows, Mono<Integer> rowsUpdated) {
-        this.codecs = Objects.requireNonNull(codecs, "codecs must not be null");
-        this.rowMetadata = Objects.requireNonNull(rowMetadata, "rowMetadata must not be null");
-        this.rows = Objects.requireNonNull(rows, "rows must not be null");
-        this.rowsUpdated = Objects.requireNonNull(rowsUpdated, "rowsUpdated must not be null");
+        this.codecs = Assert.requireNonNull(codecs, "codecs must not be null");
+        this.rowMetadata = Assert.requireNonNull(rowMetadata, "rowMetadata must not be null");
+        this.rows = Assert.requireNonNull(rows, "rows must not be null");
+        this.rowsUpdated = Assert.requireNonNull(rowsUpdated, "rowsUpdated must not be null");
     }
 
     @Override
@@ -60,7 +61,7 @@ public final class PostgresqlResult implements Result {
 
     @Override
     public <T> Flux<T> map(BiFunction<Row, RowMetadata, ? extends T> f) {
-        Objects.requireNonNull(f, "f must not be null");
+        Assert.requireNonNull(f, "f must not be null");
 
         return this.rows
             .zipWith(this.rowMetadata.repeat())
@@ -84,8 +85,8 @@ public final class PostgresqlResult implements Result {
     }
 
     static PostgresqlResult toResult(Codecs codecs, Flux<BackendMessage> messages) {
-        Objects.requireNonNull(codecs, "codecs must not be null");
-        Objects.requireNonNull(messages, "messages must not be null");
+        Assert.requireNonNull(codecs, "codecs must not be null");
+        Assert.requireNonNull(messages, "messages must not be null");
 
         EmitterProcessor<BackendMessage> processor = EmitterProcessor.create(false);
         Flux<BackendMessage> firstMessages = processor.take(3).cache();

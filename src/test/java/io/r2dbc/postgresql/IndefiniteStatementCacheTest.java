@@ -34,13 +34,13 @@ import java.util.Collections;
 import static io.r2dbc.postgresql.client.TestClient.NO_OP;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class IndefiniteStatementCacheTest {
 
     @Test
     void constructorNoClient() {
-        assertThatNullPointerException().isThrownBy(() -> new IndefiniteStatementCache(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new IndefiniteStatementCache(null))
             .withMessage("client must not be null");
     }
 
@@ -98,13 +98,13 @@ final class IndefiniteStatementCacheTest {
 
     @Test
     void getNameNoBinding() {
-        assertThatNullPointerException().isThrownBy(() -> new IndefiniteStatementCache(NO_OP).getName(null, "test-query"))
+        assertThatIllegalArgumentException().isThrownBy(() -> new IndefiniteStatementCache(NO_OP).getName(null, "test-query"))
             .withMessage("binding must not be null");
     }
 
     @Test
     void getNameNoSql() {
-        assertThatNullPointerException().isThrownBy(() -> new IndefiniteStatementCache(NO_OP).getName(new Binding(), null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new IndefiniteStatementCache(NO_OP).getName(new Binding(), null))
             .withMessage("sql must not be null");
     }
 

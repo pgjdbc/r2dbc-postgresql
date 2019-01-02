@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
+import io.r2dbc.postgresql.util.Assert;
 
 import java.util.List;
 import java.util.Objects;
@@ -32,10 +33,10 @@ public final class ErrorResponse implements BackendMessage {
      * Creates a new message.
      *
      * @param fields the fields
-     * @throws NullPointerException if {@code fields} is {@code null}
+     * @throws IllegalArgumentException if {@code fields} is {@code null}
      */
     public ErrorResponse(List<Field> fields) {
-        this.fields = Objects.requireNonNull(fields, "fields must not be null");
+        this.fields = Assert.requireNonNull(fields, "fields must not be null");
     }
 
     @Override
@@ -72,7 +73,7 @@ public final class ErrorResponse implements BackendMessage {
     }
 
     static ErrorResponse decode(ByteBuf in) {
-        Objects.requireNonNull(in, "in must not be null");
+        Assert.requireNonNull(in, "in must not be null");
 
         return new ErrorResponse(Field.decode(in));
     }

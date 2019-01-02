@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
+import io.r2dbc.postgresql.util.Assert;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -32,10 +33,10 @@ public final class AuthenticationGSSContinue implements AuthenticationMessage {
      * Creates a new message.
      *
      * @param authenticationData GSSAPI or SSPI authentication data
-     * @throws NullPointerException if {@code authenticationData} is {@code null}
+     * @throws IllegalArgumentException if {@code authenticationData} is {@code null}
      */
     public AuthenticationGSSContinue(ByteBuf authenticationData) {
-        Objects.requireNonNull(authenticationData, "authenticationData must not be null");
+        Assert.requireNonNull(authenticationData, "authenticationData must not be null");
 
         this.authenticationData = authenticationData.nioBuffer();
     }
@@ -74,7 +75,7 @@ public final class AuthenticationGSSContinue implements AuthenticationMessage {
     }
 
     static AuthenticationGSSContinue decode(ByteBuf in) {
-        Objects.requireNonNull(in, "in must not be null");
+        Assert.requireNonNull(in, "in must not be null");
 
         return new AuthenticationGSSContinue(in.readSlice(in.readableBytes()));
     }

@@ -47,7 +47,7 @@ import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.Mockito.RETURNS_SMART_NULLS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -74,19 +74,19 @@ final class ExtendedQueryPostgresqlStatementTest {
 
     @Test
     void bindIndexNoValue() {
-        assertThatNullPointerException().isThrownBy(() -> this.statement.bind(1, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> this.statement.bind(1, null))
             .withMessage("value must not be null");
     }
 
     @Test
     void bindNoIdentifier() {
-        assertThatNullPointerException().isThrownBy(() -> this.statement.bind(null, ""))
+        assertThatIllegalArgumentException().isThrownBy(() -> this.statement.bind(null, ""))
             .withMessage("identifier must not be null");
     }
 
     @Test
     void bindNoValue() {
-        assertThatNullPointerException().isThrownBy(() -> this.statement.bind("$1", null))
+        assertThatIllegalArgumentException().isThrownBy(() -> this.statement.bind("$1", null))
             .withMessage("value must not be null");
     }
 
@@ -104,19 +104,19 @@ final class ExtendedQueryPostgresqlStatementTest {
 
     @Test
     void bindNullIndexNoType() {
-        assertThatNullPointerException().isThrownBy(() -> this.statement.bindNull(0, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> this.statement.bindNull(0, null))
             .withMessage("type must not be null");
     }
 
     @Test
     void bindNullNoIdentifier() {
-        assertThatNullPointerException().isThrownBy(() -> this.statement.bindNull(null, Integer.class))
+        assertThatIllegalArgumentException().isThrownBy(() -> this.statement.bindNull(null, Integer.class))
             .withMessage("identifier must not be null");
     }
 
     @Test
     void bindNullNoType() {
-        assertThatNullPointerException().isThrownBy(() -> this.statement.bindNull("$1", null))
+        assertThatIllegalArgumentException().isThrownBy(() -> this.statement.bindNull("$1", null))
             .withMessage("type must not be null");
     }
 
@@ -146,31 +146,31 @@ final class ExtendedQueryPostgresqlStatementTest {
 
     @Test
     void constructorNoClient() {
-        assertThatNullPointerException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(null, MockCodecs.empty(), () -> "", "test-query", this.statementCache))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(null, MockCodecs.empty(), () -> "", "test-query", this.statementCache))
             .withMessage("client must not be null");
     }
 
     @Test
     void constructorNoCodecs() {
-        assertThatNullPointerException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(NO_OP, null, () -> "", "test-query", this.statementCache))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(NO_OP, null, () -> "", "test-query", this.statementCache))
             .withMessage("codecs must not be null");
     }
 
     @Test
     void constructorNoPortalNameSupplier() {
-        assertThatNullPointerException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), null, "test-query", this.statementCache))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), null, "test-query", this.statementCache))
             .withMessage("portalNameSupplier must not be null");
     }
 
     @Test
     void constructorNoSql() {
-        assertThatNullPointerException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), () -> "", null, this.statementCache))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), () -> "", null, this.statementCache))
             .withMessage("sql must not be null");
     }
 
     @Test
     void constructorNoStatementCache() {
-        assertThatNullPointerException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), () -> "", "test-query", null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), () -> "", "test-query", null))
             .withMessage("statementCache must not be null");
     }
 
@@ -251,7 +251,7 @@ final class ExtendedQueryPostgresqlStatementTest {
 
     @Test
     void supportsNoSql() {
-        assertThatNullPointerException().isThrownBy(() -> ExtendedQueryPostgresqlStatement.supports(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryPostgresqlStatement.supports(null))
             .withMessage("sql must not be null");
     }
 

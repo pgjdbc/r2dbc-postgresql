@@ -25,19 +25,18 @@ import org.junit.jupiter.api.Test;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 final class PasswordAuthenticationHandlerTest {
 
     @Test
     void constructorNoPassword() {
-        assertThatNullPointerException().isThrownBy(() -> new PasswordAuthenticationHandler(null, "test-username"))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PasswordAuthenticationHandler(null, "test-username"))
             .withMessage("password must not be null");
     }
 
     @Test
     void constructorNoUsername() {
-        assertThatNullPointerException().isThrownBy(() -> new PasswordAuthenticationHandler("test-password", null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PasswordAuthenticationHandler("test-password", null))
             .withMessage("username must not be null");
     }
 
@@ -59,7 +58,7 @@ final class PasswordAuthenticationHandlerTest {
 
     @Test
     void handleNoMessage() {
-        assertThatNullPointerException().isThrownBy(() -> new PasswordAuthenticationHandler("test-username", "test-password").handle(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PasswordAuthenticationHandler("test-username", "test-password").handle(null))
             .withMessage("message must not be null");
     }
 

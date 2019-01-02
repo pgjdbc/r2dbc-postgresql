@@ -18,6 +18,7 @@ package io.r2dbc.postgresql.message.frontend;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
@@ -58,19 +59,19 @@ public final class Parse implements FrontendMessage {
      * @param name       the name of the destination prepared statement (an empty string selects the unnamed prepared statement)
      * @param parameters the object IDs of the parameter data types. Placing a zero here is equivalent to leaving the type unspecified.
      * @param query      the query string to be parsed
-     * @throws NullPointerException if {@code name}, {@code parameters}, or {@code query} is {@code null}
+     * @throws IllegalArgumentException if {@code name}, {@code parameters}, or {@code query} is {@code null}
      * @see #UNNAMED_STATEMENT
      * @see #UNSPECIFIED
      */
     public Parse(String name, List<Integer> parameters, String query) {
-        this.name = Objects.requireNonNull(name, "name must not be null");
-        this.parameters = Objects.requireNonNull(parameters, "parameters must not be null");
-        this.query = Objects.requireNonNull(query, "query must not be null");
+        this.name = Assert.requireNonNull(name, "name must not be null");
+        this.parameters = Assert.requireNonNull(parameters, "parameters must not be null");
+        this.query = Assert.requireNonNull(query, "query must not be null");
     }
 
     @Override
     public Publisher<ByteBuf> encode(ByteBufAllocator byteBufAllocator) {
-        Objects.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
 
         return Mono.defer(() -> {
             ByteBuf out = byteBufAllocator.ioBuffer();

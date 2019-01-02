@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.message.backend.RowDescription.Field;
+import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ColumnMetadata;
 
 import java.util.Objects;
@@ -34,9 +35,9 @@ public final class PostgresqlColumnMetadata implements ColumnMetadata {
     private final Integer type;
 
     PostgresqlColumnMetadata(String name, Short precision, Integer type) {
-        this.name = Objects.requireNonNull(name, "name must not be null");
-        this.precision = Objects.requireNonNull(precision, "precision must not be null");
-        this.type = Objects.requireNonNull(type, "type must not be null");
+        this.name = Assert.requireNonNull(name, "name must not be null");
+        this.precision = Assert.requireNonNull(precision, "precision must not be null");
+        this.type = Assert.requireNonNull(type, "type must not be null");
     }
 
     @Override
@@ -84,7 +85,7 @@ public final class PostgresqlColumnMetadata implements ColumnMetadata {
     }
 
     static PostgresqlColumnMetadata toColumnMetadata(Field field) {
-        Objects.requireNonNull(field, "field must not be null");
+        Assert.requireNonNull(field, "field must not be null");
 
         return new PostgresqlColumnMetadata(field.getName(), field.getDataTypeSize(), field.getDataType());
     }

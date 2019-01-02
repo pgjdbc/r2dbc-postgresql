@@ -21,6 +21,7 @@ import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
+import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
@@ -35,12 +36,12 @@ final class UuidCodec extends AbstractCodec<UUID> {
 
     UuidCodec(ByteBufAllocator byteBufAllocator) {
         super(UUID.class);
-        this.byteBufAllocator = Objects.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
     }
 
     @Override
     public Parameter doEncode(UUID value) {
-        Objects.requireNonNull(value, "value must not be null");
+        Assert.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toString());
         return create(FORMAT_TEXT, PostgresqlObjectId.UUID, encoded);
@@ -53,15 +54,15 @@ final class UuidCodec extends AbstractCodec<UUID> {
 
     @Override
     boolean doCanDecode(Format format, PostgresqlObjectId type) {
-        Objects.requireNonNull(format, "format must not be null");
-        Objects.requireNonNull(type, "type must not be null");
+        Assert.requireNonNull(format, "format must not be null");
+        Assert.requireNonNull(type, "type must not be null");
 
         return FORMAT_TEXT == format && PostgresqlObjectId.UUID == type;
     }
 
     @Override
     UUID doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends UUID> type) {
-        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
+        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
         return UUID.fromString(ByteBufUtils.decode(byteBuf));
     }
 

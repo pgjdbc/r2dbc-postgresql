@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
+import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
 import java.util.Objects;
@@ -42,10 +43,10 @@ public final class CommandComplete implements BackendMessage {
      * @param command the command that was completed
      * @param rowId   the object ID of the inserted row
      * @param rows    the number of rows affected by the command
-     * @throws NullPointerException if {@code command} is {@code null}
+     * @throws IllegalArgumentException if {@code command} is {@code null}
      */
     public CommandComplete(String command, @Nullable Integer rowId, @Nullable Integer rows) {
-        this.command = Objects.requireNonNull(command, "command must not be null");
+        this.command = Assert.requireNonNull(command, "command must not be null");
         this.rowId = rowId;
         this.rows = rows;
     }
@@ -108,7 +109,7 @@ public final class CommandComplete implements BackendMessage {
     }
 
     static CommandComplete decode(ByteBuf in) {
-        Objects.requireNonNull(in, "in must not be null");
+        Assert.requireNonNull(in, "in must not be null");
 
         String tag = readCStringUTF8(in);
 

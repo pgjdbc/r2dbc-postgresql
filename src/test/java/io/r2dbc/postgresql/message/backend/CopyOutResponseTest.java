@@ -22,19 +22,19 @@ import java.util.Collections;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.backend.BackendMessageAssert.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class CopyOutResponseTest {
 
     @Test
     void constructorNoColumnFormats() {
-        assertThatNullPointerException().isThrownBy(() -> new CopyOutResponse(null, FORMAT_BINARY))
+        assertThatIllegalArgumentException().isThrownBy(() -> new CopyOutResponse(null, FORMAT_BINARY))
             .withMessage("columnFormats must not be null");
     }
 
     @Test
     void constructorNoOverallFormat() {
-        assertThatNullPointerException().isThrownBy(() -> new CopyOutResponse(null, FORMAT_BINARY))
+        assertThatIllegalArgumentException().isThrownBy(() -> new CopyOutResponse(null, FORMAT_BINARY))
             .withMessage("columnFormats must not be null");
     }
 

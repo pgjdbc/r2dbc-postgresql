@@ -21,19 +21,19 @@ import org.junit.jupiter.api.Test;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class ParameterTest {
 
     @Test
     void constructorNoFormat() {
-        assertThatNullPointerException().isThrownBy(() -> new Parameter(null, 100, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new Parameter(null, 100, null))
             .withMessage("format must not be null");
     }
 
     @Test
     void constructorNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new Parameter(FORMAT_TEXT, null, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new Parameter(FORMAT_TEXT, null, null))
             .withMessage("type must not be null");
     }
 

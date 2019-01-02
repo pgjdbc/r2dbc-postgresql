@@ -18,6 +18,7 @@ package io.r2dbc.postgresql.message.frontend;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
@@ -46,16 +47,16 @@ public final class SASLInitialResponse implements FrontendMessage {
      *
      * @param initialResponse SASL mechanism specific "Initial Response"
      * @param name            name of the SASL authentication mechanism that the client selected
-     * @throws NullPointerException if {@code name} is {@code null}
+     * @throws IllegalArgumentException if {@code name} is {@code null}
      */
     public SASLInitialResponse(@Nullable ByteBuffer initialResponse, String name) {
         this.initialResponse = initialResponse == null ? null : (ByteBuffer) initialResponse.flip();
-        this.name = Objects.requireNonNull(name, "name must not be null");
+        this.name = Assert.requireNonNull(name, "name must not be null");
     }
 
     @Override
     public Publisher<ByteBuf> encode(ByteBufAllocator byteBufAllocator) {
-        Objects.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
 
         return Mono.defer(() -> {
             ByteBuf out = byteBufAllocator.ioBuffer();

@@ -31,13 +31,13 @@ import java.util.Collections;
 
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class PostgresqlConnectionFactoryTest {
 
     @Test
     void constructorNoClientFactory() {
-        assertThatNullPointerException().isThrownBy(() -> new PostgresqlConnectionFactory(null, PostgresqlConnectionConfiguration.builder()
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlConnectionFactory(null, PostgresqlConnectionConfiguration.builder()
             .host("test-host")
             .password("test-password")
             .username("test-username")
@@ -47,7 +47,7 @@ final class PostgresqlConnectionFactoryTest {
 
     @Test
     void constructorNoConfiguration() {
-        assertThatNullPointerException().isThrownBy(() -> new PostgresqlConnectionFactory(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlConnectionFactory(null))
             .withMessage("configuration must not be null");
     }
 

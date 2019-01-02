@@ -20,13 +20,13 @@ import org.junit.jupiter.api.Test;
 
 import static io.netty.util.CharsetUtil.UTF_8;
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageAssert.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class PasswordMessageTest {
 
     @Test
     void constructorNoPassword() {
-        assertThatNullPointerException().isThrownBy(() -> new PasswordMessage(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PasswordMessage(null))
             .withMessage("password must not be null");
     }
 

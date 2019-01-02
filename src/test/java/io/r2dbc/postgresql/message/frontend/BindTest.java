@@ -24,38 +24,38 @@ import static io.netty.util.CharsetUtil.UTF_8;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageAssert.assertThat;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class BindTest {
 
     @Test
     void constructorNoNames() {
-        assertThatNullPointerException().isThrownBy(() -> new Bind(null, Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)),
+        assertThatIllegalArgumentException().isThrownBy(() -> new Bind(null, Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)),
             Collections.singletonList(FORMAT_BINARY), "test-source"))
             .withMessage("name must not be null");
     }
 
     @Test
     void constructorNoParameterFormats() {
-        assertThatNullPointerException().isThrownBy(() -> new Bind("test-name", null, Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.singletonList(FORMAT_BINARY), "test-source"))
+        assertThatIllegalArgumentException().isThrownBy(() -> new Bind("test-name", null, Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.singletonList(FORMAT_BINARY), "test-source"))
             .withMessage("parameterFormats must not be null");
     }
 
     @Test
     void constructorNoParameters() {
-        assertThatNullPointerException().isThrownBy(() -> new Bind("test-name", Collections.singletonList(FORMAT_BINARY), null, Collections.singletonList(FORMAT_BINARY), "test-source"))
+        assertThatIllegalArgumentException().isThrownBy(() -> new Bind("test-name", Collections.singletonList(FORMAT_BINARY), null, Collections.singletonList(FORMAT_BINARY), "test-source"))
             .withMessage("parameters must not be null");
     }
 
     @Test
     void constructorNoResultFormats() {
-        assertThatNullPointerException().isThrownBy(() -> new Bind("test-name", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), null, "test-source"))
+        assertThatIllegalArgumentException().isThrownBy(() -> new Bind("test-name", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), null, "test-source"))
             .withMessage("resultFormats must not be null");
     }
 
     @Test
     void constructorNoSource() {
-        assertThatNullPointerException().isThrownBy(() -> new Bind("test-name", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)),
+        assertThatIllegalArgumentException().isThrownBy(() -> new Bind("test-name", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)),
             Collections.singletonList(FORMAT_BINARY), null))
             .withMessage("source must not be null");
     }

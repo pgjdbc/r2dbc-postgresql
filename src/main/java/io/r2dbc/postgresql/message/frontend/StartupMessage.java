@@ -19,6 +19,7 @@ package io.r2dbc.postgresql.message.frontend;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
+import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
@@ -68,17 +69,17 @@ public final class StartupMessage implements FrontendMessage {
      * @param applicationName the name of the application connecting to the database
      * @param database        the database to connect to. Defaults to the user name.
      * @param username        the database user name to connect as
-     * @throws NullPointerException if {@code applicationName} or {@code username} is {@code null}
+     * @throws IllegalArgumentException if {@code applicationName} or {@code username} is {@code null}
      */
     public StartupMessage(String applicationName, @Nullable String database, String username) {
-        this.applicationName = Objects.requireNonNull(applicationName, "applicationName must not be null");
+        this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
         this.database = database;
-        this.username = Objects.requireNonNull(username, "username must not be null");
+        this.username = Assert.requireNonNull(username, "username must not be null");
     }
 
     @Override
     public Publisher<ByteBuf> encode(ByteBufAllocator byteBufAllocator) {
-        Objects.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
 
         return Mono.defer(() -> {
             ByteBuf out = byteBufAllocator.ioBuffer();

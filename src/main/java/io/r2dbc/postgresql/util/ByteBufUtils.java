@@ -36,10 +36,10 @@ public final class ByteBufUtils {
      *
      * @param byteBuf the {@link ByteBuf} to decode
      * @return the {@link String} decoded from the {@link ByteBuf}
-     * @throws NullPointerException if {@code byteBuf} is {@code null}
+     * @throws IllegalArgumentException if {@code byteBuf} is {@code null}
      */
     public static String decode(ByteBuf byteBuf) {
-        Objects.requireNonNull(byteBuf, "byteBuf must not be null");
+        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
 
         return byteBuf.readCharSequence(byteBuf.readableBytes(), UTF_8).toString();
     }
@@ -50,11 +50,11 @@ public final class ByteBufUtils {
      * @param byteBufAllocator the {@link ByteBufAllocator} to use to create a buffer
      * @param s                the {@link CharSequence} to encode
      * @return the {@link ByteBuf} with the {@link CharSequence} encoded within it
-     * @throws NullPointerException if {@code byteBufAllocator} is {@code null}
+     * @throws IllegalArgumentException if {@code byteBufAllocator} is {@code null}
      */
     public static ByteBuf encode(ByteBufAllocator byteBufAllocator, CharSequence s) {
-        Objects.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
-        Objects.requireNonNull(s, "s must not be null");
+        Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        Assert.requireNonNull(s, "s must not be null");
 
         ByteBuf byteBuf = byteBufAllocator.buffer();
         byteBuf.writeCharSequence(s, UTF_8);

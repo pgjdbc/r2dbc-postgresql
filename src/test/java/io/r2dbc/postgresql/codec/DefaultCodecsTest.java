@@ -33,13 +33,13 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class DefaultCodecsTest {
 
     @Test
     void constructorNoByteBufAllocator() {
-        assertThatNullPointerException().isThrownBy(() -> new DefaultCodecs(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new DefaultCodecs(null))
             .withMessage("byteBufAllocator must not be null");
     }
 
@@ -57,13 +57,13 @@ final class DefaultCodecsTest {
 
     @Test
     void decodeNoFormat() {
-        assertThatNullPointerException().isThrownBy(() -> new DefaultCodecs(TEST).decode(TEST.buffer(4), INT4.getObjectId(), null, Object.class))
+        assertThatIllegalArgumentException().isThrownBy(() -> new DefaultCodecs(TEST).decode(TEST.buffer(4), INT4.getObjectId(), null, Object.class))
             .withMessage("format must not be null");
     }
 
     @Test
     void decodeNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new DefaultCodecs(TEST).decode(TEST.buffer(4), INT4.getObjectId(), FORMAT_BINARY, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new DefaultCodecs(TEST).decode(TEST.buffer(4), INT4.getObjectId(), FORMAT_BINARY, null))
             .withMessage("type must not be null");
     }
 
@@ -99,7 +99,7 @@ final class DefaultCodecsTest {
 
     @Test
     void encodeNoValue() {
-        assertThatNullPointerException().isThrownBy(() -> new DefaultCodecs(TEST).encode(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new DefaultCodecs(TEST).encode(null))
             .withMessage("value must not be null");
     }
 
@@ -112,7 +112,7 @@ final class DefaultCodecsTest {
 
     @Test
     void encodeNullNoType() {
-        assertThatNullPointerException().isThrownBy(() -> new DefaultCodecs(TEST).encodeNull(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new DefaultCodecs(TEST).encodeNull(null))
             .withMessage("type must not be null");
     }
 

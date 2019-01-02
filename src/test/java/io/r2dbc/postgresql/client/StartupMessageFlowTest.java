@@ -27,7 +27,7 @@ import reactor.test.StepVerifier;
 
 import static io.r2dbc.postgresql.client.TestClient.NO_OP;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.Mockito.RETURNS_SMART_NULLS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -96,25 +96,25 @@ final class StartupMessageFlowTest {
 
     @Test
     void exchangeNoApplicationName() {
-        assertThatNullPointerException().isThrownBy(() -> StartupMessageFlow.exchange(null, m -> this.authenticationHandler, NO_OP, "test-database", "test-username"))
+        assertThatIllegalArgumentException().isThrownBy(() -> StartupMessageFlow.exchange(null, m -> this.authenticationHandler, NO_OP, "test-database", "test-username"))
             .withMessage("applicationName must not be null");
     }
 
     @Test
     void exchangeNoAuthenticationHandlerProvider() {
-        assertThatNullPointerException().isThrownBy(() -> StartupMessageFlow.exchange("test-application-name", null, NO_OP, "test-database", "test-username"))
+        assertThatIllegalArgumentException().isThrownBy(() -> StartupMessageFlow.exchange("test-application-name", null, NO_OP, "test-database", "test-username"))
             .withMessage("authenticationHandlerProvider must not be null");
     }
 
     @Test
     void exchangeNoClient() {
-        assertThatNullPointerException().isThrownBy(() -> StartupMessageFlow.exchange("test-application-name", m -> this.authenticationHandler, null, "test-database", "test-username"))
+        assertThatIllegalArgumentException().isThrownBy(() -> StartupMessageFlow.exchange("test-application-name", m -> this.authenticationHandler, null, "test-database", "test-username"))
             .withMessage("client must not be null");
     }
 
     @Test
     void exchangeNoUsername() {
-        assertThatNullPointerException().isThrownBy(() -> StartupMessageFlow.exchange("test-application-name", m -> this.authenticationHandler, NO_OP, "test-database", null))
+        assertThatIllegalArgumentException().isThrownBy(() -> StartupMessageFlow.exchange("test-application-name", m -> this.authenticationHandler, NO_OP, "test-database", null))
             .withMessage("username must not be null");
     }
 

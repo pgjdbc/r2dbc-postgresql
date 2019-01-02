@@ -22,6 +22,7 @@ import io.r2dbc.postgresql.message.backend.AuthenticationOk;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.message.frontend.StartupMessage;
+import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
@@ -47,15 +48,15 @@ public final class StartupMessageFlow {
      * @param database                      the database to connect to
      * @param username                      the username to authenticate with
      * @return the messages received after authentication is complete, in response to this exchange
-     * @throws NullPointerException if {@code applicationName}, {@code authenticationHandler}, {@code client}, or {@code username} is {@code null}
+     * @throws IllegalArgumentException if {@code applicationName}, {@code authenticationHandler}, {@code client}, or {@code username} is {@code null}
      */
     public static Flux<BackendMessage> exchange(String applicationName, Function<AuthenticationMessage, AuthenticationHandler> authenticationHandlerProvider, Client client,
                                                 @Nullable String database, String username) {
 
-        Objects.requireNonNull(applicationName, "applicationName must not be null");
-        Objects.requireNonNull(authenticationHandlerProvider, "authenticationHandlerProvider must not be null");
-        Objects.requireNonNull(client, "client must not be null");
-        Objects.requireNonNull(username, "username must not be null");
+        Assert.requireNonNull(applicationName, "applicationName must not be null");
+        Assert.requireNonNull(authenticationHandlerProvider, "authenticationHandlerProvider must not be null");
+        Assert.requireNonNull(client, "client must not be null");
+        Assert.requireNonNull(username, "username must not be null");
 
         EmitterProcessor<FrontendMessage> requestProcessor = EmitterProcessor.create();
         FluxSink<FrontendMessage> requests = requestProcessor.sink();
