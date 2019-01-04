@@ -17,14 +17,14 @@
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.CompositeByteBuf;
 import io.netty.util.ReferenceCountUtil;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.SynchronousSink;
 
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static io.r2dbc.postgresql.message.backend.BackendMessageUtils.getBody;
 import static io.r2dbc.postgresql.message.backend.BackendMessageUtils.getEnvelope;
@@ -34,7 +34,13 @@ import static io.r2dbc.postgresql.message.backend.BackendMessageUtils.getEnvelop
  */
 public final class BackendMessageDecoder {
 
-    private final AtomicReference<ByteBuf> remainder = new AtomicReference<>();
+    private final CompositeByteBuf byteBuf;
+
+    private final AtomicBoolean disposed = new AtomicBoolean();
+
+    public BackendMessageDecoder(ByteBufAllocator allocator) {
+        this.byteBuf = allocator.compositeBuffer();
+    }
 
     /**
      * Decode a {@link ByteBuf} into a {@link Flux} of {@link BackendMessage}s.  If the {@link ByteBuf} does not end on a {@link BackendMessage} boundary, the {@link ByteBuf} will be retained until
@@ -47,18 +53,11 @@ public final class BackendMessageDecoder {
         Assert.requireNonNull(in, "in must not be null");
 
         return Flux.generate(
-            () -> {
-                ByteBuf remainder = this.remainder.getAndSet(null);
-                return remainder == null ? in : Unpooled.wrappedBuffer(remainder, in);
-            },
+            () -> this.byteBuf.addComponent(true, in),
             (byteBuf, sink) -> {
                 ByteBuf envelope = getEnvelope(byteBuf);
 
                 if (envelope == null) {
-                    if (byteBuf.readableBytes() > 0) {
-                        this.remainder.set(byteBuf.retain());
-                    }
-
                     sink.complete();
                     return byteBuf;
                 }
@@ -142,8 +141,14 @@ public final class BackendMessageDecoder {
 
                 return byteBuf;
             },
-            ReferenceCountUtil::release);
+            CompositeByteBuf::discardReadComponents);
 
+    }
+
+    public void dispose() {
+        if (this.disposed.compareAndSet(false, true)) {
+            ReferenceCountUtil.release(this.byteBuf);
+        }
     }
 
     private static void decodeAuthentication(ByteBuf in, SynchronousSink<BackendMessage> sink) {

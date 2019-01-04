@@ -47,7 +47,6 @@ import reactor.util.concurrent.Queues;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -126,11 +125,11 @@ public final class ReactorNettyClient implements Client {
 
         connection.addHandler(new EnsureSubscribersCompleteChannelHandler(this.requestProcessor, this.responseReceivers));
 
-        BackendMessageDecoder decoder = new BackendMessageDecoder();
+        ByteBufAllocator alloc = connection.outbound().alloc();
+        BackendMessageDecoder decoder = new BackendMessageDecoder(alloc);
+        this.byteBufAllocator.set(alloc);
 
-        this.byteBufAllocator.set(connection.outbound().alloc());
-
-        connection.inbound().receive()
+        Mono<Void> receive = connection.inbound().receive()
             .retain()
             .concatMap(decoder::decode)
             .doOnNext(message -> this.logger.debug("Response: {}", message))
@@ -152,11 +151,19 @@ public final class ReactorNettyClient implements Client {
                     receiver.success(Flux.empty());
                 }
             })
-            .subscribe();
+            .then();
 
-        this.requestProcessor
+        Mono<Void> request = this.requestProcessor
             .doOnNext(message -> this.logger.debug("Request:  {}", message))
             .concatMap(message -> connection.outbound().send(message.encode(connection.outbound().alloc())))
+            .then();
+
+        Flux.merge(receive, request)
+            .doFinally(s -> decoder.dispose())
+            .onErrorResume(throwable -> {
+                this.logger.error("Connection Error", throwable);
+                return close();
+            })
             .subscribe();
 
         this.connection.set(connection);

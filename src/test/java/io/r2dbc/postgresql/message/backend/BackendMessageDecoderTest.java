@@ -384,7 +384,7 @@ final class BackendMessageDecoderTest {
                     .writeBytes(payload))
             .reduce(TEST.buffer(), ByteBuf::writeBytes);
 
-        BackendMessageDecoder decoder = new BackendMessageDecoder();
+        BackendMessageDecoder decoder = new BackendMessageDecoder(TEST);
 
         return Flux.just(data.readRetainedSlice(data.readableBytes() / 2), data)
             .concatMap(decoder::decode)
