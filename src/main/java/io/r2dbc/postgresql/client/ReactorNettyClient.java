@@ -47,7 +47,6 @@ import reactor.util.concurrent.Queues;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -162,7 +161,7 @@ public final class ReactorNettyClient implements Client {
         Flux.merge(receive, request)
             .doFinally(s -> decoder.dispose())
             .onErrorResume(throwable -> {
-                logger.error("connection error", throwable);
+                this.logger.error("Connection Error", throwable);
                 return close();
             })
             .subscribe();

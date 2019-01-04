@@ -19,16 +19,12 @@ package io.r2dbc.postgresql.message.backend;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.CompositeByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.util.ReferenceCountUtil;
 import io.r2dbc.postgresql.util.Assert;
-import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.SynchronousSink;
 
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static io.r2dbc.postgresql.message.backend.BackendMessageUtils.getBody;
 import static io.r2dbc.postgresql.message.backend.BackendMessageUtils.getEnvelope;
@@ -36,24 +32,14 @@ import static io.r2dbc.postgresql.message.backend.BackendMessageUtils.getEnvelop
 /**
  * A decoder that reads {@link ByteBuf}s and returns a {@link Flux} of decoded {@link BackendMessage}s.
  */
-public final class BackendMessageDecoder extends AtomicBoolean implements Disposable {
+public final class BackendMessageDecoder {
 
     private final CompositeByteBuf byteBuf;
 
+    private final AtomicBoolean disposed = new AtomicBoolean();
+
     public BackendMessageDecoder(ByteBufAllocator allocator) {
-        byteBuf = allocator.compositeBuffer();
-    }
-
-    @Override
-    public boolean isDisposed() {
-        return get();
-    }
-
-    @Override
-    public void dispose() {
-        if (compareAndSet(false, true)) {
-            ReferenceCountUtil.safeRelease(byteBuf);
-        }
+        this.byteBuf = allocator.compositeBuffer();
     }
 
     /**
@@ -67,10 +53,7 @@ public final class BackendMessageDecoder extends AtomicBoolean implements Dispos
         Assert.requireNonNull(in, "in must not be null");
 
         return Flux.generate(
-            () -> {
-                byteBuf.addComponent(true, in);
-                return byteBuf;
-            },
+            () -> this.byteBuf.addComponent(true, in),
             (byteBuf, sink) -> {
                 ByteBuf envelope = getEnvelope(byteBuf);
 
@@ -160,6 +143,12 @@ public final class BackendMessageDecoder extends AtomicBoolean implements Dispos
             },
             CompositeByteBuf::discardReadComponents);
 
+    }
+
+    public void dispose() {
+        if (this.disposed.compareAndSet(false, true)) {
+            ReferenceCountUtil.release(this.byteBuf);
+        }
     }
 
     private static void decodeAuthentication(ByteBuf in, SynchronousSink<BackendMessage> sink) {
