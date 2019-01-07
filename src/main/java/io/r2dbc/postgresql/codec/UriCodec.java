@@ -54,7 +54,7 @@ final class UriCodec extends AbstractCodec<URI> {
     URI doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends URI> type) {
         Assert.requireNonNull(byteBuf, "byteBuf must not be null");
 
-        return URI.create(this.delegate.doDecode(byteBuf, format, String.class));
+        return URI.create(this.delegate.doDecode(byteBuf, format, String.class).trim());
     }
 
     @Override

@@ -63,7 +63,7 @@ final class UrlCodec extends AbstractCodec<URL> {
         Assert.requireNonNull(byteBuf, "byteBuf must not be null");
 
         try {
-            return new URL(this.delegate.doDecode(byteBuf, format, String.class));
+            return new URL(this.delegate.doDecode(byteBuf, format, String.class).trim());
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException(e);
         }

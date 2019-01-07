@@ -29,6 +29,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 
 final class InetAddressCodec extends AbstractCodec<InetAddress> {
@@ -50,7 +51,7 @@ final class InetAddressCodec extends AbstractCodec<InetAddress> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return FORMAT_TEXT == format && VARCHAR == type;
+        return FORMAT_TEXT == format && (BPCHAR == type || VARCHAR == type);
     }
 
     @Override
@@ -58,7 +59,7 @@ final class InetAddressCodec extends AbstractCodec<InetAddress> {
         Assert.requireNonNull(byteBuf, "byteBuf must not be null");
 
         try {
-            return InetAddress.getByName(ByteBufUtils.decode(byteBuf));
+            return InetAddress.getByName(ByteBufUtils.decode(byteBuf).trim());
         } catch (UnknownHostException e) {
             throw new IllegalArgumentException(e);
         }

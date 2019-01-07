@@ -60,7 +60,7 @@ final class EnumCodec implements Codec<Enum> {
         if (byteBuf == null) {
             return null;
         }
-        return Enum.valueOf(type, this.delegate.doDecode(byteBuf, format, String.class));
+        return Enum.valueOf(type, this.delegate.doDecode(byteBuf, format, String.class).trim());
     }
 
     @Override

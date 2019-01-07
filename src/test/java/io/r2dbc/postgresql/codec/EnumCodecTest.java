@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
@@ -59,6 +60,7 @@ final class EnumCodecTest {
 
         assertThat(codec.canDecode(VARCHAR.getObjectId(), FORMAT_BINARY, TimeUnit.class)).isFalse();
         assertThat(codec.canDecode(MONEY.getObjectId(), FORMAT_TEXT, TimeUnit.class)).isFalse();
+        assertThat(codec.canDecode(BPCHAR.getObjectId(), FORMAT_TEXT, TimeUnit.class)).isTrue();
         assertThat(codec.canDecode(VARCHAR.getObjectId(), FORMAT_TEXT, TimeUnit.class)).isTrue();
     }
 
