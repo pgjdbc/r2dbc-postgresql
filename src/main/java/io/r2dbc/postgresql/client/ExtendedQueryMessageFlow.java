@@ -48,7 +48,7 @@ public final class ExtendedQueryMessageFlow {
     /**
      * The pattern that identifies a parameter symbol.
      */
-    public static final Pattern PARAMETER_SYMBOL = Pattern.compile(".*\\$([\\d]+).*");
+    public static final Pattern PARAMETER_SYMBOL = Pattern.compile(".*\\$([\\d]+).*", Pattern.DOTALL);
 
     private ExtendedQueryMessageFlow() {
     }

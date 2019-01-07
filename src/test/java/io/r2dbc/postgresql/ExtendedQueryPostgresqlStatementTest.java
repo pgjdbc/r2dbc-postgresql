@@ -255,6 +255,11 @@ final class ExtendedQueryPostgresqlStatementTest {
     }
 
     @Test
+    void supportsMultilineParameterSymbol() {
+        assertThat(ExtendedQueryPostgresqlStatement.supports("test-query-0\ntest-query-$1")).isTrue();
+    }
+
+    @Test
     void supportsParameterSymbol() {
         assertThat(ExtendedQueryPostgresqlStatement.supports("test-query-$1")).isTrue();
     }

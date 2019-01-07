@@ -198,6 +198,11 @@ final class SimpleQueryPostgresqlStatementTest {
     }
 
     @Test
+    void supportsMultilineParameterSymbol() {
+        assertThat(SimpleQueryPostgresqlStatement.supports("test-query-0\ntest-query-$1")).isFalse();
+    }
+
+    @Test
     void supportsNoSql() {
         assertThatIllegalArgumentException().isThrownBy(() -> SimpleQueryPostgresqlStatement.supports(null))
             .withMessage("sql must not be null");
