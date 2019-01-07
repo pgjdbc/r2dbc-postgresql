@@ -25,7 +25,6 @@ import io.r2dbc.postgresql.message.backend.BackendMessageDecoder;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.Field;
 import io.r2dbc.postgresql.message.backend.NoticeResponse;
-import io.r2dbc.postgresql.message.backend.ParameterStatus;
 import io.r2dbc.postgresql.message.backend.ReadyForQuery;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.message.frontend.Terminate;
@@ -44,13 +43,9 @@ import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.tcp.TcpClient;
 import reactor.util.concurrent.Queues;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -84,11 +79,6 @@ public final class ReactorNettyClient implements Client {
         (message, sink) -> this.logger.warn("Notice: {}", toString(message.getFields())));
 
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
-
-    private final ConcurrentMap<String, String> parameterStatus = new ConcurrentHashMap<>();
-
-    private final BiConsumer<BackendMessage, SynchronousSink<BackendMessage>> handleParameterStatus = handleBackendMessage(ParameterStatus.class,
-        (message, sink) -> this.parameterStatus.put(message.getName(), message.getValue()));
 
     private final AtomicReference<Integer> processId = new AtomicReference<>();
 
@@ -136,7 +126,6 @@ public final class ReactorNettyClient implements Client {
             .handle(this.handleNoticeResponse)
             .handle(this.handleErrorResponse)
             .handle(this.handleBackendKeyData)
-            .handle(this.handleParameterStatus)
             .handle(this.handleReadyForQuery)
             .windowWhile(not(ReadyForQuery.class::isInstance))
             .doOnNext(fluxOfMessages -> {
@@ -252,11 +241,6 @@ public final class ReactorNettyClient implements Client {
     @Override
     public ByteBufAllocator getByteBufAllocator() {
         return this.byteBufAllocator.get();
-    }
-
-    @Override
-    public Map<String, String> getParameterStatus() {
-        return new HashMap<>(this.parameterStatus);
     }
 
     @Override

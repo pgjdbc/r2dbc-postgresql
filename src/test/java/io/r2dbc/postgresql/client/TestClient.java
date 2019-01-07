@@ -29,10 +29,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -40,11 +37,9 @@ import static io.r2dbc.postgresql.client.TransactionStatus.IDLE;
 
 public final class TestClient implements Client {
 
-    public static final TestClient NO_OP = new TestClient(false, Collections.emptyMap(), null, null, Flux.empty(), IDLE);
+    public static final TestClient NO_OP = new TestClient(false, null, null, Flux.empty(), IDLE);
 
     private final boolean expectClose;
-
-    private final Map<String, String> parameterStatus;
 
     private final Integer processId;
 
@@ -58,9 +53,8 @@ public final class TestClient implements Client {
 
     private final TransactionStatus transactionStatus;
 
-    private TestClient(boolean expectClose, Map<String, String> parameterStatus, @Nullable Integer processId, @Nullable Integer secretKey, Flux<Window> windows, TransactionStatus transactionStatus) {
+    private TestClient(boolean expectClose, @Nullable Integer processId, @Nullable Integer secretKey, Flux<Window> windows, TransactionStatus transactionStatus) {
         this.expectClose = expectClose;
-        this.parameterStatus = Assert.requireNonNull(parameterStatus, "parameterStatus must not be null");
         this.processId = processId;
         this.secretKey = secretKey;
         this.transactionStatus = Assert.requireNonNull(transactionStatus, "transactionStatus must not be null");
@@ -112,11 +106,6 @@ public final class TestClient implements Client {
     }
 
     @Override
-    public Map<String, String> getParameterStatus() {
-        return this.parameterStatus;
-    }
-
-    @Override
     public Optional<Integer> getProcessId() {
         return Optional.ofNullable(this.processId);
     }
@@ -133,8 +122,6 @@ public final class TestClient implements Client {
 
     public static final class Builder {
 
-        private final Map<String, String> parameterStatus = new HashMap<>();
-
         private final List<Window.Builder<?>> windows = new ArrayList<>();
 
         private boolean expectClose = false;
@@ -149,7 +136,7 @@ public final class TestClient implements Client {
         }
 
         public TestClient build() {
-            return new TestClient(this.expectClose, parameterStatus, this.processId, this.secretKey, Flux.fromIterable(this.windows).map(Window.Builder::build), this.transactionStatus);
+            return new TestClient(this.expectClose, this.processId, this.secretKey, Flux.fromIterable(this.windows).map(Window.Builder::build), this.transactionStatus);
         }
 
         public Builder expectClose() {
@@ -167,14 +154,6 @@ public final class TestClient implements Client {
             window.exchanges.add(exchange);
 
             return exchange;
-        }
-
-        public Builder parameterStatus(String key, String value) {
-            Assert.requireNonNull(key, "key must not be null");
-            Assert.requireNonNull(value, "value must not be null");
-
-            this.parameterStatus.put(key, value);
-            return this;
         }
 
         public Builder processId(Integer processId) {

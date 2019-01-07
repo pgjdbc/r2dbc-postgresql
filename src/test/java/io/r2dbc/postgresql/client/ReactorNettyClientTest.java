@@ -101,11 +101,6 @@ final class ReactorNettyClientTest {
     }
 
     @Test
-    void handleParameterStatus() {
-        assertThat(this.client.getParameterStatus()).containsEntry("application_name", this.getClass().getName());
-    }
-
-    @Test
     void handleTransactionStatus() {
         assertThat(this.client.getTransactionStatus()).isEqualTo(TransactionStatus.IDLE);
 

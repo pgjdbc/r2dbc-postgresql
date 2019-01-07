@@ -27,8 +27,6 @@ import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ConnectionFactory;
 import reactor.core.publisher.Mono;
 
-import java.util.Objects;
-
 /**
  * An implementation of {@link ConnectionFactory} for creating connections to a PostgreSQL database.
  */
@@ -62,9 +60,10 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
         return this.clientFactory
             .delayUntil(client ->
                 StartupMessageFlow
-                    .exchange(this.configuration.getApplicationName(), this::getAuthenticationHandler, client, this.configuration.getDatabase().orElse(null), this.configuration.getUsername())
+                    .exchange(this.configuration.getApplicationName(), this::getAuthenticationHandler, client, this.configuration.getDatabase(), this.configuration.getUsername())
                     .handle(PostgresqlServerErrorException::handleErrorResponse))
-            .map(client -> new PostgresqlConnection(client, new DefaultCodecs(client.getByteBufAllocator()), DefaultPortalNameSupplier.INSTANCE, new IndefiniteStatementCache(client)));
+            .map(client -> new PostgresqlConnection(client, new DefaultCodecs(client.getByteBufAllocator()), DefaultPortalNameSupplier.INSTANCE, new IndefiniteStatementCache(client)))
+            .delayUntil(this::setSchema);
     }
 
     @Override
@@ -86,6 +85,16 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
         } else {
             throw new IllegalStateException(String.format("Unable to provide AuthenticationHandler capable of handling %s", message));
         }
+    }
+
+    private Mono<Void> setSchema(PostgresqlConnection connection) {
+        if (this.configuration.getSchema() == null) {
+            return Mono.empty();
+        }
+
+        return connection.createStatement(String.format("SET SCHEMA '%s'", this.configuration.getSchema()))
+            .execute()
+            .then();
     }
 
 }

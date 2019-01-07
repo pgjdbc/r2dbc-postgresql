@@ -30,8 +30,6 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Map;
-import java.util.Objects;
 import java.util.function.Function;
 
 import static io.r2dbc.postgresql.client.TransactionStatus.IDLE;
@@ -122,15 +120,6 @@ public final class PostgresqlConnection implements Connection {
         } else {
             throw new IllegalArgumentException(String.format("Statement '%s' cannot be created. This is often due to the presence of both multiple statements and parameters at the same time.", sql));
         }
-    }
-
-    /**
-     * Returns a snapshot of the current parameter statuses.
-     *
-     * @return a snapshot of the current parameter statuses
-     */
-    public Map<String, String> getParameterStatus() {
-        return this.client.getParameterStatus();
     }
 
     @Override
