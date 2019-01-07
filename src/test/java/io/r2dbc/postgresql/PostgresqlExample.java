@@ -18,12 +18,8 @@ package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
 import io.r2dbc.spi.test.Example;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.jdbc.core.JdbcOperations;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
 
 final class PostgresqlExample implements Example<String> {
 
@@ -64,26 +60,6 @@ final class PostgresqlExample implements Example<String> {
     @Override
     public String getPlaceholder(int index) {
         return String.format("$%d", index + 1);
-    }
-
-    @Test
-    void parameterStatusConnection() {
-        getConnectionFactory().create()
-            .flatMapMany(connection -> Mono.just(
-
-                connection.getParameterStatus())
-
-                .delayUntil(m -> connection.createStatement("SET application_name TO 'test-application'")
-                    .execute())
-
-                .concatWith(Flux.defer(() -> Flux.just(connection.getParameterStatus())))
-
-                .concatWith(Example.close(connection)))
-            .map(m -> m.get("application_name"))
-            .as(StepVerifier::create)
-            .expectNext("postgresql-r2dbc")
-            .expectNext("test-application")
-            .verifyComplete();
     }
 
 }

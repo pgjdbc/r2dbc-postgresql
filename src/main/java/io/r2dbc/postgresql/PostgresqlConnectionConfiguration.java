@@ -20,9 +20,6 @@ package io.r2dbc.postgresql;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
-import java.util.Objects;
-import java.util.Optional;
-
 /**
  * Connection configuration information for connecting to a PostgreSQL database.
  */
@@ -38,14 +35,17 @@ public final class PostgresqlConnectionConfiguration {
 
     private final int port;
 
+    private final String schema;
+
     private final String username;
 
-    private PostgresqlConnectionConfiguration(String applicationName, @Nullable String database, String host, String password, int port, String username) {
+    private PostgresqlConnectionConfiguration(String applicationName, @Nullable String database, String host, String password, int port, @Nullable String schema, String username) {
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
         this.database = database;
         this.host = Assert.requireNonNull(host, "host must not be null");
         this.password = Assert.requireNonNull(password, "password must not be null");
         this.port = port;
+        this.schema = schema;
         this.username = Assert.requireNonNull(username, "username must not be null");
     }
 
@@ -66,6 +66,7 @@ public final class PostgresqlConnectionConfiguration {
             ", host='" + this.host + '\'' +
             ", password='" + this.password + '\'' +
             ", port=" + this.port +
+            ", schema='" + this.schema + '\'' +
             ", username='" + this.username + '\'' +
             '}';
     }
@@ -74,8 +75,9 @@ public final class PostgresqlConnectionConfiguration {
         return this.applicationName;
     }
 
-    Optional<String> getDatabase() {
-        return Optional.ofNullable(this.database);
+    @Nullable
+    String getDatabase() {
+        return this.database;
     }
 
     String getHost() {
@@ -88,6 +90,11 @@ public final class PostgresqlConnectionConfiguration {
 
     int getPort() {
         return this.port;
+    }
+
+    @Nullable
+    String getSchema() {
+        return this.schema;
     }
 
     String getUsername() {
@@ -110,6 +117,8 @@ public final class PostgresqlConnectionConfiguration {
         private String password;
 
         private int port = 5432;
+
+        private String schema;
 
         private String username;
 
@@ -134,7 +143,7 @@ public final class PostgresqlConnectionConfiguration {
          * @return a configured {@link PostgresqlConnectionConfiguration}
          */
         public PostgresqlConnectionConfiguration build() {
-            return new PostgresqlConnectionConfiguration(this.applicationName, this.database, this.host, this.password, this.port, this.username);
+            return new PostgresqlConnectionConfiguration(this.applicationName, this.database, this.host, this.password, this.port, this.schema, this.username);
         }
 
         /**
@@ -183,6 +192,17 @@ public final class PostgresqlConnectionConfiguration {
             return this;
         }
 
+        /**
+         * Configure the schema.
+         *
+         * @param schema the schema
+         * @return this {@link Builder}
+         */
+        public Builder schema(@Nullable String schema) {
+            this.schema = schema;
+            return this;
+        }
+
         @Override
         public String toString() {
             return "Builder{" +
@@ -191,6 +211,7 @@ public final class PostgresqlConnectionConfiguration {
                 ", host='" + this.host + '\'' +
                 ", password='" + this.password + '\'' +
                 ", port=" + this.port +
+                ", schema='" + this.schema + '\'' +
                 ", username='" + this.username + '\'' +
                 '}';
         }

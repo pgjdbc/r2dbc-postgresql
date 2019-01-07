@@ -55,6 +55,7 @@ final class PostgresqlConnectionConfigurationTest {
             .host("test-host")
             .password("test-password")
             .port(100)
+            .schema("test-schema")
             .username("test-username")
             .build();
 
@@ -64,6 +65,7 @@ final class PostgresqlConnectionConfigurationTest {
             .hasFieldOrPropertyWithValue("host", "test-host")
             .hasFieldOrPropertyWithValue("password", "test-password")
             .hasFieldOrPropertyWithValue("port", 100)
+            .hasFieldOrPropertyWithValue("schema", "test-schema")
             .hasFieldOrPropertyWithValue("username", "test-username");
     }
 
@@ -74,6 +76,7 @@ final class PostgresqlConnectionConfigurationTest {
             .host("test-host")
             .password("test-password")
             .username("test-username")
+            .schema("test-schema")
             .build();
 
         assertThat(configuration)
@@ -82,6 +85,7 @@ final class PostgresqlConnectionConfigurationTest {
             .hasFieldOrPropertyWithValue("host", "test-host")
             .hasFieldOrPropertyWithValue("password", "test-password")
             .hasFieldOrPropertyWithValue("port", 5432)
+            .hasFieldOrPropertyWithValue("schema", "test-schema")
             .hasFieldOrPropertyWithValue("username", "test-username");
     }
 

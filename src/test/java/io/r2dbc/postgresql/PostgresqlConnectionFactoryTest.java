@@ -55,7 +55,6 @@ final class PostgresqlConnectionFactoryTest {
     void createAuthenticationMD5Password() {
         // @formatter:off
         Client client = TestClient.builder()
-            .parameterStatus("test-key", "test-value")
             .window()
                 .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username")).thenRespond(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))
                 .expectRequest(new PasswordMessage("md55e9836cdb369d50e3bc7d127e88b4804")).thenRespond(AuthenticationOk.INSTANCE)
@@ -74,7 +73,7 @@ final class PostgresqlConnectionFactoryTest {
         new PostgresqlConnectionFactory(Mono.just(client), configuration)
             .create()
             .as(StepVerifier::create)
-            .assertNext(connection -> assertThat(connection.getParameterStatus()).containsEntry("test-key", "test-value"))
+            .expectNextCount(1)
             .verifyComplete();
     }
 
@@ -82,7 +81,6 @@ final class PostgresqlConnectionFactoryTest {
     void createError() {
         // @formatter:off
         Client client = TestClient.builder()
-            .parameterStatus("test-key", "test-value")
             .window()
                 .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username")).thenRespond(new ErrorResponse(Collections.emptyList()))
                 .done()
@@ -97,14 +95,15 @@ final class PostgresqlConnectionFactoryTest {
             .password("test-password")
             .build();
 
-        new PostgresqlConnectionFactory(Mono.just(client), configuration).create().as(StepVerifier::create).verifyErrorMatches(PostgresqlServerErrorException.class::isInstance);
+        new PostgresqlConnectionFactory(Mono.just(client), configuration).create()
+            .as(StepVerifier::create)
+            .verifyErrorMatches(PostgresqlServerErrorException.class::isInstance);
     }
 
     @Test
     void getMetadata() {
         // @formatter:off
         Client client = TestClient.builder()
-            .parameterStatus("test-key", "test-value")
             .window()
                 .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username")).thenRespond(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))
                 .expectRequest(new PasswordMessage("md55e9836cdb369d50e3bc7d127e88b4804")).thenRespond(AuthenticationOk.INSTANCE)

@@ -34,7 +34,6 @@ import static io.r2dbc.postgresql.client.TransactionStatus.OPEN;
 import static io.r2dbc.spi.IsolationLevel.READ_COMMITTED;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.Mockito.RETURNS_SMART_NULLS;
 import static org.mockito.Mockito.mock;
 
@@ -216,15 +215,6 @@ final class PostgresqlConnectionTest {
     @Test
     void createStatementSimple() {
         assertThat(new PostgresqlConnection(NO_OP, MockCodecs.empty(), () -> "", this.statementCache).createStatement("test-query-1; test-query-2")).isInstanceOf(SimpleQueryPostgresqlStatement.class);
-    }
-
-    @Test
-    void getParameterStatus() {
-        Client client = TestClient.builder()
-            .parameterStatus("test-key", "test-value")
-            .build();
-
-        assertThat(new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache).getParameterStatus()).containsEntry("test-key", "test-value");
     }
 
     @Test

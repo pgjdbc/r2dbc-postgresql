@@ -56,13 +56,6 @@ public interface Client {
     ByteBufAllocator getByteBufAllocator();
 
     /**
-     * Returns a snapshot of the current parameter statuses.
-     *
-     * @return a snapshot of the current parameter statuses
-     */
-    Map<String, String> getParameterStatus();
-
-    /**
      * Returns the connected process id if it has been communicated.
      *
      * @return the connected process id if it has been communicated
