@@ -24,7 +24,6 @@ import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * An implementation of {@link Batch} for executing a collection of statements in a batch against a PostgreSQL database.

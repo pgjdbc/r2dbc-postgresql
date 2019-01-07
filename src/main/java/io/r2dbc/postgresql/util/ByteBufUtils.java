@@ -19,8 +19,6 @@ package io.r2dbc.postgresql.util;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 
-import java.util.Objects;
-
 import static io.netty.util.CharsetUtil.UTF_8;
 
 /**

@@ -20,7 +20,6 @@ import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.util.Assert;
 
 import java.nio.ByteBuffer;
-import java.util.Objects;
 
 import static io.netty.util.CharsetUtil.UTF_8;
 

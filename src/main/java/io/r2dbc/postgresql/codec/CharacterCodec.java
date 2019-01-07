@@ -24,8 +24,6 @@ import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
-import java.util.Objects;
-
 final class CharacterCodec extends AbstractCodec<Character> {
 
     private final StringCodec delegate;

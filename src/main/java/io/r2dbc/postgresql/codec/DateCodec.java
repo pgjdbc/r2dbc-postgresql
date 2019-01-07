@@ -26,7 +26,6 @@ import reactor.util.annotation.Nullable;
 
 import java.time.Instant;
 import java.util.Date;
-import java.util.Objects;
 
 final class DateCodec extends AbstractCodec<Date> {
 

@@ -25,7 +25,6 @@ import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
 import java.time.ZoneId;
-import java.util.Objects;
 
 final class ZoneIdCodec extends AbstractCodec<ZoneId> {
 

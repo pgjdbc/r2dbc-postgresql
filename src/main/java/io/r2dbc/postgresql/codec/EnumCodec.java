@@ -23,8 +23,6 @@ import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 
-import java.util.Objects;
-
 @SuppressWarnings("rawtypes")
 final class EnumCodec implements Codec<Enum> {
 
@@ -45,7 +43,7 @@ final class EnumCodec implements Codec<Enum> {
     @Override
     public boolean canEncode(Object value) {
         Assert.requireNonNull(value, "value must not be null");
-        return Enum.class.isInstance(value);
+        return value instanceof Enum;
     }
 
     @Override

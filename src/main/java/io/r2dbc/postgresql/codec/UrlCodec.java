@@ -26,7 +26,6 @@ import reactor.util.annotation.Nullable;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Objects;
 
 final class UrlCodec extends AbstractCodec<URL> {
 

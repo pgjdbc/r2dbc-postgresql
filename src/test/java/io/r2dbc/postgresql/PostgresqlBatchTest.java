@@ -30,7 +30,6 @@ import java.util.Collections;
 
 import static io.r2dbc.postgresql.client.TestClient.NO_OP;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class PostgresqlBatchTest {
 

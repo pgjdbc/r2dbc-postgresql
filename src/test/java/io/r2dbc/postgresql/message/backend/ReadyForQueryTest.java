@@ -24,7 +24,6 @@ import static io.r2dbc.postgresql.message.backend.ReadyForQuery.TransactionStatu
 import static io.r2dbc.postgresql.message.backend.ReadyForQuery.TransactionStatus.TRANSACTION;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class ReadyForQueryTest {
 

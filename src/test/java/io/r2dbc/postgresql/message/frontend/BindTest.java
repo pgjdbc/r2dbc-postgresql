@@ -37,7 +37,8 @@ final class BindTest {
 
     @Test
     void constructorNoParameterFormats() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new Bind("test-name", null, Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.singletonList(FORMAT_BINARY), "test-source"))
+        assertThatIllegalArgumentException().isThrownBy(() -> new Bind("test-name", null, Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.singletonList(FORMAT_BINARY), "test" +
+            "-source"))
             .withMessage("parameterFormats must not be null");
     }
 
@@ -49,7 +50,8 @@ final class BindTest {
 
     @Test
     void constructorNoResultFormats() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new Bind("test-name", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), null, "test-source"))
+        assertThatIllegalArgumentException().isThrownBy(() -> new Bind("test-name", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), null, "test" +
+            "-source"))
             .withMessage("resultFormats must not be null");
     }
 

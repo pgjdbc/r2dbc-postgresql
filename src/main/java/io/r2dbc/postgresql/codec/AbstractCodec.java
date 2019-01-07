@@ -23,8 +23,6 @@ import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
-import java.util.Objects;
-
 abstract class AbstractCodec<T> implements Codec<T> {
 
     private final Class<T> type;

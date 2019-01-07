@@ -26,8 +26,6 @@ import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.util.annotation.Nullable;
 
-import java.util.Objects;
-
 import static io.r2dbc.postgresql.client.ExtendedQueryMessageFlow.PARAMETER_SYMBOL;
 import static io.r2dbc.postgresql.util.PredicateUtils.or;
 

@@ -20,8 +20,6 @@ import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
-import java.util.Objects;
-
 import static io.netty.util.CharsetUtil.UTF_8;
 
 final class BackendMessageUtils {

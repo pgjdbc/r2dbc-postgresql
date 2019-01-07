@@ -19,8 +19,6 @@ package io.r2dbc.postgresql.client;
 import io.r2dbc.postgresql.message.backend.ReadyForQuery;
 import io.r2dbc.postgresql.util.Assert;
 
-import java.util.Objects;
-
 /**
  * An enumeration of transaction statuses.
  */

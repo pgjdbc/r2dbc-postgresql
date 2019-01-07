@@ -25,7 +25,6 @@ import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
-import java.util.Objects;
 import java.util.UUID;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;

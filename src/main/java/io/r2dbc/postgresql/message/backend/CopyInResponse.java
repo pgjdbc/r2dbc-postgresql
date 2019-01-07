@@ -21,7 +21,6 @@ import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * The CopyInResponse message.

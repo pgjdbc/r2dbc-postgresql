@@ -32,7 +32,6 @@ import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class PostgresqlRowTest {
 
@@ -55,17 +54,6 @@ final class PostgresqlRowTest {
     }
 
     @Test
-    void getDefaultType() {
-        Object value = new Object();
-
-        MockCodecs codecs = MockCodecs.builder()
-            .decoding(TEST.buffer(4).writeInt(300), 400, FORMAT_TEXT, Object.class, value)
-            .build();
-
-        assertThat(new PostgresqlRow(codecs, this.columns).get("test-name-2")).isSameAs(value);
-    }
-
-    @Test
     void getAfterRelease() {
         Object value = new Object();
 
@@ -78,6 +66,17 @@ final class PostgresqlRowTest {
 
         assertThatIllegalStateException().isThrownBy(() -> row.get("test-name-2", Object.class))
             .withMessage("Value cannot be retrieved after row has been released");
+    }
+
+    @Test
+    void getDefaultType() {
+        Object value = new Object();
+
+        MockCodecs codecs = MockCodecs.builder()
+            .decoding(TEST.buffer(4).writeInt(300), 400, FORMAT_TEXT, Object.class, value)
+            .build();
+
+        assertThat(new PostgresqlRow(codecs, this.columns).get("test-name-2")).isSameAs(value);
     }
 
     @Test

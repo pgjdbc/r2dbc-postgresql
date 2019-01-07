@@ -24,7 +24,6 @@ import io.r2dbc.postgresql.util.Assert;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 
