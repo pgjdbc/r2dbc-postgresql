@@ -24,6 +24,7 @@ import java.net.URL;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
@@ -56,6 +57,7 @@ final class UrlCodecTest {
 
         assertThat(codec.doCanDecode(FORMAT_BINARY, VARCHAR)).isFalse();
         assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, BPCHAR)).isTrue();
         assertThat(codec.doCanDecode(FORMAT_TEXT, VARCHAR)).isTrue();
     }
 

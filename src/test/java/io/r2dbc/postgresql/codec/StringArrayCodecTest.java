@@ -23,6 +23,8 @@ import org.junit.jupiter.api.Test;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR_ARRAY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.CHAR;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.CHAR_ARRAY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TEXT;
@@ -51,6 +53,8 @@ final class StringArrayCodecTest {
     void doCanDecode() {
         StringArrayCodec codec = new StringArrayCodec(TEST);
 
+        assertThat(codec.doCanDecode(FORMAT_TEXT, BPCHAR)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, BPCHAR_ARRAY)).isFalse();
         assertThat(codec.doCanDecode(FORMAT_TEXT, CHAR)).isFalse();
         assertThat(codec.doCanDecode(FORMAT_BINARY, CHAR_ARRAY)).isFalse();
         assertThat(codec.doCanDecode(FORMAT_TEXT, CHAR_ARRAY)).isTrue();

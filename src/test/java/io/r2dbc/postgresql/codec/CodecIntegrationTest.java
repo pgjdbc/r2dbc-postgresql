@@ -21,7 +21,6 @@ import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.postgresql.PostgresqlResult;
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
 import io.r2dbc.spi.Connection;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import reactor.core.publisher.Mono;
@@ -79,6 +78,7 @@ final class CodecIntegrationTest {
 
     @Test
     void charPrimitive() {
+        testCodec(Character.class, 'a', "BPCHAR(1)");
         testCodec(Character.class, 'a', "VARCHAR(1)");
     }
 
@@ -92,13 +92,9 @@ final class CodecIntegrationTest {
         testCodec(Double.class, 100.0, "FLOAT8");
     }
 
-    @AfterEach
-    void dropTable() {
-        SERVER.getJdbcOperations().execute("DROP TABLE test");
-    }
-
     @Test
     void enumPrimitive() {
+        testCodec(Color.class, Color.RED, "BPCHAR(16)");
         testCodec(Color.class, Color.RED, "VARCHAR(16)");
     }
 
@@ -109,6 +105,7 @@ final class CodecIntegrationTest {
 
     @Test
     void inetAddress() throws UnknownHostException {
+        testCodec(InetAddress.class, InetAddress.getLocalHost(), "BPCHAR(128)");
         testCodec(InetAddress.class, InetAddress.getLocalHost(), "VARCHAR(128)");
     }
 
@@ -169,21 +166,25 @@ final class CodecIntegrationTest {
 
     @Test
     void string() {
-        testCodec(String.class, "test-value", "VARCHAR(128)");
+        testCodec(String.class, "test-value", (actual, expected) -> assertThat(actual).isEqualToIgnoringWhitespace(expected), "BPCHAR(32)");
+        testCodec(String.class, "test-value", "VARCHAR(32)");
     }
 
     @Test
     void stringArray() {
+        testCodec(String[].class, new String[]{"test-value1", "test-value2", "test-value3"}, "BPCHAR[]");
         testCodec(String[].class, new String[]{"test-value1", "test-value2", "test-value3"}, "VARCHAR[]");
     }
 
     @Test
     void uri() {
+        testCodec(URI.class, URI.create("https://localhost"), "BPCHAR(128)");
         testCodec(URI.class, URI.create("https://localhost"), "VARCHAR(128)");
     }
 
     @Test
     void url() throws MalformedURLException {
+        testCodec(URL.class, new URL("https://localhost"), "BPCHAR(128)");
         testCodec(URL.class, new URL("https://localhost"), "VARCHAR(128)");
     }
 
@@ -194,6 +195,7 @@ final class CodecIntegrationTest {
 
     @Test
     void zoneId() {
+        testCodec(ZoneId.class, ZoneId.systemDefault(), "BPCHAR(32)");
         testCodec(ZoneId.class, ZoneId.systemDefault(), "VARCHAR(32)");
     }
 
@@ -215,33 +217,37 @@ final class CodecIntegrationTest {
     private <T> void testCodec(Class<T> javaType, T value, BiConsumer<T, T> equality, String sqlType) {
         SERVER.getJdbcOperations().execute(String.format("CREATE TABLE test ( value %s )", sqlType));
 
-        this.connectionFactory.create()
-            .flatMapMany(connection -> connection
+        try {
+            this.connectionFactory.create()
+                .flatMapMany(connection -> connection
 
-                .createStatement("INSERT INTO test VALUES ($1)")
-                .bind("$1", value)
-                .execute()
+                    .createStatement("INSERT INTO test VALUES ($1)")
+                    .bind("$1", value)
+                    .execute()
 
-                .flatMap(PostgresqlResult::getRowsUpdated)
+                    .flatMap(PostgresqlResult::getRowsUpdated)
 
-                .concatWith(close(connection)))
-            .as(StepVerifier::create)
-            .expectNext(1)
-            .verifyComplete();
+                    .concatWith(close(connection)))
+                .as(StepVerifier::create)
+                .expectNext(1)
+                .verifyComplete();
 
-        this.connectionFactory.create()
-            .flatMapMany(connection -> connection
+            this.connectionFactory.create()
+                .flatMapMany(connection -> connection
 
-                .createStatement("SELECT value FROM test")
-                .execute()
+                    .createStatement("SELECT value FROM test")
+                    .execute()
 
-                .map(result -> result.map((row, metadata) -> row.get("value", javaType)))
-                .flatMap(Function.identity())
+                    .map(result -> result.map((row, metadata) -> row.get("value", javaType)))
+                    .flatMap(Function.identity())
 
-                .concatWith(close(connection)))
-            .as(StepVerifier::create)
-            .assertNext(r2dbc -> equality.accept(r2dbc, value))
-            .verifyComplete();
+                    .concatWith(close(connection)))
+                .as(StepVerifier::create)
+                .assertNext(r2dbc -> equality.accept(r2dbc, value))
+                .verifyComplete();
+        } finally {
+            SERVER.getJdbcOperations().execute("DROP TABLE test");
+        }
     }
 
     private enum Color {

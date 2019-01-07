@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.CHAR;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.UNKNOWN;
@@ -56,6 +57,7 @@ final class StringCodecTest {
 
         assertThat(codec.doCanDecode(FORMAT_BINARY, VARCHAR)).isFalse();
         assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, BPCHAR)).isTrue();
         assertThat(codec.doCanDecode(FORMAT_TEXT, CHAR)).isTrue();
         assertThat(codec.doCanDecode(FORMAT_TEXT, PostgresqlObjectId.TEXT)).isTrue();
         assertThat(codec.doCanDecode(FORMAT_TEXT, UNKNOWN)).isTrue();
