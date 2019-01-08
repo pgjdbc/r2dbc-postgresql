@@ -19,6 +19,7 @@ package io.r2dbc.postgresql.client;
 import io.r2dbc.postgresql.authentication.PasswordAuthenticationHandler;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.DataRow;
+import io.r2dbc.postgresql.message.backend.NotificationResponse;
 import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.postgresql.message.frontend.Query;
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
@@ -26,7 +27,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import reactor.core.Disposable;
+import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.MonoProcessor;
+import reactor.core.publisher.UnicastProcessor;
 import reactor.test.StepVerifier;
 
 import java.util.Arrays;
@@ -142,4 +147,55 @@ final class ReactorNettyClientTest {
             .verifyComplete();
     }
 
+    @Test
+    void handleNotify() {
+        UnicastProcessor<NotificationResponse> response = UnicastProcessor.create();
+        this.client.addNotificationListener(response::onNext);
+
+        this.client
+            .exchange(Mono.just(new Query("LISTEN events")))
+            .blockLast();
+
+        SERVER.getJdbcOperations().execute("NOTIFY events, 'test'");
+
+        StepVerifier.create(response)
+            .assertNext(message -> assertThat(message.getPayload()).isEqualTo("test"))
+            .thenCancel()
+            .verify();
+    }
+
+    @Test
+    void handleTrigger() {
+        SERVER.getJdbcOperations().execute(
+            "CREATE OR REPLACE FUNCTION notify_event() RETURNS TRIGGER AS $$\n" +
+                "  DECLARE\n" +
+                "    payload JSON;\n" +
+                "  BEGIN\n" +
+                "    payload = row_to_json(NEW);\n" +
+                "    PERFORM pg_notify('events', payload::text);\n" +
+                "    RETURN NULL;\n" +
+                "  END;\n" +
+                "$$ LANGUAGE plpgsql;");
+
+        SERVER.getJdbcOperations().execute(
+            "CREATE TRIGGER notify_test_event\n" +
+                "AFTER INSERT OR UPDATE OR DELETE ON test\n" +
+                "  FOR EACH ROW EXECUTE PROCEDURE notify_event();");
+
+        UnicastProcessor<NotificationResponse> response = UnicastProcessor.create();
+        this.client.addNotificationListener(response::onNext);
+
+        this.client
+            .exchange(Mono.just(new Query("LISTEN events")))
+            .blockLast();
+
+        SERVER.getJdbcOperations().execute("INSERT INTO test VALUES (100)");
+        SERVER.getJdbcOperations().execute("INSERT INTO test VALUES (1000)");
+
+        StepVerifier.create(response)
+            .assertNext(message -> assertThat(message.getPayload()).isEqualTo("{\"value\":100}"))
+            .assertNext(message -> assertThat(message.getPayload()).isEqualTo("{\"value\":1000}"))
+            .thenCancel()
+            .verify();
+    }
 }

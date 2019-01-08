@@ -18,13 +18,16 @@ package io.r2dbc.postgresql.client;
 
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
+import io.r2dbc.postgresql.message.backend.NotificationResponse;
 import io.r2dbc.postgresql.message.backend.ReadyForQuery;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import org.reactivestreams.Publisher;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * An abstraction that wraps the networking part of exchanging methods.
@@ -75,4 +78,12 @@ public interface Client {
      */
     TransactionStatus getTransactionStatus();
 
+    /**
+     * Add a consumer of notification messages.
+     *
+     * @param consumer the consumer of notification messages
+     * @return a new {@link Disposable} that can be used to cancel the underlying subscription.
+     * @throws IllegalArgumentException if {@code consumer} is {@code null}
+     */
+    Disposable addNotificationListener(Consumer<NotificationResponse> consumer);
 }

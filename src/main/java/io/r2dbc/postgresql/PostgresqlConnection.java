@@ -21,15 +21,18 @@ import io.r2dbc.postgresql.client.PortalNameSupplier;
 import io.r2dbc.postgresql.client.SimpleQueryMessageFlow;
 import io.r2dbc.postgresql.client.TransactionStatus;
 import io.r2dbc.postgresql.codec.Codecs;
+import io.r2dbc.postgresql.message.backend.NotificationResponse;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.IsolationLevel;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static io.r2dbc.postgresql.client.TransactionStatus.IDLE;
@@ -163,6 +166,12 @@ public final class PostgresqlConnection implements Connection {
                 return Mono.empty();
             }
         });
+    }
+
+    public Disposable addNotificationListener(Consumer<NotificationResponse> consumer) {
+        Assert.requireNonNull(consumer, "consumer must not be null");
+
+        return this.client.addNotificationListener(consumer);
     }
 
     @Override

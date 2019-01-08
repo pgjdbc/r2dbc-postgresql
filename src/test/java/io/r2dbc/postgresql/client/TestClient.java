@@ -18,10 +18,12 @@ package io.r2dbc.postgresql.client;
 
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
+import io.r2dbc.postgresql.message.backend.NotificationResponse;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.TestByteBufAllocator;
 import org.reactivestreams.Publisher;
+import reactor.core.Disposable;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
@@ -31,6 +33,7 @@ import reactor.util.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static io.r2dbc.postgresql.client.TransactionStatus.IDLE;
@@ -52,6 +55,8 @@ public final class TestClient implements Client {
     private final Integer secretKey;
 
     private final TransactionStatus transactionStatus;
+
+    private final EmitterProcessor<NotificationResponse> notificationProcessor = EmitterProcessor.create(false);
 
     private TestClient(boolean expectClose, @Nullable Integer processId, @Nullable Integer secretKey, Flux<Window> windows, TransactionStatus transactionStatus) {
         this.expectClose = expectClose;
@@ -118,6 +123,11 @@ public final class TestClient implements Client {
     @Override
     public TransactionStatus getTransactionStatus() {
         return this.transactionStatus;
+    }
+
+    @Override
+    public Disposable addNotificationListener(Consumer<NotificationResponse> consumer) {
+        return this.notificationProcessor.subscribe(consumer);
     }
 
     public static final class Builder {
