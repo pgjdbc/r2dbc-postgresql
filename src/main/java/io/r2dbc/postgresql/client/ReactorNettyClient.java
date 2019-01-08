@@ -28,6 +28,7 @@ import io.r2dbc.postgresql.message.backend.BackendMessageEnvelopeDecoder;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.Field;
 import io.r2dbc.postgresql.message.backend.NoticeResponse;
+import io.r2dbc.postgresql.message.backend.NotificationResponse;
 import io.r2dbc.postgresql.message.backend.ParameterStatus;
 import io.r2dbc.postgresql.message.backend.ReadyForQuery;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
@@ -36,6 +37,7 @@ import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.Disposable;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
@@ -56,6 +58,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -135,6 +138,11 @@ public final class ReactorNettyClient implements Client {
             sink.next(message);
         });
 
+    private final EmitterProcessor<NotificationResponse> notificationProcessor = EmitterProcessor.create(false);
+
+    private final BiConsumer<BackendMessage, SynchronousSink<BackendMessage>> handleNotificationResponse = handleBackendMessage(NotificationResponse.class,
+        (message, sink) -> this.notificationProcessor.onNext(message));
+
     /**
      * Creates a new frame processor connected to a given TCP connection.
      *
@@ -156,6 +164,7 @@ public final class ReactorNettyClient implements Client {
             .map(BackendMessageDecoder::decode)
             .doOnNext(message -> this.logger.debug("Response: {}", message))
             .handle(this.handleNoticeResponse)
+            .handle(this.handleNotificationResponse)
             .handle(this.handleErrorResponse)
             .handle(this.handleBackendParameterStatus)
             .handle(this.handleBackendKeyData)
@@ -327,6 +336,11 @@ public final class ReactorNettyClient implements Client {
 
         Channel channel = this.connection.get().channel();
         return channel.isOpen();
+    }
+
+    @Override
+    public Disposable addNotificationListener(Consumer<NotificationResponse> consumer) {
+        return this.notificationProcessor.subscribe(consumer);
     }
 
     @SuppressWarnings("unchecked")
