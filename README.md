@@ -5,8 +5,6 @@ This project contains the [PostgreSQL][p] implementation of the [R2DBC SPI][r]. 
 [p]: https://www.postgresql.org
 [r]: https://github.com/r2dbc/r2dbc-spi
 
-**THIS IS ONLY AN EXPERIMENT AND NOT SUPPORTED SOFTWARE**
-
 ## Maven
 Both milestone and snapshot artifacts (library, source, and javadoc) can be found in Maven repositories.
 
