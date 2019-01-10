@@ -33,35 +33,30 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
     private static final byte DELIMITER = ',';
 
     private final ByteBufAllocator byteBufAllocator;
+
     private final Class<T> componentType;
 
     AbstractArrayCodec(ByteBufAllocator byteBufAllocator, Class<T> componentType) {
         super(Object[].class);
-        this.componentType = componentType;
         this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
-    }
-
-    abstract T decodeItem(ByteBuf byteBuf, Format format, Class<?> type);
-
-    boolean isTypeAssignable(Class<?> type) {
-        if (!type.isArray()) {
-            return false;
-        }
-
-        return getBaseComponentType(type).equals(componentType);
+        this.componentType = Assert.requireNonNull(componentType, "componentType must not be null");
     }
 
     @Override
     public boolean canEncode(Object value) {
+        Assert.requireNonNull(value, "value must not be null");
+
         return isTypeAssignable(value.getClass());
     }
+
+    abstract T decodeItem(ByteBuf byteBuf, Format format, Class<?> type);
 
     @Override
     final Object[] doDecode(ByteBuf byteBuf, Format format, Class<? extends Object[]> type) {
         Assert.requireNonNull(byteBuf, "byteBuf must not be null");
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
-        assertArrayDimension(type, 1);
+        Assert.requireArrayDimension(type, 1, "type must be an array with one dimension");
 
         List<T> items = new ArrayList<>();
 
@@ -77,10 +72,10 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
                 byteBuf.skipBytes(1); // skip delimiter
             }
 
-            items.add(decodeItem(byteBuf.readSlice(byteBuf.readableBytes() - 1), format, componentType));
+            items.add(decodeItem(byteBuf.readSlice(byteBuf.readableBytes() - 1), format, this.componentType));
         }
 
-        Object[] a = (Object[]) Array.newInstance(componentType, items.size());
+        Object[] a = (Object[]) Array.newInstance(this.componentType, items.size());
         return items.toArray(a);
     }
 
@@ -88,9 +83,9 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
     @SuppressWarnings("unchecked")
     final Parameter doEncode(Object[] value) {
         Assert.requireNonNull(value, "value must not be null");
-        assertArrayDimension(value.getClass(), 1);
+        Assert.requireArrayDimension(value.getClass(), 1, "value must be an array with one dimension");
 
-        ByteBuf byteBuf = byteBufAllocator.buffer();
+        ByteBuf byteBuf = this.byteBufAllocator.buffer();
         byteBuf.writeByte('{');
 
         if (value.length > 0) {
@@ -111,40 +106,23 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
 
     abstract void encodeItem(ByteBuf byteBuf, T value);
 
+    boolean isTypeAssignable(Class<?> type) {
+        Assert.requireNonNull(type, "type must not be null");
+
+        if (!type.isArray()) {
+            return false;
+        }
+
+        return getBaseComponentType(type).equals(this.componentType);
+    }
+
     private static Class<?> getBaseComponentType(Class<?> type) {
-        if (!type.isArray()) {
-            return type;
+        Class<?> t = type;
+
+        while (t.isArray()) {
+            t = t.getComponentType();
         }
 
-        Class<?> currentType = type;
-        while (currentType.isArray()) {
-            currentType = currentType.getComponentType();
-        }
-
-        return currentType;
-    }
-
-    private static int getDimensions(Class<?> type) {
-        if (!type.isArray()) {
-            return 0;
-        }
-
-        int dimensions = 0;
-        Class<?> currentType = type;
-        while (currentType.isArray()) {
-            currentType = currentType.getComponentType();
-            dimensions++;
-        }
-
-        return dimensions;
-    }
-
-    private static void assertArrayDimension(Class<?> type, int allowed) {
-        int actual = getDimensions(type);
-        if (actual != allowed) {
-            throw new IllegalArgumentException(String.format(
-                    "Arrays dimension mismatch. Given %d; expected %d", actual, allowed
-            ));
-        }
+        return t;
     }
 }

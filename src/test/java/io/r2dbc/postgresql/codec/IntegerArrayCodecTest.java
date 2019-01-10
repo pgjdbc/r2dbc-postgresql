@@ -28,7 +28,6 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4_ARRAY;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 final class IntegerArrayCodecTest {
 
@@ -50,6 +49,14 @@ final class IntegerArrayCodecTest {
     void decodeItemNoFormat() {
         assertThatIllegalArgumentException().isThrownBy(() -> new IntegerArrayCodec(TEST).decodeItem(TEST.buffer(0), null, null))
             .withMessage("format must not be null");
+    }
+
+    @Test
+    void decodeMultidimensional() {
+        IntegerArrayCodec codec = new IntegerArrayCodec(TEST);
+
+        assertThatIllegalArgumentException().isThrownBy(() -> codec.decode(ByteBufUtils.encode(TEST, "{{100},{200}}"), FORMAT_TEXT, Integer[][].class))
+            .withMessage("type must be an array with one dimension");
     }
 
     @Test
@@ -104,15 +111,5 @@ final class IntegerArrayCodecTest {
     void encodeNull() {
         assertThat(new IntegerArrayCodec(TEST).encodeNull())
             .isEqualTo(new Parameter(FORMAT_TEXT, INT4_ARRAY.getObjectId(), null));
-    }
-
-    @Test
-    void multidimensionalArrayNotYetAllowed() {
-        IntegerArrayCodec codec = new IntegerArrayCodec(TEST);
-
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> codec.decode(ByteBufUtils.encode(TEST, "{{100},{200}}"), FORMAT_TEXT, Integer[][].class)
-        );
     }
 }

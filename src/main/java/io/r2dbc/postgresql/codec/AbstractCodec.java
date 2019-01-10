@@ -40,10 +40,6 @@ abstract class AbstractCodec<T> implements Codec<T> {
             doCanDecode(format, PostgresqlObjectId.valueOf(dataType));
     }
 
-    boolean isTypeAssignable(Class<?> type) {
-        return type.isAssignableFrom(this.type);
-    }
-
     @Override
     public boolean canEncode(Object value) {
         Assert.requireNonNull(value, "value must not be null");
@@ -92,5 +88,11 @@ abstract class AbstractCodec<T> implements Codec<T> {
     abstract T doDecode(ByteBuf byteBuf, Format format, Class<? extends T> type);
 
     abstract Parameter doEncode(T value);
+
+    boolean isTypeAssignable(Class<?> type) {
+        Assert.requireNonNull(type, "type must not be null");
+
+        return type.isAssignableFrom(this.type);
+    }
 
 }
