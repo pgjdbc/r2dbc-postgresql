@@ -36,12 +36,16 @@ abstract class AbstractCodec<T> implements Codec<T> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return type.isAssignableFrom(this.type) &&
+        return isTypeAssignable(type) &&
             doCanDecode(format, PostgresqlObjectId.valueOf(dataType));
     }
 
+    boolean isTypeAssignable(Class<?> type) {
+        return type.isAssignableFrom(this.type);
+    }
+
     @Override
-    public final boolean canEncode(Object value) {
+    public boolean canEncode(Object value) {
         Assert.requireNonNull(value, "value must not be null");
 
         return this.type.isInstance(value);
