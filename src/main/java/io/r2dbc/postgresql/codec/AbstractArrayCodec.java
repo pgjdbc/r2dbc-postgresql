@@ -28,25 +28,40 @@ import java.util.List;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 
-abstract class AbstractArrayCodec<T> extends AbstractCodec<T[]> {
+abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
 
     private static final byte DELIMITER = ',';
 
     private final ByteBufAllocator byteBufAllocator;
+    private final Class<T> componentType;
 
-    AbstractArrayCodec(ByteBufAllocator byteBufAllocator, Class<T[]> type) {
-        super(type);
+    AbstractArrayCodec(ByteBufAllocator byteBufAllocator, Class<T> componentType) {
+        super(Object[].class);
+        this.componentType = componentType;
         this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
     }
 
     abstract T decodeItem(ByteBuf byteBuf, Format format, Class<?> type);
 
+    boolean isTypeAssignable(Class<?> type) {
+        if (!type.isArray()) {
+            return false;
+        }
+
+        return getBaseComponentType(type).equals(componentType);
+    }
+
     @Override
-    @SuppressWarnings("unchecked")
-    final T[] doDecode(ByteBuf byteBuf, Format format, Class<? extends T[]> type) {
+    public boolean canEncode(Object value) {
+        return isTypeAssignable(value.getClass());
+    }
+
+    @Override
+    final Object[] doDecode(ByteBuf byteBuf, Format format, Class<? extends Object[]> type) {
         Assert.requireNonNull(byteBuf, "byteBuf must not be null");
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
+        assertArrayDimension(type, 1);
 
         List<T> items = new ArrayList<>();
 
@@ -62,26 +77,28 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<T[]> {
                 byteBuf.skipBytes(1); // skip delimiter
             }
 
-            items.add(decodeItem(byteBuf.readSlice(byteBuf.readableBytes() - 1), format, type.getComponentType()));
+            items.add(decodeItem(byteBuf.readSlice(byteBuf.readableBytes() - 1), format, componentType));
         }
 
-        T[] a = (T[]) Array.newInstance(type.getComponentType(), items.size());
+        Object[] a = (Object[]) Array.newInstance(componentType, items.size());
         return items.toArray(a);
     }
 
     @Override
-    final Parameter doEncode(T[] value) {
+    @SuppressWarnings("unchecked")
+    final Parameter doEncode(Object[] value) {
         Assert.requireNonNull(value, "value must not be null");
+        assertArrayDimension(value.getClass(), 1);
 
         ByteBuf byteBuf = byteBufAllocator.buffer();
         byteBuf.writeByte('{');
 
         if (value.length > 0) {
-            encodeItem(byteBuf, value[0]);
+            encodeItem(byteBuf, (T) value[0]);
 
             for (int i = 1; i < value.length; i++) {
                 byteBuf.writeByte(DELIMITER);
-                encodeItem(byteBuf, value[i]);
+                encodeItem(byteBuf, (T) value[i]);
             }
         }
 
@@ -94,5 +111,40 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<T[]> {
 
     abstract void encodeItem(ByteBuf byteBuf, T value);
 
+    private static Class<?> getBaseComponentType(Class<?> type) {
+        if (!type.isArray()) {
+            return type;
+        }
 
+        Class<?> currentType = type;
+        while (currentType.isArray()) {
+            currentType = currentType.getComponentType();
+        }
+
+        return currentType;
+    }
+
+    private static int getDimensions(Class<?> type) {
+        if (!type.isArray()) {
+            return 0;
+        }
+
+        int dimensions = 0;
+        Class<?> currentType = type;
+        while (currentType.isArray()) {
+            currentType = currentType.getComponentType();
+            dimensions++;
+        }
+
+        return dimensions;
+    }
+
+    private static void assertArrayDimension(Class<?> type, int allowed) {
+        int actual = getDimensions(type);
+        if (actual != allowed) {
+            throw new IllegalArgumentException(String.format(
+                    "Arrays dimension mismatch. Given %d; expected %d", actual, allowed
+            ));
+        }
+    }
 }

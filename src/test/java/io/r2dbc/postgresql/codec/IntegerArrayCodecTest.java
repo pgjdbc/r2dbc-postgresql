@@ -28,6 +28,7 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4_ARRAY;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 final class IntegerArrayCodecTest {
 
@@ -105,4 +106,13 @@ final class IntegerArrayCodecTest {
             .isEqualTo(new Parameter(FORMAT_TEXT, INT4_ARRAY.getObjectId(), null));
     }
 
+    @Test
+    void multidimensionalArrayNotYetAllowed() {
+        IntegerArrayCodec codec = new IntegerArrayCodec(TEST);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> codec.decode(ByteBufUtils.encode(TEST, "{{100},{200}}"), FORMAT_TEXT, Integer[][].class)
+        );
+    }
 }
