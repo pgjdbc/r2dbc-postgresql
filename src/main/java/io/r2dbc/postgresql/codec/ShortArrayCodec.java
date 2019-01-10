@@ -33,7 +33,7 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT2_ARRAY;
 final class ShortArrayCodec extends AbstractArrayCodec<Short> {
 
     ShortArrayCodec(ByteBufAllocator byteBufAllocator) {
-        super(byteBufAllocator, Short[].class);
+        super(byteBufAllocator, Short.class);
     }
 
     @Override

@@ -52,6 +52,14 @@ final class ShortArrayCodecTest {
     }
 
     @Test
+    void decodeMultidimensional() {
+        ShortArrayCodec codec = new ShortArrayCodec(TEST);
+
+        assertThatIllegalArgumentException().isThrownBy(() -> codec.decode(ByteBufUtils.encode(TEST, "{{100},{200}}"), FORMAT_TEXT, Integer[][].class))
+            .withMessage("type must be an array with one dimension");
+    }
+
+    @Test
     void doCanDecode() {
         ShortArrayCodec codec = new ShortArrayCodec(TEST);
 

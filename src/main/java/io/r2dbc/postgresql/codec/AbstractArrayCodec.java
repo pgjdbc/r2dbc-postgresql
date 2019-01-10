@@ -28,25 +28,35 @@ import java.util.List;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 
-abstract class AbstractArrayCodec<T> extends AbstractCodec<T[]> {
+abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
 
     private static final byte DELIMITER = ',';
 
     private final ByteBufAllocator byteBufAllocator;
 
-    AbstractArrayCodec(ByteBufAllocator byteBufAllocator, Class<T[]> type) {
-        super(type);
+    private final Class<T> componentType;
+
+    AbstractArrayCodec(ByteBufAllocator byteBufAllocator, Class<T> componentType) {
+        super(Object[].class);
         this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        this.componentType = Assert.requireNonNull(componentType, "componentType must not be null");
+    }
+
+    @Override
+    public boolean canEncode(Object value) {
+        Assert.requireNonNull(value, "value must not be null");
+
+        return isTypeAssignable(value.getClass());
     }
 
     abstract T decodeItem(ByteBuf byteBuf, Format format, Class<?> type);
 
     @Override
-    @SuppressWarnings("unchecked")
-    final T[] doDecode(ByteBuf byteBuf, Format format, Class<? extends T[]> type) {
+    final Object[] doDecode(ByteBuf byteBuf, Format format, Class<? extends Object[]> type) {
         Assert.requireNonNull(byteBuf, "byteBuf must not be null");
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
+        Assert.requireArrayDimension(type, 1, "type must be an array with one dimension");
 
         List<T> items = new ArrayList<>();
 
@@ -62,26 +72,28 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<T[]> {
                 byteBuf.skipBytes(1); // skip delimiter
             }
 
-            items.add(decodeItem(byteBuf.readSlice(byteBuf.readableBytes() - 1), format, type.getComponentType()));
+            items.add(decodeItem(byteBuf.readSlice(byteBuf.readableBytes() - 1), format, this.componentType));
         }
 
-        T[] a = (T[]) Array.newInstance(type.getComponentType(), items.size());
+        Object[] a = (Object[]) Array.newInstance(this.componentType, items.size());
         return items.toArray(a);
     }
 
     @Override
-    final Parameter doEncode(T[] value) {
+    @SuppressWarnings("unchecked")
+    final Parameter doEncode(Object[] value) {
         Assert.requireNonNull(value, "value must not be null");
+        Assert.requireArrayDimension(value.getClass(), 1, "value must be an array with one dimension");
 
-        ByteBuf byteBuf = byteBufAllocator.buffer();
+        ByteBuf byteBuf = this.byteBufAllocator.buffer();
         byteBuf.writeByte('{');
 
         if (value.length > 0) {
-            encodeItem(byteBuf, value[0]);
+            encodeItem(byteBuf, (T) value[0]);
 
             for (int i = 1; i < value.length; i++) {
                 byteBuf.writeByte(DELIMITER);
-                encodeItem(byteBuf, value[i]);
+                encodeItem(byteBuf, (T) value[i]);
             }
         }
 
@@ -94,5 +106,23 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<T[]> {
 
     abstract void encodeItem(ByteBuf byteBuf, T value);
 
+    boolean isTypeAssignable(Class<?> type) {
+        Assert.requireNonNull(type, "type must not be null");
 
+        if (!type.isArray()) {
+            return false;
+        }
+
+        return getBaseComponentType(type).equals(this.componentType);
+    }
+
+    private static Class<?> getBaseComponentType(Class<?> type) {
+        Class<?> t = type;
+
+        while (t.isArray()) {
+            t = t.getComponentType();
+        }
+
+        return t;
+    }
 }

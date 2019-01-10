@@ -37,21 +37,26 @@ final class LongArrayCodecTest {
 
         assertThat(codec.decode(TEST.buffer(16).writeLong(100).writeLong(200), FORMAT_BINARY, Long[].class)).isEqualTo(new long[]{100, 200});
         assertThat(codec.decode(ByteBufUtils.encode(TEST, "{100,200}"), FORMAT_TEXT, Long[].class)).isEqualTo(new long[]{100, 200});
-
     }
 
     @Test
     void decodeItemNoByteBuf() {
         assertThatIllegalArgumentException().isThrownBy(() -> new LongArrayCodec(TEST).decodeItem(null, FORMAT_TEXT, null))
             .withMessage("byteBuf must not be null");
-
     }
 
     @Test
     void decodeItemNoFormat() {
         assertThatIllegalArgumentException().isThrownBy(() -> new LongArrayCodec(TEST).decodeItem(TEST.buffer(0), null, null))
             .withMessage("format must not be null");
+    }
 
+    @Test
+    void decodeMultidimensional() {
+        LongArrayCodec codec = new LongArrayCodec(TEST);
+
+        assertThatIllegalArgumentException().isThrownBy(() -> codec.decode(ByteBufUtils.encode(TEST, "{{100},{200}}"), FORMAT_TEXT, Integer[][].class))
+            .withMessage("type must be an array with one dimension");
     }
 
     @Test
@@ -73,14 +78,12 @@ final class LongArrayCodecTest {
     void encodeArray() {
         assertThat(new LongArrayCodec(TEST).encodeArray(ByteBufUtils.encode(TEST, "{100,200}")))
             .isEqualTo(new Parameter(FORMAT_TEXT, INT8_ARRAY.getObjectId(), ByteBufUtils.encode(TEST, "{100,200}")));
-
     }
 
     @Test
     void encodeArrayNoByteBuf() {
         assertThatIllegalArgumentException().isThrownBy(() -> new LongArrayCodec(TEST).encodeArray(null))
             .withMessage("byteBuf must not be null");
-
     }
 
     @Test

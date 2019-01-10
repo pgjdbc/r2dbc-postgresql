@@ -50,6 +50,14 @@ final class StringArrayCodecTest {
     }
 
     @Test
+    void decodeMultidimensional() {
+        StringArrayCodec codec = new StringArrayCodec(TEST);
+
+        assertThatIllegalArgumentException().isThrownBy(() -> codec.decode(ByteBufUtils.encode(TEST, "{{alpha},{bravo}}"), FORMAT_TEXT, Integer[][].class))
+            .withMessage("type must be an array with one dimension");
+    }
+
+    @Test
     void doCanDecode() {
         StringArrayCodec codec = new StringArrayCodec(TEST);
 

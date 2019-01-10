@@ -52,6 +52,14 @@ final class IntegerArrayCodecTest {
     }
 
     @Test
+    void decodeMultidimensional() {
+        IntegerArrayCodec codec = new IntegerArrayCodec(TEST);
+
+        assertThatIllegalArgumentException().isThrownBy(() -> codec.decode(ByteBufUtils.encode(TEST, "{{100},{200}}"), FORMAT_TEXT, Integer[][].class))
+            .withMessage("type must be an array with one dimension");
+    }
+
+    @Test
     void doCanDecode() {
         IntegerArrayCodec codec = new IntegerArrayCodec(TEST);
 
@@ -104,5 +112,4 @@ final class IntegerArrayCodecTest {
         assertThat(new IntegerArrayCodec(TEST).encodeNull())
             .isEqualTo(new Parameter(FORMAT_TEXT, INT4_ARRAY.getObjectId(), null));
     }
-
 }

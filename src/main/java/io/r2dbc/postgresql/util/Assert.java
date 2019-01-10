@@ -27,6 +27,35 @@ public final class Assert {
     }
 
     /**
+     * Checks that a specified value is an array with a given dimension.
+     *
+     * @param type      the value to check
+     * @param dimension the dimension to require
+     * @param message   the detail message to be used in the event that an {@link IllegalArgumentException} is thrown
+     * @param <T>       the type of the reference
+     * @return {@code t} if dimension matches
+     * @throws IllegalArgumentException if {@code t} is not of the required dimension
+     */
+    public static <T> Class<T> requireArrayDimension(Class<T> type, int dimension, String message) {
+        requireNonNull(type, "t must not be null");
+        requireNonNull(message, "message must not be null");
+
+        Class<?> t = type;
+
+        int d = 0;
+        while (t.isArray()) {
+            t = t.getComponentType();
+            d++;
+        }
+
+        if (d != dimension) {
+            throw new IllegalArgumentException(message);
+        }
+
+        return type;
+    }
+
+    /**
      * Checks that a specified object reference is not {@code null} and throws a customized {@link IllegalArgumentException} if it is.
      *
      * @param t       the object reference to check for nullity
