@@ -33,32 +33,33 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 
 final class LongArrayCodecTest {
 
+    private final ByteBuf BINARY_ARRAY = TEST
+        .buffer()
+        .writeInt(1)
+        .writeInt(0)
+        .writeInt(20)
+        .writeInt(2)
+        .writeInt(2)
+        .writeInt(8)
+        .writeLong(100L)
+        .writeInt(8)
+        .writeLong(200L);
+
     @Test
     void decodeItem() {
         LongArrayCodec codec = new LongArrayCodec(TEST);
 
-        assertThat(codec.decode(TEST.buffer(16).writeLong(100).writeLong(200), FORMAT_BINARY, Long[].class)).isEqualTo(new long[]{100, 200});
+        assertThat(codec.decode(BINARY_ARRAY, FORMAT_BINARY, Long[].class)).isEqualTo(new long[]{100, 200});
         assertThat(codec.decode(encode(TEST, "{100,200}"), FORMAT_TEXT, Long[].class)).isEqualTo(new long[]{100, 200});
     }
 
     @Test
-    void decodeItemNoByteBuf() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new LongArrayCodec(TEST).decodeItem(null, FORMAT_TEXT, null))
-            .withMessage("byteBuf must not be null");
-    }
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    void decodeObject() {
+        Codec codec = new LongArrayCodec(TEST);
 
-    @Test
-    void decodeItemNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new LongArrayCodec(TEST).decodeItem(TEST.buffer(0), null, null))
-            .withMessage("format must not be null");
-    }
-
-    @Test
-    void decodeMultidimensional() {
-        LongArrayCodec codec = new LongArrayCodec(TEST);
-
-        assertThatIllegalArgumentException().isThrownBy(() -> codec.decode(encode(TEST, "{{100},{200}}"), FORMAT_TEXT, Integer[][].class))
-            .withMessage("type must be an array with one dimension");
+        assertThat(codec.decode(BINARY_ARRAY, FORMAT_BINARY, Object.class)).isEqualTo(new long[]{100, 200});
+        assertThat(codec.decode(encode(TEST, "{100,200}"), FORMAT_TEXT, Object.class)).isEqualTo(new long[]{100, 200});
     }
 
     @Test
@@ -92,22 +93,12 @@ final class LongArrayCodecTest {
 
     @Test
     void encodeItem() {
-        ByteBuf actual = TEST.buffer(3);
-
-        new LongArrayCodec(TEST).encodeItem(actual, 100L);
-
-        assertThat(actual).isEqualTo(encode(TEST, "100"));
-    }
-
-    @Test
-    void encodeItemNoByteBuf() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new LongArrayCodec(TEST).encodeItem(null, 100L))
-            .withMessage("byteBuf must not be null");
+        assertThat(new LongArrayCodec(TEST).encodeItem(100L)).isEqualTo("100");
     }
 
     @Test
     void encodeItemNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new LongArrayCodec(TEST).encodeItem(TEST.buffer(0), null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new LongArrayCodec(TEST).encodeItem(null))
             .withMessage("value must not be null");
     }
 

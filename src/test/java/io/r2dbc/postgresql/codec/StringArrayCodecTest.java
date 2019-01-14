@@ -39,24 +39,34 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 
 final class StringArrayCodecTest {
 
+    private final ByteBuf BINARY_ARRAY = TEST
+        .buffer()
+        .writeInt(1)
+        .writeInt(0)
+        .writeInt(1043)
+        .writeInt(2)
+        .writeInt(2)
+        .writeInt(3)
+        .writeBytes("abc".getBytes())
+        .writeInt(3)
+        .writeBytes("def".getBytes());
+
     @Test
     void decodeItem() {
-        assertThat(new StringArrayCodec(TEST).decode(encode(TEST, "{alpha,bravo}"), FORMAT_TEXT, String[].class))
+        StringArrayCodec codec = new StringArrayCodec(TEST);
+
+        assertThat(codec.decode(BINARY_ARRAY, FORMAT_BINARY, String[].class)).isEqualTo(new String[]{"abc", "def"});
+        assertThat(codec.decode(encode(TEST, "{alpha,bravo}"), FORMAT_TEXT, String[].class))
             .isEqualTo(new String[]{"alpha", "bravo"});
     }
 
     @Test
-    void decodeItemNoByteBuf() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new StringArrayCodec(TEST).decodeItem(null, FORMAT_TEXT, null))
-            .withMessage("byteBuf must not be null");
-    }
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    void decodeObject() {
+        Codec codec = new StringArrayCodec(TEST);
 
-    @Test
-    void decodeMultidimensional() {
-        StringArrayCodec codec = new StringArrayCodec(TEST);
-
-        assertThatIllegalArgumentException().isThrownBy(() -> codec.decode(encode(TEST, "{{alpha},{bravo}}"), FORMAT_TEXT, Integer[][].class))
-            .withMessage("type must be an array with one dimension");
+        assertThat(codec.decode(encode(TEST, "{alpha,bravo}"), FORMAT_TEXT, Object.class))
+            .isEqualTo(new String[]{"alpha", "bravo"});
     }
 
     @Test
@@ -104,23 +114,28 @@ final class StringArrayCodecTest {
 
     @Test
     void encodeItem() {
-        ByteBuf actual = TEST.buffer(3);
-
-        new StringArrayCodec(TEST).encodeItem(actual, "alpha");
-
-        assertThat(actual).isEqualTo(encode(TEST, "alpha"));
+        assertThat(new StringArrayCodec(TEST).encodeItem("alpha")).isEqualTo("\"alpha\"");
     }
 
     @Test
-    void encodeItemNoByteBuf() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new StringArrayCodec(TEST).encodeItem(null, "alpha"))
-            .withMessage("byteBuf must not be null");
+    void encodeItemMultibyte() {
+        assertThat(new StringArrayCodec(TEST).encodeItem("АБ")).isEqualTo("\"АБ\"");
+    }
+
+    @Test
+    void encodeItemNULL() {
+        assertThat(new StringArrayCodec(TEST).encodeItem("NULL")).isEqualTo("\"NULL\"");
     }
 
     @Test
     void encodeItemNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new StringArrayCodec(TEST).encodeItem(TEST.buffer(0), null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new StringArrayCodec(TEST).encodeItem(null))
             .withMessage("value must not be null");
+    }
+
+    @Test
+    void encodeItemWithEscapes() {
+        assertThat(new StringArrayCodec(TEST).encodeItem("R \"2\" DBC")).isEqualTo("\"R \\\"2\\\" DBC\"");
     }
 
     @Test
