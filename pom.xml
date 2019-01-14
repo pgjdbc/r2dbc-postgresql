@@ -243,6 +243,9 @@
                 </includes>
                 <targetPath>META-INF</targetPath>
             </resource>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+            </resource>
         </resources>
     </build>
 
