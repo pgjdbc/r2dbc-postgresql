@@ -18,15 +18,12 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.netty.buffer.ByteBufUtil;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
-import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
-import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT2_ARRAY;
 
@@ -37,15 +34,13 @@ final class ShortArrayCodec extends AbstractArrayCodec<Short> {
     }
 
     @Override
-    public Short decodeItem(ByteBuf byteBuf, Format format, @Nullable Class<?> type) {
-        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
-        Assert.requireNonNull(format, "format must not be null");
+    Short decodeItem(ByteBuf byteBuf) {
+        return byteBuf.readShort();
+    }
 
-        if (FORMAT_BINARY == format) {
-            return byteBuf.readShort();
-        } else {
-            return Short.parseShort(ByteBufUtils.decode(byteBuf));
-        }
+    @Override
+    Short decodeItem(String strValue) {
+        return Short.parseShort(strValue);
     }
 
     @Override
@@ -68,11 +63,10 @@ final class ShortArrayCodec extends AbstractArrayCodec<Short> {
     }
 
     @Override
-    void encodeItem(ByteBuf byteBuf, Short value) {
-        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+    String encodeItem(Short value) {
         Assert.requireNonNull(value, "value must not be null");
 
-        ByteBufUtil.writeUtf8(byteBuf, value.toString());
+        return value.toString();
     }
 
 }

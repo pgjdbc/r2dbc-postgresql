@@ -49,7 +49,7 @@ public final class Assert {
         }
 
         if (d != dimension) {
-            throw new IllegalArgumentException(message);
+            throw new IllegalArgumentException(String.format(message, d, dimension));
         }
 
         return type;

@@ -35,28 +35,26 @@ final class ShortArrayCodecTest {
     void decodeItem() {
         ShortArrayCodec codec = new ShortArrayCodec(TEST);
 
-        assertThat(codec.decode(TEST.buffer(4).writeShort(100).writeShort(200), FORMAT_BINARY, Short[].class)).isEqualTo(new short[]{100, 200});
+        ByteBuf buf = TEST
+                .buffer()
+                .writeInt(1)
+                .writeInt(0)
+                .writeInt(21)
+                .writeInt(2)
+                .writeInt(2)
+                .writeInt(2)
+                .writeShort(100)
+                .writeInt(2)
+                .writeShort(200);
+
+        assertThat(codec.decode(buf, FORMAT_BINARY, Short[].class)).isEqualTo(new short[]{100, 200});
         assertThat(codec.decode(ByteBufUtils.encode(TEST, "{100,200}"), FORMAT_TEXT, Short[].class)).isEqualTo(new short[]{100, 200});
-    }
-
-    @Test
-    void decodeItemNoByteBuf() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new ShortArrayCodec(TEST).decodeItem(null, FORMAT_TEXT, null))
-            .withMessage("byteBuf must not be null");
-    }
-
-    @Test
-    void decodeItemNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new ShortArrayCodec(TEST).decodeItem(TEST.buffer(0), null, null))
-            .withMessage("format must not be null");
     }
 
     @Test
     void decodeMultidimensional() {
         ShortArrayCodec codec = new ShortArrayCodec(TEST);
 
-        assertThatIllegalArgumentException().isThrownBy(() -> codec.decode(ByteBufUtils.encode(TEST, "{{100},{200}}"), FORMAT_TEXT, Integer[][].class))
-            .withMessage("type must be an array with one dimension");
     }
 
     @Test
@@ -88,22 +86,12 @@ final class ShortArrayCodecTest {
 
     @Test
     void encodeItem() {
-        ByteBuf actual = TEST.buffer(3);
-
-        new ShortArrayCodec(TEST).encodeItem(actual, (short) 100);
-
-        assertThat(actual).isEqualTo(ByteBufUtils.encode(TEST, "100"));
-    }
-
-    @Test
-    void encodeItemNoByteBuf() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new ShortArrayCodec(TEST).encodeItem(null, (short) 100))
-            .withMessage("byteBuf must not be null");
+        assertThat(new ShortArrayCodec(TEST).encodeItem((short) 100)).isEqualTo("100");
     }
 
     @Test
     void encodeItemNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new ShortArrayCodec(TEST).encodeItem(TEST.buffer(0), null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ShortArrayCodec(TEST).encodeItem(null))
             .withMessage("value must not be null");
     }
 
