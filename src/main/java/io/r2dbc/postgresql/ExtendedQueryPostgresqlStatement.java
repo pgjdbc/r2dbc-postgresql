@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
 import static io.r2dbc.postgresql.client.ExtendedQueryMessageFlow.PARAMETER_SYMBOL;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 
-final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement<ExtendedQueryPostgresqlStatement> {
+final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
 
     private static final Pattern INSERT = Pattern.compile(".*INSERT.*", CASE_INSENSITIVE);
 
