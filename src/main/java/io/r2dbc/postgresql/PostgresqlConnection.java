@@ -110,7 +110,7 @@ public final class PostgresqlConnection implements Connection {
     }
 
     @Override
-    public PostgresqlStatement<?> createStatement(String sql) {
+    public PostgresqlStatement createStatement(String sql) {
         Assert.requireNonNull(sql, "sql must not be null");
 
         if (SimpleQueryPostgresqlStatement.supports(sql)) {

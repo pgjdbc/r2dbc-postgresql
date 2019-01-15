@@ -68,7 +68,7 @@ final class ExtendedQueryPostgresqlStatementTest {
 
     @Test
     void bindIndex() {
-        assertThat(this.statement.bind(0, 100).getCurrentBinding()).isEqualTo(new Binding().add(0, this.parameter));
+        assertThat(((ExtendedQueryPostgresqlStatement) this.statement.bind(0, 100)).getCurrentBinding()).isEqualTo(new Binding().add(0, this.parameter));
     }
 
     @Test
@@ -249,14 +249,14 @@ final class ExtendedQueryPostgresqlStatementTest {
     }
 
     @Test
-    void supportsNoSql() {
-        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryPostgresqlStatement.supports(null))
-            .withMessage("sql must not be null");
+    void supportsMultilineParameterSymbol() {
+        assertThat(ExtendedQueryPostgresqlStatement.supports("test-query-0\ntest-query-$1")).isTrue();
     }
 
     @Test
-    void supportsMultilineParameterSymbol() {
-        assertThat(ExtendedQueryPostgresqlStatement.supports("test-query-0\ntest-query-$1")).isTrue();
+    void supportsNoSql() {
+        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryPostgresqlStatement.supports(null))
+            .withMessage("sql must not be null");
     }
 
     @Test
