@@ -23,21 +23,17 @@ import io.r2dbc.postgresql.client.PortalNameSupplier;
 import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.message.backend.CloseComplete;
 import io.r2dbc.postgresql.util.Assert;
+import io.r2dbc.postgresql.util.GeneratedValuesUtils;
 import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static io.r2dbc.postgresql.client.ExtendedQueryMessageFlow.PARAMETER_SYMBOL;
-import static java.util.regex.Pattern.CASE_INSENSITIVE;
 
 final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
-
-    private static final Pattern INSERT = Pattern.compile(".*INSERT.*", CASE_INSENSITIVE);
-
-    private static final Pattern RETURNING = Pattern.compile(".*RETURNING.*", CASE_INSENSITIVE);
 
     private final Bindings bindings = new Bindings();
 
@@ -50,6 +46,8 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
     private final String sql;
 
     private final StatementCache statementCache;
+
+    private String[] generatedColumns;
 
     ExtendedQueryPostgresqlStatement(Client client, Codecs codecs, PortalNameSupplier portalNameSupplier, String sql, StatementCache statementCache) {
         this.client = Assert.requireNonNull(client, "client must not be null");
@@ -102,7 +100,27 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
 
     @Override
     public Flux<PostgresqlResult> execute() {
-        return execute(this.sql);
+        if (this.generatedColumns == null) {
+            return execute(this.sql);
+        }
+
+        return execute(GeneratedValuesUtils.augment(this.sql, this.generatedColumns));
+    }
+
+    @Override
+    public ExtendedQueryPostgresqlStatement returnGeneratedValues(String... columns) {
+        Assert.requireNonNull(columns, "columns must not be null");
+
+        if (GeneratedValuesUtils.hasReturningClause(this.sql)) {
+            throw new IllegalStateException("Statement already includes RETURNING clause");
+        }
+
+        if (!GeneratedValuesUtils.isSupportedCommand(this.sql)) {
+            throw new IllegalStateException("Statement is not a DELETE, INSERT, or UPDATE command");
+        }
+
+        this.generatedColumns = columns;
+        return this;
     }
 
     @Override
@@ -114,6 +132,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
             ", portalNameSupplier=" + this.portalNameSupplier +
             ", sql='" + this.sql + '\'' +
             ", statementCache=" + this.statementCache +
+            ", generatedColumns=" + Arrays.toString(this.generatedColumns) +
             '}';
     }
 
