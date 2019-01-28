@@ -25,6 +25,11 @@ import reactor.util.annotation.Nullable;
  */
 public final class PostgresqlConnectionConfiguration {
 
+    /**
+     * Default PostgreSQL port.
+     */
+    public static final int DEFAULT_PORT = 5432;
+
     private final String applicationName;
 
     private final String database;
@@ -116,7 +121,7 @@ public final class PostgresqlConnectionConfiguration {
 
         private String password;
 
-        private int port = 5432;
+        private int port = DEFAULT_PORT;
 
         private String schema;
 
