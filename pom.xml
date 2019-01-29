@@ -45,6 +45,7 @@
         <slf4j.version>1.7.25</slf4j.version>
         <spring-boot.version>2.1.0.RELEASE</spring-boot.version>
         <testcontainers.version>1.10.6</testcontainers.version>
+        <scram-client.version>1.0.0-beta.2</scram-client.version>
     </properties>
 
     <dependencyManagement>
@@ -96,6 +97,12 @@
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.ongres.scram</groupId>
+            <artifactId>client</artifactId>
+            <version>${scram-client.version}</version>
+        </dependency>
+
 
         <dependency>
             <groupId>com.google.code.findbugs</groupId>

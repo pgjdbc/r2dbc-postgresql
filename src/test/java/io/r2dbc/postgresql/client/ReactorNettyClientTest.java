@@ -16,6 +16,9 @@
 
 package io.r2dbc.postgresql.client;
 
+import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
+import io.r2dbc.postgresql.PostgresqlConnectionFactory;
+import io.r2dbc.postgresql.PostgresqlServerErrorException;
 import io.r2dbc.postgresql.authentication.PasswordAuthenticationHandler;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.DataRow;
@@ -23,6 +26,7 @@ import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.postgresql.message.frontend.Query;
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -34,11 +38,19 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 final class ReactorNettyClientTest {
 
     @RegisterExtension
     static final PostgresqlServerExtension SERVER = new PostgresqlServerExtension();
+
+    @BeforeAll
+    static void setUp() {
+        SERVER.getJdbcOperations().execute("SET password_encryption = 'scram-sha-256';");
+        SERVER.getJdbcOperations().execute("CREATE ROLE scram LOGIN PASSWORD 'scram';");
+        SERVER.getJdbcOperations().execute("GRANT ALL PRIVILEGES ON DATABASE " + SERVER.getDatabase() + " TO scram;");
+    }
 
     private final ReactorNettyClient client = ReactorNettyClient.connect(SERVER.getHost(), SERVER.getPort())
         .delayUntil(client -> StartupMessageFlow
@@ -140,6 +152,39 @@ final class ReactorNettyClientTest {
             .expectNext(new CommandComplete("SELECT", null, 1))
             .expectNext(new CommandComplete("SELECT", null, 1))
             .verifyComplete();
+    }
+
+    @Test
+    void scramAuthentication() {
+        PostgresqlConnectionFactory postgresqlConnectionFactory = createConnectionFactory("scram", "scram");
+
+        postgresqlConnectionFactory.create()
+            .flatMapMany(c -> c.createStatement("SELECT 1 test").execute())
+            .collectList()
+            .block();
+    }
+
+
+    @Test
+    void scramAuthenticationFailed() {
+        PostgresqlConnectionFactory postgresqlConnectionFactory = createConnectionFactory("scram", "wrong");
+
+        assertThrows(PostgresqlServerErrorException.class, () -> postgresqlConnectionFactory.create()
+            .flatMapMany(c -> c.createStatement("SELECT 1 test").execute())
+            .collectList()
+            .block())
+        ;
+    }
+
+    private PostgresqlConnectionFactory createConnectionFactory(String username, String password) {
+        return new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
+            .host(SERVER.getHost())
+            .port(SERVER.getPort())
+            .username(username)
+            .password(password)
+            .database(SERVER.getDatabase())
+            .applicationName(ReactorNettyClientTest.class.getName())
+            .build());
     }
 
 }

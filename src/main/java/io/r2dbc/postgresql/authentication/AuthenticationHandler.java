@@ -19,6 +19,8 @@ package io.r2dbc.postgresql.authentication;
 import io.r2dbc.postgresql.message.backend.AuthenticationMessage;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 
+import java.util.Optional;
+
 /**
  * A handler for {@link AuthenticationMessage}s.  Responsible for handling the entire interaction for a given authentication style.
  */
@@ -32,6 +34,6 @@ public interface AuthenticationHandler {
      * @return the next outbound message to send
      * @throws IllegalArgumentException if {@code message} is {@code null}
      */
-    FrontendMessage handle(AuthenticationMessage message);
+    Optional<FrontendMessage> handle(AuthenticationMessage message);
 
 }
