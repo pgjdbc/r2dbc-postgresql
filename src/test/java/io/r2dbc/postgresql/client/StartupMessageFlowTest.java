@@ -20,10 +20,13 @@ import io.r2dbc.postgresql.authentication.AuthenticationHandler;
 import io.r2dbc.postgresql.message.backend.AuthenticationMD5Password;
 import io.r2dbc.postgresql.message.backend.AuthenticationOk;
 import io.r2dbc.postgresql.message.backend.BackendKeyData;
+import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.message.frontend.PasswordMessage;
 import io.r2dbc.postgresql.message.frontend.StartupMessage;
 import org.junit.jupiter.api.Test;
 import reactor.test.StepVerifier;
+
+import java.util.Optional;
 
 import static io.r2dbc.postgresql.client.TestClient.NO_OP;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
@@ -47,7 +50,7 @@ final class StartupMessageFlowTest {
             .build();
         // @formatter:on
 
-        when(this.authenticationHandler.handle(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))).thenReturn(new PasswordMessage("test-password"));
+        when(this.authenticationHandler.handle(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))).thenReturn(Optional.of(new PasswordMessage("test-password")));
 
         StartupMessageFlow
             .exchange("test-application-name", m -> this.authenticationHandler, client, "test-database", "test-username")

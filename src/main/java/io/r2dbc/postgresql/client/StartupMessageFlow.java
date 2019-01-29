@@ -28,6 +28,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.util.annotation.Nullable;
 
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 /**
@@ -59,6 +60,7 @@ public final class StartupMessageFlow {
 
         EmitterProcessor<FrontendMessage> requestProcessor = EmitterProcessor.create();
         FluxSink<FrontendMessage> requests = requestProcessor.sink();
+        AtomicReference<AuthenticationHandler> authenticationHandler = new AtomicReference<>(null);
 
         return client.exchange(requestProcessor.startWith(new StartupMessage(applicationName, database, username)))
             .handle((message, sink) -> {
@@ -67,7 +69,10 @@ public final class StartupMessageFlow {
                 } else if (message instanceof AuthenticationMessage) {
                     try {
                         AuthenticationMessage authenticationMessage = (AuthenticationMessage) message;
-                        requests.next(authenticationHandlerProvider.apply(authenticationMessage).handle(authenticationMessage));
+                        if (authenticationHandler.get() == null) {
+                            authenticationHandler.compareAndSet(null, authenticationHandlerProvider.apply(authenticationMessage));
+                        }
+                        authenticationHandler.get().handle(authenticationMessage).ifPresent(requests::next);
                     } catch (Exception e) {
                         requests.error(e);
                         sink.error(e);

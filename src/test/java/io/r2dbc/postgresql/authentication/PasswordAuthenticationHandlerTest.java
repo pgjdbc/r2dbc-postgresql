@@ -22,6 +22,8 @@ import io.r2dbc.postgresql.message.backend.AuthenticationMD5Password;
 import io.r2dbc.postgresql.message.frontend.PasswordMessage;
 import org.junit.jupiter.api.Test;
 
+import java.util.Optional;
+
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -45,7 +47,7 @@ final class PasswordAuthenticationHandlerTest {
         PasswordAuthenticationHandler handler = new PasswordAuthenticationHandler("test-password", "test-username");
         AuthenticationCleartextPassword message = AuthenticationCleartextPassword.INSTANCE;
 
-        assertThat(handler.handle(message)).isEqualTo(new PasswordMessage("test-password"));
+        assertThat(handler.handle(message)).isEqualTo(Optional.of(new PasswordMessage("test-password")));
     }
 
     @Test
@@ -53,7 +55,7 @@ final class PasswordAuthenticationHandlerTest {
         PasswordAuthenticationHandler handler = new PasswordAuthenticationHandler("test-password", "test-username");
         AuthenticationMD5Password message = new AuthenticationMD5Password(TEST.buffer(4).writeInt(100));
 
-        assertThat(handler.handle(message)).isEqualTo(new PasswordMessage("md55e9836cdb369d50e3bc7d127e88b4804"));
+        assertThat(handler.handle(message)).isEqualTo(Optional.of(new PasswordMessage("md55e9836cdb369d50e3bc7d127e88b4804")));
     }
 
     @Test
