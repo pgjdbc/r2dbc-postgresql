@@ -113,7 +113,7 @@ public final class PostgresqlConnectionConfiguration {
      */
     public static final class Builder {
 
-        private String applicationName = "postgresql-r2dbc";
+        private String applicationName = "r2dbc-postgresql";
 
         private String database;
 

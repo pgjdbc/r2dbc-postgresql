@@ -80,7 +80,7 @@ final class PostgresqlConnectionConfigurationTest {
             .build();
 
         assertThat(configuration)
-            .hasFieldOrPropertyWithValue("applicationName", "postgresql-r2dbc")
+            .hasFieldOrPropertyWithValue("applicationName", "r2dbc-postgresql")
             .hasFieldOrPropertyWithValue("database", "test-database")
             .hasFieldOrPropertyWithValue("host", "test-host")
             .hasFieldOrPropertyWithValue("password", "test-password")
