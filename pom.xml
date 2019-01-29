@@ -44,7 +44,7 @@
         <reactor.version>Californium-SR3</reactor.version>
         <slf4j.version>1.7.25</slf4j.version>
         <spring-boot.version>2.1.0.RELEASE</spring-boot.version>
-        <testcontainers.version>1.10.1</testcontainers.version>
+        <testcontainers.version>1.10.6</testcontainers.version>
     </properties>
 
     <dependencyManagement>
