@@ -20,6 +20,8 @@ package io.r2dbc.postgresql;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
+import java.time.Duration;
+
 /**
  * Connection configuration information for connecting to a PostgreSQL database.
  */
@@ -44,7 +46,10 @@ public final class PostgresqlConnectionConfiguration {
 
     private final String username;
 
-    private PostgresqlConnectionConfiguration(String applicationName, @Nullable String database, String host, String password, int port, @Nullable String schema, String username) {
+    private final Duration connectTimeout;
+
+    private PostgresqlConnectionConfiguration(String applicationName, @Nullable String database, String host, String password, int port, @Nullable String schema, String username,
+                                              Duration connectTimeout) {
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
         this.database = database;
         this.host = Assert.requireNonNull(host, "host must not be null");
@@ -52,6 +57,7 @@ public final class PostgresqlConnectionConfiguration {
         this.port = port;
         this.schema = schema;
         this.username = Assert.requireNonNull(username, "username must not be null");
+        this.connectTimeout = connectTimeout;
     }
 
     /**
@@ -73,6 +79,7 @@ public final class PostgresqlConnectionConfiguration {
             ", port=" + this.port +
             ", schema='" + this.schema + '\'' +
             ", username='" + this.username + '\'' +
+            ", connectTimeout='" + this.connectTimeout + '\'' +
             '}';
     }
 
@@ -106,6 +113,11 @@ public final class PostgresqlConnectionConfiguration {
         return this.username;
     }
 
+    @Nullable
+    Duration getConnectTimeout() {
+        return this.connectTimeout;
+    }
+
     /**
      * A builder for {@link PostgresqlConnectionConfiguration} instances.
      * <p>
@@ -126,6 +138,8 @@ public final class PostgresqlConnectionConfiguration {
         private String schema;
 
         private String username;
+
+        private Duration connectTimeout;
 
         private Builder() {
         }
@@ -148,7 +162,7 @@ public final class PostgresqlConnectionConfiguration {
          * @return a configured {@link PostgresqlConnectionConfiguration}
          */
         public PostgresqlConnectionConfiguration build() {
-            return new PostgresqlConnectionConfiguration(this.applicationName, this.database, this.host, this.password, this.port, this.schema, this.username);
+            return new PostgresqlConnectionConfiguration(this.applicationName, this.database, this.host, this.password, this.port, this.schema, this.username, this.connectTimeout);
         }
 
         /**
@@ -208,6 +222,11 @@ public final class PostgresqlConnectionConfiguration {
             return this;
         }
 
+        public Builder connectTimeout(@Nullable Duration connectTimeout) {
+            this.connectTimeout = connectTimeout;
+            return this;
+        }
+
         @Override
         public String toString() {
             return "Builder{" +
@@ -218,6 +237,7 @@ public final class PostgresqlConnectionConfiguration {
                 ", port=" + this.port +
                 ", schema='" + this.schema + '\'' +
                 ", username='" + this.username + '\'' +
+                ", connectTimeout='" + this.connectTimeout + '\'' +
                 '}';
         }
 

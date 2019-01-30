@@ -48,8 +48,7 @@ final class PostgresqlColumnMetadataTest {
         PostgresqlColumnMetadata columnMetadata = PostgresqlColumnMetadata.toColumnMetadata(new Field((short) 100, 200, 300, (short) 400, FORMAT_TEXT, "test-name", 500));
 
         assertThat(columnMetadata.getName()).isEqualTo("test-name");
-        assertThat(columnMetadata.getPrecision()).hasValue(400);
-        assertThat(columnMetadata.getType()).isEqualTo(200);
+        assertThat(columnMetadata.getPrecision()).isEqualTo(400);
     }
 
     @Test

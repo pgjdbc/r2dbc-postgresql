@@ -21,7 +21,6 @@ import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ColumnMetadata;
 
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * An implementation of {@link ColumnMetadata} for a PostgreSQL database.
@@ -60,14 +59,8 @@ public final class PostgresqlColumnMetadata implements ColumnMetadata {
     }
 
     @Override
-    public Optional<Integer> getPrecision() {
-        return Optional.of(this.precision)
-            .map(Short::intValue);
-    }
-
-    @Override
-    public Integer getType() {
-        return this.type;
+    public Integer getPrecision() {
+        return this.precision != null ? this.precision.intValue() : null;
     }
 
     @Override
