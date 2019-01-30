@@ -18,6 +18,7 @@ package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.authentication.AuthenticationHandler;
 import io.r2dbc.postgresql.authentication.PasswordAuthenticationHandler;
+import io.r2dbc.postgresql.authentication.SASLAuthenticationHandler;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.ReactorNettyClient;
 import io.r2dbc.postgresql.client.StartupMessageFlow;
@@ -82,6 +83,8 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
     private AuthenticationHandler getAuthenticationHandler(AuthenticationMessage message) {
         if (PasswordAuthenticationHandler.supports(message)) {
             return new PasswordAuthenticationHandler(this.configuration.getPassword(), this.configuration.getUsername());
+        } else if (SASLAuthenticationHandler.supports(message)) {
+            return new SASLAuthenticationHandler(this.configuration.getPassword(), this.configuration.getUsername());
         } else {
             throw new IllegalStateException(String.format("Unable to provide AuthenticationHandler capable of handling %s", message));
         }

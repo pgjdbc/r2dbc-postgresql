@@ -16,19 +16,26 @@
 
 package io.r2dbc.postgresql;
 
+import com.ongres.scram.client.ScramClient;
+import com.ongres.scram.client.ScramSession;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.TestClient;
 import io.r2dbc.postgresql.message.backend.AuthenticationMD5Password;
 import io.r2dbc.postgresql.message.backend.AuthenticationOk;
+import io.r2dbc.postgresql.message.backend.AuthenticationSASL;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.frontend.PasswordMessage;
+import io.r2dbc.postgresql.message.frontend.SASLInitialResponse;
 import io.r2dbc.postgresql.message.frontend.StartupMessage;
+import io.r2dbc.postgresql.util.ByteBufferUtils;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.Collections;
 
+import static com.ongres.scram.client.ScramClient.ChannelBinding.NO;
+import static com.ongres.scram.common.stringprep.StringPreparations.NO_PREPARATION;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -75,6 +82,32 @@ final class PostgresqlConnectionFactoryTest {
             .as(StepVerifier::create)
             .expectNextCount(1)
             .verifyComplete();
+    }
+
+    @Test
+    void createAuthenticationSASL() {
+        ScramClient scramClient = ScramClient
+            .channelBinding(NO)
+            .stringPreparation(NO_PREPARATION)
+            .selectMechanismBasedOnServerAdvertised("SCRAM-SHA-256")
+            .setup();
+
+        // @formatter:off
+        Client client = TestClient.builder()
+            .window()
+                .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username")).thenRespond(new AuthenticationSASL(Collections.singletonList("SCRAM-SHA-256")))
+                .expectRequest(new SASLInitialResponse(ByteBufferUtils.encode(scramClient.scramSession("test-username").clientFirstMessage()), "SCRAM-SHA-256")).thenRespond(AuthenticationOk.INSTANCE)
+                .done()
+            .build();
+        // @formatter:on
+
+        PostgresqlConnectionConfiguration configuration = PostgresqlConnectionConfiguration.builder()
+            .applicationName("test-application-name")
+            .database("test-database")
+            .host("test-host")
+            .username("test-username")
+            .password("test-password")
+            .build();
     }
 
     @Test
