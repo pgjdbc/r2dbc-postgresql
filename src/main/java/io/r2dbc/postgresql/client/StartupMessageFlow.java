@@ -69,10 +69,15 @@ public final class StartupMessageFlow {
                 } else if (message instanceof AuthenticationMessage) {
                     try {
                         AuthenticationMessage authenticationMessage = (AuthenticationMessage) message;
+
                         if (authenticationHandler.get() == null) {
                             authenticationHandler.compareAndSet(null, authenticationHandlerProvider.apply(authenticationMessage));
                         }
-                        authenticationHandler.get().handle(authenticationMessage).ifPresent(requests::next);
+
+                        FrontendMessage response = authenticationHandler.get().handle(authenticationMessage);
+                        if (response != null) {
+                            requests.next(response);
+                        }
                     } catch (Exception e) {
                         requests.error(e);
                         sink.error(e);

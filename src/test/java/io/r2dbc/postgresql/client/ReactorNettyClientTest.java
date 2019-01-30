@@ -28,7 +28,9 @@ import io.r2dbc.postgresql.util.PostgresqlServerExtension;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -38,19 +40,11 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 final class ReactorNettyClientTest {
 
     @RegisterExtension
     static final PostgresqlServerExtension SERVER = new PostgresqlServerExtension();
-
-    @BeforeAll
-    static void setUp() {
-        SERVER.getJdbcOperations().execute("SET password_encryption = 'scram-sha-256';");
-        SERVER.getJdbcOperations().execute("CREATE ROLE scram LOGIN PASSWORD 'scram';");
-        SERVER.getJdbcOperations().execute("GRANT ALL PRIVILEGES ON DATABASE " + SERVER.getDatabase() + " TO scram;");
-    }
 
     private final ReactorNettyClient client = ReactorNettyClient.connect(SERVER.getHost(), SERVER.getPort())
         .delayUntil(client -> StartupMessageFlow
@@ -154,37 +148,44 @@ final class ReactorNettyClientTest {
             .verifyComplete();
     }
 
-    @Test
-    void scramAuthentication() {
-        PostgresqlConnectionFactory postgresqlConnectionFactory = createConnectionFactory("scram", "scram");
+    @Nested
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    final class ScramTest {
 
-        postgresqlConnectionFactory.create()
-            .flatMapMany(c -> c.createStatement("SELECT 1 test").execute())
-            .collectList()
-            .block();
-    }
+        @Test
+        void scramAuthentication() {
+            createConnectionFactory("scram", "scram").create()
+                .flatMapMany(c -> c.createStatement("SELECT 1 test").execute())
+                .as(StepVerifier::create)
+                .expectNextCount(1)
+                .verifyComplete();
+        }
 
+        @Test
+        void scramAuthenticationFailed() {
+            createConnectionFactory("scram", "wrong").create()
+                .flatMapMany(c -> c.createStatement("SELECT 1 test").execute())
+                .as(StepVerifier::create)
+                .verifyError(PostgresqlServerErrorException.class);
+        }
 
-    @Test
-    void scramAuthenticationFailed() {
-        PostgresqlConnectionFactory postgresqlConnectionFactory = createConnectionFactory("scram", "wrong");
+        @BeforeAll
+        void setUp() {
+            SERVER.getJdbcOperations()
+                .execute(String.format("SET password_encryption = 'scram-sha-256'; CREATE ROLE scram LOGIN PASSWORD 'scram'; GRANT ALL PRIVILEGES ON DATABASE %s TO scram", SERVER.getDatabase()));
+        }
 
-        assertThrows(PostgresqlServerErrorException.class, () -> postgresqlConnectionFactory.create()
-            .flatMapMany(c -> c.createStatement("SELECT 1 test").execute())
-            .collectList()
-            .block())
-        ;
-    }
+        private PostgresqlConnectionFactory createConnectionFactory(String username, String password) {
+            return new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
+                .host(SERVER.getHost())
+                .port(SERVER.getPort())
+                .username(username)
+                .password(password)
+                .database(SERVER.getDatabase())
+                .applicationName(ReactorNettyClientTest.class.getName())
+                .build());
+        }
 
-    private PostgresqlConnectionFactory createConnectionFactory(String username, String password) {
-        return new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
-            .host(SERVER.getHost())
-            .port(SERVER.getPort())
-            .username(username)
-            .password(password)
-            .database(SERVER.getDatabase())
-            .applicationName(ReactorNettyClientTest.class.getName())
-            .build());
     }
 
 }

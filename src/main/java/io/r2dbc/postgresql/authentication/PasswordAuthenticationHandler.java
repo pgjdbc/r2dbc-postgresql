@@ -23,8 +23,6 @@ import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.message.frontend.PasswordMessage;
 import io.r2dbc.postgresql.util.Assert;
 
-import java.util.Optional;
-
 /**
  * An implementation of {@link AuthenticationHandler} that handles {@link AuthenticationCleartextPassword} and {@link AuthenticationMD5Password} messages.
  */
@@ -60,13 +58,13 @@ public final class PasswordAuthenticationHandler implements AuthenticationHandle
     }
 
     @Override
-    public Optional<FrontendMessage> handle(AuthenticationMessage message) {
+    public FrontendMessage handle(AuthenticationMessage message) {
         Assert.requireNonNull(message, "message must not be null");
 
         if (message instanceof AuthenticationCleartextPassword) {
-            return Optional.of(handleAuthenticationClearTextPassword());
+            return handleAuthenticationClearTextPassword();
         } else if (message instanceof AuthenticationMD5Password) {
-            return Optional.of(handleAuthenticationMD5Password((AuthenticationMD5Password) message));
+            return handleAuthenticationMD5Password((AuthenticationMD5Password) message);
         } else {
             throw new IllegalArgumentException(String.format("Cannot handle %s message", message.getClass().getSimpleName()));
         }
