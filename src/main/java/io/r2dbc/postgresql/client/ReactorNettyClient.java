@@ -19,6 +19,7 @@ package io.r2dbc.postgresql.client;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelOption;
 import io.r2dbc.postgresql.message.backend.BackendKeyData;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.BackendMessageDecoder;
@@ -41,8 +42,10 @@ import reactor.core.publisher.SynchronousSink;
 import reactor.netty.Connection;
 import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.tcp.TcpClient;
+import reactor.util.annotation.Nullable;
 import reactor.util.concurrent.Queues;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
@@ -168,7 +171,21 @@ public final class ReactorNettyClient implements Client {
     public static Mono<ReactorNettyClient> connect(String host, int port) {
         Assert.requireNonNull(host, "host must not be null");
 
-        return connect(ConnectionProvider.newConnection(), host, port);
+        return connect(ConnectionProvider.newConnection(), host, port, null);
+    }
+
+    /**
+     * Creates a new frame processor connected to a given host.
+     *
+     * @param host           the host to connect to
+     * @param port           the port to connect to
+     * @param connectTimeout connect timeout
+     * @throws IllegalArgumentException if {@code host} is {@code null}
+     */
+    public static Mono<ReactorNettyClient> connect(String host, int port, @Nullable Duration connectTimeout) {
+        Assert.requireNonNull(host, "host must not be null");
+
+        return connect(ConnectionProvider.newConnection(), host, port, connectTimeout);
     }
 
     /**
@@ -177,15 +194,21 @@ public final class ReactorNettyClient implements Client {
      * @param connectionProvider the connection provider resources
      * @param host               the host to connect to
      * @param port               the port to connect to
+     * @param connectTimeout     connect timeout
      * @throws IllegalArgumentException if {@code host} is {@code null}
      */
-    public static Mono<ReactorNettyClient> connect(ConnectionProvider connectionProvider, String host, int port) {
+    // TODO deal with growing argument list
+    public static Mono<ReactorNettyClient> connect(ConnectionProvider connectionProvider, String host, int port, @Nullable Duration connectTimeout) {
         Assert.requireNonNull(connectionProvider, "connectionProvider must not be null");
         Assert.requireNonNull(host, "host must not be null");
 
-        Mono<? extends Connection> connection = TcpClient.create(connectionProvider)
-            .host(host).port(port)
-            .connect();
+        TcpClient tcpClient = TcpClient.create(connectionProvider)
+            .host(host).port(port);
+        if (connectTimeout != null) {
+            tcpClient = tcpClient.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Math.toIntExact(connectTimeout.toMillis()));
+        }
+
+        Mono<? extends Connection> connection = tcpClient.connect();
 
         return connection.map(ReactorNettyClient::new);
     }

@@ -18,6 +18,8 @@ package io.r2dbc.postgresql;
 
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
@@ -57,6 +59,7 @@ final class PostgresqlConnectionConfigurationTest {
             .port(100)
             .schema("test-schema")
             .username("test-username")
+            .connectTimeout(Duration.ofMillis(1000))
             .build();
 
         assertThat(configuration)
@@ -66,7 +69,8 @@ final class PostgresqlConnectionConfigurationTest {
             .hasFieldOrPropertyWithValue("password", "test-password")
             .hasFieldOrPropertyWithValue("port", 100)
             .hasFieldOrPropertyWithValue("schema", "test-schema")
-            .hasFieldOrPropertyWithValue("username", "test-username");
+            .hasFieldOrPropertyWithValue("username", "test-username")
+            .hasFieldOrPropertyWithValue("connectTimeout", Duration.ofMillis(1000));
     }
 
     @Test
