@@ -40,12 +40,6 @@ final class PostgresqlConnectionConfigurationTest {
     }
 
     @Test
-    void builderNoPassword() {
-        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().password(null))
-            .withMessage("password must not be null");
-    }
-
-    @Test
     void builderNoUsername() {
         assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().username(null))
             .withMessage("username must not be null");
@@ -67,6 +61,7 @@ final class PostgresqlConnectionConfigurationTest {
             .port(100)
             .schema("test-schema")
             .username("test-username")
+            .ssl(true)
             .build();
 
         assertThat(configuration)
@@ -78,7 +73,8 @@ final class PostgresqlConnectionConfigurationTest {
             .hasFieldOrPropertyWithValue("password", "test-password")
             .hasFieldOrPropertyWithValue("port", 100)
             .hasFieldOrPropertyWithValue("schema", "test-schema")
-            .hasFieldOrPropertyWithValue("username", "test-username");
+            .hasFieldOrPropertyWithValue("username", "test-username")
+            .hasFieldOrPropertyWithValue("ssl", true);
     }
 
     @Test
@@ -98,7 +94,8 @@ final class PostgresqlConnectionConfigurationTest {
             .hasFieldOrPropertyWithValue("password", "test-password")
             .hasFieldOrPropertyWithValue("port", 5432)
             .hasFieldOrPropertyWithValue("schema", "test-schema")
-            .hasFieldOrPropertyWithValue("username", "test-username");
+            .hasFieldOrPropertyWithValue("username", "test-username")
+            .hasFieldOrPropertyWithValue("ssl", false);
     }
 
     @Test

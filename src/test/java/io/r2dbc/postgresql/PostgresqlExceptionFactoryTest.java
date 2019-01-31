@@ -38,7 +38,24 @@ final class PostgresqlExceptionFactoryTest {
     @Test
     void isCreatingAuthenticationException() {
         List<Field> fields = Arrays.asList(
-            new Field(FieldType.CODE, PostgresqlExceptionFactory.AUTH_EXCEPTION_CODE),
+            new Field(FieldType.CODE, PostgresqlExceptionFactory.INVALID_PASSWORD_CODE),
+            new Field(FieldType.MESSAGE, "error message desc")
+        );
+
+        BackendMessage message = new ErrorResponse(fields);
+
+        SynchronousSink<BackendMessage> sink = createSinkMock();
+
+        PostgresqlExceptionFactory.handleErrorResponse(message, sink);
+
+        verify(sink, times(1)).error(isA(PostgresqlAuthenticationFailure.class));
+        verify(sink, times(0)).next(eq(message));
+    }
+
+    @Test
+    void isCreatingAuthenticationExceptionInvalidAuthorizationSpecification() {
+        List<Field> fields = Arrays.asList(
+            new Field(FieldType.CODE, PostgresqlExceptionFactory.INVALID_AUTHORIZATION_SPECIFICATION_CODE),
             new Field(FieldType.MESSAGE, "error message desc")
         );
 

@@ -24,7 +24,9 @@ import static io.r2dbc.postgresql.message.backend.Field.FieldType.CODE;
 
 public final class PostgresqlExceptionFactory {
 
-    static final String AUTH_EXCEPTION_CODE = "28P01";
+    static final String INVALID_AUTHORIZATION_SPECIFICATION_CODE = "28000";
+
+    static final String INVALID_PASSWORD_CODE = "28P01";
 
     private PostgresqlExceptionFactory() {
     }
@@ -39,10 +41,8 @@ public final class PostgresqlExceptionFactory {
 
         boolean isAuthError = error.getFields()
             .stream()
-            .anyMatch(field ->
-                CODE.equals(field.getType()) &&
-                    AUTH_EXCEPTION_CODE.equals(field.getValue())
-            );
+            .filter(field -> CODE.equals(field.getType()))
+            .anyMatch(field -> INVALID_PASSWORD_CODE.equals(field.getValue()) || INVALID_AUTHORIZATION_SPECIFICATION_CODE.equals(field.getValue()));
 
         if (isAuthError) {
             sink.error(PostgresqlAuthenticationFailure.toException(error));

@@ -17,9 +17,12 @@
 package io.r2dbc.postgresql.client;
 
 import io.netty.channel.ConnectTimeoutException;
+import io.r2dbc.postgresql.PostgresqlAuthenticationFailure;
+import io.r2dbc.postgresql.PostgresqlConnection;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.postgresql.PostgresqlServerErrorException;
+import io.r2dbc.postgresql.SSLMode;
 import io.r2dbc.postgresql.authentication.PasswordAuthenticationHandler;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.DataRow;
@@ -27,7 +30,6 @@ import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.postgresql.message.frontend.Query;
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -36,9 +38,13 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -203,13 +209,29 @@ final class ReactorNettyClientTest {
             .verify(Duration.ofMillis(500));
     }
 
+    public static class FailedVerification implements HostnameVerifier {
+
+        @Override
+        public boolean verify(String s, SSLSession sslSession) {
+            return false;
+        }
+    }
+
+    public static class NoVerification implements HostnameVerifier {
+
+        @Override
+        public boolean verify(String s, SSLSession sslSession) {
+            return true;
+        }
+    }
+
     @Nested
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     final class ScramTest {
 
         @Test
         void scramAuthentication() {
-            createConnectionFactory("scram", "scram").create()
+            createConnectionFactory("test-scram", "test-scram").create()
                 .flatMapMany(c -> c.createStatement("SELECT 1 test").execute())
                 .as(StepVerifier::create)
                 .expectNextCount(1)
@@ -218,16 +240,9 @@ final class ReactorNettyClientTest {
 
         @Test
         void scramAuthenticationFailed() {
-            createConnectionFactory("scram", "wrong").create()
-                .flatMapMany(c -> c.createStatement("SELECT 1 test").execute())
+            createConnectionFactory("test-scram", "wrong").create()
                 .as(StepVerifier::create)
                 .verifyError(PostgresqlServerErrorException.class);
-        }
-
-        @BeforeAll
-        void setUp() {
-            SERVER.getJdbcOperations()
-                .execute(String.format("SET password_encryption = 'scram-sha-256'; CREATE ROLE scram LOGIN PASSWORD 'scram'; GRANT ALL PRIVILEGES ON DATABASE %s TO scram", SERVER.getDatabase()));
         }
 
         private PostgresqlConnectionFactory createConnectionFactory(String username, String password) {
@@ -240,7 +255,374 @@ final class ReactorNettyClientTest {
                 .applicationName(ReactorNettyClientTest.class.getName())
                 .build());
         }
+    }
 
+    @Nested
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    final class SslTest {
+
+        @Test
+        void exchangeSslWithClientCert() {
+            client(
+                c -> c,
+                c -> c.map(client -> client.createStatement("SELECT 10")
+                    .execute()
+                    .flatMap(r -> r.map((row, meta) -> row.get(0, Integer.class)))
+                    .as(StepVerifier::create)
+                    .expectNext(10)
+                    .verifyComplete()));
+        }
+
+        @Test
+        void exchangeSslWithClientCertInvalidClientCert() {
+            client(
+                c -> c
+                    .sslCert(SERVER.getServerCrt())
+                    .sslKey(SERVER.getServerKey()),
+                c -> c
+                    .as(StepVerifier::create)
+                    .expectError(PostgresqlAuthenticationFailure.class)
+                    .verify());
+        }
+
+        @Test
+        void exchangeSslWithClientCertNoCert() {
+            client(
+                c -> c
+                    .password("test")
+                    .sslKey(null)
+                    .sslCert(null),
+                c -> c
+                    .as(StepVerifier::create)
+                    .expectError(PostgresqlAuthenticationFailure.class));
+        }
+
+        @Test
+        void exchangeSslWithPassword() {
+            client(
+                c -> c
+                    .sslCert(null)
+                    .sslKey(null)
+                    .username("test-ssl")
+                    .password("test-ssl"),
+                c -> c.map(client -> client.createStatement("SELECT 10")
+                    .execute()
+                    .flatMap(r -> r.map((row, meta) -> row.get(0, Integer.class)))
+                    .as(StepVerifier::create)
+                    .expectNext(10)
+                    .verifyComplete()));
+        }
+
+        @Test
+        void invalidServerCertificate() {
+            client(
+                c -> c
+                    .sslRootCert(SERVER.getClientCrt()),
+                c -> c
+                    .as(StepVerifier::create)
+                    .expectError()
+                    .verify());
+        }
+
+        @Test
+        void userIsNotAllowedToLoginWithSsl() {
+            client(
+                c -> c
+                    .username(SERVER.getUsername())
+                    .password(SERVER.getPassword())
+                    .sslKey(null)
+                    .sslCert(null),
+                c -> c
+                    .as(StepVerifier::create)
+                    .verifyError(PostgresqlAuthenticationFailure.class));
+        }
+
+        @Test
+        void userIsNotAllowedToLoginWithoutSsl() {
+            client(
+                c -> c.ssl(false)
+                    .username("test-ssl")
+                    .password("test-ssl"),
+                c -> c
+                    .as(StepVerifier::create)
+                    .verifyError(PostgresqlAuthenticationFailure.class));
+        }
+
+        private void client(Function<PostgresqlConnectionConfiguration.Builder, PostgresqlConnectionConfiguration.Builder> configurer,
+                            Consumer<Mono<PostgresqlConnection>> connectionConsumer) {
+            PostgresqlConnectionConfiguration.Builder defaultConfig = PostgresqlConnectionConfiguration.builder()
+                .database(SERVER.getDatabase())
+                .host(SERVER.getHost())
+                .port(SERVER.getPort())
+                .username("test-ssl-with-cert")
+                .password(null)
+                .ssl(true)
+                .sslMode(SSLMode.VERIFY_FULL)
+                .sslRootCert(SERVER.getServerCrt())
+                .sslCert(SERVER.getClientCrt())
+                .sslKey(SERVER.getClientKey())
+                .sslHostnameVerifier("io.r2dbc.postgresql.client.ReactorNettyClientTest$NoVerification");
+            new PostgresqlConnectionFactory(configurer.apply(defaultConfig).build()).create()
+                .onErrorResume(e -> Mono.fromRunnable(() -> connectionConsumer.accept(Mono.error(e))))
+                .delayUntil(connection -> Mono.fromRunnable(() -> connectionConsumer.accept(Mono.just(connection))))
+                .flatMap(PostgresqlConnection::close)
+                .block();
+        }
+
+        @Nested
+        class SslModes {
+
+            @Test
+            void allowFailed() {
+                client(
+                    c -> c
+                        .sslMode(SSLMode.ALLOW)
+                        .username("test-ssl")
+                        .sslRootCert(null),
+                    c -> c
+                        .as(StepVerifier::create)
+                        .verifyError(PostgresqlAuthenticationFailure.class));
+            }
+
+            @Test
+            void allowFallbackToSsl() {
+                client(
+                    c -> c
+                        .sslMode(SSLMode.ALLOW)
+                        .username("test-ssl")
+                        .password("test-ssl")
+                        .sslKey(null)
+                        .sslCert(null)
+                        .sslRootCert(null),
+                    c -> c
+                        .as(StepVerifier::create)
+                        .expectNextCount(1)
+                        .verifyComplete());
+            }
+
+            @Test
+            void allowFallbackToSslAndFailedAgain() {
+                client(
+                    c -> c
+                        .sslMode(SSLMode.ALLOW)
+                        .username("test-ssl-test")
+                        .password("test-ssl")
+                        .sslKey(null)
+                        .sslCert(null)
+                        .sslRootCert(null),
+                    c -> c
+                        .as(StepVerifier::create)
+                        .verifyError(PostgresqlAuthenticationFailure.class));
+            }
+
+            @Test
+            void allowWithoutSsl() {
+                client(
+                    c -> c
+                        .sslMode(SSLMode.ALLOW)
+                        .username(SERVER.getUsername())
+                        .password(SERVER.getPassword())
+                        .sslKey(null)
+                        .sslCert(null)
+                        .sslRootCert(null),
+                    c -> c
+                        .as(StepVerifier::create)
+                        .expectNextCount(1)
+                        .verifyComplete());
+            }
+
+            @Test
+            void disabled() {
+                client(
+                    c -> c
+                        .sslMode(SSLMode.DISABLE)
+                        .username(SERVER.getUsername())
+                        .password(SERVER.getPassword())
+                        .sslKey(null)
+                        .sslCert(null)
+                        .sslRootCert(null),
+                    c -> c
+                        .as(StepVerifier::create)
+                        .expectNextCount(1)
+                        .verifyComplete());
+            }
+
+            @Test
+            void disabledFailedForSslOnlyUser() {
+                client(
+                    c -> c
+                        .sslMode(SSLMode.DISABLE)
+                        .password("test-ssl")
+                        .password("test-ssl")
+                        .sslKey(null)
+                        .sslCert(null)
+                        .sslRootCert(null),
+                    c -> c
+                        .as(StepVerifier::create)
+                        .expectError(PostgresqlAuthenticationFailure.class)
+                        .verify());
+            }
+
+            @Test
+            void preferFallbackToTcp() {
+                client(
+                    c -> c
+                        .sslMode(SSLMode.PREFER)
+                        .username(SERVER.getUsername())
+                        .password(SERVER.getPassword())
+                        .sslKey(null)
+                        .sslCert(null)
+                        .sslRootCert(null),
+                    c -> c
+                        .as(StepVerifier::create)
+                        .expectNextCount(1)
+                        .verifyComplete());
+            }
+
+            @Test
+            void preferFallbackToTcpAndFailed() {
+                client(
+                    c -> c
+                        .sslMode(SSLMode.PREFER)
+                        .username("test-ssl-test")
+                        .password(SERVER.getPassword())
+                        .sslKey(null)
+                        .sslCert(null)
+                        .sslRootCert(null),
+                    c -> c
+                        .as(StepVerifier::create)
+                        .expectError(PostgresqlAuthenticationFailure.class));
+            }
+
+            @Test
+            void preferWithSsl() {
+                client(
+                    c -> c
+                        .sslRootCert(null)
+                        .sslMode(SSLMode.PREFER),
+                    c -> c
+                        .as(StepVerifier::create)
+                        .expectNextCount(1)
+                        .verifyComplete());
+            }
+
+            @Test
+            void require() {
+                client(
+                    c -> c
+                        .sslMode(SSLMode.REQUIRE),
+                    c -> c
+                        .as(StepVerifier::create)
+                        .expectNextCount(1)
+                        .verifyComplete());
+            }
+
+            @Test
+            void requireConnectsWithoutCertificate() {
+                client(
+                    c -> c
+                        .sslRootCert(null)
+                        .sslMode(SSLMode.REQUIRE),
+                    c -> c
+                        .as(StepVerifier::create)
+                        .expectNextCount(1)
+                        .verifyComplete());
+            }
+
+            @Test
+            void requireFailed() {
+                client(
+                    c -> c
+                        .sslMode(SSLMode.REQUIRE)
+                        .username(SERVER.getUsername())
+                        .password(SERVER.getPassword())
+                        .sslKey(null)
+                        .sslCert(null)
+                        .sslRootCert(null),
+                    c -> c
+                        .as(StepVerifier::create)
+                        .verifyError(PostgresqlAuthenticationFailure.class));
+            }
+
+            @Test
+            void verifyCa() {
+                client(
+                    c -> c
+                        .sslMode(SSLMode.VERIFY_CA),
+                    c -> c
+                        .as(StepVerifier::create)
+                        .expectNextCount(1)
+                        .verifyComplete());
+            }
+
+            @Test
+            void verifyCaFailedWithWrongRootCert() {
+                client(
+                    c -> c
+                        .sslRootCert(SERVER.getClientCrt())
+                        .sslMode(SSLMode.VERIFY_CA),
+                    c -> c
+                        .as(StepVerifier::create)
+                        .verifyError());
+            }
+
+            @Test
+            void verifyCaFailedWithoutSsl() {
+                client(
+                    c -> c
+                        .sslMode(SSLMode.VERIFY_CA)
+                        .username(SERVER.getUsername())
+                        .password(SERVER.getPassword()),
+                    c -> c
+                        .as(StepVerifier::create)
+                        .verifyError(PostgresqlAuthenticationFailure.class));
+            }
+
+            @Test
+            void verifyFull() {
+                client(
+                    c -> c
+                        .sslMode(SSLMode.VERIFY_FULL),
+                    c -> c
+                        .as(StepVerifier::create)
+                        .expectNextCount(1)
+                        .verifyComplete());
+            }
+
+            @Test
+            void verifyFullFailedWithWrongHost() {
+                client(
+                    c -> c
+                        .sslHostnameVerifier("io.r2dbc.postgresql.client.ReactorNettyClientTest$FailedVerification")
+                        .sslMode(SSLMode.VERIFY_FULL),
+                    c -> c
+                        .as(StepVerifier::create)
+                        .verifyError());
+            }
+
+            @Test
+            void verifyFullFailedWithWrongRootCert() {
+                client(
+                    c -> c
+                        .sslRootCert(SERVER.getClientCrt())
+                        .sslMode(SSLMode.VERIFY_FULL),
+                    c -> c
+                        .as(StepVerifier::create)
+                        .verifyError());
+            }
+
+            @Test
+            void verifyFullFailedWithoutSsl() {
+                client(
+                    c -> c
+                        .sslMode(SSLMode.VERIFY_FULL)
+                        .username(SERVER.getUsername())
+                        .password(SERVER.getPassword()),
+                    c -> c
+                        .as(StepVerifier::create)
+                        .verifyError(PostgresqlAuthenticationFailure.class));
+            }
+        }
     }
 
 }

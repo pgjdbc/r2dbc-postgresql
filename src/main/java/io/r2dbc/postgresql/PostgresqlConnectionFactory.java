@@ -31,13 +31,17 @@ import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import reactor.core.publisher.Mono;
 
 import java.util.Locale;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
+import static io.r2dbc.postgresql.SSLConfig.createSslConfig;
 
 /**
  * An implementation of {@link ConnectionFactory} for creating connections to a PostgreSQL database.
  */
 public final class PostgresqlConnectionFactory implements ConnectionFactory {
 
-    private final Mono<? extends Client> clientFactory;
+    private final Function<SSLConfig, Mono<? extends Client>> clientFactory;
 
     private final PostgresqlConnectionConfiguration configuration;
 
@@ -48,43 +52,64 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
      * @throws IllegalArgumentException if {@code configuration} is {@code null}
      */
     public PostgresqlConnectionFactory(PostgresqlConnectionConfiguration configuration) {
-        this(Mono.defer(() -> {
+        this(sslConfig -> Mono.defer(() -> {
             Assert.requireNonNull(configuration, "configuration must not be null");
-
-            return ReactorNettyClient.connect(configuration.getHost(), configuration.getPort(), configuration.getConnectTimeout()).cast(Client.class);
+            return ReactorNettyClient.connect(configuration.getHost(), configuration.getPort(), configuration.getConnectTimeout(), sslConfig).cast(Client.class);
         }), configuration);
     }
 
-    PostgresqlConnectionFactory(Mono<? extends Client> clientFactory, PostgresqlConnectionConfiguration configuration) {
+
+    PostgresqlConnectionFactory(Function<SSLConfig, Mono<? extends Client>> clientFactory, PostgresqlConnectionConfiguration configuration) {
         this.clientFactory = Assert.requireNonNull(clientFactory, "clientFactory must not be null");
         this.configuration = Assert.requireNonNull(configuration, "configuration must not be null");
     }
 
     @Override
     public Mono<PostgresqlConnection> create() {
-        return this.clientFactory
-            .delayUntil(client ->
-                StartupMessageFlow
-                    .exchange(this.configuration.getApplicationName(), this::getAuthenticationHandler, client, this.configuration.getDatabase(), this.configuration.getUsername(),
-                        this.configuration.getOptions())
-                    .handle(PostgresqlExceptionFactory::handleErrorResponse))
+        SSLConfig sslConfig = createSslConfig(configuration);
+        Predicate<Throwable> isAuthSpecificationError = e ->
+            (e instanceof PostgresqlAuthenticationFailure) && ((PostgresqlAuthenticationFailure) e).getCode().equals(PostgresqlExceptionFactory.INVALID_AUTHORIZATION_SPECIFICATION_CODE);
+        return this.tryConnectWithConfig(sslConfig)
+            .onErrorResume(
+                isAuthSpecificationError.and(e -> sslConfig.getSslMode() == SSLMode.ALLOW),
+                e -> this.tryConnectWithConfig(sslConfig.mutateMode(SSLMode.REQUIRE))
+                    .onErrorResume(sslAuthError -> {
+                        e.addSuppressed(sslAuthError);
+                        return Mono.error(e);
+                    })
+            )
+            .onErrorResume(
+                isAuthSpecificationError.and(e -> sslConfig.getSslMode() == SSLMode.PREFER),
+                e -> this.tryConnectWithConfig(sslConfig.mutateMode(SSLMode.DISABLE))
+                    .onErrorResume(sslAuthError -> {
+                        e.addSuppressed(sslAuthError);
+                        return Mono.error(e);
+                    })
+            )
             .flatMap(client -> {
-
                 DefaultCodecs codecs = new DefaultCodecs(client.getByteBufAllocator());
 
-                return getIsolationLevel(client, codecs).map(it -> {
-                    return new PostgresqlConnection(client, codecs, DefaultPortalNameSupplier.INSTANCE, new IndefiniteStatementCache(client), it,
-                        configuration.isForceBinary());
-                }).delayUntil(this::setSchema).onErrorResume(throwable -> {
-                    return closeWithError(client, throwable);
-                });
+                return this.getIsolationLevel(client, codecs)
+                    .map(it -> new PostgresqlConnection(client, codecs, DefaultPortalNameSupplier.INSTANCE, new IndefiniteStatementCache(client), it, configuration.isForceBinary()))
+                    .delayUntil(this::setSchema)
+                    .onErrorResume(throwable -> this.closeWithError(client, throwable));
             });
     }
 
+    private Mono<Client> tryConnectWithConfig(SSLConfig sslConfig) {
+        return this.clientFactory.apply(sslConfig)
+            .delayUntil(client -> StartupMessageFlow
+                .exchange(this.configuration.getApplicationName(), this::getAuthenticationHandler, client, this.configuration.getDatabase(), this.configuration.getUsername(),
+                    this.configuration.getOptions())
+                .handle(PostgresqlExceptionFactory::handleErrorResponse))
+            .cast(Client.class);
+    }
+
     private Mono<PostgresqlConnection> closeWithError(Client client, Throwable throwable) {
-        return client.close().then(Mono.error(new R2dbcNonTransientResourceException(String.format("Cannot connect to %s:%d", this.configuration.getHost(),
-            this.configuration.getPort()),
-            throwable)));
+        return client.close()
+            .then(Mono.error(new R2dbcNonTransientResourceException(
+                String.format("Cannot connect to %s:%d", this.configuration.getHost(), this.configuration.getPort()), throwable
+            )));
     }
 
     @Override
@@ -106,9 +131,11 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
 
     private AuthenticationHandler getAuthenticationHandler(AuthenticationMessage message) {
         if (PasswordAuthenticationHandler.supports(message)) {
-            return new PasswordAuthenticationHandler(this.configuration.getPassword(), this.configuration.getUsername());
+            String password = Assert.requireNonNull(this.configuration.getPassword(), "Password must not be null");
+            return new PasswordAuthenticationHandler(password, this.configuration.getUsername());
         } else if (SASLAuthenticationHandler.supports(message)) {
-            return new SASLAuthenticationHandler(this.configuration.getPassword(), this.configuration.getUsername());
+            String password = Assert.requireNonNull(this.configuration.getPassword(), "Password must not be null");
+            return new SASLAuthenticationHandler(password, this.configuration.getUsername());
         } else {
             throw new IllegalStateException(String.format("Unable to provide AuthenticationHandler capable of handling %s", message));
         }
