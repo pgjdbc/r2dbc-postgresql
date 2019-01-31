@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql;
 
+import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ColumnMetadata;
@@ -91,17 +92,18 @@ public final class PostgresqlRowMetadata implements RowMetadata {
             '}';
     }
 
-    static PostgresqlRowMetadata toRowMetadata(RowDescription rowDescription) {
+    static PostgresqlRowMetadata toRowMetadata(Codecs codecs, RowDescription rowDescription) {
+        Assert.requireNonNull(codecs, "codecs must not be null");
         Assert.requireNonNull(rowDescription, "rowDescription must not be null");
 
-        return new PostgresqlRowMetadata(getColumnMetadatas(rowDescription));
+        return new PostgresqlRowMetadata(getColumnMetadatas(codecs, rowDescription));
     }
 
-    private static List<PostgresqlColumnMetadata> getColumnMetadatas(RowDescription rowDescription) {
+    private static List<PostgresqlColumnMetadata> getColumnMetadatas(Codecs codecs, RowDescription rowDescription) {
         List<PostgresqlColumnMetadata> columnMetadatas = new ArrayList<>(rowDescription.getFields().size());
 
         for (RowDescription.Field field : rowDescription.getFields()) {
-            columnMetadatas.add(PostgresqlColumnMetadata.toColumnMetadata(field));
+            columnMetadatas.add(PostgresqlColumnMetadata.toColumnMetadata(codecs, field));
         }
 
         return columnMetadatas;

@@ -36,4 +36,6 @@ interface Codec<T> {
 
     Parameter encodeNull();
 
+    Class<?> type();
+
 }

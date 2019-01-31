@@ -73,4 +73,9 @@ final class EnumCodec implements Codec<Enum> {
     public Parameter encodeNull() {
         return this.delegate.encodeNull();
     }
+
+    @Override
+    public Class<?> type() {
+        return Enum.class;
+    }
 }
