@@ -1,14 +1,14 @@
 # Reactive Relational Database Connectivity PostgreSQL Implementation
 
-This project contains the [PostgreSQL][p] implementation of the [R2DBC SPI][r].  This implementation is not inteded to be used directly, but rather to be used as the backing implementation for a humane client library to delegate to.
+This project contains the [PostgreSQL][p] implementation of the [R2DBC SPI][r].  This implementation is not intended to be used directly, but rather to be used as the backing implementation for a humane client library to delegate to.
 
 This driver provides the following features:
 
-* Login with username/password or implict trust
+* Login with username/password or implicit trust
 * Explict transactions
 * Execution of prepared statements with bindings
 * Execution of batch statements without bindings
-* Read and write support for all data tyles except LOB types (e.g. `BLOB`, `CLOB`)
+* Read and write support for all data types except LOB types (e.g. `BLOB`, `CLOB`)
 
 Next steps:
 
@@ -84,7 +84,7 @@ Supported Connection Factory Discovery options:
 | `username` | Login username
 | `password` | Login password
 | `database` | Database to select. _(Optional)_
-| `applicationName` | The name of the application connecting to the datase.  Defaults to `r2dbc-postgresql`. _(Optional)_
+| `applicationName` | The name of the application connecting to the database.  Defaults to `r2dbc-postgresql`. _(Optional)_
 | `schema` | The schema to set. _(Optional)_
 
 ### Programmatic
