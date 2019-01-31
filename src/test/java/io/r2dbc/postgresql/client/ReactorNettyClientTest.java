@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql.client;
 
+import io.netty.channel.ConnectTimeoutException;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.postgresql.PostgresqlServerErrorException;
@@ -35,6 +36,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
@@ -146,6 +148,24 @@ final class ReactorNettyClientTest {
             .expectNext(new CommandComplete("SELECT", null, 1))
             .expectNext(new CommandComplete("SELECT", null, 1))
             .verifyComplete();
+    }
+
+    @Test
+    void timeoutTest() {
+        PostgresqlConnectionFactory postgresqlConnectionFactory = new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
+            .host("example.com")
+            .port(81)
+            .username("test")
+            .password("test")
+            .database(SERVER.getDatabase())
+            .applicationName(ReactorNettyClientTest.class.getName())
+            .connectTimeout(Duration.ofMillis(200))
+            .build());
+
+        postgresqlConnectionFactory.create()
+            .as(StepVerifier::create)
+            .expectError(ConnectTimeoutException.class)
+            .verify(Duration.ofMillis(500));
     }
 
     @Nested

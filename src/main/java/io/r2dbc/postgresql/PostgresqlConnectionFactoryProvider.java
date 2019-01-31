@@ -21,6 +21,7 @@ import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.ConnectionFactoryProvider;
 import io.r2dbc.spi.Option;
 
+import static io.r2dbc.spi.ConnectionFactoryOptions.CONNECT_TIMEOUT;
 import static io.r2dbc.spi.ConnectionFactoryOptions.DATABASE;
 import static io.r2dbc.spi.ConnectionFactoryOptions.HOST;
 import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
@@ -58,6 +59,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
             builder.applicationName(applicationName);
         }
 
+        builder.connectTimeout(connectionFactoryOptions.getValue(CONNECT_TIMEOUT));
         builder.database(connectionFactoryOptions.getValue(DATABASE));
         builder.host(connectionFactoryOptions.getRequiredValue(HOST));
         builder.password(connectionFactoryOptions.getRequiredValue(PASSWORD).toString());

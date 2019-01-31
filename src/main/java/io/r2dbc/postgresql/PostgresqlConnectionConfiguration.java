@@ -20,6 +20,8 @@ package io.r2dbc.postgresql;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
+import java.time.Duration;
+
 /**
  * Connection configuration information for connecting to a PostgreSQL database.
  */
@@ -31,6 +33,8 @@ public final class PostgresqlConnectionConfiguration {
     public static final int DEFAULT_PORT = 5432;
 
     private final String applicationName;
+
+    private final Duration connectTimeout;
 
     private final String database;
 
@@ -44,8 +48,11 @@ public final class PostgresqlConnectionConfiguration {
 
     private final String username;
 
-    private PostgresqlConnectionConfiguration(String applicationName, @Nullable String database, String host, String password, int port, @Nullable String schema, String username) {
+    private PostgresqlConnectionConfiguration(String applicationName, @Nullable Duration connectTimeout, @Nullable String database, String host, String password, int port, @Nullable String schema,
+                                              String username) {
+
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
+        this.connectTimeout = connectTimeout;
         this.database = database;
         this.host = Assert.requireNonNull(host, "host must not be null");
         this.password = Assert.requireNonNull(password, "password must not be null");
@@ -65,8 +72,9 @@ public final class PostgresqlConnectionConfiguration {
 
     @Override
     public String toString() {
-        return "PostgresConnectionConfiguration{" +
+        return "PostgresqlConnectionConfiguration{" +
             "applicationName='" + this.applicationName + '\'' +
+            ", connectTimeout=" + this.connectTimeout +
             ", database='" + this.database + '\'' +
             ", host='" + this.host + '\'' +
             ", password='" + this.password + '\'' +
@@ -78,6 +86,11 @@ public final class PostgresqlConnectionConfiguration {
 
     String getApplicationName() {
         return this.applicationName;
+    }
+
+    @Nullable
+    Duration getConnectTimeout() {
+        return this.connectTimeout;
     }
 
     @Nullable
@@ -115,6 +128,8 @@ public final class PostgresqlConnectionConfiguration {
 
         private String applicationName = "r2dbc-postgresql";
 
+        private Duration connectTimeout;
+
         private String database;
 
         private String host;
@@ -148,7 +163,12 @@ public final class PostgresqlConnectionConfiguration {
          * @return a configured {@link PostgresqlConnectionConfiguration}
          */
         public PostgresqlConnectionConfiguration build() {
-            return new PostgresqlConnectionConfiguration(this.applicationName, this.database, this.host, this.password, this.port, this.schema, this.username);
+            return new PostgresqlConnectionConfiguration(this.applicationName, this.connectTimeout, this.database, this.host, this.password, this.port, this.schema, this.username);
+        }
+
+        public Builder connectTimeout(@Nullable Duration connectTimeout) {
+            this.connectTimeout = connectTimeout;
+            return this;
         }
 
         /**
@@ -212,6 +232,7 @@ public final class PostgresqlConnectionConfiguration {
         public String toString() {
             return "Builder{" +
                 "applicationName='" + this.applicationName + '\'' +
+                ", connectTimeout='" + this.connectTimeout + '\'' +
                 ", database='" + this.database + '\'' +
                 ", host='" + this.host + '\'' +
                 ", password='" + this.password + '\'' +
