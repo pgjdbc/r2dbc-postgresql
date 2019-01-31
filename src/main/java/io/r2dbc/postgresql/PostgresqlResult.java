@@ -96,7 +96,7 @@ public final class PostgresqlResult implements Result {
             .cache();
 
         Mono<PostgresqlRowMetadata> rowMetadata = rowDescription
-            .map(PostgresqlRowMetadata::toRowMetadata);
+            .map(d -> PostgresqlRowMetadata.toRowMetadata(codecs, d));
 
         Flux<PostgresqlRow> rows = processor
             .startWith(firstMessages)

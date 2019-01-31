@@ -173,7 +173,11 @@ final class SimpleQueryPostgresqlStatementTest {
                 new CommandComplete("test", null, null))
             .build();
 
-        new SimpleQueryPostgresqlStatement(client, MockCodecs.empty(), "test-query")
+        MockCodecs codecs = MockCodecs.builder()
+            .preferredType(200, FORMAT_TEXT, String.class)
+            .build();
+
+        new SimpleQueryPostgresqlStatement(client, codecs, "test-query")
             .execute()
             .flatMap(result -> result.map((row, rowMetadata) -> row))
             .as(StepVerifier::create)

@@ -58,4 +58,15 @@ public interface Codecs {
      */
     Parameter encodeNull(Class<?> type);
 
+    /**
+     * Returns the preferred Java type for a given data type and format.
+     *
+     * @param dataType the data type fo the data
+     * @param format   the format of the data
+     * @return the preferred Java type for a given data type and format
+     * @throws IllegalArgumentException if {@code format} is {@code null}
+     */
+    @Nullable
+    Class<?> preferredType(int dataType, Format format);
+
 }

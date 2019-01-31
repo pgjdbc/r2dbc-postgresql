@@ -72,6 +72,11 @@ abstract class AbstractCodec<T> implements Codec<T> {
         return doEncode((T) value);
     }
 
+    @Override
+    public Class<?> type() {
+        return this.type;
+    }
+
     static Parameter create(Format format, PostgresqlObjectId type, @Nullable ByteBuf value) {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");

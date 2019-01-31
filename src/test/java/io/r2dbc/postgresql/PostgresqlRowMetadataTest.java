@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql;
 
+import io.r2dbc.postgresql.codec.MockCodecs;
 import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.postgresql.message.backend.RowDescription.Field;
 import org.junit.jupiter.api.Test;
@@ -31,8 +32,8 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 final class PostgresqlRowMetadataTest {
 
     private final List<PostgresqlColumnMetadata> columnMetadatas = Arrays.asList(
-        new PostgresqlColumnMetadata("test-name-1", (short) 100, 200),
-        new PostgresqlColumnMetadata("test-name-2", (short) 300, 400)
+        new PostgresqlColumnMetadata(Integer.class, "test-name-1", 200, (short) 100),
+        new PostgresqlColumnMetadata(String.class, "test-name-2", 400, (short) 300)
     );
 
     @Test
@@ -44,7 +45,7 @@ final class PostgresqlRowMetadataTest {
     @Test
     void getColumnMetadataIndex() {
         assertThat(new PostgresqlRowMetadata(this.columnMetadatas).getColumnMetadata(1))
-            .isEqualTo(new PostgresqlColumnMetadata("test-name-2", (short) 300, 400));
+            .isEqualTo(new PostgresqlColumnMetadata(String.class, "test-name-2", 400, (short) 300));
     }
 
     @Test
@@ -62,7 +63,7 @@ final class PostgresqlRowMetadataTest {
     @Test
     void getColumnMetadataName() {
         assertThat(new PostgresqlRowMetadata(this.columnMetadatas).getColumnMetadata("test-name-2"))
-            .isEqualTo(new PostgresqlColumnMetadata("test-name-2", (short) 300, 400));
+            .isEqualTo(new PostgresqlColumnMetadata(String.class, "test-name-2", 400, (short) 300));
     }
 
     @Test
@@ -86,15 +87,26 @@ final class PostgresqlRowMetadataTest {
 
     @Test
     void toRowMetadata() {
-        PostgresqlRowMetadata rowMetadata = PostgresqlRowMetadata.toRowMetadata(
+        MockCodecs codecs = MockCodecs.builder()
+            .preferredType(200, FORMAT_TEXT, String.class)
+            .build();
+
+        PostgresqlRowMetadata rowMetadata = PostgresqlRowMetadata.toRowMetadata(codecs,
             new RowDescription(Collections.singletonList(new Field((short) 100, 200, 300, (short) 400, FORMAT_TEXT, "test-name", 500))));
 
         assertThat(rowMetadata.getColumnMetadatas()).hasSize(1);
     }
 
     @Test
+    void toRowMetadataNoCodecs() {
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlRowMetadata.toRowMetadata(null,
+            new RowDescription(Collections.singletonList(new Field((short) 100, 200, 300, (short) 400, FORMAT_TEXT, "test-name", 500)))))
+            .withMessage("codecs must not be null");
+    }
+
+    @Test
     void toRowMetadataNoRowDescription() {
-        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlRowMetadata.toRowMetadata(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlRowMetadata.toRowMetadata(MockCodecs.empty(), null))
             .withMessage("rowDescription must not be null");
     }
 
