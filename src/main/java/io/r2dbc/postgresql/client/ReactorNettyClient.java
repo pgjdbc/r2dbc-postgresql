@@ -197,13 +197,13 @@ public final class ReactorNettyClient implements Client {
      * @param connectTimeout     connect timeout
      * @throws IllegalArgumentException if {@code host} is {@code null}
      */
-    // TODO deal with growing argument list
     public static Mono<ReactorNettyClient> connect(ConnectionProvider connectionProvider, String host, int port, @Nullable Duration connectTimeout) {
         Assert.requireNonNull(connectionProvider, "connectionProvider must not be null");
         Assert.requireNonNull(host, "host must not be null");
 
         TcpClient tcpClient = TcpClient.create(connectionProvider)
             .host(host).port(port);
+
         if (connectTimeout != null) {
             tcpClient = tcpClient.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Math.toIntExact(connectTimeout.toMillis()));
         }

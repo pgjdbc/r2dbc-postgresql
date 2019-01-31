@@ -53,24 +53,24 @@ final class PostgresqlConnectionConfigurationTest {
     void configuration() {
         PostgresqlConnectionConfiguration configuration = PostgresqlConnectionConfiguration.builder()
             .applicationName("test-application-name")
+            .connectTimeout(Duration.ofMillis(1000))
             .database("test-database")
             .host("test-host")
             .password("test-password")
             .port(100)
             .schema("test-schema")
             .username("test-username")
-            .connectTimeout(Duration.ofMillis(1000))
             .build();
 
         assertThat(configuration)
             .hasFieldOrPropertyWithValue("applicationName", "test-application-name")
+            .hasFieldOrPropertyWithValue("connectTimeout", Duration.ofMillis(1000))
             .hasFieldOrPropertyWithValue("database", "test-database")
             .hasFieldOrPropertyWithValue("host", "test-host")
             .hasFieldOrPropertyWithValue("password", "test-password")
             .hasFieldOrPropertyWithValue("port", 100)
             .hasFieldOrPropertyWithValue("schema", "test-schema")
-            .hasFieldOrPropertyWithValue("username", "test-username")
-            .hasFieldOrPropertyWithValue("connectTimeout", Duration.ofMillis(1000));
+            .hasFieldOrPropertyWithValue("username", "test-username");
     }
 
     @Test

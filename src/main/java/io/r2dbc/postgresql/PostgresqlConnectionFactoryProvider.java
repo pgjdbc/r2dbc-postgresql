@@ -59,13 +59,13 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
             builder.applicationName(applicationName);
         }
 
+        builder.connectTimeout(connectionFactoryOptions.getValue(CONNECT_TIMEOUT));
         builder.database(connectionFactoryOptions.getValue(DATABASE));
         builder.host(connectionFactoryOptions.getRequiredValue(HOST));
         builder.password(connectionFactoryOptions.getRequiredValue(PASSWORD).toString());
         builder.port(connectionFactoryOptions.getRequiredValue(PORT));
         builder.schema(connectionFactoryOptions.getValue(SCHEMA));
         builder.username(connectionFactoryOptions.getRequiredValue(USER));
-        builder.connectTimeout(connectionFactoryOptions.getValue(CONNECT_TIMEOUT));
 
         return new PostgresqlConnectionFactory(builder.build());
     }
