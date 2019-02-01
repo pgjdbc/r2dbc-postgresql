@@ -56,7 +56,9 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
         Assert.requireNonNull(byteBuf, "byteBuf must not be null");
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
-        Assert.requireArrayDimension(type, 1, "type must be an array with one dimension");
+        if ((Class<?>) type != Object.class) {
+            Assert.requireArrayDimension(type, 1, "type must be an array with one dimension");
+        }
 
         List<T> items = new ArrayList<>();
 

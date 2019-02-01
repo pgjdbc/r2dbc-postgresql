@@ -40,6 +40,15 @@ final class ShortArrayCodecTest {
     }
 
     @Test
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    void decodeObject() {
+        Codec codec = new ShortArrayCodec(TEST);
+
+        assertThat(codec.decode(TEST.buffer(4).writeShort(100).writeShort(200), FORMAT_BINARY, Object.class)).isEqualTo(new short[]{100, 200});
+        assertThat(codec.decode(ByteBufUtils.encode(TEST, "{100,200}"), FORMAT_TEXT, Object.class)).isEqualTo(new short[]{100, 200});
+    }
+
+    @Test
     void decodeItemNoByteBuf() {
         assertThatIllegalArgumentException().isThrownBy(() -> new ShortArrayCodec(TEST).decodeItem(null, FORMAT_TEXT, null))
             .withMessage("byteBuf must not be null");

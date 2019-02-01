@@ -40,6 +40,15 @@ final class LongArrayCodecTest {
     }
 
     @Test
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    void decodeObject() {
+        Codec codec = new LongArrayCodec(TEST);
+
+        assertThat(codec.decode(TEST.buffer(16).writeLong(100).writeLong(200), FORMAT_BINARY, Object.class)).isEqualTo(new long[]{100, 200});
+        assertThat(codec.decode(ByteBufUtils.encode(TEST, "{100,200}"), FORMAT_TEXT, Object.class)).isEqualTo(new long[]{100, 200});
+    }
+
+    @Test
     void decodeItemNoByteBuf() {
         assertThatIllegalArgumentException().isThrownBy(() -> new LongArrayCodec(TEST).decodeItem(null, FORMAT_TEXT, null))
             .withMessage("byteBuf must not be null");

@@ -44,6 +44,15 @@ final class StringArrayCodecTest {
     }
 
     @Test
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    void decodeObject() {
+        Codec codec = new StringArrayCodec(TEST);
+
+        assertThat(codec.decode(ByteBufUtils.encode(TEST, "{alpha,bravo}"), FORMAT_TEXT, Object.class))
+            .isEqualTo(new String[]{"alpha", "bravo"});
+    }
+
+    @Test
     void decodeItemNoByteBuf() {
         assertThatIllegalArgumentException().isThrownBy(() -> new StringArrayCodec(TEST).decodeItem(null, FORMAT_TEXT, null))
             .withMessage("byteBuf must not be null");
