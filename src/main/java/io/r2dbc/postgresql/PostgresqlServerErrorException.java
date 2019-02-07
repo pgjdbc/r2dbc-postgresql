@@ -53,6 +53,7 @@ import static io.r2dbc.postgresql.message.backend.Field.FieldType.WHERE;
  * An exception that represents a server error.  This exception is a direct translation of the {@link ErrorResponse} message.
  */
 public class PostgresqlServerErrorException extends R2dbcException {
+    private static final String AUTH_EXCEPTION_CODE = "28P01";
 
     private final String code;
 
@@ -347,11 +348,27 @@ public class PostgresqlServerErrorException extends R2dbcException {
     }
 
     static void handleErrorResponse(BackendMessage message, SynchronousSink<BackendMessage> sink) {
-        if (message instanceof ErrorResponse) {
-            sink.error(PostgresqlServerErrorException.toException((ErrorResponse) message));
-        } else {
+        if (!(message instanceof ErrorResponse)) {
             sink.next(message);
+            return;
         }
+
+        final ErrorResponse error = (ErrorResponse) message;
+
+        final boolean isAuthError = error.getFields()
+            .stream()
+            .filter(field ->
+                CODE.equals(field.getType()) &&
+                AUTH_EXCEPTION_CODE.equals(field.getValue())
+            ).findFirst()
+            .isPresent();
+
+        if (isAuthError) {
+            sink.error(new PostgresqlAuthenticationFailure(error.getFields()));
+            return;
+        }
+
+        sink.error(PostgresqlServerErrorException.toException((ErrorResponse) message));
     }
 
     private static Map<FieldType, String> convertToMap(List<Field> fields) {
