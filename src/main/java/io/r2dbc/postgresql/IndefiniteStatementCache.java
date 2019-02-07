@@ -65,7 +65,7 @@ final class IndefiniteStatementCache implements StatementCache {
 
         return ExtendedQueryMessageFlow
             .parse(this.client, name, sql, types)
-            .handle(PostgresqlServerErrorException::handleErrorResponse)
+            .handle(PostgresqlExceptionFactory::handleErrorResponse)
             .then(Mono.just(name))
             .cache();
     }

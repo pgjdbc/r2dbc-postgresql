@@ -62,7 +62,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
             .delayUntil(client ->
                 StartupMessageFlow
                     .exchange(this.configuration.getApplicationName(), this::getAuthenticationHandler, client, this.configuration.getDatabase(), this.configuration.getUsername())
-                    .handle(PostgresqlServerErrorException::handleErrorResponse))
+                    .handle(PostgresqlExceptionFactory::handleErrorResponse))
             .map(client -> new PostgresqlConnection(client, new DefaultCodecs(client.getByteBufAllocator()), DefaultPortalNameSupplier.INSTANCE, new IndefiniteStatementCache(client)))
             .delayUntil(this::setSchema);
     }
