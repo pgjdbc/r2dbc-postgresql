@@ -353,9 +353,9 @@ public class PostgresqlServerErrorException extends R2dbcException {
             return;
         }
 
-        final ErrorResponse error = (ErrorResponse) message;
+        ErrorResponse error = (ErrorResponse) message;
 
-        final boolean isAuthError = error.getFields()
+        boolean isAuthError = error.getFields()
             .stream()
             .filter(field ->
                 CODE.equals(field.getType()) &&

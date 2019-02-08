@@ -31,7 +31,7 @@ public final class PostgresqlAuthenticationFailure extends PostgresqlServerError
      * @param fields the fields to be used to populate the exception
      * @throws IllegalArgumentException if {@code fields} is {@code null}
      */
-    public PostgresqlAuthenticationFailure(final List<Field> fields) {
+    public PostgresqlAuthenticationFailure(List<Field> fields) {
         super(fields);
     }
 
