@@ -33,13 +33,13 @@ import static io.r2dbc.spi.ConnectionFactoryOptions.PORT;
 import static io.r2dbc.spi.ConnectionFactoryOptions.USER;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-public class PostgresqlAuthenticationFailureTest {
+final class PostgresqlAuthenticationFailureTest {
 
     @RegisterExtension
-    static final PostgresqlServerExtension SERVER = new PostgresqlServerExtension();
+    private static final PostgresqlServerExtension SERVER = new PostgresqlServerExtension();
 
     @Test
-    public void authExceptionCausedByWrongCredentials() {
+    void authExceptionCausedByWrongCredentials() {
         final ConnectionFactory connectionFactory = ConnectionFactories.get(ConnectionFactoryOptions.builder()
             .option(DRIVER, POSTGRESQL_DRIVER)
             .option(DATABASE, SERVER.getDatabase())
