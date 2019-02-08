@@ -71,7 +71,10 @@ ConnectionFactory connectionFactory = ConnectionFactories.get(ConnectionFactoryO
    .option(DATABASE, "...")  // optional
    .build());
 
-Mono<Connection> connection = connectionFactory.create();
+Publisher<? extends Connection> connectionPublisher = connectionFactory.create();
+
+// Alternative: Creating a Mono using Project Reactor
+Mono<Connection> connectionMono = Mono.from(connectionFactory.create());
 ```
 
 Supported Connection Factory Discovery options:
