@@ -1,0 +1,41 @@
+R2DBC PostgreSQL Changelog
+=============================
+
+1.0.0.M7
+------------------
+* Update changelong for M7 #73
+* ConnectionFactory Discovery #66
+* Improved ColumnMetadata #64
+* SCRAM authentication #63
+* Reinstated generated value retrieval #60
+* Documentation improvements #57, #68
+* ConnectionTimeout Configuration #56
+* Multi-dimensional array support #53
+* Nullability enforcement returns accurate exception #51
+* Support multiline queries #50
+* BackendMessageDecoder memory leak #49
+* Support for BPCHAR #47
+* Array type construction #40
+* Configure a schema #37
+* Improve support for multiple authentication mechanisms #19
+* More Stream removal #12
+
+1.0.0.M6
+------------------
+* Initial array codecs
+* Quick connection close #33
+* Handle authentication error when creating. onnections #30
+* Complete subscribers when channel is unregistered #29
+* Pipelined requests #28
+* Additional boolean text options #27
+* Type OID issues #25
+* More stream removal #24, #32
+* Propagage mapping error upstream #17
+
+1.0.0.M4
+------------------
+* Decode VARCHAR properly #9
+* Decode best-effort Object.class #8
+* Reduce Stream Usage #5
+* Initialize PostgresqlServerException with reason and SQL state #4
+* Upgrade to Reactor Californium #1
