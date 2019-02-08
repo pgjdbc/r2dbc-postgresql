@@ -23,6 +23,7 @@ import io.r2dbc.spi.Option;
 
 import static io.r2dbc.spi.ConnectionFactoryOptions.CONNECT_TIMEOUT;
 import static io.r2dbc.spi.ConnectionFactoryOptions.DATABASE;
+import static io.r2dbc.spi.ConnectionFactoryOptions.DRIVER;
 import static io.r2dbc.spi.ConnectionFactoryOptions.HOST;
 import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
 import static io.r2dbc.spi.ConnectionFactoryOptions.PORT;
@@ -74,7 +75,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public boolean supports(ConnectionFactoryOptions connectionFactoryOptions) {
         Assert.requireNonNull(connectionFactoryOptions, "connectionFactoryOptions must not be null");
 
-        String driver = connectionFactoryOptions.getValue(ConnectionFactoryOptions.DRIVER);
+        String driver = connectionFactoryOptions.getValue(DRIVER);
         if (driver == null || !driver.equals(POSTGRESQL_DRIVER)) {
             return false;
         }
