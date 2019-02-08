@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * An exception that represents a authentication error.
  */
-public class PostgresqlAuthenticationFailure extends PostgresqlServerErrorException {
+public final class PostgresqlAuthenticationFailure extends PostgresqlServerErrorException {
 
     /**
      * Creates a new exception.
