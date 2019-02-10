@@ -53,8 +53,6 @@ import static io.r2dbc.postgresql.message.backend.Field.FieldType.WHERE;
  * An exception that represents a server error.  This exception is a direct translation of the {@link ErrorResponse} message.
  */
 public class PostgresqlServerErrorException extends R2dbcException {
-    private static final String AUTH_EXCEPTION_CODE = "28P01";
-
     private final String code;
 
     private final String columnName;
@@ -347,28 +345,10 @@ public class PostgresqlServerErrorException extends R2dbcException {
             "} " + super.toString();
     }
 
-    static void handleErrorResponse(BackendMessage message, SynchronousSink<BackendMessage> sink) {
-        if (!(message instanceof ErrorResponse)) {
-            sink.next(message);
-            return;
-        }
+    static PostgresqlServerErrorException toException(ErrorResponse errorResponse) {
+        Assert.requireNonNull(errorResponse, "errorResponse must not be null");
 
-        ErrorResponse error = (ErrorResponse) message;
-
-        boolean isAuthError = error.getFields()
-            .stream()
-            .filter(field ->
-                CODE.equals(field.getType()) &&
-                AUTH_EXCEPTION_CODE.equals(field.getValue())
-            ).findFirst()
-            .isPresent();
-
-        if (isAuthError) {
-            sink.error(new PostgresqlAuthenticationFailure(error.getFields()));
-            return;
-        }
-
-        sink.error(PostgresqlServerErrorException.toException((ErrorResponse) message));
+        return new PostgresqlServerErrorException(errorResponse.getFields());
     }
 
     private static Map<FieldType, String> convertToMap(List<Field> fields) {
@@ -379,12 +359,6 @@ public class PostgresqlServerErrorException extends R2dbcException {
             fieldMap.put(field.getType(), field.getValue());
         }
         return fieldMap;
-    }
-
-    private static PostgresqlServerErrorException toException(ErrorResponse errorResponse) {
-        Assert.requireNonNull(errorResponse, "errorResponse must not be null");
-
-        return new PostgresqlServerErrorException(errorResponse.getFields());
     }
 
 }
