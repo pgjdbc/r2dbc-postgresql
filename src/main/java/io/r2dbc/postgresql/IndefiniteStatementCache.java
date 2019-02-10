@@ -19,6 +19,7 @@ package io.r2dbc.postgresql;
 import io.r2dbc.postgresql.client.Binding;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.ExtendedQueryMessageFlow;
+import io.r2dbc.postgresql.exception.PostgresqlExceptionFactory;
 import io.r2dbc.postgresql.exception.PostgresqlServerErrorException;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Mono;
@@ -66,7 +67,7 @@ final class IndefiniteStatementCache implements StatementCache {
 
         return ExtendedQueryMessageFlow
             .parse(this.client, name, sql, types)
-            .handle(PostgresqlServerErrorException::handleErrorResponse)
+            .handle(PostgresqlExceptionFactory::handleErrorResponse)
             .then(Mono.just(name))
             .cache();
     }

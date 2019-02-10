@@ -23,6 +23,7 @@ import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.ReactorNettyClient;
 import io.r2dbc.postgresql.client.StartupMessageFlow;
 import io.r2dbc.postgresql.codec.DefaultCodecs;
+import io.r2dbc.postgresql.exception.PostgresqlExceptionFactory;
 import io.r2dbc.postgresql.exception.PostgresqlServerErrorException;
 import io.r2dbc.postgresql.message.backend.AuthenticationMessage;
 import io.r2dbc.postgresql.util.Assert;
@@ -63,7 +64,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
             .delayUntil(client ->
                 StartupMessageFlow
                     .exchange(this.configuration.getApplicationName(), this::getAuthenticationHandler, client, this.configuration.getDatabase(), this.configuration.getUsername())
-                    .handle(PostgresqlServerErrorException::handleErrorResponse))
+                    .handle(PostgresqlExceptionFactory::handleErrorResponse))
             .map(client -> new PostgresqlConnection(client, new DefaultCodecs(client.getByteBufAllocator()), DefaultPortalNameSupplier.INSTANCE, new IndefiniteStatementCache(client)))
             .delayUntil(this::setSchema);
     }
