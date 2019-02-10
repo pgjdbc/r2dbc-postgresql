@@ -16,7 +16,9 @@
 
 package io.r2dbc.postgresql.exception;
 
+import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.Field;
+import io.r2dbc.postgresql.util.Assert;
 
 import java.util.List;
 
@@ -38,5 +40,11 @@ public final class PostgresqlAuthenticationFailure extends PostgresqlServerError
     @Override
     public String toString() {
         return "PostgresqlAuthenticationFailure: " + getMessage();
+    }
+
+    static PostgresqlAuthenticationFailure toException(ErrorResponse errorResponse) {
+        Assert.requireNonNull(errorResponse, "errorResponse must not be null");
+
+        return new PostgresqlAuthenticationFailure(errorResponse.getFields());
     }
 }
