@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.r2dbc.postgresql;
+package io.r2dbc.postgresql.exception;
 
 import io.r2dbc.postgresql.message.backend.Field;
 

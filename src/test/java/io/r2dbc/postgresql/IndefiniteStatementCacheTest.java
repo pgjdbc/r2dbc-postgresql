@@ -20,6 +20,7 @@ import io.r2dbc.postgresql.client.Binding;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.client.TestClient;
+import io.r2dbc.postgresql.exception.PostgresqlServerErrorException;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.ParseComplete;
 import io.r2dbc.postgresql.message.frontend.Describe;
