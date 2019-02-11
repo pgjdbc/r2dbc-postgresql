@@ -109,9 +109,10 @@ final class PostgresqlBatchTest {
         new PostgresqlBatch(client, MockCodecs.empty())
             .add("test-query")
             .execute()
+            .flatMap(result -> result.map((row, rowMetadata) -> row))
             .as(StepVerifier::create)
-            .expectNextCount(1)
-            .verifyComplete();
+            .expectNextCount(0)
+            .verifyError(PostgresqlServerErrorException.class);
     }
 
 }
