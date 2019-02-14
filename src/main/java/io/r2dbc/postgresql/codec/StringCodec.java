@@ -52,7 +52,7 @@ final class StringCodec extends AbstractCodec<String> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return FORMAT_TEXT == format && (BPCHAR == type || CHAR == type || TEXT == type || UNKNOWN == type || VARCHAR == type);
+        return (BPCHAR == type || CHAR == type || TEXT == type || UNKNOWN == type || VARCHAR == type);
     }
 
     @Override

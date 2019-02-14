@@ -24,10 +24,12 @@ import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.core.publisher.Flux;
+import java.time.ZoneOffset;
 import reactor.util.annotation.Nullable;
 
 import java.time.OffsetDateTime;
 
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMPTZ;
 
@@ -50,12 +52,16 @@ final class OffsetDateTimeCodec extends AbstractCodec<OffsetDateTime> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return FORMAT_TEXT == format && TIMESTAMPTZ == type;
+        return TIMESTAMPTZ == type;
     }
 
     @Override
     OffsetDateTime doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends OffsetDateTime> type) {
         Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+
+        if (FORMAT_BINARY == format) {
+            return EpochTime.fromLong(byteBuf.readLong()).toInstant().atOffset(OffsetDateTime.now().getOffset());
+        }
 
         return PostgresqlDateTimeFormatter.INSTANCE.parse(ByteBufUtils.decode(byteBuf), OffsetDateTime::from);
     }

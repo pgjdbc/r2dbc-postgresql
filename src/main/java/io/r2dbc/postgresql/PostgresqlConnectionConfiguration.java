@@ -48,8 +48,10 @@ public final class PostgresqlConnectionConfiguration {
 
     private final String username;
 
+    private final boolean forceBinary;
+
     private PostgresqlConnectionConfiguration(String applicationName, @Nullable Duration connectTimeout, @Nullable String database, String host, String password, int port, @Nullable String schema,
-                                              String username) {
+                                              String username, boolean forceBinary) {
 
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
         this.connectTimeout = connectTimeout;
@@ -59,6 +61,7 @@ public final class PostgresqlConnectionConfiguration {
         this.port = port;
         this.schema = schema;
         this.username = Assert.requireNonNull(username, "username must not be null");
+        this.forceBinary = forceBinary;
     }
 
     /**
@@ -81,6 +84,7 @@ public final class PostgresqlConnectionConfiguration {
             ", port=" + this.port +
             ", schema='" + this.schema + '\'' +
             ", username='" + this.username + '\'' +
+            ", forceBinary='" + this.forceBinary + '\'' +
             '}';
     }
 
@@ -119,6 +123,10 @@ public final class PostgresqlConnectionConfiguration {
         return this.username;
     }
 
+    boolean isForceBinary() {
+        return this.forceBinary;
+    }
+
     /**
      * A builder for {@link PostgresqlConnectionConfiguration} instances.
      * <p>
@@ -142,6 +150,8 @@ public final class PostgresqlConnectionConfiguration {
 
         private String username;
 
+        private boolean forceBinary = false;
+
         private Builder() {
         }
 
@@ -163,7 +173,7 @@ public final class PostgresqlConnectionConfiguration {
          * @return a configured {@link PostgresqlConnectionConfiguration}
          */
         public PostgresqlConnectionConfiguration build() {
-            return new PostgresqlConnectionConfiguration(this.applicationName, this.connectTimeout, this.database, this.host, this.password, this.port, this.schema, this.username);
+            return new PostgresqlConnectionConfiguration(this.applicationName, this.connectTimeout, this.database, this.host, this.password, this.port, this.schema, this.username, this.forceBinary);
         }
 
         public Builder connectTimeout(@Nullable Duration connectTimeout) {
@@ -228,6 +238,17 @@ public final class PostgresqlConnectionConfiguration {
             return this;
         }
 
+        /**
+         * Force binary results (<a href="https://wiki.postgresql.org/wiki/JDBC-BinaryTransfer">Binary Transfer</a>). Defaults to false
+         *
+         * @param forceBinary
+         * @return this {@link Builder}
+         */
+        public Builder forceBinary(boolean forceBinary) {
+            this.forceBinary = forceBinary;
+            return this;
+        }
+
         @Override
         public String toString() {
             return "Builder{" +
@@ -239,6 +260,7 @@ public final class PostgresqlConnectionConfiguration {
                 ", port=" + this.port +
                 ", schema='" + this.schema + '\'' +
                 ", username='" + this.username + '\'' +
+                ", forceBinary='" + this.forceBinary + '\'' +
                 '}';
         }
 
