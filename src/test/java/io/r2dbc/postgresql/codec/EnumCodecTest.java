@@ -58,7 +58,7 @@ final class EnumCodecTest {
     void doCanDecode() {
         EnumCodec codec = new EnumCodec(TEST);
 
-        assertThat(codec.canDecode(VARCHAR.getObjectId(), FORMAT_BINARY, TimeUnit.class)).isFalse();
+        assertThat(codec.canDecode(VARCHAR.getObjectId(), FORMAT_BINARY, TimeUnit.class)).isTrue();
         assertThat(codec.canDecode(MONEY.getObjectId(), FORMAT_TEXT, TimeUnit.class)).isFalse();
         assertThat(codec.canDecode(BPCHAR.getObjectId(), FORMAT_TEXT, TimeUnit.class)).isTrue();
         assertThat(codec.canDecode(VARCHAR.getObjectId(), FORMAT_TEXT, TimeUnit.class)).isTrue();

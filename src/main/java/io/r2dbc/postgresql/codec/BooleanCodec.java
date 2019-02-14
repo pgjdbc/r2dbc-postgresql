@@ -47,12 +47,16 @@ final class BooleanCodec extends AbstractCodec<Boolean> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return FORMAT_TEXT == format && BOOL == type;
+        return BOOL == type;
     }
 
     @Override
     Boolean doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends Boolean> type) {
         Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+
+        if (format == Format.FORMAT_BINARY) {
+            return byteBuf.readBoolean();
+        }
 
         String decoded = ByteBufUtils.decode(byteBuf);
         return "1".equals(decoded)
