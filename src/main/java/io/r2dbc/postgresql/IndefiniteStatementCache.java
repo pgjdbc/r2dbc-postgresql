@@ -19,8 +19,6 @@ package io.r2dbc.postgresql;
 import io.r2dbc.postgresql.client.Binding;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.ExtendedQueryMessageFlow;
-import io.r2dbc.postgresql.exception.PostgresqlExceptionFactory;
-import io.r2dbc.postgresql.exception.PostgresqlServerErrorException;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;

@@ -16,7 +16,6 @@
 
 package io.r2dbc.postgresql;
 
-import io.r2dbc.postgresql.exception.PostgresqlAuthenticationFailure;
 import io.r2dbc.postgresql.message.backend.Field;
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
 import io.r2dbc.spi.ConnectionFactories;

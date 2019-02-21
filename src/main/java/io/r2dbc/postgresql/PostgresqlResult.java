@@ -17,8 +17,6 @@
 package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.codec.Codecs;
-import io.r2dbc.postgresql.exception.PostgresqlExceptionFactory;
-import io.r2dbc.postgresql.exception.PostgresqlServerErrorException;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.DataRow;

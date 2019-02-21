@@ -19,7 +19,7 @@ package io.r2dbc.postgresql.client;
 import io.netty.channel.ConnectTimeoutException;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
-import io.r2dbc.postgresql.exception.PostgresqlServerErrorException;
+import io.r2dbc.postgresql.PostgresqlServerErrorException;
 import io.r2dbc.postgresql.authentication.PasswordAuthenticationHandler;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.DataRow;

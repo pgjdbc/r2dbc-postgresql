@@ -23,8 +23,6 @@ import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.ReactorNettyClient;
 import io.r2dbc.postgresql.client.StartupMessageFlow;
 import io.r2dbc.postgresql.codec.DefaultCodecs;
-import io.r2dbc.postgresql.exception.PostgresqlExceptionFactory;
-import io.r2dbc.postgresql.exception.PostgresqlServerErrorException;
 import io.r2dbc.postgresql.message.backend.AuthenticationMessage;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ConnectionFactory;

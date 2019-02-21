@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package io.r2dbc.postgresql.exception;
+package io.r2dbc.postgresql;
 
-import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.Field;
 import io.r2dbc.postgresql.message.backend.Field.FieldType;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.R2dbcException;
-import reactor.core.publisher.SynchronousSink;
 
 import java.util.HashMap;
 import java.util.List;
