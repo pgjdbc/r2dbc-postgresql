@@ -58,7 +58,7 @@ final class UuidCodecTest {
 
         assertThat(codec.doCanDecode(FORMAT_TEXT, PostgresqlObjectId.UUID)).isTrue();
         assertThat(codec.doCanDecode(FORMAT_BINARY, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_BINARY, PostgresqlObjectId.UUID)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, PostgresqlObjectId.UUID)).isTrue();
     }
 
     @Test

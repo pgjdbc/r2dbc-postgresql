@@ -56,7 +56,7 @@ final class BigDecimalCodecTest {
     void doCanDecode() {
         BigDecimalCodec codec = new BigDecimalCodec(TEST);
 
-        assertThat(codec.doCanDecode(FORMAT_BINARY, NUMERIC)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, NUMERIC)).isTrue();
         assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
         assertThat(codec.doCanDecode(FORMAT_TEXT, NUMERIC)).isTrue();
     }

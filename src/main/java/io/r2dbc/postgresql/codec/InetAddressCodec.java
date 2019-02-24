@@ -51,7 +51,7 @@ final class InetAddressCodec extends AbstractCodec<InetAddress> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return FORMAT_TEXT == format && (BPCHAR == type || VARCHAR == type);
+        return (BPCHAR == type || VARCHAR == type);
     }
 
     @Override

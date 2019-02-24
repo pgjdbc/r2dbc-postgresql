@@ -60,9 +60,13 @@ final class CodecBinaryFormatIntegrationTest {
     private final PostgresqlConnectionFactory connectionFactory = new PostgresqlConnectionFactory(this.configuration);
 
     @Test
-    @Disabled("not implemented yet")
     void bigDecimal() {
-        testCodec(BigDecimal.class, new BigDecimal("1000.0"), "NUMERIC");
+        testCodec(BigDecimal.class, new BigDecimal("1000.00"), "NUMERIC");
+        testCodec(BigDecimal.class, new BigDecimal("-1"), "NUMERIC");
+        testCodec(BigDecimal.class, new BigDecimal("10000.0000023"), "NUMERIC");
+        testCodec(BigDecimal.class, new BigDecimal("10010.1200023"), "NUMERIC");
+        testCodec(BigDecimal.class, new BigDecimal("2000010010.1200023"), "NUMERIC");
+        testCodec(BigDecimal.class, new BigDecimal("0"), "NUMERIC");
     }
 
     @Test
@@ -104,7 +108,6 @@ final class CodecBinaryFormatIntegrationTest {
     }
 
     @Test
-    @Disabled("not implemented yet")
     void inetAddress() throws UnknownHostException {
         testCodec(InetAddress.class, InetAddress.getLocalHost(), "BPCHAR(128)");
         testCodec(InetAddress.class, InetAddress.getLocalHost(), "VARCHAR(128)");
@@ -199,7 +202,6 @@ final class CodecBinaryFormatIntegrationTest {
     }
 
     @Test
-    @Disabled("not implemented yet")
     void uuid() {
         testCodec(UUID.class, UUID.randomUUID(), "UUID");
     }
