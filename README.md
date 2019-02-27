@@ -121,6 +121,111 @@ connection
 
 Binding also allowed positional index (zero-based) references.  The parameter index is derived from the parameter discovery order when parsing the query.
 
+
+## Data Type Mapping
+
+This reference table shows the type mapping between [PostgreSQL][p] and Java data types:
+
+| PostgreSQL Type                                | Supported Data Type                                                                                                                           | 
+|:-----------------------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------|
+| [`bigint`][psql-bigint-ref]                    | [**`Long`**][java-long-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Integer`][java-integer-ref] |
+| [`bit`][psql-bit-ref]                          | Not yet supported.|
+| [`bit varying`][psql-bit-ref]                  | Not yet supported.|
+| [`boolean or bool`][psql-boolean-ref]          | [`Boolean`][java-boolean-ref]|
+| [`box`][psql-box-ref]                          | Not yet supported.|
+| [`bytea`][psql-bytea-ref]                      | Not yet supported.|
+| [`character`][psql-character-ref]              | [`String`][java-string-ref]|
+| [`character varying`][psql-character-ref]      | [`String[]`][java-string-ref]|
+| [`cidr`] [psql-cidr-ref]                       | Not yet supported.|
+| [`circle`][psql-circle-ref]                    | Not yet supported.|
+| [`date`][psql-date-ref]                        | [`LocalDate`][java-ld-ref]|
+| [`double precision`][psql-floating-point-ref]  | [**`Double`**][java-double-ref], [`Float`][java-float-ref]|
+| [`inet`][psql-inet-ref]                        | [**`InetAddress`**][java-inet-ref]|
+| [`integer`][psql-integer-ref]                  | [**`Integer`**][java-integer-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Long`][java-long-ref]|
+| [`interval`][psql-interval-ref]                | Not yet supported.|
+| [`json`][psql-json-ref]                        | Not yet supported.|
+| [`line`][psql-line-ref]                        | Not yet supported.|
+| [`lseg`][psql-lseq-ref]                        | Not yet supported.|
+| [`macaddr`][psql-macaddr-ref]                  | Not yet supported.|
+| [`macaddr8`][psql-macaddr8-ref]                | Not yet supported.|
+| [`money`][psql-money-ref]                      | Not yet supported.|
+| [`numeric`][psql-bignumeric-ref]               | [`BigDecimal`][java-bigdecimal-ref]|
+| [`path`][psql-path-ref]                        | Not yet supported.|
+| [`pg_lsn`][psql-pg_lsn-ref]                    | Not yet supported.|
+| [`point`][psql-point-ref]                      | Not yet supported.|
+| [`polygon`][psql-polygon-ref]                  | Not yet supported.|
+| [`real`][psql-real-ref]                        | [**`Float`**][java-float-ref], [`Double`][java-double-ref]|
+| [`smallint`][psql-smallint-ref]                | [**`Short`**][java-short-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Integer`][java-integer-ref], [`Long`][java-long-ref]|
+| [`smallserial`][psql-smallserial-ref]          | Not yet supported.|
+| [`serial`][psql-serial-ref]                    | Not yet supported.|
+| [`text`][psql-text-ref]                        | [`String[]`][java-string-ref]|
+| [`time [without time zone]`][psql-time-ref]    | [`LocalTime`][java-lt-ref]|
+| [`time [with time zone]`][psql-time-ref]       | [`LocalTime`][java-lt-ref]|
+| [`timestamp [without time zone]`][psql-time-ref]|[`LocalDateTime`][java-ldt-ref]|
+| [`timestamp [with time zone]`][psql-time-ref]  |[`ZonedDateTime`][java-zdt-ref]|
+| [`tsquery`][psql-tsquery-ref]                  | Not yet supported.|
+| [`tsvector`][psql-tsvector-ref]                | Not yet supported.|
+| [`txid_snapshot`][psql-txid_snapshot-ref]      | Not yet supported.|
+| [`uuid`][psql-uuid-ref]                        | [**`UUID`**][java-uuid-ref], [`String`][java-string-ref]||
+| [`xml`][psql-xml-ref]                          | Not yet supported. |
+
+Types in **bold** indicate the native (default) Java type.
+
+[psql-bigint-ref]: https://www.postgresql.org/docs/11/datatype-numeric.html#DATATYPE-INT
+[psql-bit-ref]: https://www.postgresql.org/docs/11/datatype-numeric.html
+[psql-boolean-ref]: https://www.postgresql.org/docs/11/datatype-boolean.html
+[psql-box-ref]: https://www.postgresql.org/docs/11/datatype-geometric.html#id-1.5.7.16.8
+[psql-bytea-ref]: https://www.postgresql.org/docs/11/datatype-binary.html#id-1.5.7.12.9
+[psql-character-ref]: https://www.postgresql.org/docs/11/datatype-character.html
+[psql-cidr-ref]: https://www.postgresql.org/docs/11/datatype-net-types.html#DATATYPE-CIDR
+[psql-circle-ref]: https://www.postgresql.org/docs/11/datatype-geometric.html#DATATYPE-CIRCLE
+[psql-date-ref]: https://www.postgresql.org/docs/11/datatype-datetime.html
+[psql-floating-point-ref]: https://www.postgresql.org/docs/11/datatype-numeric.html#DATATYPE-FLOAT
+[psql-inet-ref]: https://www.postgresql.org/docs/11/datatype-net-types.html#DATATYPE-INET
+[psql-integer-ref]: https://www.postgresql.org/docs/11/datatype-numeric.html#DATATYPE-INT
+[psql-interval-ref]: https://www.postgresql.org/docs/11/datatype-datetime.html#DATATYPE-INTERVAL-INPUT
+[psql-json-ref]: https://www.postgresql.org/docs/11/datatype-json.html
+[psql-line-ref]: https://www.postgresql.org/docs/11/datatype-geometric.html#DATATYPE-LINE
+[psql-lseq-ref]: https://www.postgresql.org/docs/11/datatype-geometric.html#DATATYPE-LINE
+[psql-bignumeric-ref]: https://www.postgresql.org/docs/11/datatype-numeric.html#DATATYPE-NUMERIC-DECIMAL
+[psql-macaddr-ref]: https://www.postgresql.org/docs/11/datatype-net-types.html#DATATYPE-MACADDR
+[psql-macaddr8-ref]: https://www.postgresql.org/docs/11/datatype-net-types.html#DATATYPE-MACADDR8
+[psql-money-ref]: https://www.postgresql.org/docs/11/datatype.html
+[psql-path-ref]: https://www.postgresql.org/docs/11/datatype-geometric.html#id-1.5.7.16.9
+[psql-pg_lsn-ref]: https://www.postgresql.org/docs/11/datatype-pg-lsn.html
+[psql-point-ref]: https://www.postgresql.org/docs/11/datatype-geometric.html#id-1.5.7.16.5
+[psql-polygon-ref]: https://www.postgresql.org/docs/11/datatype-geometric.html#DATATYPE-POLYGON
+[psql-real-ref]: https://www.postgresql.org/docs/11/datatype.html
+[psql-smallint-ref]: https://www.postgresql.org/docs/11/datatype.html
+[psql-smallserial-ref]: https://www.postgresql.org/docs/11/datatype-numeric.html#DATATYPE-SERIAL
+[psql-serial-ref]: https://www.postgresql.org/docs/11/datatype-numeric.html#DATATYPE-SERIAL
+[psql-text-ref]: https://www.postgresql.org/docs/11/datatype.html
+[psql-time-ref]: https://www.postgresql.org/docs/11/datatype-datetime.html
+[psql-tsquery-ref]: https://www.postgresql.org/docs/11/datatype-textsearch.html#DATATYPE-TSQUERY
+[psql-tsvector-ref]: https://www.postgresql.org/docs/11/datatype-textsearch.html#DATATYPE-TSVECTOR
+[psql-txid_snapshot-ref]: https://www.postgresql.org/docs/11/datatype.html
+[psql-uuid-ref]: https://www.postgresql.org/docs/11/datatype-uuid.html
+[psql-xml-ref]: https://www.postgresql.org/docs/11/datatype-xml.html
+
+
+[java-bigdecimal-ref]: https://docs.oracle.com/javase/8/docs/api/java/math/BigDecimal.html
+[java-boolean-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/Boolean.html
+[java-byte-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/Byte.html
+[java-double-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/Double.html
+[java-float-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/Float.html
+[java-inet-ref]: https://docs.oracle.com/javase/7/docs/api/java/net/InetAddress.html
+[java-instant-ref]: https://docs.oracle.com/javase/8/docs/api/java/time/Instant.html
+[java-integer-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/Integer.html
+[java-long-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/Long.html
+[java-ldt-ref]: https://docs.oracle.com/javase/8/docs/api/java/time/LocalDateTime.html
+[java-ld-ref]: https://docs.oracle.com/javase/8/docs/api/java/time/LocalDate.html
+[java-lt-ref]: https://docs.oracle.com/javase/8/docs/api/java/time/LocalTime.html
+[java-odt-ref]: https://docs.oracle.com/javase/8/docs/api/java/time/OffsetDateTime.html
+[java-short-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/Short.html
+[java-string-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/String.html
+[java-uuid-ref]: https://docs.oracle.com/javase/8/docs/api/java/util/UUID.html
+[java-zdt-ref]: https://docs.oracle.com/javase/8/docs/api/java/time/ZonedDateTime.html
+
 ## License
 This project is released under version 2.0 of the [Apache License][l].
 
