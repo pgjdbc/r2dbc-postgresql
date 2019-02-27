@@ -135,7 +135,7 @@ This reference table shows the type mapping between [PostgreSQL][p] and Java dat
 | [`box`][psql-box-ref]                          | Not yet supported.|
 | [`bytea`][psql-bytea-ref]                      | Not yet supported.|
 | [`character`][psql-character-ref]              | [`String`][java-string-ref]|
-| [`character varying`][psql-character-ref]      | [`String[]`][java-string-ref]|
+| [`character varying`][psql-character-ref]      | [`String`][java-string-ref]|
 | [`cidr`] [psql-cidr-ref]                       | Not yet supported.|
 | [`circle`][psql-circle-ref]                    | Not yet supported.|
 | [`date`][psql-date-ref]                        | [`LocalDate`][java-ld-ref]|
@@ -156,8 +156,8 @@ This reference table shows the type mapping between [PostgreSQL][p] and Java dat
 | [`polygon`][psql-polygon-ref]                  | Not yet supported.|
 | [`real`][psql-real-ref]                        | [**`Float`**][java-float-ref], [`Double`][java-double-ref]|
 | [`smallint`][psql-smallint-ref]                | [**`Short`**][java-short-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Integer`][java-integer-ref], [`Long`][java-long-ref]|
-| [`smallserial`][psql-smallserial-ref]          | Not yet supported.|
-| [`serial`][psql-serial-ref]                    | Not yet supported.|
+| [`smallserial`][psql-smallserial-ref]          | [**`Integer`**][java-integer-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Long`][java-long-ref]|
+| [`serial`][psql-serial-ref]                    | [**`Long`**][java-long-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Integer`][java-integer-ref]|
 | [`text`][psql-text-ref]                        | [`String[]`][java-string-ref]|
 | [`time [without time zone]`][psql-time-ref]    | [`LocalTime`][java-lt-ref]|
 | [`time [with time zone]`][psql-time-ref]       | [`LocalTime`][java-lt-ref]|
@@ -170,6 +170,14 @@ This reference table shows the type mapping between [PostgreSQL][p] and Java dat
 | [`xml`][psql-xml-ref]                          | Not yet supported. |
 
 Types in **bold** indicate the native (default) Java type.
+
+Currently supports the following single-dimensional arrays for both read and write.
+
+| PostgreSQL Type                                | Supported Data Type                  |
+|:-----------------------------------------------|:-------------------------------------|
+|[`tex[]`][psql-text-ref]                        |[`String[]`][java-string-ref]         |  
+|[`integer[] or int[]`][psql-integer-ref]        |[`Integer[]`][java-integer-ref], [`Long[]`][java-long-ref], [`Short[]`][java-short-ref]|
+
 
 [psql-bigint-ref]: https://www.postgresql.org/docs/11/datatype-numeric.html#DATATYPE-INT
 [psql-bit-ref]: https://www.postgresql.org/docs/11/datatype-numeric.html
