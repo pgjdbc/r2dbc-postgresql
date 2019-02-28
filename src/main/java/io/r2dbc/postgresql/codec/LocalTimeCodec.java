@@ -27,6 +27,7 @@ import reactor.util.annotation.Nullable;
 
 import java.time.LocalTime;
 
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIME;
 
@@ -49,12 +50,16 @@ final class LocalTimeCodec extends AbstractCodec<LocalTime> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return FORMAT_TEXT == format && TIME == type;
+        return TIME == type;
     }
 
     @Override
     LocalTime doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends LocalTime> type) {
         Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+
+        if (FORMAT_BINARY == format) {
+            return LocalTime.ofNanoOfDay(byteBuf.readLong() * 1000);
+        }
 
         return LocalTime.parse(ByteBufUtils.decode(byteBuf));
     }

@@ -86,7 +86,6 @@ final class CodecBinaryFormatIntegrationTest {
     }
 
     @Test
-    @Disabled("not implemented yet")
     void date() {
         testCodec(Date.class, new Date(), "TIMESTAMP");
     }
@@ -114,7 +113,6 @@ final class CodecBinaryFormatIntegrationTest {
     }
 
     @Test
-    @Disabled("not implemented yet")
     void instant() {
         testCodec(Instant.class, Instant.now(), "TIMESTAMP");
     }
@@ -131,19 +129,16 @@ final class CodecBinaryFormatIntegrationTest {
     }
 
     @Test
-    @Disabled("not implemented yet")
     void localDate() {
         testCodec(LocalDate.class, LocalDate.now(), "DATE");
     }
 
     @Test
-    @Disabled("not implemented yet")
     void localDateTime() {
         testCodec(LocalDateTime.class, LocalDateTime.now(), "TIMESTAMP");
     }
 
     @Test
-    @Disabled("not implemented yet")
     void localTime() {
         testCodec(LocalTime.class, LocalTime.now(), "TIME");
     }
@@ -160,7 +155,6 @@ final class CodecBinaryFormatIntegrationTest {
     }
 
     @Test
-    @Disabled("not implemented yet")
     void offsetDateTime() {
         testCodec(OffsetDateTime.class, OffsetDateTime.now(), (actual, expected) -> assertThat(actual.isEqual(expected)).isTrue(), "TIMESTAMP WITH TIME ZONE");
     }
@@ -213,7 +207,6 @@ final class CodecBinaryFormatIntegrationTest {
     }
 
     @Test
-    @Disabled("not implemented yet")
     void zonedDateTime() {
         testCodec(ZonedDateTime.class, ZonedDateTime.now(), (actual, expected) -> assertThat(actual.isEqual(expected)).isTrue(), "TIMESTAMP WITH TIME ZONE");
     }

@@ -27,6 +27,7 @@ import reactor.util.annotation.Nullable;
 
 import java.time.LocalDate;
 
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.DATE;
 
@@ -49,12 +50,16 @@ final class LocalDateCodec extends AbstractCodec<LocalDate> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return FORMAT_TEXT == format && DATE == type;
+        return DATE == type;
     }
 
     @Override
     LocalDate doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends LocalDate> type) {
         Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+
+        if (FORMAT_BINARY == format) {
+            return LocalDate.ofEpochDay(EpochTime.fromInt(byteBuf.readInt()).getJavaDays());
+        }
 
         return LocalDate.parse(ByteBufUtils.decode(byteBuf));
     }
