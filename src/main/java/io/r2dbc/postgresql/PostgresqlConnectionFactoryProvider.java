@@ -101,6 +101,6 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
 
     @Override
     public String getDriver() {
-        throw new RuntimeException("not implemented");
+        return POSTGRESQL_DRIVER;
     }
 }

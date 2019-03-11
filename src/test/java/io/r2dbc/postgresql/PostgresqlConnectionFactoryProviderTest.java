@@ -102,4 +102,9 @@ final class PostgresqlConnectionFactoryProviderTest {
             .option(USER, "test-user")
             .build())).isTrue();
     }
+
+    @Test
+    void returnsDriverIdentifier() {
+        assertThat(this.provider.getDriver()).isEqualTo(POSTGRESQL_DRIVER);
+    }
 }
