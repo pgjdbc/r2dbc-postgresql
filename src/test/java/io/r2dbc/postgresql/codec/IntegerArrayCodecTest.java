@@ -18,6 +18,7 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import org.junit.jupiter.api.Test;
 
@@ -63,6 +64,16 @@ final class IntegerArrayCodecTest {
         assertThat(codec.decode(SINGLE_DIM_BINARY_ARRAY, FORMAT_BINARY, Integer[].class)).isEqualTo(new int[]{100, 200});
         assertThat(codec.decode(ByteBufUtils.encode(TEST, "{100,200}"), FORMAT_TEXT, Integer[].class))
                 .isEqualTo(new int[]{100, 200});
+    }
+
+    @Test
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    void decodeObject() {
+        Codec codec = new IntegerArrayCodec(TEST);
+        codec.canDecode(PostgresqlObjectId.INT4_ARRAY.getObjectId(), FORMAT_TEXT, Object.class);
+
+        assertThat(codec.decode(SINGLE_DIM_BINARY_ARRAY, FORMAT_BINARY, Object.class)).isEqualTo(new int[]{100, 200});
+        assertThat(codec.decode(ByteBufUtils.encode(TEST, "{100,200}"), FORMAT_TEXT, Object.class)).isEqualTo(new int[]{100, 200});
     }
 
     @Test

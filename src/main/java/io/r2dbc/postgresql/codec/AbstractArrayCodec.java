@@ -25,6 +25,7 @@ import io.r2dbc.postgresql.util.Assert;
 import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
@@ -133,6 +134,12 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
         return dims;
     }
 
+    private Class<?> createArrayType(int dims) {
+        int[] size = new int[dims];
+        Arrays.fill(size, 1);
+        return Array.newInstance(componentType, size).getClass();
+    }
+
     @SuppressWarnings("unchecked")
     private void encodeAsText(ByteBuf byteBuf, Object[] value, Function<T, String> encoder) {
         byteBuf.writeBytes(OPEN_CURLY);
@@ -163,18 +170,20 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
             }
         } else {
             for (int i = 0; i < dims[thisDimension]; ++i) {
-                array[i] = createArray(array.getClass().getComponentType(), dims[thisDimension + 1]);
                 readArrayAsBinary(buffer, (Object[]) array[i], dims, thisDimension + 1);
             }
         }
     }
 
-    private Object[] decodeBinary(ByteBuf buffer, Class<? extends Object[]> returnType) {
+    private Object[] decodeBinary(ByteBuf buffer, Class<?> returnType) {
         int dimensions = buffer.readInt();
         if (dimensions == 0) {
-            return createArray(returnType, 0);
+            return (Object[]) Array.newInstance(componentType, 0);
         }
-        Assert.requireArrayDimension(returnType, dimensions, "Dimensions mismatch: %s expected, but %s returned from DB");
+
+        if (returnType != Object.class) {
+            Assert.requireArrayDimension(returnType, dimensions, "Dimensions mismatch: %s expected, but %s returned from DB");
+        }
 
         buffer.skipBytes(4); // flags: 0=no-nulls, 1=has-nulls
         buffer.skipBytes(4); // element oid
@@ -185,27 +194,27 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
             buffer.skipBytes(4); // lower bound ignored
         }
 
-        Object[] array = createArray(returnType, dims[0]);
+        Object[] array = (Object[]) Array.newInstance(componentType, dims);
 
         readArrayAsBinary(buffer, array, dims, 0);
 
         return array;
     }
 
-    private Object[] decodeText(ByteBuf buffer, Class<? extends Object[]> returnType) {
+    private Object[] decodeText(ByteBuf buffer, Class<?> returnType) {
         List<?> elements = buildArrayList(buffer);
 
         if (elements.isEmpty()) {
-            return toArray(elements, returnType.getComponentType());
+            return (Object[]) Array.newInstance(componentType, 0);
         }
 
-        Assert.requireArrayDimension(returnType, getDimensions(elements), "Dimensions mismatch: %s expected, but %s returned from DB");
+        int dimensions = getDimensions(elements);
 
-        return toArray(elements, returnType.getComponentType());
-    }
+        if (returnType != Object.class) {
+            Assert.requireArrayDimension(returnType, dimensions, "Dimensions mismatch: %s expected, but %s returned from DB");
+        }
 
-    private Object[] createArray(Class<?> returnType, int size) {
-        return (Object[]) Array.newInstance(returnType.getComponentType(), size);
+        return toArray(elements, createArrayType(dimensions).getComponentType());
     }
 
     private static Object[] toArray(List<?> list, Class<?> returnType) {

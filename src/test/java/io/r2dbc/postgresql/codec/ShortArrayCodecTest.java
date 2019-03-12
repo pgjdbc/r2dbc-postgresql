@@ -31,30 +31,33 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 
 final class ShortArrayCodecTest {
 
+    private final ByteBuf BINARY_ARRAY = TEST
+            .buffer()
+            .writeInt(1)
+            .writeInt(0)
+            .writeInt(21)
+            .writeInt(2)
+            .writeInt(2)
+            .writeInt(2)
+            .writeShort(100)
+            .writeInt(2)
+            .writeShort(200);
+
     @Test
     void decodeItem() {
         ShortArrayCodec codec = new ShortArrayCodec(TEST);
 
-        ByteBuf buf = TEST
-                .buffer()
-                .writeInt(1)
-                .writeInt(0)
-                .writeInt(21)
-                .writeInt(2)
-                .writeInt(2)
-                .writeInt(2)
-                .writeShort(100)
-                .writeInt(2)
-                .writeShort(200);
-
-        assertThat(codec.decode(buf, FORMAT_BINARY, Short[].class)).isEqualTo(new short[]{100, 200});
+        assertThat(codec.decode(BINARY_ARRAY, FORMAT_BINARY, Short[].class)).isEqualTo(new short[]{100, 200});
         assertThat(codec.decode(ByteBufUtils.encode(TEST, "{100,200}"), FORMAT_TEXT, Short[].class)).isEqualTo(new short[]{100, 200});
     }
 
     @Test
-    void decodeMultidimensional() {
-        ShortArrayCodec codec = new ShortArrayCodec(TEST);
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    void decodeObject() {
+        Codec codec = new ShortArrayCodec(TEST);
 
+        assertThat(codec.decode(BINARY_ARRAY, FORMAT_BINARY, Object.class)).isEqualTo(new short[]{100, 200});
+        assertThat(codec.decode(ByteBufUtils.encode(TEST, "{100,200}"), FORMAT_TEXT, Object.class)).isEqualTo(new short[]{100, 200});
     }
 
     @Test

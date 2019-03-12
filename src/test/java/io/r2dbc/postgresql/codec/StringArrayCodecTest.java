@@ -37,25 +37,34 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 
 final class StringArrayCodecTest {
 
+    private final ByteBuf BINARY_ARRAY = TEST
+            .buffer()
+            .writeInt(1)
+            .writeInt(0)
+            .writeInt(1043)
+            .writeInt(2)
+            .writeInt(2)
+            .writeInt(3)
+            .writeBytes("abc".getBytes())
+            .writeInt(3)
+            .writeBytes("def".getBytes());
+
     @Test
     void decodeItem() {
         StringArrayCodec codec = new StringArrayCodec(TEST);
 
-        ByteBuf buf = TEST
-                .buffer()
-                .writeInt(1)
-                .writeInt(0)
-                .writeInt(1043)
-                .writeInt(2)
-                .writeInt(2)
-                .writeInt(3)
-                .writeBytes("abc".getBytes())
-                .writeInt(3)
-                .writeBytes("def".getBytes());
-
-        assertThat(codec.decode(buf, FORMAT_BINARY, String[].class)).isEqualTo(new String[]{"abc", "def"});
+        assertThat(codec.decode(BINARY_ARRAY, FORMAT_BINARY, String[].class)).isEqualTo(new String[]{"abc", "def"});
         assertThat(codec.decode(ByteBufUtils.encode(TEST, "{alpha,bravo}"), FORMAT_TEXT, String[].class))
             .isEqualTo(new String[]{"alpha", "bravo"});
+    }
+
+    @Test
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    void decodeObject() {
+        Codec codec = new StringArrayCodec(TEST);
+
+        assertThat(codec.decode(ByteBufUtils.encode(TEST, "{alpha,bravo}"), FORMAT_TEXT, Object.class))
+                .isEqualTo(new String[]{"alpha", "bravo"});
     }
 
     @Test

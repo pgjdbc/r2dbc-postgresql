@@ -31,23 +31,23 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 
 final class LongArrayCodecTest {
 
+    private final ByteBuf BINARY_ARRAY = TEST
+            .buffer()
+            .writeInt(1)
+            .writeInt(0)
+            .writeInt(20)
+            .writeInt(2)
+            .writeInt(2)
+            .writeInt(8)
+            .writeLong(100L)
+            .writeInt(8)
+            .writeLong(200L);
+
     @Test
     void decodeItem() {
         LongArrayCodec codec = new LongArrayCodec(TEST);
 
-        ByteBuf buf = TEST
-                .buffer()
-                .writeInt(1)
-                .writeInt(0)
-                .writeInt(20)
-                .writeInt(2)
-                .writeInt(2)
-                .writeInt(8)
-                .writeLong(100L)
-                .writeInt(8)
-                .writeLong(200L);
-
-        assertThat(codec.decode(buf, FORMAT_BINARY, Long[].class)).isEqualTo(new long[]{100, 200});
+        assertThat(codec.decode(BINARY_ARRAY, FORMAT_BINARY, Long[].class)).isEqualTo(new long[]{100, 200});
         assertThat(codec.decode(ByteBufUtils.encode(TEST, "{100,200}"), FORMAT_TEXT, Long[].class)).isEqualTo(new long[]{100, 200});
     }
 
@@ -70,6 +70,15 @@ final class LongArrayCodecTest {
     void encodeArray() {
         assertThat(new LongArrayCodec(TEST).encodeArray(ByteBufUtils.encode(TEST, "{100,200}")))
             .isEqualTo(new Parameter(FORMAT_TEXT, INT8_ARRAY.getObjectId(), ByteBufUtils.encode(TEST, "{100,200}")));
+    }
+
+    @Test
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    void decodeObject() {
+        Codec codec = new LongArrayCodec(TEST);
+
+        assertThat(codec.decode(BINARY_ARRAY, FORMAT_BINARY, Object.class)).isEqualTo(new long[]{100, 200});
+        assertThat(codec.decode(ByteBufUtils.encode(TEST, "{100,200}"), FORMAT_TEXT, Object.class)).isEqualTo(new long[]{100, 200});
     }
 
     @Test
