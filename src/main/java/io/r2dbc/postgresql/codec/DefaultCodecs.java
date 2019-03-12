@@ -121,4 +121,17 @@ public final class DefaultCodecs implements Codecs {
 
         throw new IllegalArgumentException(String.format("Cannot encode null parameter of type %s", type.getName()));
     }
+
+    @Override
+    public Class<?> preferredType(int dataType, Format format) {
+        Assert.requireNonNull(format, "format must not be null");
+
+        for (Codec<?> codec : this.codecs) {
+            if (codec.canDecode(dataType, format, Object.class)) {
+                return codec.type();
+            }
+        }
+
+        return null;
+    }
 }

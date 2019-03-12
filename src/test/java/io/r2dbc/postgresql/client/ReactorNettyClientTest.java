@@ -16,6 +16,10 @@
 
 package io.r2dbc.postgresql.client;
 
+import io.netty.channel.ConnectTimeoutException;
+import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
+import io.r2dbc.postgresql.PostgresqlConnectionFactory;
+import io.r2dbc.postgresql.PostgresqlServerErrorException;
 import io.r2dbc.postgresql.authentication.PasswordAuthenticationHandler;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.DataRow;
@@ -23,12 +27,16 @@ import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.postgresql.message.frontend.Query;
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
@@ -140,6 +148,64 @@ final class ReactorNettyClientTest {
             .expectNext(new CommandComplete("SELECT", null, 1))
             .expectNext(new CommandComplete("SELECT", null, 1))
             .verifyComplete();
+    }
+
+    @Test
+    void timeoutTest() {
+        PostgresqlConnectionFactory postgresqlConnectionFactory = new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
+            .host("example.com")
+            .port(81)
+            .username("test")
+            .password("test")
+            .database(SERVER.getDatabase())
+            .applicationName(ReactorNettyClientTest.class.getName())
+            .connectTimeout(Duration.ofMillis(200))
+            .build());
+
+        postgresqlConnectionFactory.create()
+            .as(StepVerifier::create)
+            .expectError(ConnectTimeoutException.class)
+            .verify(Duration.ofMillis(500));
+    }
+
+    @Nested
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    final class ScramTest {
+
+        @Test
+        void scramAuthentication() {
+            createConnectionFactory("scram", "scram").create()
+                .flatMapMany(c -> c.createStatement("SELECT 1 test").execute())
+                .as(StepVerifier::create)
+                .expectNextCount(1)
+                .verifyComplete();
+        }
+
+        @Test
+        void scramAuthenticationFailed() {
+            createConnectionFactory("scram", "wrong").create()
+                .flatMapMany(c -> c.createStatement("SELECT 1 test").execute())
+                .as(StepVerifier::create)
+                .verifyError(PostgresqlServerErrorException.class);
+        }
+
+        @BeforeAll
+        void setUp() {
+            SERVER.getJdbcOperations()
+                .execute(String.format("SET password_encryption = 'scram-sha-256'; CREATE ROLE scram LOGIN PASSWORD 'scram'; GRANT ALL PRIVILEGES ON DATABASE %s TO scram", SERVER.getDatabase()));
+        }
+
+        private PostgresqlConnectionFactory createConnectionFactory(String username, String password) {
+            return new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
+                .host(SERVER.getHost())
+                .port(SERVER.getPort())
+                .username(username)
+                .password(password)
+                .database(SERVER.getDatabase())
+                .applicationName(ReactorNettyClientTest.class.getName())
+                .build());
+        }
+
     }
 
 }

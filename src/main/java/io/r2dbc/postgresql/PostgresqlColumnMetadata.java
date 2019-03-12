@@ -16,28 +16,32 @@
 
 package io.r2dbc.postgresql;
 
+import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.message.backend.RowDescription.Field;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ColumnMetadata;
+import reactor.util.annotation.Nullable;
 
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * An implementation of {@link ColumnMetadata} for a PostgreSQL database.
  */
 public final class PostgresqlColumnMetadata implements ColumnMetadata {
 
+    private final Class<?> javaType;
+
     private final String name;
+
+    private final Integer nativeType;
 
     private final Short precision;
 
-    private final Integer type;
-
-    PostgresqlColumnMetadata(String name, Short precision, Integer type) {
+    PostgresqlColumnMetadata(@Nullable Class<?> javaType, String name, Integer nativeType, Short precision) {
+        this.javaType = javaType;
         this.name = Assert.requireNonNull(name, "name must not be null");
+        this.nativeType = Assert.requireNonNull(nativeType, "nativeType must not be null");
         this.precision = Assert.requireNonNull(precision, "precision must not be null");
-        this.type = Assert.requireNonNull(type, "type must not be null");
     }
 
     @Override
@@ -45,13 +49,19 @@ public final class PostgresqlColumnMetadata implements ColumnMetadata {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof PostgresqlColumnMetadata)) {
             return false;
         }
         PostgresqlColumnMetadata that = (PostgresqlColumnMetadata) o;
-        return Objects.equals(this.name, that.name) &&
-            Objects.equals(this.precision, that.precision) &&
-            Objects.equals(this.type, that.type);
+        return Objects.equals(this.javaType, that.javaType) &&
+            this.name.equals(that.name) &&
+            this.nativeType.equals(that.nativeType) &&
+            this.precision.equals(that.precision);
+    }
+
+    @Override
+    public Class<?> getJavaType() {
+        return this.javaType;
     }
 
     @Override
@@ -60,34 +70,35 @@ public final class PostgresqlColumnMetadata implements ColumnMetadata {
     }
 
     @Override
-    public Optional<Integer> getPrecision() {
-        return Optional.of(this.precision)
-            .map(Short::intValue);
+    public Integer getNativeTypeMetadata() {
+        return this.nativeType;
     }
 
     @Override
-    public Integer getType() {
-        return this.type;
+    public Integer getPrecision() {
+        return this.precision.intValue();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.name, this.precision, this.type);
+        return Objects.hash(this.javaType, this.name, this.nativeType, this.precision);
     }
 
     @Override
     public String toString() {
         return "PostgresqlColumnMetadata{" +
-            "name='" + this.name + '\'' +
+            "javaType=" + this.javaType +
+            ", name='" + this.name + '\'' +
+            ", nativeType=" + this.nativeType +
             ", precision=" + this.precision +
-            ", type=" + this.type +
             '}';
     }
 
-    static PostgresqlColumnMetadata toColumnMetadata(Field field) {
+    static PostgresqlColumnMetadata toColumnMetadata(Codecs codecs, Field field) {
+        Assert.requireNonNull(codecs, "codecs must not be null");
         Assert.requireNonNull(field, "field must not be null");
 
-        return new PostgresqlColumnMetadata(field.getName(), field.getDataTypeSize(), field.getDataType());
+        return new PostgresqlColumnMetadata(codecs.preferredType(field.getDataType(), field.getFormat()), field.getName(), field.getDataType(), field.getDataTypeSize());
     }
 
 }

@@ -32,9 +32,12 @@ public final class MockCodecs implements Codecs {
 
     private final Map<Object, Parameter> encodings;
 
-    private MockCodecs(Map<Decoding, Object> decodings, Map<Object, Parameter> encodings) {
+    private final Map<PreferredType, Class<?>> preferredTypes;
+
+    private MockCodecs(Map<Decoding, Object> decodings, Map<Object, Parameter> encodings, Map<PreferredType, Class<?>> preferredTypes) {
         this.decodings = Assert.requireNonNull(decodings, "decodings must not be null");
         this.encodings = Assert.requireNonNull(encodings, "encodings must not be null");
+        this.preferredTypes = Assert.requireNonNull(preferredTypes, "preferredTypes must not be null");
     }
 
     public static Builder builder() {
@@ -84,10 +87,24 @@ public final class MockCodecs implements Codecs {
     }
 
     @Override
+    public Class<?> preferredType(int dataType, Format format) {
+        Assert.requireNonNull(format, "format must not be null");
+
+        PreferredType preferredType = new PreferredType(dataType, format);
+
+        if (!this.preferredTypes.containsKey(preferredType)) {
+            throw new AssertionError(String.format("Unexpected class to preferredType(int,Format) with values '%d, %s'", dataType, format));
+        }
+
+        return this.preferredTypes.get(preferredType);
+    }
+
+    @Override
     public String toString() {
         return "MockCodecs{" +
             "decodings=" + this.decodings +
             ", encodings=" + this.encodings +
+            ", preferredTypes=" + this.preferredTypes +
             '}';
     }
 
@@ -97,11 +114,13 @@ public final class MockCodecs implements Codecs {
 
         private final Map<Object, Parameter> encodings = new HashMap<>();
 
+        private final Map<PreferredType, Class<?>> preferredTypes = new HashMap<>();
+
         private Builder() {
         }
 
         public MockCodecs build() {
-            return new MockCodecs(this.decodings, this.encodings);
+            return new MockCodecs(this.decodings, this.encodings, this.preferredTypes);
         }
 
         public <T> Builder decoding(@Nullable ByteBuf byteBuf, int dataType, Format format, Class<T> type, T value) {
@@ -119,14 +138,22 @@ public final class MockCodecs implements Codecs {
             return this;
         }
 
+        public Builder preferredType(int dataType, Format format, Class<?> type) {
+            Assert.requireNonNull(format, "format must not be null");
+            Assert.requireNonNull(type, "type must not be null");
+
+            this.preferredTypes.put(new PreferredType(dataType, format), type);
+            return this;
+        }
+
         @Override
         public String toString() {
             return "Builder{" +
                 "decodings=" + this.decodings +
                 ", encodings=" + this.encodings +
+                ", preferredTypes=" + this.preferredTypes +
                 '}';
         }
-
     }
 
     private static final class Decoding {
@@ -176,6 +203,44 @@ public final class MockCodecs implements Codecs {
                 '}';
         }
 
+    }
+
+    private static final class PreferredType {
+
+        private final int dataType;
+
+        private final Format format;
+
+        private PreferredType(int dataType, Format format) {
+            this.dataType = dataType;
+            this.format = Assert.requireNonNull(format, "format must not be null");
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof PreferredType)) {
+                return false;
+            }
+            PreferredType that = (PreferredType) o;
+            return this.dataType == that.dataType &&
+                this.format == that.format;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.dataType, this.format);
+        }
+
+        @Override
+        public String toString() {
+            return "PreferredType{" +
+                "dataType=" + this.dataType +
+                ", format=" + this.format +
+                '}';
+        }
     }
 
 }

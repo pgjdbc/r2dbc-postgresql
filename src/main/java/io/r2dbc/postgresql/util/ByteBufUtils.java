@@ -48,7 +48,7 @@ public final class ByteBufUtils {
      * @param byteBufAllocator the {@link ByteBufAllocator} to use to create a buffer
      * @param s                the {@link CharSequence} to encode
      * @return the {@link ByteBuf} with the {@link CharSequence} encoded within it
-     * @throws IllegalArgumentException if {@code byteBufAllocator} is {@code null}
+     * @throws IllegalArgumentException if {@code byteBufAllocator} or {@code s} is {@code null}
      */
     public static ByteBuf encode(ByteBufAllocator byteBufAllocator, CharSequence s) {
         Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");

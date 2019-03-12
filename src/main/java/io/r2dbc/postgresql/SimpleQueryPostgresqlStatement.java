@@ -23,19 +23,22 @@ import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.EmptyQueryResponse;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.util.Assert;
+import io.r2dbc.postgresql.util.GeneratedValuesUtils;
 import reactor.core.publisher.Flux;
 import reactor.util.annotation.Nullable;
 
 import static io.r2dbc.postgresql.client.ExtendedQueryMessageFlow.PARAMETER_SYMBOL;
 import static io.r2dbc.postgresql.util.PredicateUtils.or;
 
-final class SimpleQueryPostgresqlStatement implements PostgresqlStatement<SimpleQueryPostgresqlStatement> {
+final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
 
     private final Client client;
 
     private final Codecs codecs;
 
     private final String sql;
+
+    private String[] generatedColumns;
 
     SimpleQueryPostgresqlStatement(Client client, Codecs codecs, String sql) {
         this.client = Assert.requireNonNull(client, "client must not be null");
@@ -70,10 +73,27 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement<Simple
 
     @Override
     public Flux<PostgresqlResult> execute() {
-        return SimpleQueryMessageFlow
-            .exchange(this.client, this.sql)
-            .windowUntil(or(CommandComplete.class::isInstance, EmptyQueryResponse.class::isInstance, ErrorResponse.class::isInstance))
-            .map(dataRow -> PostgresqlResult.toResult(this.codecs, dataRow));
+        if (this.generatedColumns == null) {
+            return execute(this.sql);
+        }
+
+        return execute(GeneratedValuesUtils.augment(this.sql, this.generatedColumns));
+    }
+
+    @Override
+    public SimpleQueryPostgresqlStatement returnGeneratedValues(String... columns) {
+        Assert.requireNonNull(columns, "columns must not be null");
+
+        if (GeneratedValuesUtils.hasReturningClause(this.sql)) {
+            throw new IllegalStateException("Statement already includes RETURNING clause");
+        }
+
+        if (!GeneratedValuesUtils.isSupportedCommand(this.sql)) {
+            throw new IllegalStateException("Statement is not a DELETE, INSERT, or UPDATE command");
+        }
+
+        this.generatedColumns = columns;
+        return this;
     }
 
     @Override
@@ -89,6 +109,13 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement<Simple
         Assert.requireNonNull(sql, "sql must not be null");
 
         return sql.trim().isEmpty() || !PARAMETER_SYMBOL.matcher(sql).matches();
+    }
+
+    private Flux<PostgresqlResult> execute(String sql) {
+        return SimpleQueryMessageFlow
+            .exchange(this.client, sql)
+            .windowUntil(or(CommandComplete.class::isInstance, EmptyQueryResponse.class::isInstance, ErrorResponse.class::isInstance))
+            .map(dataRow -> PostgresqlResult.toResult(this.codecs, dataRow));
     }
 
 }

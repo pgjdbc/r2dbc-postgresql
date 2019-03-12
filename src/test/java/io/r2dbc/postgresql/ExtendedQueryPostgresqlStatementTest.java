@@ -68,7 +68,7 @@ final class ExtendedQueryPostgresqlStatementTest {
 
     @Test
     void bindIndex() {
-        assertThat(this.statement.bind(0, 100).getCurrentBinding()).isEqualTo(new Binding().add(0, this.parameter));
+        assertThat(((ExtendedQueryPostgresqlStatement) this.statement.bind(0, 100)).getCurrentBinding()).isEqualTo(new Binding().add(0, this.parameter));
     }
 
     @Test
@@ -249,14 +249,58 @@ final class ExtendedQueryPostgresqlStatementTest {
     }
 
     @Test
-    void supportsNoSql() {
-        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryPostgresqlStatement.supports(null))
-            .withMessage("sql must not be null");
+    void returnGeneratedValues() {
+        Client client = TestClient.builder()
+            .expectRequest(
+                new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
+                new Describe("B_0", ExecutionType.PORTAL),
+                new Execute("B_0", 0),
+                new Close("B_0", ExecutionType.PORTAL),
+                Sync.INSTANCE)
+            .thenRespond(
+                BindComplete.INSTANCE, NoData.INSTANCE, new CommandComplete("test", null, null), CloseComplete.INSTANCE)
+            .build();
+
+        MockCodecs codecs = MockCodecs.builder()
+            .encoding(100, new Parameter(FORMAT_BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(100)))
+            .build();
+
+        PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
+
+        when(this.statementCache.getName(new Binding().add(0, new Parameter(FORMAT_BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(100))), "INSERT test-query-$1 RETURNING *"))
+            .thenReturn(Mono.just("test-name"));
+
+        new ExtendedQueryPostgresqlStatement(client, codecs, portalNameSupplier, "INSERT test-query-$1", this.statementCache)
+            .bind("$1", 100)
+            .returnGeneratedValues()
+            .execute()
+            .as(StepVerifier::create)
+            .expectNextCount(1)
+            .verifyComplete();
+
+    }
+
+    @Test
+    void returnGeneratedValuesHasReturningClause() {
+        assertThatIllegalStateException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), () -> "", "RETURNING", this.statementCache).returnGeneratedValues())
+            .withMessage("Statement already includes RETURNING clause");
+    }
+
+    @Test
+    void returnGeneratedValuesUnsupportedCommand() {
+        assertThatIllegalStateException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), () -> "", "SELECT", this.statementCache).returnGeneratedValues())
+            .withMessage("Statement is not a DELETE, INSERT, or UPDATE command");
     }
 
     @Test
     void supportsMultilineParameterSymbol() {
         assertThat(ExtendedQueryPostgresqlStatement.supports("test-query-0\ntest-query-$1")).isTrue();
+    }
+
+    @Test
+    void supportsNoSql() {
+        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryPostgresqlStatement.supports(null))
+            .withMessage("sql must not be null");
     }
 
     @Test
@@ -278,5 +322,4 @@ final class ExtendedQueryPostgresqlStatementTest {
     void supportsSimple() {
         assertThat(ExtendedQueryPostgresqlStatement.supports("test-query")).isFalse();
     }
-
 }

@@ -36,6 +36,7 @@ import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 
 final class SimpleQueryPostgresqlStatementTest {
 
@@ -172,7 +173,11 @@ final class SimpleQueryPostgresqlStatementTest {
                 new CommandComplete("test", null, null))
             .build();
 
-        new SimpleQueryPostgresqlStatement(client, MockCodecs.empty(), "test-query")
+        MockCodecs codecs = MockCodecs.builder()
+            .preferredType(200, FORMAT_TEXT, String.class)
+            .build();
+
+        new SimpleQueryPostgresqlStatement(client, codecs, "test-query")
             .execute()
             .flatMap(result -> result.map((row, rowMetadata) -> row))
             .as(StepVerifier::create)
@@ -195,6 +200,32 @@ final class SimpleQueryPostgresqlStatementTest {
             .flatMap(PostgresqlResult::getRowsUpdated)
             .as(StepVerifier::create)
             .verifyComplete();
+    }
+
+    @Test
+    void returnGeneratedValues() {
+        Client client = TestClient.builder()
+            .expectRequest(new Query("INSERT test-query RETURNING *")).thenRespond(new CommandComplete("test", null, 1))
+            .build();
+
+        new SimpleQueryPostgresqlStatement(client, MockCodecs.empty(), "INSERT test-query")
+            .returnGeneratedValues()
+            .execute()
+            .flatMap(result -> result.map((row, rowMetadata) -> row))
+            .as(StepVerifier::create)
+            .verifyComplete();
+    }
+
+    @Test
+    void returnGeneratedValuesHasReturningClause() {
+        assertThatIllegalStateException().isThrownBy(() -> new SimpleQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), "RETURNING").returnGeneratedValues())
+            .withMessage("Statement already includes RETURNING clause");
+    }
+
+    @Test
+    void returnGeneratedValuesUnsupportedCommand() {
+        assertThatIllegalStateException().isThrownBy(() -> new SimpleQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), "SELECT").returnGeneratedValues())
+            .withMessage("Statement is not a DELETE, INSERT, or UPDATE command");
     }
 
     @Test

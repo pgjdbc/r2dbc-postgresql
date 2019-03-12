@@ -17,27 +17,37 @@
 package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
+import io.r2dbc.spi.ConnectionFactories;
+import io.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.test.Example;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.jdbc.core.JdbcOperations;
+
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.POSTGRESQL_DRIVER;
+import static io.r2dbc.spi.ConnectionFactoryOptions.DATABASE;
+import static io.r2dbc.spi.ConnectionFactoryOptions.DRIVER;
+import static io.r2dbc.spi.ConnectionFactoryOptions.HOST;
+import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
+import static io.r2dbc.spi.ConnectionFactoryOptions.PORT;
+import static io.r2dbc.spi.ConnectionFactoryOptions.USER;
 
 final class PostgresqlExample implements Example<String> {
 
     @RegisterExtension
     static final PostgresqlServerExtension SERVER = new PostgresqlServerExtension();
 
-    private final PostgresqlConnectionConfiguration configuration = PostgresqlConnectionConfiguration.builder()
-        .database(SERVER.getDatabase())
-        .host(SERVER.getHost())
-        .port(SERVER.getPort())
-        .password(SERVER.getPassword())
-        .username(SERVER.getUsername())
-        .build();
-
-    private final PostgresqlConnectionFactory connectionFactory = new PostgresqlConnectionFactory(this.configuration);
+    private final ConnectionFactory connectionFactory = ConnectionFactories.get(ConnectionFactoryOptions.builder()
+        .option(DRIVER, POSTGRESQL_DRIVER)
+        .option(DATABASE, SERVER.getDatabase())
+        .option(HOST, SERVER.getHost())
+        .option(PORT, SERVER.getPort())
+        .option(PASSWORD, SERVER.getPassword())
+        .option(USER, SERVER.getUsername())
+        .build());
 
     @Override
-    public PostgresqlConnectionFactory getConnectionFactory() {
+    public ConnectionFactory getConnectionFactory() {
         return this.connectionFactory;
     }
 

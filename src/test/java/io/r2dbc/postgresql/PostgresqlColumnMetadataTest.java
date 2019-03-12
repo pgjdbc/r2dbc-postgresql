@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql;
 
+import io.r2dbc.postgresql.codec.MockCodecs;
 import io.r2dbc.postgresql.message.backend.RowDescription.Field;
 import org.junit.jupiter.api.Test;
 
@@ -27,34 +28,45 @@ final class PostgresqlColumnMetadataTest {
 
     @Test
     void constructorNoName() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlColumnMetadata(null, (short) 100, 200))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlColumnMetadata(Object.class, null, 200, (short) 100))
             .withMessage("name must not be null");
     }
 
     @Test
+    void constructorNoNativeType() {
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlColumnMetadata(Object.class, "test-name", null, (short) 100))
+            .withMessage("nativeType must not be null");
+    }
+
+    @Test
     void constructorNoPrecision() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlColumnMetadata("test-name", null, 200))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlColumnMetadata(Object.class, "test-name", 200, null))
             .withMessage("precision must not be null");
     }
 
     @Test
-    void constructorNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlColumnMetadata("test-name", (short) 100, null))
-            .withMessage("type must not be null");
+    void toColumnMetadata() {
+        MockCodecs codecs = MockCodecs.builder()
+            .preferredType(200, FORMAT_TEXT, String.class)
+            .build();
+
+        PostgresqlColumnMetadata columnMetadata = PostgresqlColumnMetadata.toColumnMetadata(codecs, new Field((short) 100, 200, 300, (short) 400, FORMAT_TEXT, "test-name", 500));
+
+        assertThat(columnMetadata.getJavaType()).isEqualTo(String.class);
+        assertThat(columnMetadata.getName()).isEqualTo("test-name");
+        assertThat(columnMetadata.getNativeTypeMetadata()).isEqualTo(200);
+        assertThat(columnMetadata.getPrecision()).isEqualTo(400);
     }
 
     @Test
-    void toColumnMetadata() {
-        PostgresqlColumnMetadata columnMetadata = PostgresqlColumnMetadata.toColumnMetadata(new Field((short) 100, 200, 300, (short) 400, FORMAT_TEXT, "test-name", 500));
-
-        assertThat(columnMetadata.getName()).isEqualTo("test-name");
-        assertThat(columnMetadata.getPrecision()).hasValue(400);
-        assertThat(columnMetadata.getType()).isEqualTo(200);
+    void toColumnMetadataNoCodecs() {
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlColumnMetadata.toColumnMetadata(null, new Field((short) 100, 200, 300, (short) 400, FORMAT_TEXT, "test-name", 500)))
+            .withMessage("codecs must not be null");
     }
 
     @Test
     void toColumnMetadataNoField() {
-        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlColumnMetadata.toColumnMetadata(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlColumnMetadata.toColumnMetadata(MockCodecs.empty(), null))
             .withMessage("field must not be null");
     }
 
