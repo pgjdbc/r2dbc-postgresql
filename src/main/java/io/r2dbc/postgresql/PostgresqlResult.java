@@ -20,6 +20,8 @@ import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.DataRow;
+import io.r2dbc.postgresql.message.backend.EmptyQueryResponse;
+import io.r2dbc.postgresql.message.backend.PortalSuspended;
 import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Result;
@@ -31,6 +33,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.function.BiFunction;
 
+import static io.r2dbc.postgresql.util.PredicateUtils.or;
 import static reactor.function.TupleUtils.function;
 
 /**
@@ -100,6 +103,7 @@ public final class PostgresqlResult implements Result {
 
         Flux<PostgresqlRow> rows = processor
             .startWith(firstMessages)
+            .takeUntil(or(CommandComplete.class::isInstance, EmptyQueryResponse.class::isInstance, PortalSuspended.class::isInstance))
             .ofType(DataRow.class)
             .zipWith(rowDescription.repeat())
             .map(function((dataRow, rd) -> PostgresqlRow.toRow(codecs, dataRow, rd)));
