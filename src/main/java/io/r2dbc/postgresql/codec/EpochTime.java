@@ -2,9 +2,6 @@ package io.r2dbc.postgresql.codec;
 
 import java.time.Instant;
 
-// todo min/max values
-// todo support for "non-integer" date format
-// todo support for timezone
 class EpochTime {
 
     private final long javaSeconds;
