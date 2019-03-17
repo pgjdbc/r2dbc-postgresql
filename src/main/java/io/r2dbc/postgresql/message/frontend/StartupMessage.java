@@ -20,6 +20,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.util.Assert;
+import java.time.ZoneId;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
@@ -56,6 +57,10 @@ public final class StartupMessage implements FrontendMessage {
     private static final ByteBuf USER = Unpooled.copiedBuffer("user", UTF_8).asReadOnly();
 
     private static final ByteBuf UTF8 = Unpooled.copiedBuffer("utf8", UTF_8).asReadOnly();
+
+    private static final ByteBuf TIMEZONE = Unpooled.copiedBuffer("TimeZone", UTF_8).asReadOnly();
+
+    private static final ByteBuf SYSTEM_TIME_ZONE = Unpooled.copiedBuffer(ZoneId.systemDefault().toString(), UTF_8).asReadOnly();
 
     private final String applicationName;
 
@@ -96,6 +101,7 @@ public final class StartupMessage implements FrontendMessage {
             writeParameter(out, CLIENT_ENCODING, UTF8);
             writeParameter(out, DATE_STYLE, ISO);
             writeParameter(out, EXTRA_FLOAT_DIGITS, NUMERAL_2);
+            writeParameter(out, TIMEZONE, SYSTEM_TIME_ZONE);
             writeByte(out, 0);
 
             return Mono.just(writeSize(out, 0));

@@ -59,7 +59,7 @@ final class ZonedDateTimeCodec extends AbstractCodec<ZonedDateTime> {
         Assert.requireNonNull(byteBuf, "byteBuf must not be null");
 
         if (FORMAT_BINARY == format) {
-            return EpochTime.fromLong(byteBuf.readLong()).toInstant().atZone(ZoneId.of("UTC"));
+            return EpochTime.fromLong(byteBuf.readLong()).toInstant().atZone(ZoneId.systemDefault());
         }
 
         return PostgresqlDateTimeFormatter.INSTANCE.parse(ByteBufUtils.decode(byteBuf), ZonedDateTime::from);

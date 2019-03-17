@@ -23,7 +23,6 @@ import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
-import java.time.ZoneOffset;
 import reactor.util.annotation.Nullable;
 
 import java.time.OffsetDateTime;
@@ -59,7 +58,7 @@ final class OffsetDateTimeCodec extends AbstractCodec<OffsetDateTime> {
         Assert.requireNonNull(byteBuf, "byteBuf must not be null");
 
         if (FORMAT_BINARY == format) {
-            return EpochTime.fromLong(byteBuf.readLong()).toInstant().atOffset(ZoneOffset.UTC);
+            return EpochTime.fromLong(byteBuf.readLong()).toInstant().atOffset(OffsetDateTime.now().getOffset());
         }
 
         return PostgresqlDateTimeFormatter.INSTANCE.parse(ByteBufUtils.decode(byteBuf), OffsetDateTime::from);
