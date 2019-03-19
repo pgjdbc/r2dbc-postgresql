@@ -72,7 +72,11 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
                 byteBuf.skipBytes(1); // skip delimiter
             }
 
-            items.add(decodeItem(byteBuf.readSlice(byteBuf.readableBytes() - 1), format, this.componentType));
+            int size = byteBuf.readableBytes() - 1;
+
+            if (size > 0) {
+                items.add(decodeItem(byteBuf.readSlice(size), format, this.componentType));
+            }
         }
 
         Object[] a = (Object[]) Array.newInstance(this.componentType, items.size());

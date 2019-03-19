@@ -40,7 +40,9 @@ final class StringArrayCodecTest {
     @Test
     void decodeItem() {
         assertThat(new StringArrayCodec(TEST).decode(ByteBufUtils.encode(TEST, "{alpha,bravo}"), FORMAT_TEXT, String[].class))
-            .isEqualTo(new String[]{"alpha", "bravo"});
+                .isEqualTo(new String[]{"alpha", "bravo"});
+        assertThat(new StringArrayCodec(TEST).decode(ByteBufUtils.encode(TEST, "{}"), FORMAT_TEXT, String[].class))
+                .isEqualTo(new String[]{});
     }
 
     @Test

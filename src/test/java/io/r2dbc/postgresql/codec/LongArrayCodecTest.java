@@ -36,7 +36,9 @@ final class LongArrayCodecTest {
         LongArrayCodec codec = new LongArrayCodec(TEST);
 
         assertThat(codec.decode(TEST.buffer(16).writeLong(100).writeLong(200), FORMAT_BINARY, Long[].class)).isEqualTo(new long[]{100, 200});
+        assertThat(codec.decode(TEST.buffer(), FORMAT_BINARY, Long[].class)).isEqualTo(new long[]{});
         assertThat(codec.decode(ByteBufUtils.encode(TEST, "{100,200}"), FORMAT_TEXT, Long[].class)).isEqualTo(new long[]{100, 200});
+        assertThat(codec.decode(ByteBufUtils.encode(TEST, "{}"), FORMAT_TEXT, Long[].class)).isEqualTo(new long[]{});
     }
 
     @Test
