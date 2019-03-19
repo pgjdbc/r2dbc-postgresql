@@ -263,6 +263,10 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
     }
 
     private Object[] decodeBinary(ByteBuf buffer, Class<?> returnType) {
+        if (!buffer.isReadable()) {
+            return new Object[0];
+        }
+
         int dimensions = buffer.readInt();
         if (dimensions == 0) {
             return (Object[]) Array.newInstance(componentType, 0);
