@@ -65,7 +65,7 @@ Configuration of the `ConnectionFactory` can be accomplished in two ways:
 ConnectionFactory connectionFactory = ConnectionFactories.get(ConnectionFactoryOptions.builder()
    .option(DRIVER, "postgresql")
    .option(HOST, "...")
-   .option(PORT, "...")  // optional, defaults to 5432
+   .option(PORT, "...")
    .option(USER, "...")
    .option(PASSWORD, "...")
    .option(DATABASE, "...")  // optional
