@@ -107,7 +107,15 @@ public final class PostgresqlResult implements Result {
         Mono<Integer> rowsUpdated = firstMessages
             .ofType(CommandComplete.class)
             .singleOrEmpty()
-            .flatMap(commandComplete -> Mono.justOrEmpty(commandComplete.getRows()));
+            .handle((commandComplete, sink) -> {
+                Integer rowCount = commandComplete.getRows();
+                if (rowCount != null) {
+                    sink.next(rowCount);
+                }
+                else {
+                    sink.complete();
+                }
+            });
 
         messages
             .handle(PostgresqlServerErrorException::handleErrorResponse)
