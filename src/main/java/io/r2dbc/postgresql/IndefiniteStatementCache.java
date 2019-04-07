@@ -29,8 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static reactor.function.TupleUtils.function;
-
 final class IndefiniteStatementCache implements StatementCache {
 
     private final Map<Tuple2<String, List<Integer>>, Mono<String>> cache = new HashMap<>();
@@ -48,7 +46,8 @@ final class IndefiniteStatementCache implements StatementCache {
         Assert.requireNonNull(binding, "binding must not be null");
         Assert.requireNonNull(sql, "sql must not be null");
 
-        return this.cache.computeIfAbsent(Tuples.of(sql, binding.getParameterTypes()), function(this::parse));
+        return this.cache.computeIfAbsent(Tuples.of(sql, binding.getParameterTypes()),
+                tuple -> this.parse(tuple.getT1(), tuple.getT2()));
     }
 
     @Override
