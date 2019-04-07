@@ -85,10 +85,6 @@
             <artifactId>reactor-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.projectreactor.addons</groupId>
-            <artifactId>reactor-extra</artifactId>
-        </dependency>
-        <dependency>
             <groupId>io.projectreactor.netty</groupId>
             <artifactId>reactor-netty</artifactId>
             <exclusions>

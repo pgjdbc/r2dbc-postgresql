@@ -31,8 +31,6 @@ import reactor.core.publisher.Mono;
 
 import java.util.function.BiFunction;
 
-import static reactor.function.TupleUtils.function;
-
 /**
  * An implementation of {@link Result} representing the results of a query against a PostgreSQL database.
  */
@@ -64,13 +62,13 @@ public final class PostgresqlResult implements Result {
 
         return this.rows
             .zipWith(this.rowMetadata.repeat())
-            .map(function((row, rowMetadata) -> {
+            .map(tuple -> {
                 try {
-                    return f.apply(row, rowMetadata);
+                    return f.apply(tuple.getT1(), tuple.getT2());
                 } finally {
-                    row.release();
+                    tuple.getT1().release();
                 }
-            }));
+            });
     }
 
     @Override
@@ -102,7 +100,7 @@ public final class PostgresqlResult implements Result {
             .startWith(firstMessages)
             .ofType(DataRow.class)
             .zipWith(rowDescription.repeat())
-            .map(function((dataRow, rd) -> PostgresqlRow.toRow(codecs, dataRow, rd)));
+            .map(tuple -> PostgresqlRow.toRow(codecs, tuple.getT1(), tuple.getT2()));
 
         Mono<Integer> rowsUpdated = firstMessages
             .ofType(CommandComplete.class)
