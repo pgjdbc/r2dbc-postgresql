@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Test;
 
 import java.net.URI;
 
+import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR;
@@ -77,7 +79,9 @@ final class UriCodecTest {
         URI uri = URI.create("http://localhost");
 
         assertThat(new UriCodec(TEST).doEncode(uri))
-            .isEqualTo(new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), encode(TEST, "http://localhost")));
+            .hasFormat(FORMAT_TEXT)
+            .hasType(VARCHAR.getObjectId())
+            .hasValue(encode(TEST, "http://localhost"));
     }
 
     @Test
@@ -89,7 +93,7 @@ final class UriCodecTest {
     @Test
     void encodeNull() {
         assertThat(new UriCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), NULL_VALUE));
     }
 
 }

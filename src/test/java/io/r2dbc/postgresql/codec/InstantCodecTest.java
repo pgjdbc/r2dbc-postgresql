@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 
+import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
@@ -78,7 +80,9 @@ final class InstantCodecTest {
         Instant instant = Instant.now();
 
         assertThat(new InstantCodec(TEST).doEncode(instant))
-            .isEqualTo(new Parameter(FORMAT_TEXT, TIMESTAMP.getObjectId(), encode(TEST, instant.toString())));
+            .hasFormat(FORMAT_TEXT)
+            .hasType(TIMESTAMP.getObjectId())
+            .hasValue(encode(TEST, instant.toString()));
     }
 
     @Test
@@ -90,7 +94,7 @@ final class InstantCodecTest {
     @Test
     void encodeNull() {
         assertThat(new InstantCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(FORMAT_TEXT, TIMESTAMP.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_TEXT, TIMESTAMP.getObjectId(), NULL_VALUE));
     }
 
 }

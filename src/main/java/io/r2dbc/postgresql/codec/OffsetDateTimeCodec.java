@@ -23,6 +23,7 @@ import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
+import reactor.core.publisher.Flux;
 import reactor.util.annotation.Nullable;
 
 import java.time.OffsetDateTime;
@@ -64,7 +65,7 @@ final class OffsetDateTimeCodec extends AbstractCodec<OffsetDateTime> {
         Assert.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toString());
-        return create(FORMAT_TEXT, TIMESTAMPTZ, encoded);
+        return create(FORMAT_TEXT, TIMESTAMPTZ, Flux.just(encoded));
     }
 
 }

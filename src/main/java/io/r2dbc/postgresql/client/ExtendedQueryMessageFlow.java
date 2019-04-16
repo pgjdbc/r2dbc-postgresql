@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql.client;
 
+import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.NoData;
 import io.r2dbc.postgresql.message.backend.RowDescription;
@@ -97,10 +98,21 @@ public final class ExtendedQueryMessageFlow {
     private static Flux<FrontendMessage> toBindFlow(Binding binding, PortalNameSupplier portalNameSupplier, String statement) {
         String portal = portalNameSupplier.get();
 
-        // TODO: Specify Return Types
-        Bind bind = new Bind(portal, binding.getParameterFormats(), binding.getParameterValues(), Collections.emptyList(), statement);
+        return Flux.fromIterable(binding.getParameterValues())
+            .flatMap(f -> {
+                if (f == Parameter.NULL_VALUE) {
+                    return Flux.just(Bind.NULL_VALUE);
+                } else {
+                    return f.reduce((a, b) -> Unpooled.wrappedBuffer(a, b));
+                }
+            })
+            .collectList()
+            .flatMapMany(values -> {
+                // TODO: Specify Return Types
+                Bind bind = new Bind(portal, binding.getParameterFormats(), values, Collections.emptyList(), statement);
 
-        return Flux.just(bind, new Describe(portal, PORTAL), new Execute(portal, NO_LIMIT), new Close(portal, PORTAL));
+                return Flux.just(bind, new Describe(portal, PORTAL), new Execute(portal, NO_LIMIT), new Close(portal, PORTAL));
+            });
     }
 
 }

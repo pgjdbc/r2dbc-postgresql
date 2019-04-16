@@ -20,6 +20,8 @@ import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import org.junit.jupiter.api.Test;
 
+import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR;
@@ -81,7 +83,9 @@ final class StringCodecTest {
         String string = "test";
 
         assertThat(new StringCodec(TEST).doEncode(string))
-            .isEqualTo(new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), encode(TEST, "test")));
+            .hasFormat(FORMAT_TEXT)
+            .hasType(VARCHAR.getObjectId())
+            .hasValue(encode(TEST, "test"));
     }
 
     @Test
@@ -93,7 +97,7 @@ final class StringCodecTest {
     @Test
     void encodeNull() {
         assertThat(new StringCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), NULL_VALUE));
     }
 
 }

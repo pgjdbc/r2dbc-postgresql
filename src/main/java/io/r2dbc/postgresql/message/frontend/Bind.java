@@ -18,6 +18,7 @@ package io.r2dbc.postgresql.message.frontend;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
@@ -38,6 +39,11 @@ import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeSiz
  * The Bind message.
  */
 public final class Bind implements FrontendMessage {
+
+    /**
+     * A marker indicating a {@code NULL} value.
+     */
+    public static final ByteBuf NULL_VALUE = Unpooled.EMPTY_BUFFER;
 
     /**
      * The unnamed portal.
@@ -98,7 +104,7 @@ public final class Bind implements FrontendMessage {
 
             writeShort(out, this.parameters.size());
             this.parameters.forEach(parameters -> {
-                if (parameters == null) {
+                if (parameters == NULL_VALUE) {
                     writeInt(out, NULL);
                 } else {
                     writeInt(out, parameters.readableBytes());

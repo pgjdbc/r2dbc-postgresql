@@ -24,6 +24,7 @@ import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
+import reactor.core.publisher.Flux;
 import reactor.util.annotation.Nullable;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
@@ -64,7 +65,7 @@ final class IntegerArrayCodec extends AbstractArrayCodec<Integer> {
     Parameter encodeArray(ByteBuf byteBuf) {
         Assert.requireNonNull(byteBuf, "byteBuf must not be null");
 
-        return create(FORMAT_TEXT, INT4_ARRAY, byteBuf);
+        return create(FORMAT_TEXT, INT4_ARRAY, Flux.just(byteBuf));
     }
 
     @Override

@@ -18,13 +18,15 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.client.Parameter;
-import io.r2dbc.postgresql.util.ByteBufUtils;
 import org.junit.jupiter.api.Test;
 
+import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4_ARRAY;
+import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -36,7 +38,7 @@ final class IntegerArrayCodecTest {
         IntegerArrayCodec codec = new IntegerArrayCodec(TEST);
 
         assertThat(codec.decode(TEST.buffer(8).writeInt(100).writeInt(200), FORMAT_BINARY, Integer[].class)).isEqualTo(new int[]{100, 200});
-        assertThat(codec.decode(ByteBufUtils.encode(TEST, "{100,200}"), FORMAT_TEXT, Integer[].class)).isEqualTo(new int[]{100, 200});
+        assertThat(codec.decode(encode(TEST, "{100,200}"), FORMAT_TEXT, Integer[].class)).isEqualTo(new int[]{100, 200});
     }
 
     @Test
@@ -55,7 +57,7 @@ final class IntegerArrayCodecTest {
     void decodeMultidimensional() {
         IntegerArrayCodec codec = new IntegerArrayCodec(TEST);
 
-        assertThatIllegalArgumentException().isThrownBy(() -> codec.decode(ByteBufUtils.encode(TEST, "{{100},{200}}"), FORMAT_TEXT, Integer[][].class))
+        assertThatIllegalArgumentException().isThrownBy(() -> codec.decode(encode(TEST, "{{100},{200}}"), FORMAT_TEXT, Integer[][].class))
             .withMessage("type must be an array with one dimension");
     }
 
@@ -76,8 +78,10 @@ final class IntegerArrayCodecTest {
 
     @Test
     void encodeArray() {
-        assertThat(new IntegerArrayCodec(TEST).encodeArray(ByteBufUtils.encode(TEST, "{100,200}")))
-            .isEqualTo(new Parameter(FORMAT_TEXT, INT4_ARRAY.getObjectId(), ByteBufUtils.encode(TEST, "{100,200}")));
+        assertThat(new IntegerArrayCodec(TEST).encodeArray(encode(TEST, "{100,200}")))
+            .hasFormat(FORMAT_TEXT)
+            .hasType(INT4_ARRAY.getObjectId())
+            .hasValue(encode(TEST, "{100,200}"));
     }
 
     @Test
@@ -92,7 +96,7 @@ final class IntegerArrayCodecTest {
 
         new IntegerArrayCodec(TEST).encodeItem(actual, 100);
 
-        assertThat(actual).isEqualTo(ByteBufUtils.encode(TEST, "100"));
+        assertThat(actual).isEqualTo(encode(TEST, "100"));
     }
 
     @Test
@@ -110,6 +114,6 @@ final class IntegerArrayCodecTest {
     @Test
     void encodeNull() {
         assertThat(new IntegerArrayCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(FORMAT_TEXT, INT4_ARRAY.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_TEXT, INT4_ARRAY.getObjectId(), NULL_VALUE));
     }
 }

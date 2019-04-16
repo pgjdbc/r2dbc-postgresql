@@ -27,6 +27,7 @@ import io.r2dbc.postgresql.message.frontend.ExecutionType;
 import io.r2dbc.postgresql.message.frontend.Parse;
 import io.r2dbc.postgresql.message.frontend.Sync;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
 import java.util.Collections;
@@ -59,22 +60,22 @@ final class IndefiniteStatementCacheTest {
 
         IndefiniteStatementCache statementCache = new IndefiniteStatementCache(client);
 
-        statementCache.getName(new Binding().add(0, new Parameter(FORMAT_BINARY, 100, TEST.buffer(4).writeInt(100))), "test-query")
+        statementCache.getName(new Binding().add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(100)))), "test-query")
             .as(StepVerifier::create)
             .expectNext("S_0")
             .verifyComplete();
 
-        statementCache.getName(new Binding().add(0, new Parameter(FORMAT_BINARY, 100, TEST.buffer(4).writeInt(200))), "test-query")
+        statementCache.getName(new Binding().add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200)))), "test-query")
             .as(StepVerifier::create)
             .expectNext("S_0")
             .verifyComplete();
 
-        statementCache.getName(new Binding().add(0, new Parameter(FORMAT_BINARY, 200, TEST.buffer(2).writeShort(300))), "test-query")
+        statementCache.getName(new Binding().add(0, new Parameter(FORMAT_BINARY, 200, Flux.just(TEST.buffer(2).writeShort(300)))), "test-query")
             .as(StepVerifier::create)
             .expectNext("S_1")
             .verifyComplete();
 
-        statementCache.getName(new Binding().add(0, new Parameter(FORMAT_BINARY, 200, TEST.buffer(4).writeShort(300))), "test-query-2")
+        statementCache.getName(new Binding().add(0, new Parameter(FORMAT_BINARY, 200, Flux.just(TEST.buffer(4).writeShort(300)))), "test-query-2")
             .as(StepVerifier::create)
             .expectNext("S_2")
             .verifyComplete();
@@ -91,7 +92,7 @@ final class IndefiniteStatementCacheTest {
 
         IndefiniteStatementCache statementCache = new IndefiniteStatementCache(client);
 
-        statementCache.getName(new Binding().add(0, new Parameter(FORMAT_BINARY, 100, TEST.buffer(4).writeInt(200))), "test-query")
+        statementCache.getName(new Binding().add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200)))), "test-query")
             .as(StepVerifier::create)
             .verifyError(PostgresqlServerErrorException.class);
     }

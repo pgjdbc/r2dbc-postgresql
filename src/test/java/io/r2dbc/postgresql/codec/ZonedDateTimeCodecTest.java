@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Test;
 
 import java.time.ZonedDateTime;
 
+import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
@@ -78,7 +80,9 @@ final class ZonedDateTimeCodecTest {
         ZonedDateTime zonedDateTime = ZonedDateTime.now();
 
         assertThat(new ZonedDateTimeCodec(TEST).doEncode(zonedDateTime))
-            .isEqualTo(new Parameter(FORMAT_TEXT, TIMESTAMPTZ.getObjectId(), encode(TEST, zonedDateTime.toOffsetDateTime().toString())));
+            .hasFormat(FORMAT_TEXT)
+            .hasType(TIMESTAMPTZ.getObjectId())
+            .hasValue(encode(TEST, zonedDateTime.toOffsetDateTime().toString()));
     }
 
     @Test
@@ -90,7 +94,7 @@ final class ZonedDateTimeCodecTest {
     @Test
     void encodeNull() {
         assertThat(new ZonedDateTimeCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(FORMAT_TEXT, TIMESTAMPTZ.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_TEXT, TIMESTAMPTZ.getObjectId(), NULL_VALUE));
     }
 
 }

@@ -20,6 +20,8 @@ import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import org.junit.jupiter.api.Test;
 
+import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.FLOAT8;
@@ -73,7 +75,9 @@ final class DoubleCodecTest {
     @Test
     void doEncode() {
         assertThat(new DoubleCodec(TEST).doEncode(100d))
-            .isEqualTo(new Parameter(FORMAT_BINARY, FLOAT8.getObjectId(), TEST.buffer(8).writeDouble(100)));
+            .hasFormat(FORMAT_BINARY)
+            .hasType(FLOAT8.getObjectId())
+            .hasValue(TEST.buffer(8).writeDouble(100));
     }
 
     @Test
@@ -85,7 +89,7 @@ final class DoubleCodecTest {
     @Test
     void encodeNull() {
         assertThat(new DoubleCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(FORMAT_BINARY, FLOAT8.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_BINARY, FLOAT8.getObjectId(), NULL_VALUE));
     }
 
 }

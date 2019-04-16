@@ -46,6 +46,16 @@ final class PostgresqlExample implements Example<String> {
         .option(USER, SERVER.getUsername())
         .build());
 
+//    @Override
+//    public String blobType() {
+//        return "BYTEA";
+//    }
+//
+//    @Override
+//    public String clobType() {
+//        return "TEXT";
+//    }
+
     @Override
     public ConnectionFactory getConnectionFactory() {
         return this.connectionFactory;

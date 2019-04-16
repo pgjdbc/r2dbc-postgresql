@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
 
+import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.DATE;
@@ -78,7 +80,9 @@ final class LocalDateCodecTest {
         LocalDate localDate = LocalDate.now();
 
         assertThat(new LocalDateCodec(TEST).doEncode(localDate))
-            .isEqualTo(new Parameter(FORMAT_TEXT, DATE.getObjectId(), encode(TEST, localDate.toString())));
+            .hasFormat(FORMAT_TEXT)
+            .hasType(DATE.getObjectId())
+            .hasValue(encode(TEST, localDate.toString()));
     }
 
     @Test
@@ -90,7 +94,7 @@ final class LocalDateCodecTest {
     @Test
     void encodeNull() {
         assertThat(new LocalDateCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(FORMAT_TEXT, DATE.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_TEXT, DATE.getObjectId(), NULL_VALUE));
     }
 
 }

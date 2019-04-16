@@ -23,6 +23,7 @@ import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
+import reactor.core.publisher.Flux;
 import reactor.util.annotation.Nullable;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
@@ -66,7 +67,7 @@ final class DoubleCodec extends AbstractCodec<Double> {
         Assert.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = this.byteBufAllocator.buffer(8).writeDouble(value);
-        return create(FORMAT_BINARY, FLOAT8, encoded);
+        return create(FORMAT_BINARY, FLOAT8, Flux.just(encoded));
     }
 
 }

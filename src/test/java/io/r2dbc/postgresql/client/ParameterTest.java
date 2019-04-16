@@ -17,33 +17,42 @@
 package io.r2dbc.postgresql.client;
 
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
 
+import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class ParameterTest {
 
     @Test
     void constructorNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new Parameter(null, 100, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new Parameter(null, 100, NULL_VALUE))
             .withMessage("format must not be null");
     }
 
     @Test
     void constructorNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new Parameter(FORMAT_TEXT, null, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new Parameter(FORMAT_TEXT, null, NULL_VALUE))
             .withMessage("type must not be null");
     }
 
     @Test
-    void getters() {
-        Parameter parameter = new Parameter(FORMAT_TEXT, 100, TEST.buffer(4).writeInt(200));
+    void constructorNoValue() {
+        assertThatIllegalArgumentException().isThrownBy(() -> new Parameter(FORMAT_TEXT, 100, null))
+            .withMessage("value must not be null");
+    }
 
-        assertThat(parameter.getFormat()).isEqualTo(FORMAT_TEXT);
-        assertThat(parameter.getType()).isEqualTo(100);
-        assertThat(parameter.getValue()).isEqualTo(TEST.buffer(4).writeInt(200));
+    @Test
+    void getters() {
+        Parameter parameter = new Parameter(FORMAT_TEXT, 100, Flux.just(TEST.buffer(4).writeInt(200)));
+
+        assertThat(parameter)
+            .hasFormat(FORMAT_TEXT)
+            .hasType(100)
+            .hasValue(TEST.buffer(4).writeInt(200));
     }
 
 }

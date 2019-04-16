@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
 
+import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR;
@@ -81,7 +83,9 @@ final class EnumCodecTest {
         TimeUnit timeUnit = TimeUnit.DAYS;
 
         assertThat(new EnumCodec(TEST).encode(timeUnit))
-            .isEqualTo(new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), encode(TEST, timeUnit.name())));
+            .hasFormat(FORMAT_TEXT)
+            .hasType(VARCHAR.getObjectId())
+            .hasValue(encode(TEST, timeUnit.name()));
     }
 
     @Test
@@ -93,7 +97,7 @@ final class EnumCodecTest {
     @Test
     void encodeNull() {
         assertThat(new EnumCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), NULL_VALUE));
     }
 
 }

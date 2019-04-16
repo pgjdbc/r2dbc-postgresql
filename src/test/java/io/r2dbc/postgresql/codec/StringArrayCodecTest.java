@@ -18,9 +18,10 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.client.Parameter;
-import io.r2dbc.postgresql.util.ByteBufUtils;
 import org.junit.jupiter.api.Test;
 
+import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR;
@@ -31,6 +32,7 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TEXT_ARRAY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR_ARRAY;
+import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -39,7 +41,7 @@ final class StringArrayCodecTest {
 
     @Test
     void decodeItem() {
-        assertThat(new StringArrayCodec(TEST).decode(ByteBufUtils.encode(TEST, "{alpha,bravo}"), FORMAT_TEXT, String[].class))
+        assertThat(new StringArrayCodec(TEST).decode(encode(TEST, "{alpha,bravo}"), FORMAT_TEXT, String[].class))
             .isEqualTo(new String[]{"alpha", "bravo"});
     }
 
@@ -53,7 +55,7 @@ final class StringArrayCodecTest {
     void decodeMultidimensional() {
         StringArrayCodec codec = new StringArrayCodec(TEST);
 
-        assertThatIllegalArgumentException().isThrownBy(() -> codec.decode(ByteBufUtils.encode(TEST, "{{alpha},{bravo}}"), FORMAT_TEXT, Integer[][].class))
+        assertThatIllegalArgumentException().isThrownBy(() -> codec.decode(encode(TEST, "{{alpha},{bravo}}"), FORMAT_TEXT, Integer[][].class))
             .withMessage("type must be an array with one dimension");
     }
 
@@ -88,9 +90,10 @@ final class StringArrayCodecTest {
 
     @Test
     void encodeArray() {
-        assertThat(new StringArrayCodec(TEST).encodeArray(ByteBufUtils.encode(TEST, "{alpha,bravo}")))
-            .isEqualTo(new Parameter(FORMAT_TEXT, TEXT_ARRAY.getObjectId(), ByteBufUtils.encode(TEST, "{alpha,bravo}")));
-
+        assertThat(new StringArrayCodec(TEST).encodeArray(encode(TEST, "{alpha,bravo}")))
+            .hasFormat(FORMAT_TEXT)
+            .hasType(TEXT_ARRAY.getObjectId())
+            .hasValue(encode(TEST, "{alpha,bravo}"));
     }
 
     @Test
@@ -105,7 +108,7 @@ final class StringArrayCodecTest {
 
         new StringArrayCodec(TEST).encodeItem(actual, "alpha");
 
-        assertThat(actual).isEqualTo(ByteBufUtils.encode(TEST, "alpha"));
+        assertThat(actual).isEqualTo(encode(TEST, "alpha"));
     }
 
     @Test
@@ -123,7 +126,7 @@ final class StringArrayCodecTest {
     @Test
     void encodeNull() {
         assertThat(new StringArrayCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(FORMAT_TEXT, TEXT_ARRAY.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_TEXT, TEXT_ARRAY.getObjectId(), NULL_VALUE));
     }
 
 }

@@ -20,6 +20,7 @@ import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.PostgresqlBindingException;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
+import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -94,7 +95,7 @@ public final class Binding {
      *
      * @return the values of the parameters in the binding
      */
-    public List<ByteBuf> getParameterValues() {
+    public List<Flux<ByteBuf>> getParameterValues() {
         return getTransformedParameters(Parameter::getValue);
     }
 
