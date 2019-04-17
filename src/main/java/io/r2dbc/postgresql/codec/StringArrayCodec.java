@@ -18,13 +18,11 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.netty.buffer.ByteBufUtil;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Flux;
-import reactor.util.annotation.Nullable;
 
 import static io.netty.util.CharsetUtil.UTF_8;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
@@ -40,15 +38,18 @@ final class StringArrayCodec extends AbstractArrayCodec<String> {
     }
 
     @Override
-    public String decodeItem(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<?> type) {
-        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+    public Parameter encodeNull() {
+        return createNull(FORMAT_TEXT, TEXT_ARRAY);
+    }
 
+    @Override
+    String decodeItem(ByteBuf byteBuf) {
         return byteBuf.toString(UTF_8);
     }
 
     @Override
-    public Parameter encodeNull() {
-        return createNull(FORMAT_TEXT, TEXT_ARRAY);
+    String decodeItem(String strValue) {
+        return strValue;
     }
 
     @Override
@@ -67,11 +68,10 @@ final class StringArrayCodec extends AbstractArrayCodec<String> {
     }
 
     @Override
-    void encodeItem(ByteBuf byteBuf, String value) {
-        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+    String encodeItem(String value) {
         Assert.requireNonNull(value, "value must not be null");
 
-        ByteBufUtil.writeUtf8(byteBuf, value);
+        return AbstractArrayCodec.escapeArrayElement(value);
     }
 
 }

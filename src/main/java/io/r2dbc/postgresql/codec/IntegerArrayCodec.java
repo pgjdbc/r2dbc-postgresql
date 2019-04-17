@@ -18,16 +18,12 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.netty.buffer.ByteBufUtil;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
-import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.core.publisher.Flux;
-import reactor.util.annotation.Nullable;
 
-import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4_ARRAY;
 
@@ -38,20 +34,18 @@ final class IntegerArrayCodec extends AbstractArrayCodec<Integer> {
     }
 
     @Override
-    public Integer decodeItem(ByteBuf byteBuf, Format format, @Nullable Class<?> type) {
-        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
-        Assert.requireNonNull(format, "format must not be null");
-
-        if (FORMAT_BINARY == format) {
-            return byteBuf.readInt();
-        } else {
-            return Integer.parseInt(ByteBufUtils.decode(byteBuf));
-        }
+    public Parameter encodeNull() {
+        return createNull(FORMAT_TEXT, INT4_ARRAY);
     }
 
     @Override
-    public Parameter encodeNull() {
-        return createNull(FORMAT_TEXT, INT4_ARRAY);
+    Integer decodeItem(ByteBuf byteBuf) {
+        return byteBuf.readInt();
+    }
+
+    @Override
+    Integer decodeItem(String strValue) {
+        return Integer.parseInt(strValue);
     }
 
     @Override
@@ -69,11 +63,10 @@ final class IntegerArrayCodec extends AbstractArrayCodec<Integer> {
     }
 
     @Override
-    void encodeItem(ByteBuf byteBuf, Integer value) {
-        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+    String encodeItem(Integer value) {
         Assert.requireNonNull(value, "value must not be null");
 
-        ByteBufUtil.writeUtf8(byteBuf, value.toString());
+        return value.toString();
     }
 
 }

@@ -154,6 +154,11 @@ final class CodecIntegrationTest {
     }
 
     @Test
+    void intTwoDimensionalArray() {
+        testCodec(Integer[][].class, new Integer[][]{{100, 200}, {300, null}}, "INT4[][]");
+    }
+
+    @Test
     void localDate() {
         testCodec(LocalDate.class, LocalDate.now(), "DATE");
     }
@@ -179,6 +184,11 @@ final class CodecIntegrationTest {
     }
 
     @Test
+    void longTwoDimensionalArray() {
+        testCodec(Long[][].class, new Long[][]{{100L, 200L}, {300L, null}}, "INT8[][]");
+    }
+
+    @Test
     void offsetDateTime() {
         testCodec(OffsetDateTime.class, OffsetDateTime.now(), (actual, expected) -> assertThat(actual.isEqual(expected)).isTrue(), "TIMESTAMP WITH TIME ZONE");
     }
@@ -194,6 +204,11 @@ final class CodecIntegrationTest {
     }
 
     @Test
+    void shortTwoDimensionalArray() {
+        testCodec(Short[][].class, new Short[][]{{100, 200}, {300, null}}, "INT2[][]");
+    }
+
+    @Test
     void string() {
         testCodec(String.class, "test-value", (actual, expected) -> assertThat(actual).isEqualToIgnoringWhitespace(expected), "BPCHAR(32)");
         testCodec(String.class, "test-value", "VARCHAR(32)");
@@ -203,6 +218,18 @@ final class CodecIntegrationTest {
     void stringArray() {
         testCodec(String[].class, new String[]{"test-value1", "test-value2", "test-value3"}, "BPCHAR[]");
         testCodec(String[].class, new String[]{"test-value1", "test-value2", "test-value3"}, "VARCHAR[]");
+    }
+
+    @Test
+    void stringArrayValueEscaping() {
+        testCodec(String[].class, new String[]{"NULL", null, "R \"2\" DBC", "АБ"}, "BPCHAR[]");
+        testCodec(String[].class, new String[]{"NULL", null, "R \"2\" DBC", "АБ"}, "VARCHAR[]");
+    }
+
+    @Test
+    void stringTwoDimensionalArray() {
+        testCodec(String[][].class, new String[][]{{"test-value1"}, {"test-value2"}}, "BPCHAR[]");
+        testCodec(String[][].class, new String[][]{{"test-value1"}, {"test-value2"}}, "VARCHAR[]");
     }
 
     @Test
