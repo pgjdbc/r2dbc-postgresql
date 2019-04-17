@@ -53,37 +53,31 @@ final class StringArrayCodecTest {
 
     @Test
     void decodeItem() {
-        StringArrayCodec codec = new StringArrayCodec(TEST);
-
-        assertThat(codec.decode(BINARY_ARRAY, FORMAT_BINARY, String[].class)).isEqualTo(new String[]{"abc", "def"});
-        assertThat(codec.decode(encode(TEST, "{alpha,bravo}"), FORMAT_TEXT, String[].class))
+        assertThat(new StringArrayCodec(TEST).decode(BINARY_ARRAY, FORMAT_BINARY, String[].class)).isEqualTo(new String[]{"abc", "def"});
+        assertThat(new StringArrayCodec(TEST).decode(encode(TEST, "{alpha,bravo}"), FORMAT_TEXT, String[].class))
             .isEqualTo(new String[]{"alpha", "bravo"});
     }
 
     @Test
     @SuppressWarnings({"rawtypes", "unchecked"})
     void decodeObject() {
-        Codec codec = new StringArrayCodec(TEST);
-
-        assertThat(codec.decode(encode(TEST, "{alpha,bravo}"), FORMAT_TEXT, Object.class))
+        assertThat(((Codec) new StringArrayCodec(TEST)).decode(encode(TEST, "{alpha,bravo}"), FORMAT_TEXT, Object.class))
             .isEqualTo(new String[]{"alpha", "bravo"});
     }
 
     @Test
     void doCanDecode() {
-        StringArrayCodec codec = new StringArrayCodec(TEST);
-
-        assertThat(codec.doCanDecode(FORMAT_TEXT, BPCHAR)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_BINARY, BPCHAR_ARRAY)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, CHAR)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_BINARY, CHAR_ARRAY)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, CHAR_ARRAY)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, TEXT)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_BINARY, TEXT_ARRAY)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, TEXT_ARRAY)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, VARCHAR)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_BINARY, VARCHAR_ARRAY)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, VARCHAR_ARRAY)).isTrue();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_TEXT, BPCHAR)).isFalse();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_BINARY, BPCHAR_ARRAY)).isFalse();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_TEXT, CHAR)).isFalse();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_BINARY, CHAR_ARRAY)).isFalse();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_TEXT, CHAR_ARRAY)).isTrue();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_TEXT, TEXT)).isFalse();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_BINARY, TEXT_ARRAY)).isFalse();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_TEXT, TEXT_ARRAY)).isTrue();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_TEXT, VARCHAR)).isFalse();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_BINARY, VARCHAR_ARRAY)).isFalse();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_TEXT, VARCHAR_ARRAY)).isTrue();
     }
 
     @Test

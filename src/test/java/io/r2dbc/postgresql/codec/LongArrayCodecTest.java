@@ -47,28 +47,22 @@ final class LongArrayCodecTest {
 
     @Test
     void decodeItem() {
-        LongArrayCodec codec = new LongArrayCodec(TEST);
-
-        assertThat(codec.decode(BINARY_ARRAY, FORMAT_BINARY, Long[].class)).isEqualTo(new long[]{100, 200});
-        assertThat(codec.decode(encode(TEST, "{100,200}"), FORMAT_TEXT, Long[].class)).isEqualTo(new long[]{100, 200});
+        assertThat(new LongArrayCodec(TEST).decode(BINARY_ARRAY, FORMAT_BINARY, Long[].class)).isEqualTo(new long[]{100, 200});
+        assertThat(new LongArrayCodec(TEST).decode(encode(TEST, "{100,200}"), FORMAT_TEXT, Long[].class)).isEqualTo(new long[]{100, 200});
     }
 
     @Test
     @SuppressWarnings({"rawtypes", "unchecked"})
     void decodeObject() {
-        Codec codec = new LongArrayCodec(TEST);
-
-        assertThat(codec.decode(BINARY_ARRAY, FORMAT_BINARY, Object.class)).isEqualTo(new long[]{100, 200});
-        assertThat(codec.decode(encode(TEST, "{100,200}"), FORMAT_TEXT, Object.class)).isEqualTo(new long[]{100, 200});
+        assertThat(((Codec) new LongArrayCodec(TEST)).decode(BINARY_ARRAY, FORMAT_BINARY, Object.class)).isEqualTo(new long[]{100, 200});
+        assertThat(((Codec) new LongArrayCodec(TEST)).decode(encode(TEST, "{100,200}"), FORMAT_TEXT, Object.class)).isEqualTo(new long[]{100, 200});
     }
 
     @Test
     void doCanDecode() {
-        LongArrayCodec codec = new LongArrayCodec(TEST);
-
-        assertThat(codec.doCanDecode(FORMAT_TEXT, INT8)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, INT8_ARRAY)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_BINARY, INT8_ARRAY)).isTrue();
+        assertThat(new LongArrayCodec(TEST).doCanDecode(FORMAT_TEXT, INT8)).isFalse();
+        assertThat(new LongArrayCodec(TEST).doCanDecode(FORMAT_TEXT, INT8_ARRAY)).isTrue();
+        assertThat(new LongArrayCodec(TEST).doCanDecode(FORMAT_BINARY, INT8_ARRAY)).isTrue();
     }
 
     @Test

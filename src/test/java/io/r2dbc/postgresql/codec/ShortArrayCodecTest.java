@@ -47,28 +47,22 @@ final class ShortArrayCodecTest {
 
     @Test
     void decodeItem() {
-        ShortArrayCodec codec = new ShortArrayCodec(TEST);
-
-        assertThat(codec.decode(BINARY_ARRAY, FORMAT_BINARY, Short[].class)).isEqualTo(new short[]{100, 200});
-        assertThat(codec.decode(encode(TEST, "{100,200}"), FORMAT_TEXT, Short[].class)).isEqualTo(new short[]{100, 200});
+        assertThat(new ShortArrayCodec(TEST).decode(BINARY_ARRAY, FORMAT_BINARY, Short[].class)).isEqualTo(new short[]{100, 200});
+        assertThat(new ShortArrayCodec(TEST).decode(encode(TEST, "{100,200}"), FORMAT_TEXT, Short[].class)).isEqualTo(new short[]{100, 200});
     }
 
     @Test
     @SuppressWarnings({"rawtypes", "unchecked"})
     void decodeObject() {
-        Codec codec = new ShortArrayCodec(TEST);
-
-        assertThat(codec.decode(BINARY_ARRAY, FORMAT_BINARY, Object.class)).isEqualTo(new short[]{100, 200});
-        assertThat(codec.decode(encode(TEST, "{100,200}"), FORMAT_TEXT, Object.class)).isEqualTo(new short[]{100, 200});
+        assertThat(((Codec) new ShortArrayCodec(TEST)).decode(BINARY_ARRAY, FORMAT_BINARY, Object.class)).isEqualTo(new short[]{100, 200});
+        assertThat(((Codec) new ShortArrayCodec(TEST)).decode(encode(TEST, "{100,200}"), FORMAT_TEXT, Object.class)).isEqualTo(new short[]{100, 200});
     }
 
     @Test
     void doCanDecode() {
-        ShortArrayCodec codec = new ShortArrayCodec(TEST);
-
-        assertThat(codec.doCanDecode(FORMAT_TEXT, INT2)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, INT2_ARRAY)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_BINARY, INT2_ARRAY)).isTrue();
+        assertThat(new ShortArrayCodec(TEST).doCanDecode(FORMAT_TEXT, INT2)).isFalse();
+        assertThat(new ShortArrayCodec(TEST).doCanDecode(FORMAT_TEXT, INT2_ARRAY)).isTrue();
+        assertThat(new ShortArrayCodec(TEST).doCanDecode(FORMAT_BINARY, INT2_ARRAY)).isTrue();
     }
 
     @Test
@@ -107,4 +101,5 @@ final class ShortArrayCodecTest {
         assertThat(new ShortArrayCodec(TEST).encodeNull())
             .isEqualTo(new Parameter(FORMAT_TEXT, INT2_ARRAY.getObjectId(), NULL_VALUE));
     }
+
 }

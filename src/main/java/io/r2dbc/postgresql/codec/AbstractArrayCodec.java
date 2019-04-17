@@ -33,10 +33,13 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 
 abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
 
-    private static final String NULL = "NULL";
-    private static final byte[] COMMA = ",".getBytes();
-    private static final byte[] OPEN_CURLY = "{".getBytes();
     private static final byte[] CLOSE_CURLY = "}".getBytes();
+
+    private static final byte[] COMMA = ",".getBytes();
+
+    private static final String NULL = "NULL";
+
+    private static final byte[] OPEN_CURLY = "{".getBytes();
 
     private final ByteBufAllocator byteBufAllocator;
 
@@ -53,6 +56,21 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
         Assert.requireNonNull(value, "value must not be null");
 
         return isTypeAssignable(value.getClass());
+    }
+
+    static String escapeArrayElement(String s) {
+        StringBuilder b = new StringBuilder();
+        b.append('"');
+        for (int j = 0; j < s.length(); j++) {
+            char c = s.charAt(j);
+            if (c == '"' || c == '\\') {
+                b.append('\\');
+            }
+
+            b.append(c);
+        }
+        b.append('"');
+        return b.toString();
     }
 
     abstract T decodeItem(ByteBuf byteBuf);
@@ -96,21 +114,6 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
         return getBaseComponentType(type).equals(this.componentType);
     }
 
-    static String escapeArrayElement(String s) {
-        StringBuilder b = new StringBuilder();
-        b.append('"');
-        for (int j = 0; j < s.length(); j++) {
-            char c = s.charAt(j);
-            if (c == '"' || c == '\\') {
-                b.append('\\');
-            }
-
-            b.append(c);
-        }
-        b.append('"');
-        return b.toString();
-    }
-
     private static Class<?> getBaseComponentType(Class<?> type) {
         Class<?> t = type;
 
@@ -134,94 +137,11 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
         return dims;
     }
 
-    private Class<?> createArrayType(int dims) {
-        int[] size = new int[dims];
-        Arrays.fill(size, 1);
-        return Array.newInstance(componentType, size).getClass();
-    }
-
-    @SuppressWarnings("unchecked")
-    private void encodeAsText(ByteBuf byteBuf, Object[] value, Function<T, String> encoder) {
-        byteBuf.writeBytes(OPEN_CURLY);
-        for (int i = 0; i < value.length; i++) {
-            Object item = value[i];
-            if (item instanceof Object[]) {
-                encodeAsText(byteBuf, (Object[]) item, encoder);
-            } else {
-                byteBuf.writeCharSequence(item == null ? NULL : encoder.apply((T) item), StandardCharsets.UTF_8);
-            }
-
-            if (i != value.length - 1) {
-                byteBuf.writeBytes(COMMA);
-            }
-        }
-        byteBuf.writeBytes(CLOSE_CURLY);
-    }
-
-    private void readArrayAsBinary(ByteBuf buffer, Object[] array, int[] dims, int thisDimension) {
-        if (thisDimension == dims.length - 1) {
-            for (int i = 0; i < dims[thisDimension]; ++i) {
-                int len = buffer.readInt();
-                if (len == -1) {
-                    continue;
-
-                }
-                array[i] = decodeItem(buffer.readBytes(len));
-            }
-        } else {
-            for (int i = 0; i < dims[thisDimension]; ++i) {
-                readArrayAsBinary(buffer, (Object[]) array[i], dims, thisDimension + 1);
-            }
-        }
-    }
-
-    private Object[] decodeBinary(ByteBuf buffer, Class<?> returnType) {
-        int dimensions = buffer.readInt();
-        if (dimensions == 0) {
-            return (Object[]) Array.newInstance(componentType, 0);
-        }
-
-        if (returnType != Object.class) {
-            Assert.requireArrayDimension(returnType, dimensions, "Dimensions mismatch: %s expected, but %s returned from DB");
-        }
-
-        buffer.skipBytes(4); // flags: 0=no-nulls, 1=has-nulls
-        buffer.skipBytes(4); // element oid
-
-        int[] dims = new int[dimensions];
-        for (int d = 0; d < dimensions; ++d) {
-            dims[d] = buffer.readInt(); // dimension size
-            buffer.skipBytes(4); // lower bound ignored
-        }
-
-        Object[] array = (Object[]) Array.newInstance(componentType, dims);
-
-        readArrayAsBinary(buffer, array, dims, 0);
-
-        return array;
-    }
-
-    private Object[] decodeText(ByteBuf buffer, Class<?> returnType) {
-        List<?> elements = buildArrayList(buffer);
-
-        if (elements.isEmpty()) {
-            return (Object[]) Array.newInstance(componentType, 0);
-        }
-
-        int dimensions = getDimensions(elements);
-
-        if (returnType != Object.class) {
-            Assert.requireArrayDimension(returnType, dimensions, "Dimensions mismatch: %s expected, but %s returned from DB");
-        }
-
-        return toArray(elements, createArrayType(dimensions).getComponentType());
-    }
-
     private static Object[] toArray(List<?> list, Class<?> returnType) {
         return list
-                .stream()
-                .map(e -> (e instanceof List ? toArray((List) e, returnType.getComponentType()) : e))
-                .toArray(r ->  (Object[]) Array.newInstance(returnType, list.size()));
+            .stream()
+            .map(e -> (e instanceof List ? toArray((List) e, returnType.getComponentType()) : e))
+            .toArray(r -> (Object[]) Array.newInstance(returnType, list.size()));
     }
 
     private List<Object> buildArrayList(ByteBuf buf) {
@@ -296,7 +216,7 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
                 // white space
                 continue;
             } else if ((!insideString && (currentChar == delim || currentChar == '}'))
-                    || i == chars.length() - 1) {
+                || i == chars.length() - 1) {
                 // array end or element end
                 // when character that is a part of array element
                 if (currentChar != '"' && currentChar != '}' && currentChar != delim && buffer != null) {
@@ -334,5 +254,88 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
         }
 
         return arrayList;
+    }
+
+    private Class<?> createArrayType(int dims) {
+        int[] size = new int[dims];
+        Arrays.fill(size, 1);
+        return Array.newInstance(componentType, size).getClass();
+    }
+
+    private Object[] decodeBinary(ByteBuf buffer, Class<?> returnType) {
+        int dimensions = buffer.readInt();
+        if (dimensions == 0) {
+            return (Object[]) Array.newInstance(componentType, 0);
+        }
+
+        if (returnType != Object.class) {
+            Assert.requireArrayDimension(returnType, dimensions, "Dimensions mismatch: %s expected, but %s returned from DB");
+        }
+
+        buffer.skipBytes(4); // flags: 0=no-nulls, 1=has-nulls
+        buffer.skipBytes(4); // element oid
+
+        int[] dims = new int[dimensions];
+        for (int d = 0; d < dimensions; ++d) {
+            dims[d] = buffer.readInt(); // dimension size
+            buffer.skipBytes(4); // lower bound ignored
+        }
+
+        Object[] array = (Object[]) Array.newInstance(componentType, dims);
+
+        readArrayAsBinary(buffer, array, dims, 0);
+
+        return array;
+    }
+
+    private Object[] decodeText(ByteBuf buffer, Class<?> returnType) {
+        List<?> elements = buildArrayList(buffer);
+
+        if (elements.isEmpty()) {
+            return (Object[]) Array.newInstance(componentType, 0);
+        }
+
+        int dimensions = getDimensions(elements);
+
+        if (returnType != Object.class) {
+            Assert.requireArrayDimension(returnType, dimensions, "Dimensions mismatch: %s expected, but %s returned from DB");
+        }
+
+        return toArray(elements, createArrayType(dimensions).getComponentType());
+    }
+
+    @SuppressWarnings("unchecked")
+    private void encodeAsText(ByteBuf byteBuf, Object[] value, Function<T, String> encoder) {
+        byteBuf.writeBytes(OPEN_CURLY);
+        for (int i = 0; i < value.length; i++) {
+            Object item = value[i];
+            if (item instanceof Object[]) {
+                encodeAsText(byteBuf, (Object[]) item, encoder);
+            } else {
+                byteBuf.writeCharSequence(item == null ? NULL : encoder.apply((T) item), StandardCharsets.UTF_8);
+            }
+
+            if (i != value.length - 1) {
+                byteBuf.writeBytes(COMMA);
+            }
+        }
+        byteBuf.writeBytes(CLOSE_CURLY);
+    }
+
+    private void readArrayAsBinary(ByteBuf buffer, Object[] array, int[] dims, int thisDimension) {
+        if (thisDimension == dims.length - 1) {
+            for (int i = 0; i < dims[thisDimension]; ++i) {
+                int len = buffer.readInt();
+                if (len == -1) {
+                    continue;
+
+                }
+                array[i] = decodeItem(buffer.readBytes(len));
+            }
+        } else {
+            for (int i = 0; i < dims[thisDimension]; ++i) {
+                readArrayAsBinary(buffer, (Object[]) array[i], dims, thisDimension + 1);
+            }
+        }
     }
 }

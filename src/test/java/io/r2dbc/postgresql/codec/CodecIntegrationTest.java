@@ -149,13 +149,13 @@ final class CodecIntegrationTest {
     }
 
     @Test
-    void intTwoDimensionalArray() {
-        testCodec(Integer[][].class, new Integer[][]{{100, 200}, {300, null}}, "INT4[][]");
+    void intPrimitive() {
+        testCodec(Integer.class, 100, "INT4");
     }
 
     @Test
-    void intPrimitive() {
-        testCodec(Integer.class, 100, "INT4");
+    void intTwoDimensionalArray() {
+        testCodec(Integer[][].class, new Integer[][]{{100, 200}, {300, null}}, "INT4[][]");
     }
 
     @Test
@@ -179,13 +179,13 @@ final class CodecIntegrationTest {
     }
 
     @Test
-    void longTwoDimensionalArray() {
-        testCodec(Long[][].class, new Long[][]{{100L, 200L}, {300L, null}}, "INT8[][]");
+    void longPrimitive() {
+        testCodec(Long.class, 100L, "INT8");
     }
 
     @Test
-    void longPrimitive() {
-        testCodec(Long.class, 100L, "INT8");
+    void longTwoDimensionalArray() {
+        testCodec(Long[][].class, new Long[][]{{100L, 200L}, {300L, null}}, "INT8[][]");
     }
 
     @Test
@@ -199,13 +199,13 @@ final class CodecIntegrationTest {
     }
 
     @Test
-    void shortTwoDimensionalArray() {
-        testCodec(Short[][].class, new Short[][]{{100, 200}, {300, null}}, "INT2[][]");
+    void shortPrimitive() {
+        testCodec(Short.class, (short) 100, "INT2");
     }
 
     @Test
-    void shortPrimitive() {
-        testCodec(Short.class, (short) 100, "INT2");
+    void shortTwoDimensionalArray() {
+        testCodec(Short[][].class, new Short[][]{{100, 200}, {300, null}}, "INT2[][]");
     }
 
     @Test
@@ -221,15 +221,15 @@ final class CodecIntegrationTest {
     }
 
     @Test
-    void stringTwoDimensionalArray() {
-        testCodec(String[][].class, new String[][]{{"test-value1"}, {"test-value2"}}, "BPCHAR[]");
-        testCodec(String[][].class, new String[][]{{"test-value1"}, {"test-value2"}}, "VARCHAR[]");
-    }
-
-    @Test
     void stringArrayValueEscaping() {
         testCodec(String[].class, new String[]{"NULL", null, "R \"2\" DBC", "АБ"}, "BPCHAR[]");
         testCodec(String[].class, new String[]{"NULL", null, "R \"2\" DBC", "АБ"}, "VARCHAR[]");
+    }
+
+    @Test
+    void stringTwoDimensionalArray() {
+        testCodec(String[][].class, new String[][]{{"test-value1"}, {"test-value2"}}, "BPCHAR[]");
+        testCodec(String[][].class, new String[][]{{"test-value1"}, {"test-value2"}}, "VARCHAR[]");
     }
 
     @Test

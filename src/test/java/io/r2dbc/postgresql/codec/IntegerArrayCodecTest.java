@@ -59,18 +59,16 @@ final class IntegerArrayCodecTest {
         .writeInt(100) // value
         .writeInt(-1); // length of null element
 
-    private final IntegerArrayCodec codec = new IntegerArrayCodec(TEST);
-
     @Test
     void decodeItem() {
-        assertThat(codec.decode(SINGLE_DIM_BINARY_ARRAY, FORMAT_BINARY, Integer[].class)).isEqualTo(new int[]{100, 200});
-        assertThat(codec.decode(encode(TEST, "{100,200}"), FORMAT_TEXT, Integer[].class))
+        assertThat(new IntegerArrayCodec(TEST).decode(SINGLE_DIM_BINARY_ARRAY, FORMAT_BINARY, Integer[].class)).isEqualTo(new int[]{100, 200});
+        assertThat(new IntegerArrayCodec(TEST).decode(encode(TEST, "{100,200}"), FORMAT_TEXT, Integer[].class))
             .isEqualTo(new int[]{100, 200});
     }
 
     @Test
     void decodeItem_emptyArray() {
-        assertThat(codec.decode(encode(TEST, "{}"), FORMAT_TEXT, Integer[][].class))
+        assertThat(new IntegerArrayCodec(TEST).decode(encode(TEST, "{}"), FORMAT_TEXT, Integer[][].class))
             .isEqualTo(new int[][]{});
     }
 
@@ -82,46 +80,46 @@ final class IntegerArrayCodecTest {
             .writeInt(0)
             .writeInt(23);
 
-        assertThat(codec.decode(buf, FORMAT_BINARY, Integer[][].class)).isEqualTo(new int[][]{});
+        assertThat(new IntegerArrayCodec(TEST).decode(buf, FORMAT_BINARY, Integer[][].class)).isEqualTo(new int[][]{});
     }
 
     @Test
     void decodeItem_expectedLessDimensionsInArray() {
         assertThatIllegalArgumentException()
-            .isThrownBy(() -> codec.decode(encode(TEST, "{{100}}"), FORMAT_TEXT, Integer[].class))
+            .isThrownBy(() -> new IntegerArrayCodec(TEST).decode(encode(TEST, "{{100}}"), FORMAT_TEXT, Integer[].class))
             .withMessage("Dimensions mismatch: 1 expected, but 2 returned from DB");
     }
 
     @Test
     void decodeItem_expectedLessDimensionsInBinaryArray() {
         assertThatIllegalArgumentException()
-            .isThrownBy(() -> codec.decode(TWO_DIM_BINARY_ARRAY, FORMAT_BINARY, Integer[].class))
+            .isThrownBy(() -> new IntegerArrayCodec(TEST).decode(TWO_DIM_BINARY_ARRAY, FORMAT_BINARY, Integer[].class))
             .withMessage("Dimensions mismatch: 1 expected, but 2 returned from DB");
     }
 
     @Test
     void decodeItem_expectedMoreDimensionsInArray() {
         assertThatIllegalArgumentException()
-            .isThrownBy(() -> codec.decode(encode(TEST, "{100,200}"), FORMAT_TEXT, Integer[][].class))
+            .isThrownBy(() -> new IntegerArrayCodec(TEST).decode(encode(TEST, "{100,200}"), FORMAT_TEXT, Integer[][].class))
             .withMessage("Dimensions mismatch: 2 expected, but 1 returned from DB");
     }
 
     @Test
     void decodeItem_expectedMoreDimensionsInBinaryArray() {
         assertThatIllegalArgumentException()
-            .isThrownBy(() -> codec.decode(SINGLE_DIM_BINARY_ARRAY, FORMAT_BINARY, Integer[][].class))
+            .isThrownBy(() -> new IntegerArrayCodec(TEST).decode(SINGLE_DIM_BINARY_ARRAY, FORMAT_BINARY, Integer[][].class))
             .withMessage("Dimensions mismatch: 2 expected, but 1 returned from DB");
     }
 
     @Test
     void decodeItem_twoDimensionalArrayWithNull() {
-        assertThat(codec.decode(encode(TEST, "{{100},{NULL}}"), FORMAT_TEXT, Integer[][].class))
+        assertThat(new IntegerArrayCodec(TEST).decode(encode(TEST, "{{100},{NULL}}"), FORMAT_TEXT, Integer[][].class))
             .isEqualTo(new Integer[][]{{100}, {null}});
     }
 
     @Test
     void decodeItem_twoDimensionalBinaryArrayWithNull() {
-        assertThat(codec.decode(TWO_DIM_BINARY_ARRAY, FORMAT_BINARY, Integer[][].class)).isEqualTo(new Integer[][]{{100}, {null}});
+        assertThat(new IntegerArrayCodec(TEST).decode(TWO_DIM_BINARY_ARRAY, FORMAT_BINARY, Integer[][].class)).isEqualTo(new Integer[][]{{100}, {null}});
     }
 
     @Test
@@ -136,20 +134,20 @@ final class IntegerArrayCodecTest {
 
     @Test
     void doCanDecode() {
-        assertThat(codec.doCanDecode(FORMAT_TEXT, INT4)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, INT4_ARRAY)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_BINARY, INT4_ARRAY)).isTrue();
+        assertThat(new IntegerArrayCodec(TEST).doCanDecode(FORMAT_TEXT, INT4)).isFalse();
+        assertThat(new IntegerArrayCodec(TEST).doCanDecode(FORMAT_TEXT, INT4_ARRAY)).isTrue();
+        assertThat(new IntegerArrayCodec(TEST).doCanDecode(FORMAT_BINARY, INT4_ARRAY)).isTrue();
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> codec.doCanDecode(null, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new IntegerArrayCodec(TEST).doCanDecode(null, null))
             .withMessage("type must not be null");
     }
 
     @Test
     void encodeArray() {
-        assertThat(codec.encodeArray(encode(TEST, "{100,200}")))
+        assertThat(new IntegerArrayCodec(TEST).encodeArray(encode(TEST, "{100,200}")))
             .hasFormat(FORMAT_TEXT)
             .hasType(INT4_ARRAY.getObjectId())
             .hasValue(encode(TEST, "{100,200}"));
@@ -157,18 +155,19 @@ final class IntegerArrayCodecTest {
 
     @Test
     void encodeItem() {
-        assertThat(codec.encodeItem(100)).isEqualTo("100");
+        assertThat(new IntegerArrayCodec(TEST).encodeItem(100)).isEqualTo("100");
     }
 
     @Test
     void encodeItemNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> codec.encodeItem(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new IntegerArrayCodec(TEST).encodeItem(null))
             .withMessage("value must not be null");
     }
 
     @Test
     void encodeNull() {
-        assertThat(codec.encodeNull())
+        assertThat(new IntegerArrayCodec(TEST).encodeNull())
             .isEqualTo(new Parameter(FORMAT_TEXT, INT4_ARRAY.getObjectId(), NULL_VALUE));
     }
+
 }
