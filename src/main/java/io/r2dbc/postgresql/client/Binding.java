@@ -21,7 +21,6 @@ import io.r2dbc.postgresql.PostgresqlBindingException;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
-import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.List;

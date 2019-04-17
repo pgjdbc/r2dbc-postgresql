@@ -27,7 +27,9 @@ import reactor.core.publisher.Flux;
 import reactor.util.annotation.Nullable;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMP;
 
@@ -50,12 +52,16 @@ final class LocalDateTimeCodec extends AbstractCodec<LocalDateTime> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return FORMAT_TEXT == format && TIMESTAMP == type;
+        return TIMESTAMP == type;
     }
 
     @Override
     LocalDateTime doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends LocalDateTime> type) {
         Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+
+        if (format == FORMAT_BINARY) {
+            return LocalDateTime.ofInstant(EpochTime.fromLong(byteBuf.readLong()).toInstant(), ZoneId.of("UTC"));
+        }
 
         return PostgresqlDateTimeFormatter.INSTANCE.parse(ByteBufUtils.decode(byteBuf), LocalDateTime::from);
     }

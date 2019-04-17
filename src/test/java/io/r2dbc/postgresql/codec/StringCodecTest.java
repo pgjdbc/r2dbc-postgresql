@@ -57,7 +57,7 @@ final class StringCodecTest {
     void doCanDecode() {
         StringCodec codec = new StringCodec(TEST);
 
-        assertThat(codec.doCanDecode(FORMAT_BINARY, VARCHAR)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, VARCHAR)).isTrue();
         assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
         assertThat(codec.doCanDecode(FORMAT_TEXT, BPCHAR)).isTrue();
         assertThat(codec.doCanDecode(FORMAT_TEXT, CHAR)).isTrue();

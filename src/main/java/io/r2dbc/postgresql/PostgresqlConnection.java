@@ -46,15 +46,18 @@ public final class PostgresqlConnection implements Connection {
 
     private final Codecs codecs;
 
+    private final boolean forceBinary;
+
     private final PortalNameSupplier portalNameSupplier;
 
     private final StatementCache statementCache;
 
-    PostgresqlConnection(Client client, Codecs codecs, PortalNameSupplier portalNameSupplier, StatementCache statementCache) {
+    PostgresqlConnection(Client client, Codecs codecs, PortalNameSupplier portalNameSupplier, StatementCache statementCache, boolean forceBinary) {
         this.client = Assert.requireNonNull(client, "client must not be null");
         this.codecs = Assert.requireNonNull(codecs, "codecs must not be null");
         this.portalNameSupplier = Assert.requireNonNull(portalNameSupplier, "portalNameSupplier must not be null");
         this.statementCache = Assert.requireNonNull(statementCache, "statementCache must not be null");
+        this.forceBinary = forceBinary;
     }
 
     @Override
@@ -116,7 +119,7 @@ public final class PostgresqlConnection implements Connection {
         if (SimpleQueryPostgresqlStatement.supports(sql)) {
             return new SimpleQueryPostgresqlStatement(this.client, this.codecs, sql);
         } else if (ExtendedQueryPostgresqlStatement.supports(sql)) {
-            return new ExtendedQueryPostgresqlStatement(this.client, this.codecs, this.portalNameSupplier, sql, this.statementCache);
+            return new ExtendedQueryPostgresqlStatement(this.client, this.codecs, this.portalNameSupplier, sql, this.statementCache, this.forceBinary);
         } else {
             throw new IllegalArgumentException(String.format("Statement '%s' cannot be created. This is often due to the presence of both multiple statements and parameters at the same time.", sql));
         }
@@ -180,6 +183,7 @@ public final class PostgresqlConnection implements Connection {
         return "PostgresqlConnection{" +
             "client=" + this.client +
             ", codecs=" + this.codecs +
+            ", forceBinary=" + this.forceBinary +
             ", portalNameSupplier=" + this.portalNameSupplier +
             ", statementCache=" + this.statementCache +
             '}';

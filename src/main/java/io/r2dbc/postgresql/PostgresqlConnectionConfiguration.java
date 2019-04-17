@@ -38,6 +38,8 @@ public final class PostgresqlConnectionConfiguration {
 
     private final String database;
 
+    private final boolean forceBinary;
+
     private final String host;
 
     private final String password;
@@ -48,12 +50,13 @@ public final class PostgresqlConnectionConfiguration {
 
     private final String username;
 
-    private PostgresqlConnectionConfiguration(String applicationName, @Nullable Duration connectTimeout, @Nullable String database, String host, String password, int port, @Nullable String schema,
-                                              String username) {
+    private PostgresqlConnectionConfiguration(String applicationName, @Nullable Duration connectTimeout, @Nullable String database, boolean forceBinary, String host, String password, int port,
+                                              @Nullable String schema, String username) {
 
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
         this.connectTimeout = connectTimeout;
         this.database = database;
+        this.forceBinary = forceBinary;
         this.host = Assert.requireNonNull(host, "host must not be null");
         this.password = Assert.requireNonNull(password, "password must not be null");
         this.port = port;
@@ -76,6 +79,7 @@ public final class PostgresqlConnectionConfiguration {
             "applicationName='" + this.applicationName + '\'' +
             ", connectTimeout=" + this.connectTimeout +
             ", database='" + this.database + '\'' +
+            ", forceBinary='" + this.forceBinary + '\'' +
             ", host='" + this.host + '\'' +
             ", password='" + this.password + '\'' +
             ", port=" + this.port +
@@ -119,6 +123,10 @@ public final class PostgresqlConnectionConfiguration {
         return this.username;
     }
 
+    boolean isForceBinary() {
+        return this.forceBinary;
+    }
+
     /**
      * A builder for {@link PostgresqlConnectionConfiguration} instances.
      * <p>
@@ -131,6 +139,8 @@ public final class PostgresqlConnectionConfiguration {
         private Duration connectTimeout;
 
         private String database;
+
+        private boolean forceBinary = false;
 
         private String host;
 
@@ -163,7 +173,7 @@ public final class PostgresqlConnectionConfiguration {
          * @return a configured {@link PostgresqlConnectionConfiguration}
          */
         public PostgresqlConnectionConfiguration build() {
-            return new PostgresqlConnectionConfiguration(this.applicationName, this.connectTimeout, this.database, this.host, this.password, this.port, this.schema, this.username);
+            return new PostgresqlConnectionConfiguration(this.applicationName, this.connectTimeout, this.database, this.forceBinary, this.host, this.password, this.port, this.schema, this.username);
         }
 
         public Builder connectTimeout(@Nullable Duration connectTimeout) {
@@ -179,6 +189,17 @@ public final class PostgresqlConnectionConfiguration {
          */
         public Builder database(@Nullable String database) {
             this.database = database;
+            return this;
+        }
+
+        /**
+         * Force binary results (<a href="https://wiki.postgresql.org/wiki/JDBC-BinaryTransfer">Binary Transfer</a>). Defaults to false.
+         *
+         * @param forceBinary whether to force binary transfer
+         * @return this {@link Builder}
+         */
+        public Builder forceBinary(boolean forceBinary) {
+            this.forceBinary = forceBinary;
             return this;
         }
 
@@ -234,6 +255,7 @@ public final class PostgresqlConnectionConfiguration {
                 "applicationName='" + this.applicationName + '\'' +
                 ", connectTimeout='" + this.connectTimeout + '\'' +
                 ", database='" + this.database + '\'' +
+                ", forceBinary='" + this.forceBinary + '\'' +
                 ", host='" + this.host + '\'' +
                 ", password='" + this.password + '\'' +
                 ", port=" + this.port +

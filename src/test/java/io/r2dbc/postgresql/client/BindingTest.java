@@ -16,7 +16,6 @@
 
 package io.r2dbc.postgresql.client;
 
-import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.PostgresqlBindingException;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;

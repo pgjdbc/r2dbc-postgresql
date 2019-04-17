@@ -41,6 +41,8 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
 
     private final Codecs codecs;
 
+    private final boolean forceBinary;
+
     private final PortalNameSupplier portalNameSupplier;
 
     private final String sql;
@@ -49,12 +51,13 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
 
     private String[] generatedColumns;
 
-    ExtendedQueryPostgresqlStatement(Client client, Codecs codecs, PortalNameSupplier portalNameSupplier, String sql, StatementCache statementCache) {
+    ExtendedQueryPostgresqlStatement(Client client, Codecs codecs, PortalNameSupplier portalNameSupplier, String sql, StatementCache statementCache, boolean forceBinary) {
         this.client = Assert.requireNonNull(client, "client must not be null");
         this.codecs = Assert.requireNonNull(codecs, "codecs must not be null");
         this.portalNameSupplier = Assert.requireNonNull(portalNameSupplier, "portalNameSupplier must not be null");
         this.sql = Assert.requireNonNull(sql, "sql must not be null");
         this.statementCache = Assert.requireNonNull(statementCache, "statementCache must not be null");
+        this.forceBinary = forceBinary;
     }
 
     @Override
@@ -129,6 +132,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
             "bindings=" + this.bindings +
             ", client=" + this.client +
             ", codecs=" + this.codecs +
+            ", forceBinary=" + this.forceBinary +
             ", portalNameSupplier=" + this.portalNameSupplier +
             ", sql='" + this.sql + '\'' +
             ", statementCache=" + this.statementCache +
@@ -149,7 +153,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
     private Flux<PostgresqlResult> execute(String sql) {
         return this.statementCache.getName(this.bindings.first(), sql)
             .flatMapMany(name -> ExtendedQueryMessageFlow
-                .execute(Flux.fromIterable(this.bindings.bindings), this.client, this.portalNameSupplier, name))
+                .execute(Flux.fromIterable(this.bindings.bindings), this.client, this.portalNameSupplier, name, this.forceBinary))
             .windowUntil(CloseComplete.class::isInstance)
             .map(messages -> PostgresqlResult.toResult(this.codecs, messages));
     }

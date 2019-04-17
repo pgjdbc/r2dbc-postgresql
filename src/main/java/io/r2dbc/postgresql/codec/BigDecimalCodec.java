@@ -28,6 +28,7 @@ import reactor.util.annotation.Nullable;
 
 import java.math.BigDecimal;
 
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.NUMERIC;
 
@@ -50,12 +51,16 @@ final class BigDecimalCodec extends AbstractCodec<BigDecimal> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return FORMAT_TEXT == format && NUMERIC == type;
+        return NUMERIC == type;
     }
 
     @Override
     BigDecimal doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends BigDecimal> type) {
         Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+
+        if (format == FORMAT_BINARY) {
+            return doDecodeBinary(byteBuf);
+        }
 
         return new BigDecimal(ByteBufUtils.decode(byteBuf));
     }
@@ -66,6 +71,56 @@ final class BigDecimalCodec extends AbstractCodec<BigDecimal> {
 
         ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toString());
         return create(FORMAT_TEXT, NUMERIC, Flux.just(encoded));
+    }
+
+    private BigDecimal doDecodeBinary(ByteBuf byteBuf) {
+        // extract values
+        short numOfDigits = byteBuf.readShort();
+        if (numOfDigits == 0) {
+            return BigDecimal.ZERO;
+        }
+        short weight = byteBuf.readShort();
+        short sign = byteBuf.readShort();
+        short scale = byteBuf.readShort();
+        short[] digits = new short[numOfDigits];
+        for (short i = 0; i < numOfDigits; i++) {
+            digits[i] = byteBuf.readShort();
+        }
+
+        StringBuilder builder = new StringBuilder();
+        // whole part
+        builder.append(digits[0]);
+        for (short i = 0; i < weight * 4; i++) {
+            builder.append(0);
+        }
+        // decimal part
+        if (scale > 0) {
+            builder.append('.');
+            for (short i = 0; i < scale; i++) {
+                builder.append(0);
+            }
+        }
+
+        int expectedLength = builder.length();
+        int baseOffset = Short.toString(digits[0]).length();
+
+        for (short i = 1; i < numOfDigits; i++) {
+            weight--;
+            String temp = Short.toString(digits[i]);
+            int offset = baseOffset + 4 * i - temp.length();
+            if (weight < 0) {
+                offset++; // dot between whole and decimal parts
+            }
+            builder.replace(offset, offset + temp.length(), temp);
+        }
+
+        builder.setLength(expectedLength); // remove zeros from the end
+
+        if (sign == 0) {
+            return new BigDecimal(builder.toString());
+        } else {
+            return new BigDecimal("-" + builder.toString());
+        }
     }
 
 }

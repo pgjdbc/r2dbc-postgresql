@@ -61,7 +61,7 @@ final class BooleanCodecTest {
     void doCanDecode() {
         BooleanCodec codec = new BooleanCodec(TEST);
 
-        assertThat(codec.doCanDecode(FORMAT_BINARY, BOOL)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, BOOL)).isTrue();
         assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
         assertThat(codec.doCanDecode(FORMAT_TEXT, BOOL)).isTrue();
     }

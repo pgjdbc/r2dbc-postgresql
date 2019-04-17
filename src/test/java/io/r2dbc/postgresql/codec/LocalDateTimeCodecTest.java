@@ -58,7 +58,7 @@ final class LocalDateTimeCodecTest {
     void doCanDecode() {
         LocalDateTimeCodec codec = new LocalDateTimeCodec(TEST);
 
-        assertThat(codec.doCanDecode(FORMAT_BINARY, TIMESTAMP)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, TIMESTAMP)).isTrue();
         assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
         assertThat(codec.doCanDecode(FORMAT_TEXT, TIMESTAMP)).isTrue();
     }

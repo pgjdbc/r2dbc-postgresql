@@ -18,6 +18,8 @@ package io.r2dbc.postgresql.message.frontend;
 
 import org.junit.jupiter.api.Test;
 
+import java.time.ZoneId;
+
 import static io.netty.util.CharsetUtil.UTF_8;
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageAssert.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -42,7 +44,7 @@ final class StartupMessageTest {
             .isDeferred()
             .isEncodedAs(buffer -> {
                 buffer
-                    .writeInt(146)
+                    .writeInt(156 + ZoneId.systemDefault().toString().length())
                     .writeInt(196608);
 
                 buffer.writeCharSequence("user", UTF_8);
@@ -81,6 +83,12 @@ final class StartupMessageTest {
                 buffer.writeCharSequence("2", UTF_8);
                 buffer.writeByte(0);
 
+                buffer.writeCharSequence("TimeZone", UTF_8);
+                buffer.writeByte(0);
+
+                buffer.writeCharSequence(ZoneId.systemDefault().toString(), UTF_8);
+                buffer.writeByte(0);
+
                 buffer.writeByte(0);
 
                 return buffer;
@@ -93,7 +101,7 @@ final class StartupMessageTest {
             .isDeferred()
             .isEncodedAs(buffer -> {
                 buffer
-                    .writeInt(123)
+                    .writeInt(133 + ZoneId.systemDefault().toString().length())
                     .writeInt(196608);
 
                 buffer.writeCharSequence("user", UTF_8);
@@ -124,6 +132,12 @@ final class StartupMessageTest {
                 buffer.writeByte(0);
 
                 buffer.writeCharSequence("2", UTF_8);
+                buffer.writeByte(0);
+
+                buffer.writeCharSequence("TimeZone", UTF_8);
+                buffer.writeByte(0);
+
+                buffer.writeCharSequence(ZoneId.systemDefault().toString(), UTF_8);
                 buffer.writeByte(0);
 
                 buffer.writeByte(0);

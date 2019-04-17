@@ -28,6 +28,7 @@ import reactor.util.annotation.Nullable;
 
 import java.util.UUID;
 
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
 final class UuidCodec extends AbstractCodec<UUID> {
@@ -57,13 +58,19 @@ final class UuidCodec extends AbstractCodec<UUID> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return FORMAT_TEXT == format && PostgresqlObjectId.UUID == type;
+        return PostgresqlObjectId.UUID == type;
     }
 
     @Override
     UUID doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends UUID> type) {
         Assert.requireNonNull(byteBuf, "byteBuf must not be null");
-        return UUID.fromString(ByteBufUtils.decode(byteBuf));
+
+        if (format == FORMAT_BINARY) {
+            return new UUID(byteBuf.readLong(), byteBuf.readLong());
+        }
+
+        String str = ByteBufUtils.decode(byteBuf);
+        return UUID.fromString(str);
     }
 
 }

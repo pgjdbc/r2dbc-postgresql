@@ -58,7 +58,7 @@ final class ZonedDateTimeCodecTest {
     void doCanDecode() {
         ZonedDateTimeCodec codec = new ZonedDateTimeCodec(TEST);
 
-        assertThat(codec.doCanDecode(FORMAT_BINARY, TIMESTAMPTZ)).isFalse();
+        assertThat(codec.doCanDecode(FORMAT_BINARY, TIMESTAMPTZ)).isTrue();
         assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
         assertThat(codec.doCanDecode(FORMAT_TEXT, TIMESTAMPTZ)).isTrue();
     }

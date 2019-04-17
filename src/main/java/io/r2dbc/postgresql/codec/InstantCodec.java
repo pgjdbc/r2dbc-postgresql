@@ -31,6 +31,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMP;
 
@@ -53,12 +54,17 @@ final class InstantCodec extends AbstractCodec<Instant> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return FORMAT_TEXT == format && TIMESTAMP == type;
+        return TIMESTAMP == type;
     }
 
     @Override
     Instant doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends Instant> type) {
         Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+
+        if (FORMAT_BINARY == format) {
+            return EpochTime.fromLong(byteBuf.readLong()).toInstant();
+        }
+
         return PostgresqlDateTimeFormatter.INSTANCE.parse(ByteBufUtils.decode(byteBuf), temporal -> ZonedDateTime.of(LocalDateTime.from(temporal), ZoneOffset.UTC).toInstant());
     }
 
@@ -69,5 +75,4 @@ final class InstantCodec extends AbstractCodec<Instant> {
         ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toString());
         return create(FORMAT_TEXT, TIMESTAMP, Flux.just(encoded));
     }
-
 }

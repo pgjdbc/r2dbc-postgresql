@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.client;
 
 import io.netty.buffer.Unpooled;
+import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.NoData;
 import io.r2dbc.postgresql.message.backend.RowDescription;
@@ -61,17 +62,18 @@ public final class ExtendedQueryMessageFlow {
      * @param client             the {@link Client} to exchange messages with
      * @param portalNameSupplier supplier unique portal names for each binding
      * @param statement          the name of the statement to execute
+     * @param forceBinary        force backend to return column data values in binary format for all columns
      * @return the messages received in response to the exchange
      * @throws IllegalArgumentException if {@code bindings}, {@code client}, {@code portalNameSupplier}, or {@code statement} is {@code null}
      */
-    public static Flux<BackendMessage> execute(Publisher<Binding> bindings, Client client, PortalNameSupplier portalNameSupplier, String statement) {
+    public static Flux<BackendMessage> execute(Publisher<Binding> bindings, Client client, PortalNameSupplier portalNameSupplier, String statement, boolean forceBinary) {
         Assert.requireNonNull(bindings, "bindings must not be null");
         Assert.requireNonNull(client, "client must not be null");
         Assert.requireNonNull(portalNameSupplier, "portalNameSupplier must not be null");
         Assert.requireNonNull(statement, "statement must not be null");
 
         return client.exchange(Flux.from(bindings)
-            .flatMap(binding -> toBindFlow(binding, portalNameSupplier, statement))
+            .flatMap(binding -> toBindFlow(binding, portalNameSupplier, statement, forceBinary))
             .concatWith(Mono.just(Sync.INSTANCE)));
     }
 
@@ -95,7 +97,15 @@ public final class ExtendedQueryMessageFlow {
             .takeUntil(or(RowDescription.class::isInstance, NoData.class::isInstance));
     }
 
-    private static Flux<FrontendMessage> toBindFlow(Binding binding, PortalNameSupplier portalNameSupplier, String statement) {
+    private static List<Format> resultFormat(boolean forceBinary) {
+        if (forceBinary) {
+            return Collections.singletonList(Format.FORMAT_BINARY);
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
+    private static Flux<FrontendMessage> toBindFlow(Binding binding, PortalNameSupplier portalNameSupplier, String statement, boolean forceBinary) {
         String portal = portalNameSupplier.get();
 
         return Flux.fromIterable(binding.getParameterValues())
@@ -109,8 +119,7 @@ public final class ExtendedQueryMessageFlow {
             })
             .collectList()
             .flatMapMany(values -> {
-                // TODO: Specify Return Types
-                Bind bind = new Bind(portal, binding.getParameterFormats(), values, Collections.emptyList(), statement);
+                Bind bind = new Bind(portal, binding.getParameterFormats(), values, resultFormat(forceBinary), statement);
 
                 return Flux.just(bind, new Describe(portal, PORTAL), new Execute(portal, NO_LIMIT), new Close(portal, PORTAL));
             });
