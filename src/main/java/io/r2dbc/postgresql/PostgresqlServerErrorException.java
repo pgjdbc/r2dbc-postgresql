@@ -51,6 +51,7 @@ import static io.r2dbc.postgresql.message.backend.Field.FieldType.WHERE;
  * An exception that represents a server error.  This exception is a direct translation of the {@link ErrorResponse} message.
  */
 public class PostgresqlServerErrorException extends R2dbcException {
+
     private final String code;
 
     private final String columnName;

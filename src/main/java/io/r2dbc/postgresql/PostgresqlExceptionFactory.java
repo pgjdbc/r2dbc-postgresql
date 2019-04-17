@@ -23,6 +23,7 @@ import reactor.core.publisher.SynchronousSink;
 import static io.r2dbc.postgresql.message.backend.Field.FieldType.CODE;
 
 public final class PostgresqlExceptionFactory {
+
     static final String AUTH_EXCEPTION_CODE = "28P01";
 
     private PostgresqlExceptionFactory() {
@@ -40,7 +41,7 @@ public final class PostgresqlExceptionFactory {
             .stream()
             .anyMatch(field ->
                 CODE.equals(field.getType()) &&
-                AUTH_EXCEPTION_CODE.equals(field.getValue())
+                    AUTH_EXCEPTION_CODE.equals(field.getValue())
             );
 
         if (isAuthError) {
@@ -50,4 +51,5 @@ public final class PostgresqlExceptionFactory {
 
         sink.error(PostgresqlServerErrorException.toException(error));
     }
+
 }

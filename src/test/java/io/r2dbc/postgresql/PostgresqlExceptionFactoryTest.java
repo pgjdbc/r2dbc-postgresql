@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 the original author or authors.
+ * Copyright 2017-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,8 @@
  * limitations under the License.
  */
 
-package io.r2dbc.postgresql.exception;
+package io.r2dbc.postgresql;
 
-import io.r2dbc.postgresql.PostgresqlAuthenticationFailure;
-import io.r2dbc.postgresql.PostgresqlExceptionFactory;
-import io.r2dbc.postgresql.PostgresqlServerErrorException;
 import io.r2dbc.postgresql.message.backend.AuthenticationGSS;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
@@ -37,19 +34,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 final class PostgresqlExceptionFactoryTest {
-
-    @Test
-    void isForwardingMessageNonErrorMessage() {
-        SynchronousSink<BackendMessage> sink = createSinkMock();
-
-        BackendMessage message = AuthenticationGSS.INSTANCE;
-
-        PostgresqlExceptionFactory.handleErrorResponse(message, sink);
-
-        verify(sink, times(1)).next(eq(message));
-        verify(sink, times(0)).error(isA(PostgresqlAuthenticationFailure.class));
-        verify(sink, times(0)).error(isA(PostgresqlServerErrorException.class));
-    }
 
     @Test
     void isCreatingAuthenticationException() {
@@ -83,6 +67,19 @@ final class PostgresqlExceptionFactoryTest {
 
         verify(sink, times(1)).error(isA(PostgresqlServerErrorException.class));
         verify(sink, times(0)).next(eq(message));
+    }
+
+    @Test
+    void isForwardingMessageNonErrorMessage() {
+        SynchronousSink<BackendMessage> sink = createSinkMock();
+
+        BackendMessage message = AuthenticationGSS.INSTANCE;
+
+        PostgresqlExceptionFactory.handleErrorResponse(message, sink);
+
+        verify(sink, times(1)).next(eq(message));
+        verify(sink, times(0)).error(isA(PostgresqlAuthenticationFailure.class));
+        verify(sink, times(0)).error(isA(PostgresqlServerErrorException.class));
     }
 
     @SuppressWarnings("unchecked")
