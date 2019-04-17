@@ -18,6 +18,7 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
@@ -25,8 +26,6 @@ import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import io.r2dbc.spi.Blob;
-import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.binary.Hex;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
@@ -74,7 +73,7 @@ final class BlobCodec extends AbstractCodec<Blob> {
         return create(FORMAT_TEXT, BYTEA,
             Flux.from(value.stream())
                 .reduce(this.byteBufAllocator.compositeBuffer(), (a, b) -> a.addComponent(true, Unpooled.wrappedBuffer(b)))
-                .map(b -> ByteBufUtils.encode(this.byteBufAllocator, String.format("\\\\x%s", Hex.encodeHexString(b.nioBuffer()))))
+                .map(b -> ByteBufUtils.encode(this.byteBufAllocator, String.format("\\\\x%s", ByteBufUtil.hexDump(b))))
                 .concatWith(Flux.from(value.discard())
                     .then(Mono.empty()))
         );
@@ -107,11 +106,7 @@ final class BlobCodec extends AbstractCodec<Blob> {
                     return Mono.error(new IllegalStateException("ByteBuf does not contain BYTEA hex format"));
                 }
 
-                try {
-                    return Mono.just(ByteBuffer.wrap(Hex.decodeHex(matcher.group(1))));
-                } catch (DecoderException e) {
-                    return Mono.error(e);
-                }
+                return Mono.just(ByteBuffer.wrap(ByteBufUtil.decodeHexDump(matcher.group(1))));
             });
         }
     }
