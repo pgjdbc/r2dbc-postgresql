@@ -33,6 +33,7 @@ import io.r2dbc.postgresql.message.frontend.Execute;
 import io.r2dbc.postgresql.message.frontend.ExecutionType;
 import io.r2dbc.postgresql.message.frontend.Sync;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -40,6 +41,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 
+import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.TestClient.NO_OP;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
@@ -47,13 +49,14 @@ import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.RETURNS_SMART_NULLS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 final class ExtendedQueryPostgresqlStatementTest {
 
-    private final Parameter parameter = new Parameter(FORMAT_BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(100));
+    private final Parameter parameter = new Parameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100)));
 
     private final MockCodecs codecs = MockCodecs.builder().encoding(100, this.parameter).build();
 
@@ -92,13 +95,13 @@ final class ExtendedQueryPostgresqlStatementTest {
     @Test
     void bindNull() {
         MockCodecs codecs = MockCodecs.builder()
-            .encoding(Integer.class, new Parameter(FORMAT_BINARY, INT4.getObjectId(), null))
+            .encoding(Integer.class, new Parameter(FORMAT_BINARY, INT4.getObjectId(), NULL_VALUE))
             .build();
 
         ExtendedQueryPostgresqlStatement statement = new ExtendedQueryPostgresqlStatement(NO_OP, codecs, () -> "", "test-query-$1", this.statementCache);
 
         assertThat(statement.bindNull("$1", Integer.class).getCurrentBinding())
-            .isEqualTo(new Binding().add(0, new Parameter(FORMAT_BINARY, INT4.getObjectId(), null)));
+            .isEqualTo(new Binding().add(0, new Parameter(FORMAT_BINARY, INT4.getObjectId(), NULL_VALUE)));
     }
 
     @Test
@@ -193,14 +196,13 @@ final class ExtendedQueryPostgresqlStatementTest {
             .build();
 
         MockCodecs codecs = MockCodecs.builder()
-            .encoding(100, new Parameter(FORMAT_BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(100)))
-            .encoding(200, new Parameter(FORMAT_BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(200)))
+            .encoding(100, new Parameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100))))
+            .encoding(200, new Parameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(200))))
             .build();
 
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
 
-        when(this.statementCache.getName(new Binding().add(0, new Parameter(FORMAT_BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(100))), "test-query-$1")).thenReturn(Mono.just("test-name"));
-        when(this.statementCache.getName(new Binding().add(0, new Parameter(FORMAT_BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(200))), "test-query-$1")).thenReturn(Mono.just("test-name"));
+        when(this.statementCache.getName(any(), any())).thenReturn(Mono.just("test-name"));
 
         new ExtendedQueryPostgresqlStatement(client, codecs, portalNameSupplier, "test-query-$1", this.statementCache)
             .bind("$1", 100)
@@ -233,12 +235,12 @@ final class ExtendedQueryPostgresqlStatementTest {
             .build();
 
         MockCodecs codecs = MockCodecs.builder()
-            .encoding(100, new Parameter(FORMAT_BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(100)))
+            .encoding(100, new Parameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100))))
             .build();
 
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
 
-        when(this.statementCache.getName(new Binding().add(0, new Parameter(FORMAT_BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(100))), "test-query-$1")).thenReturn(Mono.just("test-name"));
+        when(this.statementCache.getName(any(), any())).thenReturn(Mono.just("test-name"));
 
         new ExtendedQueryPostgresqlStatement(client, codecs, portalNameSupplier, "test-query-$1", this.statementCache)
             .bind("$1", 100)
@@ -262,13 +264,12 @@ final class ExtendedQueryPostgresqlStatementTest {
             .build();
 
         MockCodecs codecs = MockCodecs.builder()
-            .encoding(100, new Parameter(FORMAT_BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(100)))
+            .encoding(100, new Parameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100))))
             .build();
 
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
 
-        when(this.statementCache.getName(new Binding().add(0, new Parameter(FORMAT_BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(100))), "INSERT test-query-$1 RETURNING *"))
-            .thenReturn(Mono.just("test-name"));
+        when(this.statementCache.getName(any(), any())).thenReturn(Mono.just("test-name"));
 
         new ExtendedQueryPostgresqlStatement(client, codecs, portalNameSupplier, "INSERT test-query-$1", this.statementCache)
             .bind("$1", 100)

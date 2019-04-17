@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
+import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.BOOL;
@@ -81,10 +83,14 @@ final class BooleanCodecTest {
         BooleanCodec codec = new BooleanCodec(TEST);
 
         assertThat(codec.doEncode(true))
-            .isEqualTo(new Parameter(FORMAT_TEXT, BOOL.getObjectId(), encode(TEST, "TRUE")));
+            .hasFormat(FORMAT_TEXT)
+            .hasType(BOOL.getObjectId())
+            .hasValue(encode(TEST, "TRUE"));
 
         assertThat(codec.doEncode(false))
-            .isEqualTo(new Parameter(FORMAT_TEXT, BOOL.getObjectId(), encode(TEST, "FALSE")));
+            .hasFormat(FORMAT_TEXT)
+            .hasType(BOOL.getObjectId())
+            .hasValue(encode(TEST, "FALSE"));
     }
 
     @Test
@@ -96,7 +102,7 @@ final class BooleanCodecTest {
     @Test
     void encodeNull() {
         assertThat(new BooleanCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(FORMAT_TEXT, BOOL.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_TEXT, BOOL.getObjectId(), NULL_VALUE));
     }
 
 }

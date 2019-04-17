@@ -16,9 +16,13 @@
 
 package io.r2dbc.postgresql.client;
 
+import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.PostgresqlBindingException;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
 
+import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
@@ -31,7 +35,7 @@ final class BindingTest {
 
     @Test
     void addNoIndex() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new Binding().add(null, new Parameter(FORMAT_TEXT, 100, null)))
+        assertThatIllegalArgumentException().isThrownBy(() -> new Binding().add(null, new Parameter(FORMAT_TEXT, 100, NULL_VALUE)))
             .withMessage("index must not be null");
     }
 
@@ -51,9 +55,9 @@ final class BindingTest {
     @Test
     void getParameterFormats() {
         Binding binding = new Binding();
-        binding.add(2, new Parameter(FORMAT_BINARY, 100, TEST.buffer(4).writeInt(300)));
-        binding.add(0, new Parameter(FORMAT_BINARY, 100, TEST.buffer(4).writeInt(200)));
-        binding.add(1, new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), TEST.buffer().writeBytes("Hello".getBytes())));
+        binding.add(2, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))));
+        binding.add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200))));
+        binding.add(1, new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), Flux.just(TEST.buffer().writeBytes("Hello".getBytes()))));
 
         assertThat(binding.getParameterFormats()).containsExactly(FORMAT_BINARY, FORMAT_TEXT, FORMAT_BINARY);
     }
@@ -61,7 +65,7 @@ final class BindingTest {
     @Test
     void getParameterFormatsUnbound() {
         Binding binding = new Binding();
-        binding.add(2, new Parameter(FORMAT_BINARY, 100, TEST.buffer(4).writeInt(300)));
+        binding.add(2, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))));
 
         assertThatExceptionOfType(PostgresqlBindingException.class).isThrownBy(binding::getParameterFormats).withMessage("No parameter specified for index 0");
     }
@@ -69,9 +73,9 @@ final class BindingTest {
     @Test
     void getParameterTypes() {
         Binding binding = new Binding();
-        binding.add(2, new Parameter(FORMAT_BINARY, 100, TEST.buffer(4).writeInt(300)));
-        binding.add(0, new Parameter(FORMAT_BINARY, 100, TEST.buffer(4).writeInt(200)));
-        binding.add(1, new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), TEST.buffer().writeBytes("Hello".getBytes())));
+        binding.add(2, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))));
+        binding.add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200))));
+        binding.add(1, new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), Flux.just(TEST.buffer().writeBytes("Hello".getBytes()))));
 
         assertThat(binding.getParameterTypes()).containsExactly(100, VARCHAR.getObjectId(), 100);
     }
@@ -79,7 +83,7 @@ final class BindingTest {
     @Test
     void getParameterTypesUnbound() {
         Binding binding = new Binding();
-        binding.add(2, new Parameter(FORMAT_BINARY, 100, TEST.buffer(4).writeInt(300)));
+        binding.add(2, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))));
 
         assertThatExceptionOfType(PostgresqlBindingException.class).isThrownBy(binding::getParameterTypes).withMessage("No parameter specified for index 0");
     }
@@ -87,17 +91,30 @@ final class BindingTest {
     @Test
     void getParameterValues() {
         Binding binding = new Binding();
-        binding.add(2, new Parameter(FORMAT_BINARY, 100, TEST.buffer(4).writeInt(300)));
-        binding.add(0, new Parameter(FORMAT_BINARY, 100, TEST.buffer(4).writeInt(200)));
-        binding.add(1, new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), TEST.buffer().writeBytes("Hello".getBytes())));
+        binding.add(2, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))));
+        binding.add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200))));
+        binding.add(1, new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), Flux.just(TEST.buffer().writeBytes("Hello".getBytes()))));
 
-        assertThat(binding.getParameterValues()).containsExactly(TEST.buffer(4).writeInt(200), TEST.buffer().writeBytes("Hello".getBytes()), TEST.buffer(4).writeInt(300));
+        Flux.from(binding.getParameterValues().get(0))
+            .as(StepVerifier::create)
+            .expectNext(TEST.buffer(4).writeInt(200))
+            .verifyComplete();
+
+        Flux.from(binding.getParameterValues().get(1))
+            .as(StepVerifier::create)
+            .expectNext(TEST.buffer().writeBytes("Hello".getBytes()))
+            .verifyComplete();
+
+        Flux.from(binding.getParameterValues().get(2))
+            .as(StepVerifier::create)
+            .expectNext(TEST.buffer(4).writeInt(300))
+            .verifyComplete();
     }
 
     @Test
     void getParameterValuesUnbound() {
         Binding binding = new Binding();
-        binding.add(2, new Parameter(FORMAT_BINARY, 100, TEST.buffer(4).writeInt(300)));
+        binding.add(2, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))));
 
         assertThatExceptionOfType(PostgresqlBindingException.class).isThrownBy(binding::getParameterValues).withMessage("No parameter specified for index 0");
     }

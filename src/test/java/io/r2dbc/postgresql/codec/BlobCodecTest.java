@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      https://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,14 +16,20 @@
 
 package io.r2dbc.postgresql.codec;
 
+import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.ParameterAssert;
+import io.r2dbc.postgresql.util.ByteBufUtils;
+import io.r2dbc.spi.Blob;
+import io.r2dbc.spi.test.MockBlob;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
 
 import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
-import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.BYTEA;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
@@ -31,65 +37,76 @@ import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
-final class CharacterCodecTest {
+final class BlobCodecTest {
 
     @Test
     void constructorNoByteBufAllocator() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new CharacterCodec(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new BlobCodec(null))
             .withMessage("byteBufAllocator must not be null");
     }
 
     @Test
     void decode() {
-        assertThat(new CharacterCodec(TEST).decode(encode(TEST, "A"), FORMAT_TEXT, Character.class))
-            .isEqualTo('A');
+        Flux.from(new BlobCodec(TEST).decode(encode(TEST, "\\\\x746573742d76616c7565"), FORMAT_TEXT, Blob.class).stream())
+            .reduce(TEST.compositeBuffer(), (a, b) -> a.addComponent(true, Unpooled.wrappedBuffer(b)))
+            .map(ByteBufUtils::decode)
+            .as(StepVerifier::create)
+            .expectNext("test-value")
+            .verifyComplete();
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new CharacterCodec(TEST).decode(null, FORMAT_TEXT, Character.class)).isNull();
+        assertThat(new BlobCodec(TEST).decode(null, FORMAT_TEXT, Blob.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
-        CharacterCodec codec = new CharacterCodec(TEST);
+        BlobCodec codec = new BlobCodec(TEST);
 
         assertThat(codec.doCanDecode(FORMAT_BINARY, VARCHAR)).isFalse();
         assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, BPCHAR)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, VARCHAR)).isTrue();
+        assertThat(codec.doCanDecode(FORMAT_TEXT, BYTEA)).isTrue();
     }
 
     @Test
     void doCanDecodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new CharacterCodec(TEST).doCanDecode(null, VARCHAR))
+        assertThatIllegalArgumentException().isThrownBy(() -> new BlobCodec(TEST).doCanDecode(null, BYTEA))
             .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new CharacterCodec(TEST).doCanDecode(FORMAT_TEXT, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new BlobCodec(TEST).doCanDecode(FORMAT_TEXT, null))
             .withMessage("type must not be null");
     }
 
     @Test
     void doEncode() {
-        assertThat(new CharacterCodec(TEST).doEncode('A'))
+        MockBlob Blob = MockBlob.builder()
+            .item(ByteBufUtils.encode(TEST, "test").nioBuffer())
+            .item(ByteBufUtils.encode(TEST, "-").nioBuffer())
+            .item(ByteBufUtils.encode(TEST, "value").nioBuffer())
+            .build();
+
+        ParameterAssert.assertThat(new BlobCodec(TEST).doEncode(Blob))
             .hasFormat(FORMAT_TEXT)
-            .hasType(VARCHAR.getObjectId())
-            .hasValue(encode(TEST, "A"));
+            .hasType(BYTEA.getObjectId())
+            .hasValue(encode(TEST, "\\\\x746573742d76616c7565"));
+
+        assertThat(Blob.isDiscardCalled()).isTrue();
     }
 
     @Test
     void doEncodeNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new CharacterCodec(TEST).doEncode(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new BlobCodec(TEST).doEncode(null))
             .withMessage("value must not be null");
     }
 
     @Test
     void encodeNull() {
-        assertThat(new CharacterCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), NULL_VALUE));
+        ParameterAssert.assertThat(new BlobCodec(TEST).encodeNull())
+            .isEqualTo(new Parameter(FORMAT_TEXT, BYTEA.getObjectId(), NULL_VALUE));
     }
 
 }

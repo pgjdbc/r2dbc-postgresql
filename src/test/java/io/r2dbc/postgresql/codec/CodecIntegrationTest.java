@@ -20,9 +20,12 @@ import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.postgresql.PostgresqlResult;
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
+import io.r2dbc.spi.Clob;
 import io.r2dbc.spi.Connection;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -45,6 +48,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static reactor.function.TupleUtils.consumer;
 
 final class CodecIntegrationTest {
 
@@ -80,6 +84,31 @@ final class CodecIntegrationTest {
     void charPrimitive() {
         testCodec(Character.class, 'a', "BPCHAR(1)");
         testCodec(Character.class, 'a', "VARCHAR(1)");
+    }
+
+    @Test
+    void clob() {
+        testCodec(Clob.class,
+            new Clob() {
+
+                @Override
+                public Publisher<Void> discard() {
+                    return Mono.empty();
+                }
+
+                @Override
+                public Publisher<CharSequence> stream() {
+                    return Mono.just("test-value");
+                }
+            },
+            (actual, expected) -> Flux.zip(
+                Flux.from(actual.stream()).reduce(new StringBuilder(), StringBuilder::append).map(StringBuilder::toString),
+                Flux.from(expected.stream()).reduce(new StringBuilder(), StringBuilder::append).map(StringBuilder::toString)
+            )
+                .as(StepVerifier::create)
+                .assertNext(consumer((a, b) -> assertThat(a).isEqualToIgnoringWhitespace(b)))
+                .verifyComplete()
+            , "TEXT");
     }
 
     @Test

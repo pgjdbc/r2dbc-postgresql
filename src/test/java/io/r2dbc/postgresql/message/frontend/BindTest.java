@@ -92,7 +92,7 @@ final class BindTest {
 
     @Test
     void encodeNullParameter() {
-        assertThat(new Bind("test-name", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(null), Collections.singletonList(FORMAT_BINARY), "test-source")).encoded()
+        assertThat(new Bind("test-name", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(Bind.NULL_VALUE), Collections.singletonList(FORMAT_BINARY), "test-source")).encoded()
             .isDeferred()
             .isEncodedAs(buffer -> {
                 buffer

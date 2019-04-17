@@ -47,6 +47,16 @@ final class PostgresqlExample implements Example<String> {
         .build());
 
     @Override
+    public String blobType() {
+        return "BYTEA";
+    }
+
+    @Override
+    public String clobType() {
+        return "TEXT";
+    }
+
+    @Override
     public ConnectionFactory getConnectionFactory() {
         return this.connectionFactory;
     }

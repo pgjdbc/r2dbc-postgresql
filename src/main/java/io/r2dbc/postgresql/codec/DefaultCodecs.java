@@ -50,9 +50,11 @@ public final class DefaultCodecs implements Codecs {
             new ZonedDateTimeCodec(byteBufAllocator),
 
             new BigDecimalCodec(byteBufAllocator),
+            new BlobCodec(byteBufAllocator),
             new BooleanCodec(byteBufAllocator),
             new ByteCodec(byteBufAllocator),
             new CharacterCodec(byteBufAllocator),
+            new ClobCodec(byteBufAllocator),
             new DateCodec(byteBufAllocator),
             new DoubleCodec(byteBufAllocator),
             new EnumCodec(byteBufAllocator),

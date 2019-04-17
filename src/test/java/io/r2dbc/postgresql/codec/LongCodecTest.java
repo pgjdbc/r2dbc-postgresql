@@ -19,6 +19,8 @@ package io.r2dbc.postgresql.codec;
 import io.r2dbc.postgresql.client.Parameter;
 import org.junit.jupiter.api.Test;
 
+import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT8;
@@ -73,7 +75,9 @@ final class LongCodecTest {
     @Test
     void doEncode() {
         assertThat(new LongCodec(TEST).doEncode(100L))
-            .isEqualTo(new Parameter(FORMAT_BINARY, INT8.getObjectId(), TEST.buffer(8).writeLong(100)));
+            .hasFormat(FORMAT_BINARY)
+            .hasType(INT8.getObjectId())
+            .hasValue(TEST.buffer(8).writeLong(100));
     }
 
     @Test
@@ -85,7 +89,7 @@ final class LongCodecTest {
     @Test
     void encodeNull() {
         assertThat(new LongCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(FORMAT_BINARY, INT8.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_BINARY, INT8.getObjectId(), NULL_VALUE));
     }
 
 }

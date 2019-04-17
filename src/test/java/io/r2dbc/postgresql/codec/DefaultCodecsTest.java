@@ -23,6 +23,8 @@ import org.junit.jupiter.api.Test;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 
+import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT2;
@@ -93,7 +95,10 @@ final class DefaultCodecsTest {
     void encode() {
         Parameter parameter = new DefaultCodecs(TEST).encode(100);
 
-        assertThat(parameter).isEqualTo(new Parameter(FORMAT_BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(100)));
+        assertThat(parameter)
+            .hasFormat(FORMAT_BINARY)
+            .hasType(INT4.getObjectId())
+            .hasValue(TEST.buffer(4).writeInt(100));
     }
 
     @Test
@@ -106,7 +111,7 @@ final class DefaultCodecsTest {
     void encodeNull() {
         Parameter parameter = new DefaultCodecs(TEST).encodeNull(Integer.class);
 
-        assertThat(parameter).isEqualTo(new Parameter(FORMAT_BINARY, INT4.getObjectId(), null));
+        assertThat(parameter).isEqualTo(new Parameter(FORMAT_BINARY, INT4.getObjectId(), NULL_VALUE));
     }
 
     @Test
@@ -126,4 +131,5 @@ final class DefaultCodecsTest {
         assertThatIllegalArgumentException().isThrownBy(() -> new DefaultCodecs(TEST).encode(new Object()))
             .withMessage("Cannot encode parameter of type java.lang.Object");
     }
+
 }

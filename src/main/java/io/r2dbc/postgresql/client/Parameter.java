@@ -19,7 +19,8 @@ package io.r2dbc.postgresql.client;
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
-import reactor.util.annotation.Nullable;
+import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
 
 import java.util.Objects;
 
@@ -28,11 +29,13 @@ import java.util.Objects;
  */
 public final class Parameter {
 
+    public static final Flux<? extends ByteBuf> NULL_VALUE = Flux.empty();
+
     private final Format format;
 
     private final Integer type;
 
-    private final ByteBuf value;
+    private final Publisher<? extends ByteBuf> value;
 
     /**
      * Creates a new instance.
@@ -42,10 +45,10 @@ public final class Parameter {
      * @param value  the value of the parameter
      * @throws IllegalArgumentException if {@code format}, or {@code type} is {@code null}
      */
-    public Parameter(Format format, Integer type, @Nullable ByteBuf value) {
+    public Parameter(Format format, Integer type, Publisher<? extends ByteBuf> value) {
         this.format = Assert.requireNonNull(format, "format must not be null");
         this.type = Assert.requireNonNull(type, "type must not be null");
-        this.value = value;
+        this.value = Assert.requireNonNull(value, "value must not be null");
     }
 
     @Override
@@ -99,8 +102,7 @@ public final class Parameter {
      *
      * @return the value of the parameter
      */
-    @Nullable
-    ByteBuf getValue() {
+    Publisher<? extends ByteBuf> getValue() {
         return this.value;
     }
 

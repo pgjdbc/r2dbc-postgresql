@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalTime;
 
+import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
@@ -78,7 +80,9 @@ final class LocalTimeCodecTest {
         LocalTime localTime = LocalTime.now();
 
         assertThat(new LocalTimeCodec(TEST).doEncode(localTime))
-            .isEqualTo(new Parameter(FORMAT_TEXT, TIME.getObjectId(), encode(TEST, localTime.toString())));
+            .hasFormat(FORMAT_TEXT)
+            .hasType(TIME.getObjectId())
+            .hasValue(encode(TEST, localTime.toString()));
     }
 
     @Test
@@ -90,7 +94,7 @@ final class LocalTimeCodecTest {
     @Test
     void encodeNull() {
         assertThat(new LocalTimeCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(FORMAT_TEXT, TIME.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_TEXT, TIME.getObjectId(), NULL_VALUE));
     }
 
 }

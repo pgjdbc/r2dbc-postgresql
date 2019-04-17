@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Test;
 
 import java.time.OffsetDateTime;
 
+import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
@@ -78,7 +80,9 @@ final class OffsetDateTimeCodecTest {
         OffsetDateTime offsetDateTime = OffsetDateTime.now();
 
         assertThat(new OffsetDateTimeCodec(TEST).doEncode(offsetDateTime))
-            .isEqualTo(new Parameter(FORMAT_TEXT, TIMESTAMPTZ.getObjectId(), encode(TEST, offsetDateTime.toString())));
+            .hasFormat(FORMAT_TEXT)
+            .hasType(TIMESTAMPTZ.getObjectId())
+            .hasValue(encode(TEST, offsetDateTime.toString()));
     }
 
     @Test
@@ -90,7 +94,7 @@ final class OffsetDateTimeCodecTest {
     @Test
     void encodeNull() {
         assertThat(new OffsetDateTimeCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(FORMAT_TEXT, TIMESTAMPTZ.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_TEXT, TIMESTAMPTZ.getObjectId(), NULL_VALUE));
     }
 
 }

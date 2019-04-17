@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      https://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,26 +23,27 @@ import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
+import io.r2dbc.spi.Clob;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
-import java.time.LocalTime;
-
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIME;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.TEXT;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 
-final class LocalTimeCodec extends AbstractCodec<LocalTime> {
+final class ClobCodec extends AbstractCodec<Clob> {
 
     private final ByteBufAllocator byteBufAllocator;
 
-    LocalTimeCodec(ByteBufAllocator byteBufAllocator) {
-        super(LocalTime.class);
+    ClobCodec(ByteBufAllocator byteBufAllocator) {
+        super(Clob.class);
         this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
     }
 
     @Override
     public Parameter encodeNull() {
-        return createNull(FORMAT_TEXT, TIME);
+        return createNull(FORMAT_TEXT, TEXT);
     }
 
     @Override
@@ -50,22 +51,27 @@ final class LocalTimeCodec extends AbstractCodec<LocalTime> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return FORMAT_TEXT == format && TIME == type;
+        return FORMAT_TEXT == format && TEXT == type;
     }
 
     @Override
-    LocalTime doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends LocalTime> type) {
+    Clob doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends Clob> type) {
         Assert.requireNonNull(byteBuf, "byteBuf must not be null");
 
-        return LocalTime.parse(ByteBufUtils.decode(byteBuf));
+        return Clob.from(Mono.just(ByteBufUtils.decode(byteBuf)));
     }
 
     @Override
-    Parameter doEncode(LocalTime value) {
+    Parameter doEncode(Clob value) {
         Assert.requireNonNull(value, "value must not be null");
 
-        ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toString());
-        return create(FORMAT_TEXT, TIME, Flux.just(encoded));
+        return create(FORMAT_TEXT, VARCHAR,
+            Flux.from(value.stream())
+                .reduce(new StringBuilder(), StringBuilder::append)
+                .map(sb -> ByteBufUtils.encode(this.byteBufAllocator, sb.toString()))
+                .concatWith(Flux.from(value.discard())
+                    .then(Mono.empty()))
+        );
     }
 
 }

@@ -18,7 +18,10 @@ package io.r2dbc.postgresql.codec;
 
 import io.r2dbc.postgresql.client.Parameter;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
 
+import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
@@ -83,9 +86,12 @@ final class AbstractCodecTest {
 
     @Test
     void create() {
-        Parameter parameter = AbstractCodec.create(FORMAT_TEXT, INT4, TEST.buffer(4).writeInt(100));
+        Parameter parameter = AbstractCodec.create(FORMAT_TEXT, INT4, Flux.just(TEST.buffer(4).writeInt(100)));
 
-        assertThat(parameter).isEqualTo(new Parameter(FORMAT_TEXT, INT4.getObjectId(), TEST.buffer(4).writeInt(100)));
+        assertThat(parameter)
+            .hasFormat(FORMAT_TEXT)
+            .hasType(INT4.getObjectId())
+            .hasValue(TEST.buffer(4).writeInt(100));
     }
 
     @Test
@@ -104,7 +110,7 @@ final class AbstractCodecTest {
     void createNull() {
         Parameter parameter = AbstractCodec.createNull(FORMAT_TEXT, INT4);
 
-        assertThat(parameter).isEqualTo(new Parameter(FORMAT_TEXT, INT4.getObjectId(), null));
+        assertThat(parameter).isEqualTo(new Parameter(FORMAT_TEXT, INT4.getObjectId(), NULL_VALUE));
     }
 
     @Test
@@ -121,7 +127,7 @@ final class AbstractCodecTest {
 
     @Test
     void encode() {
-        Parameter parameter = new Parameter(FORMAT_TEXT, INT4.getObjectId(), TEST.buffer(4).writeInt(100));
+        Parameter parameter = new Parameter(FORMAT_TEXT, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100)));
         Object value = new Object();
 
         MockCodec<Object> codec = MockCodec.builder(Object.class)

@@ -23,11 +23,13 @@ import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
+import reactor.core.publisher.Flux;
 import reactor.util.annotation.Nullable;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.CHAR;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.UNKNOWN;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 
@@ -50,7 +52,7 @@ final class StringCodec extends AbstractCodec<String> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return FORMAT_TEXT == format && (BPCHAR == type || CHAR == type || PostgresqlObjectId.TEXT == type || UNKNOWN == type || VARCHAR == type);
+        return FORMAT_TEXT == format && (BPCHAR == type || CHAR == type || TEXT == type || UNKNOWN == type || VARCHAR == type);
     }
 
     @Override
@@ -65,7 +67,7 @@ final class StringCodec extends AbstractCodec<String> {
         Assert.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value);
-        return create(FORMAT_TEXT, VARCHAR, encoded);
+        return create(FORMAT_TEXT, VARCHAR, Flux.just(encoded));
     }
 
 }

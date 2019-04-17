@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Test;
 
 import java.time.ZoneId;
 
+import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR;
@@ -79,7 +81,9 @@ final class ZoneIdCodecTest {
         ZoneId zoneId = ZoneId.systemDefault();
 
         assertThat(new ZoneIdCodec(TEST).doEncode(zoneId))
-            .isEqualTo(new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), encode(TEST, zoneId.getId())));
+            .hasFormat(FORMAT_TEXT)
+            .hasType(VARCHAR.getObjectId())
+            .hasValue(encode(TEST, zoneId.getId()));
     }
 
     @Test
@@ -91,7 +95,7 @@ final class ZoneIdCodecTest {
     @Test
     void encodeNull() {
         assertThat(new ZoneIdCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), NULL_VALUE));
     }
 
 }

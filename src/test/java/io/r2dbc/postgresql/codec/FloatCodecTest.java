@@ -19,6 +19,8 @@ package io.r2dbc.postgresql.codec;
 import io.r2dbc.postgresql.client.Parameter;
 import org.junit.jupiter.api.Test;
 
+import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.FLOAT4;
@@ -73,7 +75,9 @@ final class FloatCodecTest {
     @Test
     void doEncode() {
         assertThat(new FloatCodec(TEST).doEncode(100f))
-            .isEqualTo(new Parameter(FORMAT_BINARY, FLOAT4.getObjectId(), TEST.buffer(4).writeFloat(100)));
+            .hasFormat(FORMAT_BINARY)
+            .hasType(FLOAT4.getObjectId())
+            .hasValue(TEST.buffer(4).writeFloat(100));
     }
 
     @Test
@@ -85,7 +89,7 @@ final class FloatCodecTest {
     @Test
     void encodeNull() {
         assertThat(new FloatCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(FORMAT_BINARY, FLOAT4.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_BINARY, FLOAT4.getObjectId(), NULL_VALUE));
     }
 
 }

@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 
+import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
@@ -78,7 +80,9 @@ final class BigDecimalCodecTest {
         BigDecimal bigDecimal = new BigDecimal("100");
 
         assertThat(new BigDecimalCodec(TEST).doEncode(bigDecimal))
-            .isEqualTo(new Parameter(FORMAT_TEXT, NUMERIC.getObjectId(), encode(TEST, "100")));
+            .hasFormat(FORMAT_TEXT)
+            .hasType(NUMERIC.getObjectId())
+            .hasValue(encode(TEST, "100"));
     }
 
     @Test
@@ -90,7 +94,7 @@ final class BigDecimalCodecTest {
     @Test
     void encodeNull() {
         assertThat(new BigDecimalCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(FORMAT_TEXT, NUMERIC.getObjectId(), null));
+            .isEqualTo(new Parameter(FORMAT_TEXT, NUMERIC.getObjectId(), NULL_VALUE));
     }
 
 }
