@@ -21,6 +21,7 @@ import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.util.annotation.Nullable;
 
@@ -80,7 +81,7 @@ abstract class AbstractCodec<T> implements Codec<T> {
         return this.type;
     }
 
-    static Parameter create(Format format, PostgresqlObjectId type, @Nullable Flux<ByteBuf> value) {
+    static Parameter create(Format format, PostgresqlObjectId type, @Nullable Publisher<? extends ByteBuf> value) {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 

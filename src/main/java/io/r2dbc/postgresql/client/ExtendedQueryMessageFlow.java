@@ -103,7 +103,8 @@ public final class ExtendedQueryMessageFlow {
                 if (f == Parameter.NULL_VALUE) {
                     return Flux.just(Bind.NULL_VALUE);
                 } else {
-                    return f.reduce((a, b) -> Unpooled.wrappedBuffer(a, b));
+                    return Flux.from(f)
+                        .reduce(Unpooled.compositeBuffer(), (c, b) -> c.addComponent(true, b));
                 }
             })
             .collectList()

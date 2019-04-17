@@ -38,7 +38,7 @@ public final class ParameterAssert extends AbstractAssert<ParameterAssert, Param
         isNotNull();
 
         if (this.actual.getFormat() != expected) {
-            failWithMessage("Expected parameter's format to be <%s> but was <%s>", expected, this.actual);
+            failWithMessage("Expected parameter's format to be <%s> but was <%s>", expected, this.actual.getFormat());
         }
 
         return this;
@@ -48,7 +48,7 @@ public final class ParameterAssert extends AbstractAssert<ParameterAssert, Param
         isNotNull();
 
         if (!Objects.equals(this.actual.getType(), expected)) {
-            failWithMessage("Expected parameter's type to be <%d> but was <%d>", expected, this.actual);
+            failWithMessage("Expected parameter's type to be <%d> but was <%d>", expected, this.actual.getType());
         }
 
         return this;
@@ -57,17 +57,7 @@ public final class ParameterAssert extends AbstractAssert<ParameterAssert, Param
     public ParameterAssert hasValue(ByteBuf... expected) {
         isNotNull();
 
-        Flux<ByteBuf> value = this.actual.getValue();
-        if (value == null) {
-
-            if (expected.length != 0) {
-                failWithMessage("Expected parameter's value to be null but was not");
-            }
-
-            return this;
-        }
-
-        value
+        Flux.from(this.actual.getValue())
             .as(StepVerifier::create)
             .expectNext(expected)
             .verifyComplete();

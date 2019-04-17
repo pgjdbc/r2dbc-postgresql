@@ -131,4 +131,5 @@ final class DefaultCodecsTest {
         assertThatIllegalArgumentException().isThrownBy(() -> new DefaultCodecs(TEST).encode(new Object()))
             .withMessage("Cannot encode parameter of type java.lang.Object");
     }
+
 }

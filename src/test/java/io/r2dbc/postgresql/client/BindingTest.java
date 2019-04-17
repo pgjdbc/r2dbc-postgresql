@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql.client;
 
+import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.PostgresqlBindingException;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
@@ -94,17 +95,17 @@ final class BindingTest {
         binding.add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200))));
         binding.add(1, new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), Flux.just(TEST.buffer().writeBytes("Hello".getBytes()))));
 
-        binding.getParameterValues().get(0)
+        Flux.from(binding.getParameterValues().get(0))
             .as(StepVerifier::create)
             .expectNext(TEST.buffer(4).writeInt(200))
             .verifyComplete();
 
-        binding.getParameterValues().get(1)
+        Flux.from(binding.getParameterValues().get(1))
             .as(StepVerifier::create)
             .expectNext(TEST.buffer().writeBytes("Hello".getBytes()))
             .verifyComplete();
 
-        binding.getParameterValues().get(2)
+        Flux.from(binding.getParameterValues().get(2))
             .as(StepVerifier::create)
             .expectNext(TEST.buffer(4).writeInt(300))
             .verifyComplete();
