@@ -208,7 +208,8 @@ final class PostgresqlConnectionTest {
 
     @Test
     void createStatementIllegal() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), () -> "", this.statementCache, false).createStatement("test-query-$1-1 ; test-query-$1-2"))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), () -> "", this.statementCache, false).createStatement("test-query-$1-1 ; " +
+            "test-query-$1-2"))
             .withMessage("Statement 'test-query-$1-1 ; test-query-$1-2' cannot be created. This is often due to the presence of both multiple statements and parameters at the same time.");
     }
 

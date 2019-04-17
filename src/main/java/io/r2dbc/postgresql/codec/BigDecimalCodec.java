@@ -59,7 +59,7 @@ final class BigDecimalCodec extends AbstractCodec<BigDecimal> {
         Assert.requireNonNull(byteBuf, "byteBuf must not be null");
 
         if (format == FORMAT_BINARY) {
-           return doDecodeBinary(byteBuf);
+            return doDecodeBinary(byteBuf);
         }
 
         return new BigDecimal(ByteBufUtils.decode(byteBuf));
@@ -104,7 +104,7 @@ final class BigDecimalCodec extends AbstractCodec<BigDecimal> {
         int expectedLength = builder.length();
         int baseOffset = Short.toString(digits[0]).length();
 
-        for (short i = 1; i < numOfDigits; i++ ) {
+        for (short i = 1; i < numOfDigits; i++) {
             weight--;
             String temp = Short.toString(digits[i]);
             int offset = baseOffset + 4 * i - temp.length();

@@ -24,7 +24,6 @@ import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.core.publisher.Flux;
-import java.time.ZoneOffset;
 import reactor.util.annotation.Nullable;
 
 import java.time.OffsetDateTime;

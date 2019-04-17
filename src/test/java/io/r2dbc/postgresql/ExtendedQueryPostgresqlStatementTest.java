@@ -242,7 +242,7 @@ final class ExtendedQueryPostgresqlStatementTest {
 
         when(this.statementCache.getName(any(), any())).thenReturn(Mono.just("test-name"));
 
-        new ExtendedQueryPostgresqlStatement(client, codecs, portalNameSupplier, "test-query-$1", this.statementCache)
+        new ExtendedQueryPostgresqlStatement(client, codecs, portalNameSupplier, "test-query-$1", this.statementCache, false)
             .bind("$1", 100)
             .execute()
             .flatMap(result -> result.map((row, rowMetadata) -> row))

@@ -41,13 +41,13 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
 
     private final Codecs codecs;
 
+    private final boolean forceBinary;
+
     private final PortalNameSupplier portalNameSupplier;
 
     private final String sql;
 
     private final StatementCache statementCache;
-
-    private final boolean forceBinary;
 
     private String[] generatedColumns;
 
@@ -132,11 +132,11 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
             "bindings=" + this.bindings +
             ", client=" + this.client +
             ", codecs=" + this.codecs +
+            ", forceBinary=" + this.forceBinary +
             ", portalNameSupplier=" + this.portalNameSupplier +
             ", sql='" + this.sql + '\'' +
             ", statementCache=" + this.statementCache +
             ", generatedColumns=" + Arrays.toString(this.generatedColumns) +
-            ", forceBinary=" + this.forceBinary +
             '}';
     }
 

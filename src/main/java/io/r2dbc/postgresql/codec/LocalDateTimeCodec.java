@@ -24,10 +24,10 @@ import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.core.publisher.Flux;
-import java.time.ZoneId;
 import reactor.util.annotation.Nullable;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
@@ -73,4 +73,5 @@ final class LocalDateTimeCodec extends AbstractCodec<LocalDateTime> {
         ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toString());
         return create(FORMAT_TEXT, TIMESTAMP, Flux.just(encoded));
     }
+
 }

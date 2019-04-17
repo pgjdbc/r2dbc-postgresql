@@ -97,6 +97,14 @@ public final class ExtendedQueryMessageFlow {
             .takeUntil(or(RowDescription.class::isInstance, NoData.class::isInstance));
     }
 
+    private static List<Format> resultFormat(boolean forceBinary) {
+        if (forceBinary) {
+            return Collections.singletonList(Format.FORMAT_BINARY);
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
     private static Flux<FrontendMessage> toBindFlow(Binding binding, PortalNameSupplier portalNameSupplier, String statement, boolean forceBinary) {
         String portal = portalNameSupplier.get();
 
@@ -115,22 +123,6 @@ public final class ExtendedQueryMessageFlow {
 
                 return Flux.just(bind, new Describe(portal, PORTAL), new Execute(portal, NO_LIMIT), new Close(portal, PORTAL));
             });
-    }
-
-    /**
-     * Specify data format. According to <a href="tell backend to return column data values in binary format for all columns">Message Formats</a>
-     * "This can be zero to indicate that there are no result columns or that the result columns should all use the default format (text); or one,
-     *  in which case the specified format code is applied to all result columns (if any);..."
-     *
-     * @param forceBinary force backend to return column data values in binary format for all columns
-     * @return
-     */
-    private static List<Format> resultFormat(boolean forceBinary) {
-        if (forceBinary) {
-            return Collections.singletonList(Format.FORMAT_BINARY);
-        } else {
-            return Collections.emptyList();
-        }
     }
 
 }

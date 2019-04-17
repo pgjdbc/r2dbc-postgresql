@@ -5,15 +5,8 @@ import java.time.Instant;
 class EpochTime {
 
     private final long javaSeconds;
+
     private final int nanos;
-
-    static EpochTime fromLong(long pgMicros) {
-        return new EpochTime(pgMicros);
-    }
-
-    static EpochTime fromInt(int pgDays) {
-        return new EpochTime(pgDays * 86400L * 1000000);
-    }
 
     private EpochTime(long pgMicros) {
         long pgSeconds = pgMicros / 1000000;
@@ -21,12 +14,12 @@ class EpochTime {
         this.nanos = (int) (pgMicros - pgSeconds * 1000000) * 1000;
     }
 
-    Instant toInstant() {
-        return Instant.ofEpochSecond(getSeconds(), getNanos());
+    static EpochTime fromInt(int pgDays) {
+        return new EpochTime(pgDays * 86400L * 1000000);
     }
 
-    long getSeconds() {
-        return javaSeconds;
+    static EpochTime fromLong(long pgMicros) {
+        return new EpochTime(pgMicros);
     }
 
     long getJavaDays() {
@@ -35,6 +28,14 @@ class EpochTime {
 
     int getNanos() {
         return nanos;
+    }
+
+    long getSeconds() {
+        return javaSeconds;
+    }
+
+    Instant toInstant() {
+        return Instant.ofEpochSecond(getSeconds(), getNanos());
     }
 
     /**

@@ -24,9 +24,9 @@ import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.core.publisher.Flux;
-import java.time.ZoneId;
 import reactor.util.annotation.Nullable;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;

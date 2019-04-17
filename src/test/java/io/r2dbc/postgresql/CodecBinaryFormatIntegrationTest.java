@@ -16,10 +16,14 @@
 
 package io.r2dbc.postgresql;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
 import io.r2dbc.spi.Connection;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+
 import java.math.BigDecimal;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
@@ -37,11 +41,8 @@ import java.util.Date;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 final class CodecBinaryFormatIntegrationTest {
 
@@ -118,7 +119,6 @@ final class CodecBinaryFormatIntegrationTest {
     }
 
     @Test
-    @Disabled("enable after merging https://github.com/r2dbc/r2dbc-postgresql/pull/54")
     void intArray() {
         testCodec(Integer[].class, new Integer[]{100, 200, 300}, "INT4[]");
     }
@@ -144,7 +144,6 @@ final class CodecBinaryFormatIntegrationTest {
     }
 
     @Test
-    @Disabled("enable after merging https://github.com/r2dbc/r2dbc-postgresql/pull/54")
     void longArray() {
         testCodec(Long[].class, new Long[]{100L, 200L, 300L}, "INT8[]");
     }
@@ -160,7 +159,6 @@ final class CodecBinaryFormatIntegrationTest {
     }
 
     @Test
-    @Disabled("enable after merging https://github.com/r2dbc/r2dbc-postgresql/pull/54")
     void shortArray() {
         testCodec(Short[].class, new Short[]{100, 200, 300}, "INT2[]");
     }

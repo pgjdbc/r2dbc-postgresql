@@ -72,6 +72,11 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     }
 
     @Override
+    public String getDriver() {
+        return POSTGRESQL_DRIVER;
+    }
+
+    @Override
     public boolean supports(ConnectionFactoryOptions connectionFactoryOptions) {
         Assert.requireNonNull(connectionFactoryOptions, "connectionFactoryOptions must not be null");
 
@@ -92,15 +97,8 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
             return false;
         }
 
-        if (!connectionFactoryOptions.hasOption(USER)) {
-            return false;
-        }
+        return connectionFactoryOptions.hasOption(USER);
 
-        return true;
-    }
-    @Override
-    public String getDriver() {
-        return POSTGRESQL_DRIVER;
     }
 
 }

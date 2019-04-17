@@ -46,11 +46,11 @@ public final class PostgresqlConnection implements Connection {
 
     private final Codecs codecs;
 
+    private final boolean forceBinary;
+
     private final PortalNameSupplier portalNameSupplier;
 
     private final StatementCache statementCache;
-
-    private final boolean forceBinary;
 
     PostgresqlConnection(Client client, Codecs codecs, PortalNameSupplier portalNameSupplier, StatementCache statementCache, boolean forceBinary) {
         this.client = Assert.requireNonNull(client, "client must not be null");
@@ -183,9 +183,9 @@ public final class PostgresqlConnection implements Connection {
         return "PostgresqlConnection{" +
             "client=" + this.client +
             ", codecs=" + this.codecs +
+            ", forceBinary=" + this.forceBinary +
             ", portalNameSupplier=" + this.portalNameSupplier +
             ", statementCache=" + this.statementCache +
-            ", forceBinary=" + this.forceBinary +
             '}';
     }
 

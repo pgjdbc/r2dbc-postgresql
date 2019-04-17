@@ -47,7 +47,7 @@ final class PostgresqlAuthenticationFailureTest {
         final ConnectionFactory connectionFactory = ConnectionFactories.get(ConnectionFactoryOptions.builder()
             .option(DRIVER, POSTGRESQL_DRIVER)
             .option(DATABASE, SERVER.getDatabase())
-            .option(HOST,  SERVER.getHost())
+            .option(HOST, SERVER.getHost())
             .option(PORT, SERVER.getPort())
             .option(PASSWORD, "SUPER WRONG PASSWORD")
             .option(USER, SERVER.getUsername())
@@ -57,7 +57,7 @@ final class PostgresqlAuthenticationFailureTest {
             .isThrownBy(() -> Mono.from(connectionFactory.create()).block())
             .withMessage("password authentication failed for user \"test\"");
     }
-    
+
     @Test
     void initializesReason() {
         PostgresqlAuthenticationFailure exception = new PostgresqlAuthenticationFailure(Collections.singletonList(new Field(Field.FieldType.MESSAGE, "Failed to Connect")));
