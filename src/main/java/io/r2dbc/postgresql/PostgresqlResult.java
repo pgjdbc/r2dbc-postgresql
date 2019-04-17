@@ -110,7 +110,7 @@ public final class PostgresqlResult implements Result {
             .flatMap(commandComplete -> Mono.justOrEmpty(commandComplete.getRows()));
 
         messages
-            .handle(PostgresqlServerErrorException::handleErrorResponse)
+            .handle(PostgresqlExceptionFactory::handleErrorResponse)
             .hide()
             .subscribe(processor);
 

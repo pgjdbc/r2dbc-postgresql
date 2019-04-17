@@ -62,7 +62,7 @@ public final class PostgresqlConnection implements Connection {
         return useTransactionStatus(transactionStatus -> {
             if (IDLE == transactionStatus) {
                 return SimpleQueryMessageFlow.exchange(this.client, "BEGIN")
-                    .handle(PostgresqlServerErrorException::handleErrorResponse);
+                    .handle(PostgresqlExceptionFactory::handleErrorResponse);
             } else {
                 this.logger.debug("Skipping begin transaction because status is {}", transactionStatus);
                 return Mono.empty();
@@ -81,7 +81,7 @@ public final class PostgresqlConnection implements Connection {
         return useTransactionStatus(transactionStatus -> {
             if (OPEN == transactionStatus) {
                 return SimpleQueryMessageFlow.exchange(this.client, "COMMIT")
-                    .handle(PostgresqlServerErrorException::handleErrorResponse);
+                    .handle(PostgresqlExceptionFactory::handleErrorResponse);
             } else {
                 this.logger.debug("Skipping commit transaction because status is {}", transactionStatus);
                 return Mono.empty();
@@ -101,7 +101,7 @@ public final class PostgresqlConnection implements Connection {
         return useTransactionStatus(transactionStatus -> {
             if (OPEN == transactionStatus) {
                 return SimpleQueryMessageFlow.exchange(this.client, String.format("SAVEPOINT %s", name))
-                    .handle(PostgresqlServerErrorException::handleErrorResponse);
+                    .handle(PostgresqlExceptionFactory::handleErrorResponse);
             } else {
                 this.logger.debug("Skipping create savepoint because status is {}", transactionStatus);
                 return Mono.empty();
@@ -129,7 +129,7 @@ public final class PostgresqlConnection implements Connection {
         return useTransactionStatus(transactionStatus -> {
             if (OPEN == transactionStatus) {
                 return SimpleQueryMessageFlow.exchange(this.client, String.format("RELEASE SAVEPOINT %s", name))
-                    .handle(PostgresqlServerErrorException::handleErrorResponse);
+                    .handle(PostgresqlExceptionFactory::handleErrorResponse);
             } else {
                 this.logger.debug("Skipping release savepoint because status is {}", transactionStatus);
                 return Mono.empty();
@@ -142,7 +142,7 @@ public final class PostgresqlConnection implements Connection {
         return useTransactionStatus(transactionStatus -> {
             if (OPEN == transactionStatus) {
                 return SimpleQueryMessageFlow.exchange(this.client, "ROLLBACK")
-                    .handle(PostgresqlServerErrorException::handleErrorResponse);
+                    .handle(PostgresqlExceptionFactory::handleErrorResponse);
             } else {
                 this.logger.debug("Skipping rollback transaction because status is {}", transactionStatus);
                 return Mono.empty();
@@ -157,7 +157,7 @@ public final class PostgresqlConnection implements Connection {
         return useTransactionStatus(transactionStatus -> {
             if (OPEN == transactionStatus) {
                 return SimpleQueryMessageFlow.exchange(this.client, String.format("ROLLBACK TO SAVEPOINT %s", name))
-                    .handle(PostgresqlServerErrorException::handleErrorResponse);
+                    .handle(PostgresqlExceptionFactory::handleErrorResponse);
             } else {
                 this.logger.debug("Skipping rollback transaction to savepoint because status is {}", transactionStatus);
                 return Mono.empty();
@@ -171,7 +171,7 @@ public final class PostgresqlConnection implements Connection {
 
         return withTransactionStatus(getTransactionIsolationLevelQuery(isolationLevel))
             .flatMapMany(query -> SimpleQueryMessageFlow.exchange(this.client, query))
-            .handle(PostgresqlServerErrorException::handleErrorResponse)
+            .handle(PostgresqlExceptionFactory::handleErrorResponse)
             .then();
     }
 

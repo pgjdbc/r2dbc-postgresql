@@ -17,7 +17,6 @@
 package io.r2dbc.postgresql;
 
 import com.ongres.scram.client.ScramClient;
-import com.ongres.scram.client.ScramSession;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.TestClient;
 import io.r2dbc.postgresql.message.backend.AuthenticationMD5Password;
