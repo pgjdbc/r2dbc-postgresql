@@ -111,7 +111,6 @@ final class PostgresqlBatchTest {
             .execute()
             .flatMap(result -> result.map((row, rowMetadata) -> row))
             .as(StepVerifier::create)
-            .expectNextCount(0)
             .verifyError(PostgresqlServerErrorException.class);
     }
 
