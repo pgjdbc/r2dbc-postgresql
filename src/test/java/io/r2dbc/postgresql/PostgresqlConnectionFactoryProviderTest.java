@@ -23,7 +23,6 @@ import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.POSTGRESQL
 import static io.r2dbc.spi.ConnectionFactoryOptions.DRIVER;
 import static io.r2dbc.spi.ConnectionFactoryOptions.HOST;
 import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
-import static io.r2dbc.spi.ConnectionFactoryOptions.PORT;
 import static io.r2dbc.spi.ConnectionFactoryOptions.USER;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -37,7 +36,6 @@ final class PostgresqlConnectionFactoryProviderTest {
             .option(DRIVER, "test-driver")
             .option(HOST, "test-host")
             .option(PASSWORD, "test-password")
-            .option(PORT, -1)
             .option(USER, "test-user")
             .build())).isFalse();
     }
@@ -47,7 +45,6 @@ final class PostgresqlConnectionFactoryProviderTest {
         assertThat(this.provider.supports(ConnectionFactoryOptions.builder()
             .option(HOST, "test-host")
             .option(PASSWORD, "test-password")
-            .option(PORT, -1)
             .option(USER, "test-user")
             .build())).isFalse();
     }
@@ -57,7 +54,6 @@ final class PostgresqlConnectionFactoryProviderTest {
         assertThat(this.provider.supports(ConnectionFactoryOptions.builder()
             .option(DRIVER, POSTGRESQL_DRIVER)
             .option(PASSWORD, "test-password")
-            .option(PORT, -1)
             .option(USER, "test-user")
             .build())).isFalse();
     }
@@ -67,17 +63,6 @@ final class PostgresqlConnectionFactoryProviderTest {
         assertThat(this.provider.supports(ConnectionFactoryOptions.builder()
             .option(DRIVER, POSTGRESQL_DRIVER)
             .option(HOST, "test-host")
-            .option(PORT, -1)
-            .option(USER, "test-user")
-            .build())).isFalse();
-    }
-
-    @Test
-    void doesNotSupportWithoutPort() {
-        assertThat(this.provider.supports(ConnectionFactoryOptions.builder()
-            .option(DRIVER, POSTGRESQL_DRIVER)
-            .option(HOST, "test-host")
-            .option(PASSWORD, "test-password")
             .option(USER, "test-user")
             .build())).isFalse();
     }
@@ -88,7 +73,6 @@ final class PostgresqlConnectionFactoryProviderTest {
             .option(DRIVER, POSTGRESQL_DRIVER)
             .option(HOST, "test-host")
             .option(PASSWORD, "test-password")
-            .option(PORT, -1)
             .build())).isFalse();
     }
 
@@ -103,7 +87,6 @@ final class PostgresqlConnectionFactoryProviderTest {
             .option(DRIVER, POSTGRESQL_DRIVER)
             .option(HOST, "test-host")
             .option(PASSWORD, "test-password")
-            .option(PORT, -1)
             .option(USER, "test-user")
             .build())).isTrue();
     }
