@@ -64,9 +64,13 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         builder.database(connectionFactoryOptions.getValue(DATABASE));
         builder.host(connectionFactoryOptions.getRequiredValue(HOST));
         builder.password(connectionFactoryOptions.getRequiredValue(PASSWORD).toString());
-        builder.port(connectionFactoryOptions.getRequiredValue(PORT));
         builder.schema(connectionFactoryOptions.getValue(SCHEMA));
         builder.username(connectionFactoryOptions.getRequiredValue(USER));
+
+        Integer port = connectionFactoryOptions.getValue(PORT);
+        if (port != null) {
+            builder.port(port);
+        }
 
         return new PostgresqlConnectionFactory(builder.build());
     }
@@ -90,10 +94,6 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         }
 
         if (!connectionFactoryOptions.hasOption(PASSWORD)) {
-            return false;
-        }
-
-        if (!connectionFactoryOptions.hasOption(PORT)) {
             return false;
         }
 
