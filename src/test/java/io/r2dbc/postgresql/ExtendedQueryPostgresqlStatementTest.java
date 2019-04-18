@@ -280,7 +280,6 @@ final class ExtendedQueryPostgresqlStatementTest {
             .verifyComplete();
     }
 
-
     @Test
     void executeWithoutResultWithMap() {
         Client client = TestClient.builder()
@@ -295,14 +294,14 @@ final class ExtendedQueryPostgresqlStatementTest {
             .build();
 
         MockCodecs codecs = MockCodecs.builder()
-            .encoding(100, new Parameter(FORMAT_BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(100)))
+            .encoding(100, new Parameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100))))
             .build();
 
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
 
-        when(this.statementCache.getName(new Binding().add(0, new Parameter(FORMAT_BINARY, INT4.getObjectId(), TEST.buffer(4).writeInt(100))), "test-query-$1")).thenReturn(Mono.just("test-name"));
+        when(this.statementCache.getName(any(), any())).thenReturn(Mono.just("test-name"));
 
-        new ExtendedQueryPostgresqlStatement(client, codecs, portalNameSupplier, "test-query-$1", this.statementCache)
+        new ExtendedQueryPostgresqlStatement(client, codecs, portalNameSupplier, "test-query-$1", this.statementCache, false)
             .bind("$1", 100)
             .execute()
             .flatMap(result -> result.map((row, metadata) -> 1))
