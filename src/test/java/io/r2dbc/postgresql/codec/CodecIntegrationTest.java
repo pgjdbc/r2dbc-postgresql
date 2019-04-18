@@ -48,7 +48,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static reactor.function.TupleUtils.consumer;
 
 final class CodecIntegrationTest {
 
@@ -106,7 +105,7 @@ final class CodecIntegrationTest {
                 Flux.from(expected.stream()).reduce(new StringBuilder(), StringBuilder::append).map(StringBuilder::toString)
             )
                 .as(StepVerifier::create)
-                .assertNext(consumer((a, b) -> assertThat(a).isEqualToIgnoringWhitespace(b)))
+                .assertNext(t -> assertThat(t.getT1()).isEqualToIgnoringWhitespace(t.getT2()))
                 .verifyComplete()
             , "TEXT");
     }
