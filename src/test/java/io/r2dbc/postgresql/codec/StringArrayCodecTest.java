@@ -56,6 +56,8 @@ final class StringArrayCodecTest {
         assertThat(new StringArrayCodec(TEST).decode(BINARY_ARRAY, FORMAT_BINARY, String[].class)).isEqualTo(new String[]{"abc", "def"});
         assertThat(new StringArrayCodec(TEST).decode(encode(TEST, "{alpha,bravo}"), FORMAT_TEXT, String[].class))
             .isEqualTo(new String[]{"alpha", "bravo"});
+        assertThat(new StringArrayCodec(TEST).decode(encode(TEST, "{}"), FORMAT_TEXT, String[].class))
+            .isEqualTo(new String[]{});
     }
 
     @Test
