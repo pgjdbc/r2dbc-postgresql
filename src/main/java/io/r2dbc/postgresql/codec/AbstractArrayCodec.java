@@ -259,7 +259,7 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
     private Class<?> createArrayType(int dims) {
         int[] size = new int[dims];
         Arrays.fill(size, 1);
-        return Array.newInstance(componentType, size).getClass();
+        return Array.newInstance(this.componentType, size).getClass();
     }
 
     private Object[] decodeBinary(ByteBuf buffer, Class<?> returnType) {
@@ -269,7 +269,7 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
 
         int dimensions = buffer.readInt();
         if (dimensions == 0) {
-            return (Object[]) Array.newInstance(componentType, 0);
+            return (Object[]) Array.newInstance(this.componentType, 0);
         }
 
         if (returnType != Object.class) {
@@ -285,7 +285,7 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
             buffer.skipBytes(4); // lower bound ignored
         }
 
-        Object[] array = (Object[]) Array.newInstance(componentType, dims);
+        Object[] array = (Object[]) Array.newInstance(this.componentType, dims);
 
         readArrayAsBinary(buffer, array, dims, 0);
 
@@ -296,7 +296,7 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
         List<?> elements = buildArrayList(buffer);
 
         if (elements.isEmpty()) {
-            return (Object[]) Array.newInstance(componentType, 0);
+            return (Object[]) Array.newInstance(this.componentType, 0);
         }
 
         int dimensions = getDimensions(elements);
