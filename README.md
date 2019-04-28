@@ -28,7 +28,7 @@ Both milestone and snapshot artifacts (library, source, and javadoc) can be foun
 <dependency>
   <groupId>io.r2dbc</groupId>
   <artifactId>r2dbc-postgresql</artifactId>
-  <version>1.0.0.M5</version>
+  <version>1.0.0.M7</version>
 </dependency>
 ```
 
@@ -83,7 +83,7 @@ Supported Connection Factory Discovery options:
 | ------ | -----------
 | `driver` | Must be `postgresql`
 | `host` | Server hostname to connect to
-| `port` | Server port to connect to.  Defaults to 1443. _(Optional)_
+| `port` | Server port to connect to.  Defaults to 5432. _(Optional)_
 | `username` | Login username
 | `password` | Login password
 | `database` | Database to select. _(Optional)_
