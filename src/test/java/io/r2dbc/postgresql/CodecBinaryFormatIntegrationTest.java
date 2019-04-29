@@ -97,12 +97,6 @@ final class CodecBinaryFormatIntegrationTest {
     }
 
     @Test
-    void enumPrimitive() {
-        testCodec(Color.class, Color.RED, "BPCHAR(16)");
-        testCodec(Color.class, Color.RED, "VARCHAR(16)");
-    }
-
-    @Test
     void floatPrimitive() {
         testCodec(Float.class, 100.0F, "FLOAT4");
     }
@@ -256,7 +250,4 @@ final class CodecBinaryFormatIntegrationTest {
         }
     }
 
-    private enum Color {
-        RED
-    }
 }
