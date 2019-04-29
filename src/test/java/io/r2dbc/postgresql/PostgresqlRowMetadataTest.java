@@ -22,18 +22,20 @@ import io.r2dbc.postgresql.message.backend.RowDescription.Field;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class PostgresqlRowMetadataTest {
 
     private final List<PostgresqlColumnMetadata> columnMetadatas = Arrays.asList(
-        new PostgresqlColumnMetadata(Integer.class, "test-name-1", 200, (short) 100),
-        new PostgresqlColumnMetadata(String.class, "test-name-2", 400, (short) 300)
+        new PostgresqlColumnMetadata(String.class, "test-name-2", 400, (short) 300),
+        new PostgresqlColumnMetadata(Integer.class, "test-name-1", 200, (short) 100)
     );
 
     @Test
@@ -44,7 +46,7 @@ final class PostgresqlRowMetadataTest {
 
     @Test
     void getColumnMetadataIndex() {
-        assertThat(new PostgresqlRowMetadata(this.columnMetadatas).getColumnMetadata(1))
+        assertThat(new PostgresqlRowMetadata(this.columnMetadatas).getColumnMetadata(0))
             .isEqualTo(new PostgresqlColumnMetadata(String.class, "test-name-2", 400, (short) 300));
     }
 
@@ -57,7 +59,7 @@ final class PostgresqlRowMetadataTest {
     @Test
     void getColumnMetadataInvalidName() {
         assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRowMetadata(this.columnMetadatas).getColumnMetadata("test-name-3"))
-            .withMessage("Column name 'test-name-3' does not exist in column names [test-name-1, test-name-2]");
+            .withMessage("Column name 'test-name-3' does not exist in column names [test-name-2, test-name-1]");
     }
 
     @Test
@@ -83,6 +85,19 @@ final class PostgresqlRowMetadataTest {
     @Test
     void getColumnMetadatas() {
         assertThat(new PostgresqlRowMetadata(this.columnMetadatas).getColumnMetadatas()).containsAll(this.columnMetadatas);
+    }
+
+    @Test
+    void getColumnNames() {
+        Collection<String> columnNames = new PostgresqlRowMetadata(this.columnMetadatas).getColumnNames();
+
+        assertThat(columnNames.contains("TEST-NAME-1")).isTrue();
+        assertThat(columnNames).containsExactly("test-name-2", "test-name-1");
+    }
+
+    @Test
+    void getColumnNamesModify() {
+        assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> new PostgresqlRowMetadata(this.columnMetadatas).getColumnNames().remove("test-name-1"));
     }
 
     @Test
