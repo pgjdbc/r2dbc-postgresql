@@ -57,7 +57,6 @@ public final class DefaultCodecs implements Codecs {
             new ClobCodec(byteBufAllocator),
             new DateCodec(byteBufAllocator),
             new DoubleCodec(byteBufAllocator),
-            new EnumCodec(byteBufAllocator),
             new FloatCodec(byteBufAllocator),
             new InetAddressCodec(byteBufAllocator),
             new IntegerCodec(byteBufAllocator),
