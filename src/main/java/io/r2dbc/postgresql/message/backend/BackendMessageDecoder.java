@@ -142,7 +142,6 @@ public final class BackendMessageDecoder {
                 return byteBuf;
             },
             CompositeByteBuf::discardReadComponents);
-
     }
 
     public void dispose() {
