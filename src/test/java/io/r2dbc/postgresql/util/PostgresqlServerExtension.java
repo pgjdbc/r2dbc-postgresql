@@ -28,7 +28,7 @@ import reactor.util.annotation.Nullable;
 
 public final class PostgresqlServerExtension implements BeforeAllCallback, AfterAllCallback {
 
-    private final PostgreSQLContainer<?> container = new PostgreSQLContainer<>("postgres:11.1");
+    private final PostgreSQLContainer<?> container = new PostgreSQLContainer<>("postgres:latest");
 
     private HikariDataSource dataSource;
 
