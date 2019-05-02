@@ -100,7 +100,7 @@ ConnectionFactory connectionFactory = new PostgresqlConnectionFactory(Postgresql
     .database("...")  // optional
     .build());
 
-Mono<Connection> connection = connectionFactory.create();
+Mono<Connection> mono = connectionFactory.create();
 ```
 
 PostgreSQL uses index parameters that are prefixed with `$`.  The following SQL statement makes use of parameters:
@@ -111,12 +111,16 @@ INSERT INTO person (id, first_name, last_name) VALUES ($1, $2, $3)
 Parameters are referenced using the same identifiers when binding these:
 
 ```java
-connection
-    .createStatement("INSERT INTO person (id, first_name, last_name) VALUES ($1, $2, $3)")
-    .bind("$1", 1)
-    .bind("$2", "Walter")
-    .bind("$3", "White")
-    .execute()
+mono.subscribe(connection -> {
+            connection.beginTransaction();
+            connection
+                    .createStatement("INSERT INTO person (id, first_name, last_name) VALUES ($1, $2, $3)")
+                    .bind("$1", 1)
+                    .bind("$2", "Walter")
+                    .bind("$3", "White")
+                    .execute();
+            connection.commitTransaction();
+        });
 ```
 
 Binding also allowed positional index (zero-based) references.  The parameter index is derived from the parameter discovery order when parsing the query.
