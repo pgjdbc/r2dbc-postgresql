@@ -111,16 +111,14 @@ INSERT INTO person (id, first_name, last_name) VALUES ($1, $2, $3)
 Parameters are referenced using the same identifiers when binding these:
 
 ```java
-mono.subscribe(connection -> {
-            connection.beginTransaction();
-            connection
-                    .createStatement("INSERT INTO person (id, first_name, last_name) VALUES ($1, $2, $3)")
-                    .bind("$1", 1)
-                    .bind("$2", "Walter")
-                    .bind("$3", "White")
-                    .execute();
-            connection.commitTransaction();
-        });
+mono.map(connection -> connection
+                .createStatement("INSERT INTO person (id, first_name, last_name) VALUES ($1, $2, $3)")
+                .bind("$1", 1)
+                .bind("$2", "Walter")
+                .bind("$3", "White")
+                .execute())
+                .block()
+                .blockFirst();
 ```
 
 Binding also allowed positional index (zero-based) references.  The parameter index is derived from the parameter discovery order when parsing the query.
