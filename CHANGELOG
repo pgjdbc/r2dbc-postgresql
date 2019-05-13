@@ -1,9 +1,25 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+0.8.0.M8
+------------------
+* Remove Enum Codec #103
+* Implement RowMetadata.getColumnNames() #102
+* Row.get fails for array-typed values #67
+* Multi-dimensional arrays #42, #54
+* handle() instead of flatMap() #97
+* Treat port as optional #93, #100
+* Check for data before decoding array elements #89, #90
+* Infinite result execution #81, #85
+* Prefer binary transfer #21, #76
+* Error response possibly lost #16, #75
+* Improve Authentication Error Message #34, #72
+* BLOB/CLOB Support #99
+* ConnectionFactoryProvider.getDriver() #77, #78
+
 1.0.0.M7
 ------------------
-* Update changelong for M7 #73
+* Update changelog for M7 #73
 * ConnectionFactory Discovery #66
 * Improved ColumnMetadata #64
 * SCRAM authentication #63
