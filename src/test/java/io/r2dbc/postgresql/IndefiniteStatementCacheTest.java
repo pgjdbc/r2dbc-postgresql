@@ -60,22 +60,22 @@ final class IndefiniteStatementCacheTest {
 
         IndefiniteStatementCache statementCache = new IndefiniteStatementCache(client);
 
-        statementCache.getName(new Binding().add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(100)))), "test-query")
+        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(100)))), "test-query")
             .as(StepVerifier::create)
             .expectNext("S_0")
             .verifyComplete();
 
-        statementCache.getName(new Binding().add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200)))), "test-query")
+        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200)))), "test-query")
             .as(StepVerifier::create)
             .expectNext("S_0")
             .verifyComplete();
 
-        statementCache.getName(new Binding().add(0, new Parameter(FORMAT_BINARY, 200, Flux.just(TEST.buffer(2).writeShort(300)))), "test-query")
+        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 200, Flux.just(TEST.buffer(2).writeShort(300)))), "test-query")
             .as(StepVerifier::create)
             .expectNext("S_1")
             .verifyComplete();
 
-        statementCache.getName(new Binding().add(0, new Parameter(FORMAT_BINARY, 200, Flux.just(TEST.buffer(4).writeShort(300)))), "test-query-2")
+        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 200, Flux.just(TEST.buffer(4).writeShort(300)))), "test-query-2")
             .as(StepVerifier::create)
             .expectNext("S_2")
             .verifyComplete();
@@ -92,7 +92,7 @@ final class IndefiniteStatementCacheTest {
 
         IndefiniteStatementCache statementCache = new IndefiniteStatementCache(client);
 
-        statementCache.getName(new Binding().add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200)))), "test-query")
+        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200)))), "test-query")
             .as(StepVerifier::create)
             .verifyError(PostgresqlServerErrorException.class);
     }
@@ -105,7 +105,7 @@ final class IndefiniteStatementCacheTest {
 
     @Test
     void getNameNoSql() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new IndefiniteStatementCache(NO_OP).getName(new Binding(), null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new IndefiniteStatementCache(NO_OP).getName(new Binding(0), null))
             .withMessage("sql must not be null");
     }
 

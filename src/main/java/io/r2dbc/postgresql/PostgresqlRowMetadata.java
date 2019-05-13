@@ -21,17 +21,13 @@ import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.RowMetadata;
 
-import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.TreeMap;
 
 /**
  * An implementation of {@link RowMetadata} for a PostgreSQL database.
@@ -40,11 +36,14 @@ public final class PostgresqlRowMetadata implements RowMetadata {
 
     private final List<PostgresqlColumnMetadata> columnMetadatas;
 
+    private final Collection<String> columnNames;
+
     private final Map<String, PostgresqlColumnMetadata> nameKeyedColumnMetadatas;
 
     PostgresqlRowMetadata(List<PostgresqlColumnMetadata> columnMetadatas) {
         this.columnMetadatas = Assert.requireNonNull(columnMetadatas, "columnMetadatas must not be null");
 
+        this.columnNames = getColumnNames(columnMetadatas);
         this.nameKeyedColumnMetadatas = getNameKeyedColumnMetadatas(columnMetadatas);
     }
 
@@ -85,7 +84,7 @@ public final class PostgresqlRowMetadata implements RowMetadata {
 
     @Override
     public Collection<String> getColumnNames() {
-        return Collections.unmodifiableCollection(new CollatedCollection<>(this.nameKeyedColumnMetadatas.keySet()));
+        return Collections.unmodifiableCollection(this.columnNames);
     }
 
     @Override
@@ -97,6 +96,7 @@ public final class PostgresqlRowMetadata implements RowMetadata {
     public String toString() {
         return "PostgresqlRowMetadata{" +
             "columnMetadatas=" + this.columnMetadatas +
+            ", columnNames=" + this.columnNames +
             ", nameKeyedColumnMetadatas=" + this.nameKeyedColumnMetadatas +
             '}';
     }
@@ -128,77 +128,30 @@ public final class PostgresqlRowMetadata implements RowMetadata {
 
     private PostgresqlColumnMetadata getColumnMetadata(String name) {
         if (!this.nameKeyedColumnMetadatas.containsKey(name)) {
-            throw new IllegalArgumentException(String.format("Column name '%s' does not exist in column names %s", name, this.nameKeyedColumnMetadatas.keySet()));
+            throw new IllegalArgumentException(String.format("Column name '%s' does not exist in column names %s", name, this.columnNames));
         }
 
         return this.nameKeyedColumnMetadatas.get(name);
     }
 
+    private Collection<String> getColumnNames(List<PostgresqlColumnMetadata> columnMetadatas) {
+        List<String> columnNames = new ArrayList<>(columnMetadatas.size());
+
+        for (PostgresqlColumnMetadata columnMetadata : columnMetadatas) {
+            columnNames.add(columnMetadata.getName());
+        }
+
+        return new CollatedCollection<>(columnNames);
+    }
+
     private Map<String, PostgresqlColumnMetadata> getNameKeyedColumnMetadatas(List<PostgresqlColumnMetadata> columnMetadatas) {
-        Map<String, PostgresqlColumnMetadata> nameKeyedColumnMetadatas = new LinkedHashMap<>(columnMetadatas.size());
+        Map<String, PostgresqlColumnMetadata> nameKeyedColumnMetadatas = new TreeMap<>(Collator.DEFAULT);
 
         for (PostgresqlColumnMetadata columnMetadata : columnMetadatas) {
             nameKeyedColumnMetadatas.put(columnMetadata.getName(), columnMetadata);
         }
 
         return nameKeyedColumnMetadatas;
-    }
-
-    private static final class CollatedCollection<T> extends ArrayList<T> {
-
-        private static final Collator COLLATOR;
-
-        static {
-            Collator collator = Collator.getInstance(Locale.US);
-            collator.setStrength(Collator.SECONDARY);
-            COLLATOR = collator;
-        }
-
-        private final Set<T> contains;
-
-        private CollatedCollection(Set<T> names) {
-            super(Assert.requireNonNull(names, "names must not be null"));
-
-            this.contains = new TreeSet<>(COLLATOR);
-            this.contains.addAll(names);
-        }
-
-        @Override
-        public boolean contains(Object o) {
-            return this.contains.contains(o);
-        }
-
-        @Override
-        public boolean containsAll(Collection<?> c) {
-            return this.contains.containsAll(c);
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (!(o instanceof CollatedCollection)) {
-                return false;
-            }
-            if (!super.equals(o)) {
-                return false;
-            }
-            CollatedCollection<?> that = (CollatedCollection<?>) o;
-            return this.contains.equals(that.contains);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(super.hashCode(), this.contains);
-        }
-
-        @Override
-        public String toString() {
-            return "CollatedCollection{" +
-                "contains=" + this.contains +
-                "} " + super.toString();
-        }
     }
 
 }

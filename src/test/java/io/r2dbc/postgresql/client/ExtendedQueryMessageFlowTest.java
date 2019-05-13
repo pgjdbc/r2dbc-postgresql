@@ -45,8 +45,8 @@ final class ExtendedQueryMessageFlowTest {
     @Test
     void execute() {
         Flux<Binding> bindings = Flux.just(
-            new Binding().add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200)))),
-            new Binding().add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))))
+            new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200)))),
+            new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))))
         );
 
         Client client = TestClient.builder()

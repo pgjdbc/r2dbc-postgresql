@@ -35,7 +35,7 @@ import static io.r2dbc.postgresql.client.ExtendedQueryMessageFlow.PARAMETER_SYMB
 
 final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
 
-    private final Bindings bindings = new Bindings();
+    private final Bindings bindings;
 
     private final Client client;
 
@@ -58,6 +58,8 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
         this.sql = Assert.requireNonNull(sql, "sql must not be null");
         this.statementCache = Assert.requireNonNull(statementCache, "statementCache must not be null");
         this.forceBinary = forceBinary;
+
+        this.bindings = new Bindings(expectedSize(sql));
     }
 
     @Override
@@ -143,14 +145,27 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
     static boolean supports(String sql) {
         Assert.requireNonNull(sql, "sql must not be null");
 
-        return !sql.trim().isEmpty() && !sql.contains(";") && PARAMETER_SYMBOL.matcher(sql).matches();
+        return !sql.trim().isEmpty() && !sql.contains(";") && PARAMETER_SYMBOL.matcher(sql).find();
     }
 
     Binding getCurrentBinding() {
         return this.bindings.getCurrent();
     }
 
+    private static int expectedSize(String sql) {
+        Matcher m = PARAMETER_SYMBOL.matcher(sql);
+
+        int count = 0;
+        while (m.find()) {
+            count++;
+        }
+
+        return count;
+    }
+
     private Flux<PostgresqlResult> execute(String sql) {
+        this.bindings.finish();
+
         return this.statementCache.getName(this.bindings.first(), sql)
             .flatMapMany(name -> ExtendedQueryMessageFlow
                 .execute(Flux.fromIterable(this.bindings.bindings), this.client, this.portalNameSupplier, name, this.forceBinary))
@@ -172,7 +187,13 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
 
         private final List<Binding> bindings = new ArrayList<>();
 
+        private final int expectedSize;
+
         private Binding current;
+
+        private Bindings(int expectedSize) {
+            this.expectedSize = expectedSize;
+        }
 
         @Override
         public String toString() {
@@ -183,6 +204,10 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
         }
 
         private void finish() {
+            if (this.current != null) {
+                this.current.validate();
+            }
+
             this.current = null;
         }
 
@@ -195,7 +220,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
 
         private Binding getCurrent() {
             if (this.current == null) {
-                this.current = new Binding();
+                this.current = new Binding(this.expectedSize);
                 this.bindings.add(this.current);
             }
 

@@ -21,8 +21,10 @@ import io.r2dbc.postgresql.PostgresqlBindingException;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -32,7 +34,21 @@ import java.util.function.Function;
  */
 public final class Binding {
 
-    private final List<Parameter> parameters = new ArrayList<>();
+    private static final Parameter UNSPECIFIED = new Parameter(Format.FORMAT_BINARY, -1, Mono.never());
+
+    private final int expectedSize;
+
+    private final List<Parameter> parameters;
+
+    /**
+     * Create a new instance.
+     *
+     * @param expectedSize the expected number of parameters
+     */
+    public Binding(int expectedSize) {
+        this.expectedSize = expectedSize;
+        this.parameters = new ArrayList<>(Collections.nCopies(expectedSize, UNSPECIFIED));
+    }
 
     /**
      * Add a {@link Parameter} to the binding.
@@ -46,15 +62,11 @@ public final class Binding {
         Assert.requireNonNull(index, "index must not be null");
         Assert.requireNonNull(parameter, "parameter must not be null");
 
-        if (this.parameters.size() > index) {
-            this.parameters.set(index, parameter);
-        } else {
-            for (int i = this.parameters.size(); i < index; i++) {
-                this.parameters.add(null);
-            }
-
-            this.parameters.add(parameter);
+        if (index >= this.expectedSize) {
+            throw new IndexOutOfBoundsException(String.format("Binding index %d when only %d parameters are expected", index, this.expectedSize));
         }
+
+        this.parameters.set(index, parameter);
 
         return this;
     }
@@ -115,12 +127,25 @@ public final class Binding {
             '}';
     }
 
+    /**
+     * Validates that the correct number of parameters have been bound.
+     *
+     * @throws IllegalStateException if the incorrect number of parameters have been bound
+     */
+    public void validate() {
+        for (Parameter parameter : this.parameters) {
+            if (UNSPECIFIED == parameter) {
+                throw new IllegalStateException("Bound parameter count does not match parameters in SQL statement");
+            }
+        }
+    }
+
     private <T> List<T> getTransformedParameters(Function<Parameter, T> transformer) {
         List<T> transformed = new ArrayList<>(this.parameters.size());
 
         for (int i = 0; i < this.parameters.size(); i++) {
             Parameter parameter = this.parameters.get(i);
-            if (parameter == null) {
+            if (parameter == UNSPECIFIED) {
                 throw new PostgresqlBindingException(String.format("No parameter specified for index %d", i));
             }
 

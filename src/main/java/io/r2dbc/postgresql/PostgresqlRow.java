@@ -26,10 +26,10 @@ import io.r2dbc.spi.Row;
 import reactor.util.annotation.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -80,7 +80,18 @@ public final class PostgresqlRow implements Row {
             throw new IllegalArgumentException(String.format("Identifier '%s' is not a valid identifier. Should either be an Integer index or a String column name.", identifier));
         }
 
-        return this.codecs.decode(column.getByteBuf(), column.getDataType(), column.getFormat(), type);
+        ByteBuf data = column.getByteBuf();
+        if (data != null) {
+            data.markReaderIndex();
+        }
+
+        T value = this.codecs.decode(data, column.getDataType(), column.getFormat(), type);
+
+        if (data != null) {
+            data.resetReaderIndex();
+        }
+
+        return value;
     }
 
     @Override
@@ -144,10 +155,12 @@ public final class PostgresqlRow implements Row {
     }
 
     private Map<String, Column> getNameKeyedColumns(List<Column> columns) {
-        Map<String, Column> nameKeyedColumns = new HashMap<>(columns.size());
+        Map<String, Column> nameKeyedColumns = new TreeMap<>(Collator.DEFAULT);
 
         for (Column column : columns) {
-            nameKeyedColumns.put(column.getName(), column);
+            if (!nameKeyedColumns.containsKey(column.getName())) {
+                nameKeyedColumns.put(column.getName(), column);
+            }
         }
 
         return nameKeyedColumns;
@@ -206,6 +219,7 @@ public final class PostgresqlRow implements Row {
                 '}';
         }
 
+        @Nullable
         private ByteBuf getByteBuf() {
             return this.byteBuf;
         }

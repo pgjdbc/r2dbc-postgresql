@@ -68,12 +68,12 @@ final class ExtendedQueryPostgresqlStatementTest {
 
     @Test
     void bind() {
-        assertThat(this.statement.bind("$1", 100).getCurrentBinding()).isEqualTo(new Binding().add(0, this.parameter));
+        assertThat(this.statement.bind("$1", 100).getCurrentBinding()).isEqualTo(new Binding(1).add(0, this.parameter));
     }
 
     @Test
     void bindIndex() {
-        assertThat(((ExtendedQueryPostgresqlStatement) this.statement.bind(0, 100)).getCurrentBinding()).isEqualTo(new Binding().add(0, this.parameter));
+        assertThat(((ExtendedQueryPostgresqlStatement) this.statement.bind(0, 100)).getCurrentBinding()).isEqualTo(new Binding(1).add(0, this.parameter));
     }
 
     @Test
@@ -103,7 +103,7 @@ final class ExtendedQueryPostgresqlStatementTest {
         ExtendedQueryPostgresqlStatement statement = new ExtendedQueryPostgresqlStatement(NO_OP, codecs, () -> "", "test-query-$1", this.statementCache, false);
 
         assertThat(statement.bindNull("$1", Integer.class).getCurrentBinding())
-            .isEqualTo(new Binding().add(0, new Parameter(FORMAT_BINARY, INT4.getObjectId(), NULL_VALUE)));
+            .isEqualTo(new Binding(1).add(0, new Parameter(FORMAT_BINARY, INT4.getObjectId(), NULL_VALUE)));
     }
 
     @Test
@@ -127,7 +127,7 @@ final class ExtendedQueryPostgresqlStatementTest {
     @Test
     void bindNullWrongIdentifierFormat() {
         assertThatIllegalArgumentException().isThrownBy(() -> this.statement.bindNull("foo", Integer.class))
-            .withMessage("Identifier 'foo' is not a valid identifier. Should be of the pattern '.*\\$([\\d]+).*'.");
+            .withMessage("Identifier 'foo' is not a valid identifier. Should be of the pattern '\\$([\\d]+)'.");
     }
 
     @Test
@@ -139,7 +139,7 @@ final class ExtendedQueryPostgresqlStatementTest {
     @Test
     void bindWrongIdentifierFormat() {
         assertThatIllegalArgumentException().isThrownBy(() -> this.statement.bind("foo", ""))
-            .withMessage("Identifier 'foo' is not a valid identifier. Should be of the pattern '.*\\$([\\d]+).*'.");
+            .withMessage("Identifier 'foo' is not a valid identifier. Should be of the pattern '\\$([\\d]+)'.");
     }
 
     @Test

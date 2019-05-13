@@ -29,31 +29,32 @@ import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 
 final class BindingTest {
 
     @Test
     void addNoIndex() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new Binding().add(null, new Parameter(FORMAT_TEXT, 100, NULL_VALUE)))
+        assertThatIllegalArgumentException().isThrownBy(() -> new Binding(1).add(null, new Parameter(FORMAT_TEXT, 100, NULL_VALUE)))
             .withMessage("index must not be null");
     }
 
     @Test
     void addNoParameter() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new Binding().add(1, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new Binding(1).add(1, null))
             .withMessage("parameter must not be null");
     }
 
     @Test
     void empty() {
-        Binding binding = new Binding();
+        Binding binding = new Binding(0);
 
         assertThat(binding.isEmpty()).isTrue();
     }
 
     @Test
     void getParameterFormats() {
-        Binding binding = new Binding();
+        Binding binding = new Binding(3);
         binding.add(2, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))));
         binding.add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200))));
         binding.add(1, new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), Flux.just(TEST.buffer().writeBytes("Hello".getBytes()))));
@@ -63,7 +64,7 @@ final class BindingTest {
 
     @Test
     void getParameterFormatsUnbound() {
-        Binding binding = new Binding();
+        Binding binding = new Binding(3);
         binding.add(2, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))));
 
         assertThatExceptionOfType(PostgresqlBindingException.class).isThrownBy(binding::getParameterFormats).withMessage("No parameter specified for index 0");
@@ -71,7 +72,7 @@ final class BindingTest {
 
     @Test
     void getParameterTypes() {
-        Binding binding = new Binding();
+        Binding binding = new Binding(3);
         binding.add(2, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))));
         binding.add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200))));
         binding.add(1, new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), Flux.just(TEST.buffer().writeBytes("Hello".getBytes()))));
@@ -81,7 +82,7 @@ final class BindingTest {
 
     @Test
     void getParameterTypesUnbound() {
-        Binding binding = new Binding();
+        Binding binding = new Binding(3);
         binding.add(2, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))));
 
         assertThatExceptionOfType(PostgresqlBindingException.class).isThrownBy(binding::getParameterTypes).withMessage("No parameter specified for index 0");
@@ -89,7 +90,7 @@ final class BindingTest {
 
     @Test
     void getParameterValues() {
-        Binding binding = new Binding();
+        Binding binding = new Binding(3);
         binding.add(2, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))));
         binding.add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200))));
         binding.add(1, new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), Flux.just(TEST.buffer().writeBytes("Hello".getBytes()))));
@@ -112,10 +113,21 @@ final class BindingTest {
 
     @Test
     void getParameterValuesUnbound() {
-        Binding binding = new Binding();
+        Binding binding = new Binding(3);
         binding.add(2, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))));
 
         assertThatExceptionOfType(PostgresqlBindingException.class).isThrownBy(binding::getParameterValues).withMessage("No parameter specified for index 0");
+    }
+
+    @Test
+    void validate() {
+        new Binding(0).validate();
+    }
+
+    @Test
+    void validateIncorrectNumber() {
+        assertThatIllegalStateException().isThrownBy(() -> new Binding(1).validate())
+            .withMessage("Bound parameter count does not match parameters in SQL statement");
     }
 
 }

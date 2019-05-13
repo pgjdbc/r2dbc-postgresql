@@ -108,7 +108,7 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
     static boolean supports(String sql) {
         Assert.requireNonNull(sql, "sql must not be null");
 
-        return sql.trim().isEmpty() || !PARAMETER_SYMBOL.matcher(sql).matches();
+        return sql.trim().isEmpty() || !PARAMETER_SYMBOL.matcher(sql).find();
     }
 
     private Flux<PostgresqlResult> execute(String sql) {
