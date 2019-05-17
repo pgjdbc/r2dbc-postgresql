@@ -20,6 +20,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
+import io.netty.util.internal.StringUtil;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
@@ -31,6 +32,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -73,10 +75,22 @@ final class BlobCodec extends AbstractCodec<Blob> {
         return create(FORMAT_TEXT, BYTEA,
             Flux.from(value.stream())
                 .reduce(this.byteBufAllocator.compositeBuffer(), (a, b) -> a.addComponent(true, Unpooled.wrappedBuffer(b)))
-                .map(b -> ByteBufUtils.encode(this.byteBufAllocator, String.format("\\\\x%s", ByteBufUtil.hexDump(b))))
+                .map(this::toHexFormat)
                 .concatWith(Flux.from(value.discard())
                     .then(Mono.empty()))
         );
+    }
+
+    private ByteBuf toHexFormat(ByteBuf b) {
+        int blobSize = b.readableBytes();
+        ByteBuf buf = this.byteBufAllocator.buffer(2 + blobSize * 2);
+        buf.writeByte('\\')
+            .writeByte('x');
+        while (b.readableBytes() > 0) {
+            String s = StringUtil.byteToHexStringPadded(b.readByte());
+            buf.writeCharSequence(s, StandardCharsets.US_ASCII);
+        }
+        return buf;
     }
 
     private static final class ByteABlob implements Blob {
