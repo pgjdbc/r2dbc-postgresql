@@ -28,7 +28,9 @@ import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 
 import static io.r2dbc.postgresql.client.ExtendedQueryMessageFlow.PARAMETER_SYMBOL;
@@ -154,10 +156,13 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
 
     private static int expectedSize(String sql) {
         Matcher m = PARAMETER_SYMBOL.matcher(sql);
+        Set<String> paramNames = new HashSet<>();
 
         int count = 0;
         while (m.find()) {
-            count++;
+            if (paramNames.add(m.group())) {
+                count++;
+            }
         }
 
         return count;

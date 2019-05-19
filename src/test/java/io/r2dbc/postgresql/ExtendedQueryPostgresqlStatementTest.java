@@ -206,7 +206,7 @@ final class ExtendedQueryPostgresqlStatementTest {
 
         when(this.statementCache.getName(any(), any())).thenReturn(Mono.just("test-name"));
 
-        new ExtendedQueryPostgresqlStatement(client, codecs, portalNameSupplier, "test-query-$1", this.statementCache, false)
+        new ExtendedQueryPostgresqlStatement(client, codecs, portalNameSupplier, "test-query-$1-$1", this.statementCache, false)
             .bind("$1", 100)
             .add()
             .bind("$1", 200)
