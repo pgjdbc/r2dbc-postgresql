@@ -118,7 +118,7 @@ public final class CommandComplete implements BackendMessage {
             return new CommandComplete(tokens[0], Integer.parseInt(tokens[1]), Integer.parseInt(tokens[2]));
         } else if (Stream.of("COPY", "DELETE", "FETCH", "MOVE", "SELECT", "UPDATE").anyMatch(tag::startsWith)) {
             String[] tokens = tag.split(" ");
-            return new CommandComplete(tokens[0], null, Integer.parseInt(tokens[1]));
+            return new CommandComplete(tokens[0], null, tokens.length>1?Integer.parseInt(tokens[1]):null);
         } else {
             return new CommandComplete(tag, null, null);
         }

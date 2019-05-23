@@ -112,7 +112,17 @@ final class CommandCompleteTest {
                 return buffer;
             })
             .isEqualTo(new CommandComplete("SELECT", null, 100));
+        assertThat(CommandComplete.class)
+            .decoded(buffer -> {
+                buffer.writeCharSequence("SELECT", UTF_8);
+                buffer.writeByte(0);
+
+                return buffer;
+            })
+            .isEqualTo(new CommandComplete("SELECT", null, null));
     }
+    
+
 
     @Test
     void decodeUpdate() {
