@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.CompositeByteBuf;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
@@ -43,7 +44,7 @@ public final class DataRow implements BackendMessage {
         this.columns = Assert.requireNonNull(columns, "columns must not be null");
 
         for (ByteBuf column : this.columns) {
-            if (column != null) {
+            if (column != null && !(column instanceof CompositeByteBuf)) {
                 column.retain();
             }
         }
@@ -110,7 +111,13 @@ public final class DataRow implements BackendMessage {
         Assert.requireNonNull(in, "in must not be null");
 
         int length = in.readInt();
-        return NULL == length ? null : in.readSlice(length);
+        if (NULL == length) {
+            return null;
+        }
+
+        return in instanceof CompositeByteBuf
+            ? BackendMessageUtils.readComposite((CompositeByteBuf) in, length)
+            : in.readSlice(length);
     }
 
 }

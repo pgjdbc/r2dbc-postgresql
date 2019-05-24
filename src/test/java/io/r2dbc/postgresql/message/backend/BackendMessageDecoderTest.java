@@ -203,8 +203,8 @@ final class BackendMessageDecoderTest {
     @Test
     void dataRow() {
         decodeWithRelease('D', message -> Mono.fromRunnable(() -> {
-                ((DataRow) message).release();
                 assertThat(message).isEqualTo(new DataRow(Collections.singletonList(TEST.buffer(4).writeInt(100))));
+                ((DataRow) message).release();
             }),
             buffer -> buffer
                 .writeShort(1)
@@ -219,8 +219,8 @@ final class BackendMessageDecoderTest {
         decodeWithRelease('D', message -> Mono.just("test")
                 .delayElement(Duration.ofMillis(1))
                 .then(Mono.fromRunnable(() -> {
-                    ((DataRow) message).release();
                     assertThat(message).isEqualTo(new DataRow(Collections.singletonList(TEST.buffer(4).writeInt(100))));
+                    ((DataRow) message).release();
                 })),
             buffer -> buffer
                 .writeShort(1)
@@ -405,6 +405,8 @@ final class BackendMessageDecoderTest {
             .reduce(TEST.buffer(), ByteBuf::writeBytes);
 
         BackendMessageDecoder decoder = new BackendMessageDecoder(TEST);
+
+        assertThat(data.refCnt()).isOne();
 
         return Flux.just(data.readRetainedSlice(data.readableBytes() / 2), data)
             .concatMap(decoder::decode)
