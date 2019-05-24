@@ -107,17 +107,13 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
     boolean isTypeAssignable(Class<?> type) {
         Assert.requireNonNull(type, "type must not be null");
 
-        if (!type.isArray()) {
-            return false;
-        }
-
-        return getBaseComponentType(type).equals(this.componentType);
+        return this.componentType.equals(getBaseComponentType(type));
     }
 
     private static Class<?> getBaseComponentType(Class<?> type) {
         Class<?> t = type;
 
-        while (t.isArray()) {
+        while (t.getComponentType() != null) {
             t = t.getComponentType();
         }
 
