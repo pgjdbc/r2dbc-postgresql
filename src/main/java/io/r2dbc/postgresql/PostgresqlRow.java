@@ -82,16 +82,10 @@ public final class PostgresqlRow implements Row {
 
         ByteBuf data = column.getByteBuf();
         if (data != null) {
-            data.markReaderIndex();
+            data = data.slice();
         }
 
-        T value = this.codecs.decode(data, column.getDataType(), column.getFormat(), type);
-
-        if (data != null) {
-            data.resetReaderIndex();
-        }
-
-        return value;
+        return this.codecs.decode(data, column.getDataType(), column.getFormat(), type);
     }
 
     @Override

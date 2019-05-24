@@ -19,11 +19,12 @@ package io.r2dbc.postgresql.message.backend;
 import io.netty.buffer.ByteBuf;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import reactor.test.StepVerifier.FirstStep;
 
+import java.time.Duration;
 import java.util.Collections;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -201,11 +202,31 @@ final class BackendMessageDecoderTest {
 
     @Test
     void dataRow() {
-        decodeWithRelease('D', message -> ((DataRow) message).release(), buffer -> buffer
-            .writeShort(1)
-            .writeInt(4)
-            .writeInt(100))
-            .expectNext(new DataRow(Collections.singletonList(TEST.buffer(4).writeInt(100))))
+        decodeWithRelease('D', message -> Mono.fromRunnable(() -> {
+                ((DataRow) message).release();
+                assertThat(message).isEqualTo(new DataRow(Collections.singletonList(TEST.buffer(4).writeInt(100))));
+            }),
+            buffer -> buffer
+                .writeShort(1)
+                .writeInt(4)
+                .writeInt(100))
+            .expectNextCount(1)
+            .verifyComplete();
+    }
+
+    @Test
+    void dataRowParallel() {
+        decodeWithRelease('D', message -> Mono.just("test")
+                .delayElement(Duration.ofMillis(1))
+                .then(Mono.fromRunnable(() -> {
+                    ((DataRow) message).release();
+                    assertThat(message).isEqualTo(new DataRow(Collections.singletonList(TEST.buffer(4).writeInt(100))));
+                })),
+            buffer -> buffer
+                .writeShort(1)
+                .writeInt(4)
+                .writeInt(100))
+            .expectNextCount(1)
             .verifyComplete();
     }
 
@@ -368,13 +389,12 @@ final class BackendMessageDecoderTest {
     @SafeVarargs
     @SuppressWarnings("varargs")
     private final FirstStep<BackendMessage> decode(char discriminator, Function<ByteBuf, ByteBuf>... decodes) {
-        return decodeWithRelease(discriminator, message -> {
-        }, decodes);
+        return decodeWithRelease(discriminator, message -> Mono.empty(), decodes);
     }
 
     @SafeVarargs
     @SuppressWarnings("varargs")
-    private final FirstStep<BackendMessage> decodeWithRelease(char discriminator, Consumer<BackendMessage> release, Function<ByteBuf, ByteBuf>... decodes) {
+    private final FirstStep<BackendMessage> decodeWithRelease(char discriminator, Function<BackendMessage, Mono<?>> release, Function<ByteBuf, ByteBuf>... decodes) {
         ByteBuf data = Stream.of(decodes)
             .map(decode -> decode.apply(TEST.buffer()))
             .map(payload ->
@@ -388,7 +408,8 @@ final class BackendMessageDecoderTest {
 
         return Flux.just(data.readRetainedSlice(data.readableBytes() / 2), data)
             .concatMap(decoder::decode)
-            .doOnNext(release)
+            .delayUntil(release)
+            .doFinally(s -> decoder.dispose())
             .doAfterTerminate(() -> assertThat(data.refCnt()).isZero())
             .as(StepVerifier::create);
     }

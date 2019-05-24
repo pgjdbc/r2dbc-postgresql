@@ -150,8 +150,11 @@ public final class ReactorNettyClient implements Client {
             .concatMap(message -> connection.outbound().send(message.encode(connection.outbound().alloc())))
             .then();
 
-        Flux.merge(receive, request)
+        connection.onDispose()
             .doFinally(s -> decoder.dispose())
+            .subscribe();
+
+        Flux.merge(receive, request)
             .onErrorResume(throwable -> {
                 this.logger.error("Connection Error", throwable);
                 return close();
