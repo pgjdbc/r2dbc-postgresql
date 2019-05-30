@@ -77,7 +77,7 @@ public final class CopyData implements BackendMessage {
     static CopyData decode(ByteBuf in) {
         Assert.requireNonNull(in, "in must not be null");
 
-        return new CopyData(in.readSlice(in.readableBytes()));
+        return new CopyData(in.readSlice(in.readableBytes()).retain());
     }
 
 }

@@ -32,10 +32,10 @@ final class BackendMessageUtils {
     private BackendMessageUtils() {
     }
 
-    static CompositeByteBuf getBody(CompositeByteBuf in) {
+    static ByteBuf getBody(ByteBuf in) {
         Assert.requireNonNull(in, "in must not be null");
-        int length = in.readInt() - 4;
-        return readComposite(in, length);
+
+        return in.readSlice(in.readInt() - 4);
     }
 
     @Nullable

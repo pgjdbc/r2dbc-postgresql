@@ -17,193 +17,116 @@
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.CompositeByteBuf;
-import io.netty.util.ReferenceCountUtil;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.SynchronousSink;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static io.r2dbc.postgresql.message.backend.BackendMessageUtils.getBody;
-import static io.r2dbc.postgresql.message.backend.BackendMessageUtils.getEnvelope;
 
 /**
  * A decoder that reads {@link ByteBuf}s and returns a {@link Flux} of decoded {@link BackendMessage}s.
  */
 public final class BackendMessageDecoder {
 
-    private final CompositeByteBuf byteBuf;
-
-    private final AtomicBoolean disposed = new AtomicBoolean();
-
-    public BackendMessageDecoder(ByteBufAllocator allocator) {
-        this.byteBuf = allocator.compositeBuffer();
-    }
-
     /**
-     * Decode a {@link ByteBuf} into a {@link Flux} of {@link BackendMessage}s.  If the {@link ByteBuf} does not end on a {@link BackendMessage} boundary, the {@link ByteBuf} will be retained until
-     * an the concatenated contents of all retained {@link ByteBuf}s is a {@link BackendMessage} boundary.
+     * Decode a {@link ByteBuf} into a {@link BackendMessage}.
      *
-     * @param in the {@link ByteBuf} to decode
+     * @param envelope the {@link ByteBuf} to decode
      * @return a {@link Flux} of {@link BackendMessage}s
      */
-    public Flux<BackendMessage> decode(ByteBuf in) {
-        Assert.requireNonNull(in, "in must not be null");
+    public static BackendMessage decode(CompositeByteBuf envelope) {
+        Assert.requireNonNull(envelope, "in must not be null");
 
-        return Flux.generate(
-            () -> this.byteBuf.addComponent(true, in),
-            (byteBuf, sink) -> {
-                CompositeByteBuf envelope = getEnvelope(byteBuf);
-
-                if (envelope == null) {
-                    sink.complete();
-                    return byteBuf;
-                }
-
-                MessageType messageType;
-                CompositeByteBuf body = null;
-                try {
-                    messageType = MessageType.valueOf(envelope.readByte());
-                    body = getBody(envelope);
-                    processBody(sink, body, messageType);
-                } finally {
-                    if (body != null) {
-                        body.release();
-                    }
-                    envelope.release();
-                }
-                return byteBuf;
-            },
-            buf -> {
-                if (!this.disposed.get()) {
-                    buf.discardReadComponents();
-                }
-            });
+        try {
+            MessageType messageType = MessageType.valueOf(envelope.readByte());
+            ByteBuf body = getBody(envelope);
+            return decodeBody(body, messageType);
+        } finally {
+            envelope.release();
+        }
     }
 
-    private void processBody(SynchronousSink<BackendMessage> sink, CompositeByteBuf body, MessageType messageType) {
+    private static BackendMessage decodeBody(ByteBuf body, MessageType messageType) {
         switch (messageType) {
             case AUTHENTICATION:
-                decodeAuthentication(body, sink);
-                break;
+                return decodeAuthentication(body);
             case BACKEND_KEY_DATA:
-                sink.next(BackendKeyData.decode(body));
-                break;
+                return BackendKeyData.decode(body);
             case BIND_COMPLETE:
-                sink.next(BindComplete.INSTANCE);
-                break;
+                return BindComplete.INSTANCE;
             case CLOSE_COMPLETE:
-                sink.next(CloseComplete.INSTANCE);
-                break;
+                return CloseComplete.INSTANCE;
             case COMMAND_COMPLETE:
-                sink.next(CommandComplete.decode(body));
-                break;
+                return CommandComplete.decode(body);
             case COPY_DATA:
-                sink.next(CopyData.decode(body));
-                break;
+                return CopyData.decode(body);
             case COPY_DONE:
-                sink.next(CopyDone.INSTANCE);
-                break;
+                return CopyDone.INSTANCE;
             case COPY_BOTH_RESPONSE:
-                sink.next(CopyBothResponse.decode(body));
-                break;
+                return CopyBothResponse.decode(body);
             case COPY_IN_RESPONSE:
-                sink.next(CopyInResponse.decode(body));
-                break;
+                return CopyInResponse.decode(body);
             case COPY_OUT_RESPONSE:
-                sink.next(CopyOutResponse.decode(body));
-                break;
+                return CopyOutResponse.decode(body);
             case DATA_ROW:
-                sink.next(DataRow.decode(body));
-                break;
+                return DataRow.decode(body);
             case EMPTY_QUERY_RESPONSE:
-                sink.next(EmptyQueryResponse.INSTANCE);
-                break;
+                return EmptyQueryResponse.INSTANCE;
             case ERROR_RESPONSE:
-                sink.next(ErrorResponse.decode(body));
-                break;
+                return ErrorResponse.decode(body);
             case FUNCTION_CALL_RESPONSE:
-                sink.next(FunctionCallResponse.decode(body));
-                break;
+                return FunctionCallResponse.decode(body);
             case NO_DATA:
-                sink.next(NoData.INSTANCE);
-                break;
+                return NoData.INSTANCE;
             case NOTICE_RESPONSE:
-                sink.next(NoticeResponse.decode(body));
-                break;
+                return NoticeResponse.decode(body);
             case NOTIFICATION_RESPONSE:
-                sink.next(NotificationResponse.decode(body));
-                break;
+                return NotificationResponse.decode(body);
             case PARAMETER_DESCRIPTION:
-                sink.next(ParameterDescription.decode(body));
-                break;
+                return ParameterDescription.decode(body);
             case PARAMETER_STATUS:
-                sink.next(ParameterStatus.decode(body));
-                break;
+                return ParameterStatus.decode(body);
             case PARSE_COMPLETE:
-                sink.next(ParseComplete.INSTANCE);
-                break;
+                return ParseComplete.INSTANCE;
             case PORTAL_SUSPENDED:
-                sink.next(PortalSuspended.INSTANCE);
-                break;
+                return PortalSuspended.INSTANCE;
             case READY_FOR_QUERY:
-                sink.next(ReadyForQuery.decode(body));
-                break;
+                return ReadyForQuery.decode(body);
             case ROW_DESCRIPTION:
-                sink.next(RowDescription.decode(body));
-                break;
+                return RowDescription.decode(body);
             default:
-                sink.error(new IllegalArgumentException(String.format("%s is not a supported message type", messageType)));
+                throw new IllegalArgumentException(String.format("%s is not a supported message type", messageType));
         }
     }
 
-    public void dispose() {
-        if (this.disposed.compareAndSet(false, true)) {
-            ReferenceCountUtil.release(this.byteBuf);
-        }
-    }
-
-    private static void decodeAuthentication(ByteBuf in, SynchronousSink<BackendMessage> sink) {
+    private static BackendMessage decodeAuthentication(ByteBuf in) {
         AuthenticationType authenticationType = AuthenticationType.valueOf(in.readInt());
 
         switch (authenticationType) {
             case OK:
-                sink.next(AuthenticationOk.INSTANCE);
-                break;
+                return AuthenticationOk.INSTANCE;
             case KERBEROS_V5:
-                sink.next(AuthenticationKerberosV5.INSTANCE);
-                break;
+                return AuthenticationKerberosV5.INSTANCE;
             case CLEARTEXT_PASSWORD:
-                sink.next(AuthenticationCleartextPassword.INSTANCE);
-                break;
+                return AuthenticationCleartextPassword.INSTANCE;
             case GSS:
-                sink.next(AuthenticationGSS.INSTANCE);
-                break;
+                return AuthenticationGSS.INSTANCE;
             case GSS_CONTINUE:
-                sink.next(AuthenticationGSSContinue.decode(in));
-                break;
+                return AuthenticationGSSContinue.decode(in);
             case MD5_PASSWORD:
-                sink.next(AuthenticationMD5Password.decode(in));
-                break;
+                return AuthenticationMD5Password.decode(in);
             case SCMC_CREDENTIAL:
-                sink.next(AuthenticationSCMCredential.INSTANCE);
-                break;
+                return AuthenticationSCMCredential.INSTANCE;
             case SASL:
-                sink.next(AuthenticationSASL.decode(in));
-                break;
+                return AuthenticationSASL.decode(in);
             case SASL_CONTINUE:
-                sink.next(AuthenticationSASLContinue.decode(in));
-                break;
+                return AuthenticationSASLContinue.decode(in);
             case SASL_FINAL:
-                sink.next(AuthenticationSASLFinal.decode(in));
-                break;
+                return AuthenticationSASLFinal.decode(in);
             case SSPI:
-                sink.next(AuthenticationSSPI.INSTANCE);
-                break;
+                return AuthenticationSSPI.INSTANCE;
             default:
-                sink.error(new IllegalArgumentException(String.format("%s is not a supported authentication type", authenticationType)));
+                throw new IllegalArgumentException(String.format("%s is not a supported authentication type", authenticationType));
         }
     }
 

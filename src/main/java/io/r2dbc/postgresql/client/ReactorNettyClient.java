@@ -23,6 +23,7 @@ import io.netty.channel.ChannelOption;
 import io.r2dbc.postgresql.message.backend.BackendKeyData;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.BackendMessageDecoder;
+import io.r2dbc.postgresql.message.backend.BackendMessageEnvelopeDecoder;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.Field;
 import io.r2dbc.postgresql.message.backend.NoticeResponse;
@@ -119,12 +120,13 @@ public final class ReactorNettyClient implements Client {
         connection.addHandler(new EnsureSubscribersCompleteChannelHandler(this.requestProcessor, this.responseReceivers));
 
         ByteBufAllocator alloc = connection.outbound().alloc();
-        BackendMessageDecoder decoder = new BackendMessageDecoder(alloc);
+        BackendMessageEnvelopeDecoder envelopeDecoder = new BackendMessageEnvelopeDecoder(alloc);
         this.byteBufAllocator.set(alloc);
 
         Mono<Void> receive = connection.inbound().receive()
             .retain()
-            .concatMap(decoder::decode)
+            .concatMap(envelopeDecoder)
+            .map(BackendMessageDecoder::decode)
             .doOnNext(message -> this.logger.debug("Response: {}", message))
             .handle(this.handleNoticeResponse)
             .handle(this.handleErrorResponse)
@@ -151,7 +153,7 @@ public final class ReactorNettyClient implements Client {
             .then();
 
         connection.onDispose()
-            .doFinally(s -> decoder.dispose())
+            .doFinally(s -> envelopeDecoder.dispose())
             .subscribe();
 
         Flux.merge(receive, request)
