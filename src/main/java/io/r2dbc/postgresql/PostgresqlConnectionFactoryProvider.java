@@ -85,7 +85,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         Assert.requireNonNull(connectionFactoryOptions, "connectionFactoryOptions must not be null");
 
         String driver = connectionFactoryOptions.getValue(DRIVER);
-        if (driver == null || !driver.equals(POSTGRESQL_DRIVER)) {
+        if (driver == null || !(driver.equals(POSTGRESQL_DRIVER) || driver.equals("postgres"))) {
             return false;
         }
 
