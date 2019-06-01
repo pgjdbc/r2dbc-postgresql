@@ -90,4 +90,14 @@ final class PostgresqlConnectionFactoryProviderTest {
             .option(USER, "test-user")
             .build())).isTrue();
     }
+
+    @Test
+    void supportsPostgresDriver() {
+        assertThat(this.provider.supports(ConnectionFactoryOptions.builder()
+            .option(DRIVER, "postgres")
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .build())).isTrue();
+    }
 }
