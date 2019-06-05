@@ -20,7 +20,6 @@ import io.r2dbc.postgresql.codec.MockCodecs;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.DataRow;
 import io.r2dbc.postgresql.message.backend.EmptyQueryResponse;
-import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.RowDescription;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
@@ -83,20 +82,6 @@ final class PostgresqlResultTest {
             .as(StepVerifier::create)
             .verifyComplete();
     }
-
-    @Test
-    void toResultErrorResponse() {
-        PostgresqlResult result = PostgresqlResult.toResult(MockCodecs.empty(), Flux.just(new ErrorResponse(Collections.emptyList())));
-
-        result.map((row, rowMetadata) -> row)
-            .as(StepVerifier::create)
-            .verifyError(PostgresqlServerErrorException.class);
-
-        result.getRowsUpdated()
-            .as(StepVerifier::create)
-            .verifyError(PostgresqlServerErrorException.class);
-    }
-
 
     @Test
     void toResultNoCodecs() {
