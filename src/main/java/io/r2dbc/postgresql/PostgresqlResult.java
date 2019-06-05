@@ -114,14 +114,12 @@ public final class PostgresqlResult implements Result {
                 Integer rowCount = commandComplete.getRows();
                 if (rowCount != null) {
                     sink.next(rowCount);
-                }
-                else {
+                } else {
                     sink.complete();
                 }
             });
 
         messages
-            .handle(PostgresqlExceptionFactory::handleErrorResponse)
             .hide()
             .subscribe(processor);
 

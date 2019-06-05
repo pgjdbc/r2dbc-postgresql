@@ -164,6 +164,18 @@ final class SimpleQueryPostgresqlStatementTest {
     }
 
     @Test
+    void executeErrorResponse() {
+        Client client = TestClient.builder()
+            .expectRequest(new Query("test-query")).thenRespond(new ErrorResponse(Collections.emptyList()))
+            .build();
+
+        new SimpleQueryPostgresqlStatement(client, MockCodecs.empty(), "test-query")
+            .execute()
+            .as(StepVerifier::create)
+            .verifyError(PostgresqlServerErrorException.class);
+    }
+
+    @Test
     void executeRowDescriptionRows() {
         Client client = TestClient.builder()
             .expectRequest(new Query("test-query"))
