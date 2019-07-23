@@ -40,10 +40,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
 
     /**
      * Legacy driver option value.
-     *
-     * @deprecated Should use {@link #POSTGRESQL_DRIVER} for new driver development.
      */
-    @Deprecated
     public static final String LEGACY_POSTGRESQL_DRIVER = "postgres";
 
     /**
