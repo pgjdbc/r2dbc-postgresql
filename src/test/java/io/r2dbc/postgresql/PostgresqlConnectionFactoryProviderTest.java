@@ -16,15 +16,12 @@
 
 package io.r2dbc.postgresql;
 
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.*;
+import static io.r2dbc.spi.ConnectionFactoryOptions.*;
+import static org.assertj.core.api.Assertions.*;
+
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import org.junit.jupiter.api.Test;
-
-import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.POSTGRESQL_DRIVER;
-import static io.r2dbc.spi.ConnectionFactoryOptions.DRIVER;
-import static io.r2dbc.spi.ConnectionFactoryOptions.HOST;
-import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
-import static io.r2dbc.spi.ConnectionFactoryOptions.USER;
-import static org.assertj.core.api.Assertions.assertThat;
 
 final class PostgresqlConnectionFactoryProviderTest {
 
@@ -94,7 +91,7 @@ final class PostgresqlConnectionFactoryProviderTest {
     @Test
     void supportsPostgresDriver() {
         assertThat(this.provider.supports(ConnectionFactoryOptions.builder()
-            .option(DRIVER, "postgres")
+            .option(DRIVER, LEGACY_POSTGRESQL_DRIVER)
             .option(HOST, "test-host")
             .option(PASSWORD, "test-password")
             .option(USER, "test-user")

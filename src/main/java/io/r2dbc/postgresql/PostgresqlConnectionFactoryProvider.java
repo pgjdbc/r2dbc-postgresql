@@ -16,18 +16,12 @@
 
 package io.r2dbc.postgresql;
 
+import static io.r2dbc.spi.ConnectionFactoryOptions.*;
+
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.ConnectionFactoryProvider;
 import io.r2dbc.spi.Option;
-
-import static io.r2dbc.spi.ConnectionFactoryOptions.CONNECT_TIMEOUT;
-import static io.r2dbc.spi.ConnectionFactoryOptions.DATABASE;
-import static io.r2dbc.spi.ConnectionFactoryOptions.DRIVER;
-import static io.r2dbc.spi.ConnectionFactoryOptions.HOST;
-import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
-import static io.r2dbc.spi.ConnectionFactoryOptions.PORT;
-import static io.r2dbc.spi.ConnectionFactoryOptions.USER;
 
 /**
  * An implementation of {@link ConnectionFactoryProvider} for creating {@link PostgresqlConnectionFactory}s.
@@ -43,6 +37,14 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
      * Driver option value.
      */
     public static final String POSTGRESQL_DRIVER = "postgresql";
+
+    /**
+     * Legacy driver option value.
+     *
+     * @deprecated Should use {@link #POSTGRESQL_DRIVER} for new driver development.
+     */
+    @Deprecated
+    public static final String LEGACY_POSTGRESQL_DRIVER = "postgres";
 
     /**
      * Schema.
@@ -85,7 +87,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         Assert.requireNonNull(connectionFactoryOptions, "connectionFactoryOptions must not be null");
 
         String driver = connectionFactoryOptions.getValue(DRIVER);
-        if (driver == null || !(driver.equals(POSTGRESQL_DRIVER) || driver.equals("postgres"))) {
+        if (driver == null || !(driver.equals(POSTGRESQL_DRIVER) || driver.equals(LEGACY_POSTGRESQL_DRIVER))) {
             return false;
         }
 
