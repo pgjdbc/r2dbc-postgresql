@@ -27,7 +27,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * An implementation of {@link RowMetadata} for a PostgreSQL database.
@@ -135,17 +137,17 @@ public final class PostgresqlRowMetadata implements RowMetadata {
     }
 
     private Collection<String> getColumnNames(List<PostgresqlColumnMetadata> columnMetadatas) {
-        List<String> columnNames = new ArrayList<>(columnMetadatas.size());
+        Set<String> columnNames = new TreeSet<>(Collator.IGNORE_CASE_COMPARATOR);
 
         for (PostgresqlColumnMetadata columnMetadata : columnMetadatas) {
             columnNames.add(columnMetadata.getName());
         }
 
-        return new CollatedCollection<>(columnNames);
+        return columnNames;
     }
 
     private Map<String, PostgresqlColumnMetadata> getNameKeyedColumnMetadatas(List<PostgresqlColumnMetadata> columnMetadatas) {
-        Map<String, PostgresqlColumnMetadata> nameKeyedColumnMetadatas = new TreeMap<>(Collator.DEFAULT);
+        Map<String, PostgresqlColumnMetadata> nameKeyedColumnMetadatas = new TreeMap<>(Collator.IGNORE_CASE_COMPARATOR);
 
         for (PostgresqlColumnMetadata columnMetadata : columnMetadatas) {
             nameKeyedColumnMetadatas.put(columnMetadata.getName(), columnMetadata);
