@@ -81,6 +81,11 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
     }
 
     @Override
+    public SimpleQueryPostgresqlStatement fetchSize(int rows) {
+        return this;
+    }
+
+    @Override
     public SimpleQueryPostgresqlStatement returnGeneratedValues(String... columns) {
         Assert.requireNonNull(columns, "columns must not be null");
 

@@ -24,6 +24,7 @@ import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.message.backend.CloseComplete;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.GeneratedValuesUtils;
+import io.r2dbc.spi.Statement;
 import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
@@ -110,6 +111,11 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
         }
 
         return execute(GeneratedValuesUtils.augment(this.sql, this.generatedColumns));
+    }
+
+    @Override
+    public Statement fetchSize(int rows) {
+        return this;
     }
 
     @Override

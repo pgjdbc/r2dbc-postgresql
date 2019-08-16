@@ -63,8 +63,7 @@ public final class PostgresqlConnection implements Connection {
         this.portalNameSupplier = Assert.requireNonNull(portalNameSupplier, "portalNameSupplier must not be null");
         this.statementCache = Assert.requireNonNull(statementCache, "statementCache must not be null");
         this.forceBinary = forceBinary;
-        this.validationQuery = ((SimpleQueryPostgresqlStatement) new SimpleQueryPostgresqlStatement(this.client, this.codecs, "SELECT 1").fetchSize(0)).execute().flatMap
-            (PostgresqlResult::getRowsUpdated);
+        this.validationQuery = new SimpleQueryPostgresqlStatement(this.client, this.codecs, "SELECT 1").fetchSize(0).execute().flatMap(PostgresqlResult::getRowsUpdated);
     }
 
     @Override
