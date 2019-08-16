@@ -24,9 +24,12 @@ import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.IsolationLevel;
+import io.r2dbc.spi.ValidationDepth;
 import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.CoreSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -52,12 +55,16 @@ public final class PostgresqlConnection implements Connection {
 
     private final StatementCache statementCache;
 
+    private final Flux<Integer> validationQuery;
+
     PostgresqlConnection(Client client, Codecs codecs, PortalNameSupplier portalNameSupplier, StatementCache statementCache, boolean forceBinary) {
         this.client = Assert.requireNonNull(client, "client must not be null");
         this.codecs = Assert.requireNonNull(codecs, "codecs must not be null");
         this.portalNameSupplier = Assert.requireNonNull(portalNameSupplier, "portalNameSupplier must not be null");
         this.statementCache = Assert.requireNonNull(statementCache, "statementCache must not be null");
         this.forceBinary = forceBinary;
+        this.validationQuery = ((SimpleQueryPostgresqlStatement) new SimpleQueryPostgresqlStatement(this.client, this.codecs, "SELECT 1").fetchSize(0)).execute().flatMap
+            (PostgresqlResult::getRowsUpdated);
     }
 
     @Override
@@ -187,6 +194,46 @@ public final class PostgresqlConnection implements Connection {
             ", portalNameSupplier=" + this.portalNameSupplier +
             ", statementCache=" + this.statementCache +
             '}';
+    }
+
+    @Override
+    public Publisher<Boolean> validate(ValidationDepth depth) {
+
+        if (depth == ValidationDepth.LOCAL) {
+            return Mono.fromSupplier(this.client::isConnected);
+        }
+
+        return Mono.create(sink -> {
+
+            if (!this.client.isConnected()) {
+                sink.success(false);
+                return;
+            }
+
+            this.validationQuery.subscribe(new CoreSubscriber<Integer>() {
+
+                @Override
+                public void onSubscribe(Subscription s) {
+                    s.request(Integer.MAX_VALUE);
+                }
+
+                @Override
+                public void onNext(Integer integer) {
+
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                    logger.debug("Validation failed", t);
+                    sink.success(false);
+                }
+
+                @Override
+                public void onComplete() {
+                    sink.success(true);
+                }
+            });
+        });
     }
 
     private static Function<TransactionStatus, String> getTransactionIsolationLevelQuery(IsolationLevel isolationLevel) {

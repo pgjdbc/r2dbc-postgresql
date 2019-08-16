@@ -37,9 +37,11 @@ import static io.r2dbc.postgresql.client.TransactionStatus.IDLE;
 
 public final class TestClient implements Client {
 
-    public static final TestClient NO_OP = new TestClient(false, null, null, Flux.empty(), IDLE);
+    public static final TestClient NO_OP = new TestClient(false, true, null, null, Flux.empty(), IDLE);
 
     private final boolean expectClose;
+
+    private final boolean connected;
 
     private final Integer processId;
 
@@ -53,8 +55,9 @@ public final class TestClient implements Client {
 
     private final TransactionStatus transactionStatus;
 
-    private TestClient(boolean expectClose, @Nullable Integer processId, @Nullable Integer secretKey, Flux<Window> windows, TransactionStatus transactionStatus) {
+    private TestClient(boolean expectClose, boolean connected, @Nullable Integer processId, @Nullable Integer secretKey, Flux<Window> windows, TransactionStatus transactionStatus) {
         this.expectClose = expectClose;
+        this.connected = connected;
         this.processId = processId;
         this.secretKey = secretKey;
         this.transactionStatus = Assert.requireNonNull(transactionStatus, "transactionStatus must not be null");
@@ -120,11 +123,18 @@ public final class TestClient implements Client {
         return this.transactionStatus;
     }
 
+    @Override
+    public boolean isConnected() {
+        return this.connected;
+    }
+
     public static final class Builder {
 
         private final List<Window.Builder<?>> windows = new ArrayList<>();
 
         private boolean expectClose = false;
+
+        private boolean connected = true;
 
         private Integer processId = null;
 
@@ -136,11 +146,16 @@ public final class TestClient implements Client {
         }
 
         public TestClient build() {
-            return new TestClient(this.expectClose, this.processId, this.secretKey, Flux.fromIterable(this.windows).map(Window.Builder::build), this.transactionStatus);
+            return new TestClient(this.expectClose, this.connected, this.processId, this.secretKey, Flux.fromIterable(this.windows).map(Window.Builder::build), this.transactionStatus);
         }
 
         public Builder expectClose() {
             this.expectClose = true;
+            return this;
+        }
+
+        public Builder withConnected(boolean connected) {
+            this.connected = connected;
             return this;
         }
 
