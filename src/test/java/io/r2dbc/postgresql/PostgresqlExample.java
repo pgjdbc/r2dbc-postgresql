@@ -21,6 +21,7 @@ import io.r2dbc.spi.ConnectionFactories;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.test.Example;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.jdbc.core.JdbcOperations;
 
@@ -87,4 +88,9 @@ final class PostgresqlExample implements Example<String> {
         return String.format("$%d", index + 1);
     }
 
+    @Disabled
+    @Override
+    public void savePointStartsTransaction() {
+
+    }
 }

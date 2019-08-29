@@ -132,6 +132,16 @@ public final class PostgresqlConnection implements Connection {
     }
 
     @Override
+    public IsolationLevel getTransactionIsolationLevel() {
+        return IsolationLevel.READ_COMMITTED; // TODO: Replace with proper lookup of transaction's isolation level.
+    }
+
+    @Override
+    public boolean isAutoCommit() {
+        return true; // TOODO: Replace with proper lookup of session's autoCommit status.
+    }
+
+    @Override
     public Mono<Void> releaseSavepoint(String name) {
         Assert.requireNonNull(name, "name must not be null");
 
@@ -172,6 +182,11 @@ public final class PostgresqlConnection implements Connection {
                 return Mono.empty();
             }
         });
+    }
+
+    @Override
+    public Publisher<Void> setAutoCommit(boolean b) {
+        return Mono.empty(); // TODO: Replace with proper implementation of setting autoCommit.
     }
 
     @Override
