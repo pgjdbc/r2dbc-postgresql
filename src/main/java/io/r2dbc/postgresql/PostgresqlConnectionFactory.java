@@ -28,6 +28,8 @@ import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ConnectionFactory;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
+
 /**
  * An implementation of {@link ConnectionFactory} for creating connections to a PostgreSQL database.
  */
@@ -61,7 +63,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
         return this.clientFactory
             .delayUntil(client ->
                 StartupMessageFlow
-                    .exchange(this.configuration.getApplicationName(), this::getAuthenticationHandler, client, this.configuration.getDatabase(), this.configuration.getUsername())
+                    .exchange(this.configuration.getApplicationName(), this::getAuthenticationHandler, client, this.configuration.getDatabase(), this.configuration.getUsername(), this.configuration.getOptions())
                     .handle(PostgresqlExceptionFactory::handleErrorResponse))
             .map(client -> new PostgresqlConnection(client, new DefaultCodecs(client.getByteBufAllocator()), DefaultPortalNameSupplier.INSTANCE, new IndefiniteStatementCache(client),
                 configuration.isForceBinary()))
@@ -71,6 +73,10 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
     @Override
     public PostgresqlConnectionFactoryMetadata getMetadata() {
         return PostgresqlConnectionFactoryMetadata.INSTANCE;
+    }
+
+    PostgresqlConnectionConfiguration getConfiguration() {
+        return this.configuration;
     }
 
     @Override

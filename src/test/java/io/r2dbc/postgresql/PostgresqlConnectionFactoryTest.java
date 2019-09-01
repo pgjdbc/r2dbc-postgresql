@@ -62,7 +62,7 @@ final class PostgresqlConnectionFactoryTest {
         // @formatter:off
         Client client = TestClient.builder()
             .window()
-                .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username")).thenRespond(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))
+                .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username", null)).thenRespond(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))
                 .expectRequest(new PasswordMessage("md55e9836cdb369d50e3bc7d127e88b4804")).thenRespond(AuthenticationOk.INSTANCE)
                 .done()
             .build();
@@ -94,7 +94,7 @@ final class PostgresqlConnectionFactoryTest {
         // @formatter:off
         Client client = TestClient.builder()
             .window()
-                .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username")).thenRespond(new AuthenticationSASL(Collections.singletonList("SCRAM-SHA-256")))
+                .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username", null)).thenRespond(new AuthenticationSASL(Collections.singletonList("SCRAM-SHA-256")))
                 .expectRequest(new SASLInitialResponse(ByteBufferUtils.encode(scramClient.scramSession("test-username").clientFirstMessage()), "SCRAM-SHA-256")).thenRespond(AuthenticationOk.INSTANCE)
                 .done()
             .build();
@@ -114,7 +114,7 @@ final class PostgresqlConnectionFactoryTest {
         // @formatter:off
         Client client = TestClient.builder()
             .window()
-                .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username")).thenRespond(new ErrorResponse(Collections.emptyList()))
+                .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username", null)).thenRespond(new ErrorResponse(Collections.emptyList()))
                 .done()
             .build();
         // @formatter:on
@@ -137,7 +137,7 @@ final class PostgresqlConnectionFactoryTest {
         // @formatter:off
         Client client = TestClient.builder()
             .window()
-                .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username")).thenRespond(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))
+                .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username", null)).thenRespond(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))
                 .expectRequest(new PasswordMessage("md55e9836cdb369d50e3bc7d127e88b4804")).thenRespond(AuthenticationOk.INSTANCE)
                 .done()
             .build();

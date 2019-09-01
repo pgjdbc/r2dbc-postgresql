@@ -26,6 +26,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
 import reactor.util.annotation.Nullable;
 
+import java.util.Map;
+
 public final class PostgresqlServerExtension implements BeforeAllCallback, AfterAllCallback {
 
     private final PostgreSQLContainer<?> container = new PostgreSQLContainer<>("postgres:latest");
@@ -81,4 +83,5 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
         return this.container.getUsername();
     }
 
+    public Map<String, String> getOptions() { return null; }
 }
