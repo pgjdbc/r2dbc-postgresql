@@ -171,7 +171,7 @@ public final class PostgresqlConnection implements Connection {
     @Override
     public Mono<Void> rollbackTransaction() {
         return useTransactionStatus(transactionStatus -> {
-            if (OPEN == transactionStatus) {
+            if (IDLE != transactionStatus) {
                 return SimpleQueryMessageFlow.exchange(this.client, "ROLLBACK")
                     .handle(PostgresqlExceptionFactory::handleErrorResponse);
             } else {
@@ -186,7 +186,7 @@ public final class PostgresqlConnection implements Connection {
         Assert.requireNonNull(name, "name must not be null");
 
         return useTransactionStatus(transactionStatus -> {
-            if (OPEN == transactionStatus) {
+            if (IDLE != transactionStatus) {
                 return SimpleQueryMessageFlow.exchange(this.client, String.format("ROLLBACK TO SAVEPOINT %s", name))
                     .handle(PostgresqlExceptionFactory::handleErrorResponse);
             } else {
