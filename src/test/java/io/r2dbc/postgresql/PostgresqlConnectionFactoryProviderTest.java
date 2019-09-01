@@ -23,6 +23,9 @@ import static org.assertj.core.api.Assertions.*;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 final class PostgresqlConnectionFactoryProviderTest {
 
     private final PostgresqlConnectionFactoryProvider provider = new PostgresqlConnectionFactoryProvider();
@@ -97,4 +100,25 @@ final class PostgresqlConnectionFactoryProviderTest {
             .option(USER, "test-user")
             .build())).isTrue();
     }
+
+
+    @Test
+    void providerShouldparseAndHandleConnectionParameters() {
+        Map<String, String> expectedOptions = new HashMap<>();
+        expectedOptions.put("lock_timeout", "5s");
+        expectedOptions.put("statement_timeout", "6000");
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+                .option(DRIVER, LEGACY_POSTGRESQL_DRIVER)
+                .option(HOST, "test-host")
+                .option(PASSWORD, "test-password")
+                .option(USER, "test-user")
+                .option(OPTIONS, expectedOptions)
+                .build());
+
+        Map<String, String> actualOptions = factory.getConfiguration().getOptions();
+
+        assertThat(actualOptions).isNotNull();
+        assertThat(actualOptions).isEqualTo(expectedOptions);
+    }
+
 }

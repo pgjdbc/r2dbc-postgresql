@@ -41,7 +41,7 @@ final class StartupMessageFlowTest {
         // @formatter:off
         Client client = TestClient.builder()
             .window()
-                .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username")).thenRespond(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))
+                .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username", null)).thenRespond(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))
                 .expectRequest(new PasswordMessage("test-password")).thenRespond(AuthenticationOk.INSTANCE)
                 .done()
             .build();
@@ -50,7 +50,7 @@ final class StartupMessageFlowTest {
         when(this.authenticationHandler.handle(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))).thenReturn(new PasswordMessage("test-password"));
 
         StartupMessageFlow
-            .exchange("test-application-name", m -> this.authenticationHandler, client, "test-database", "test-username")
+            .exchange("test-application-name", m -> this.authenticationHandler, client, "test-database", "test-username", null)
             .as(StepVerifier::create)
             .verifyComplete();
     }
@@ -58,13 +58,13 @@ final class StartupMessageFlowTest {
     @Test
     void exchangeAuthenticationMessageFail() {
         Client client = TestClient.builder()
-            .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username")).thenRespond(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))
+            .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username", null)).thenRespond(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))
             .build();
 
         when(this.authenticationHandler.handle(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))).thenThrow(new IllegalArgumentException());
 
         StartupMessageFlow
-            .exchange("test-application-name", m -> this.authenticationHandler, client, "test-database", "test-username")
+            .exchange("test-application-name", m -> this.authenticationHandler, client, "test-database", "test-username", null)
             .as(StepVerifier::create)
             .verifyError(IllegalArgumentException.class);
     }
@@ -72,11 +72,11 @@ final class StartupMessageFlowTest {
     @Test
     void exchangeAuthenticationOk() {
         Client client = TestClient.builder()
-            .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username")).thenRespond(AuthenticationOk.INSTANCE)
+            .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username", null)).thenRespond(AuthenticationOk.INSTANCE)
             .build();
 
         StartupMessageFlow
-            .exchange("test-application-name", m -> this.authenticationHandler, client, "test-database", "test-username")
+            .exchange("test-application-name", m -> this.authenticationHandler, client, "test-database", "test-username", null)
             .as(StepVerifier::create)
             .verifyComplete();
     }
@@ -84,11 +84,11 @@ final class StartupMessageFlowTest {
     @Test
     void exchangeAuthenticationOther() {
         Client client = TestClient.builder()
-            .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username")).thenRespond(AuthenticationOk.INSTANCE, new BackendKeyData(100, 200))
+            .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username", null)).thenRespond(AuthenticationOk.INSTANCE, new BackendKeyData(100, 200))
             .build();
 
         StartupMessageFlow
-            .exchange("test-application-name", m -> this.authenticationHandler, client, "test-database", "test-username")
+            .exchange("test-application-name", m -> this.authenticationHandler, client, "test-database", "test-username", null)
             .as(StepVerifier::create)
             .expectNext(new BackendKeyData(100, 200))
             .verifyComplete();
@@ -96,25 +96,25 @@ final class StartupMessageFlowTest {
 
     @Test
     void exchangeNoApplicationName() {
-        assertThatIllegalArgumentException().isThrownBy(() -> StartupMessageFlow.exchange(null, m -> this.authenticationHandler, NO_OP, "test-database", "test-username"))
+        assertThatIllegalArgumentException().isThrownBy(() -> StartupMessageFlow.exchange(null, m -> this.authenticationHandler, NO_OP, "test-database", "test-username", null))
             .withMessage("applicationName must not be null");
     }
 
     @Test
     void exchangeNoAuthenticationHandlerProvider() {
-        assertThatIllegalArgumentException().isThrownBy(() -> StartupMessageFlow.exchange("test-application-name", null, NO_OP, "test-database", "test-username"))
+        assertThatIllegalArgumentException().isThrownBy(() -> StartupMessageFlow.exchange("test-application-name", null, NO_OP, "test-database", "test-username", null))
             .withMessage("authenticationHandlerProvider must not be null");
     }
 
     @Test
     void exchangeNoClient() {
-        assertThatIllegalArgumentException().isThrownBy(() -> StartupMessageFlow.exchange("test-application-name", m -> this.authenticationHandler, null, "test-database", "test-username"))
+        assertThatIllegalArgumentException().isThrownBy(() -> StartupMessageFlow.exchange("test-application-name", m -> this.authenticationHandler, null, "test-database", "test-username", null))
             .withMessage("client must not be null");
     }
 
     @Test
     void exchangeNoUsername() {
-        assertThatIllegalArgumentException().isThrownBy(() -> StartupMessageFlow.exchange("test-application-name", m -> this.authenticationHandler, NO_OP, "test-database", null))
+        assertThatIllegalArgumentException().isThrownBy(() -> StartupMessageFlow.exchange("test-application-name", m -> this.authenticationHandler, NO_OP, "test-database", null, null))
             .withMessage("username must not be null");
     }
 

@@ -25,6 +25,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
 import java.time.ZoneId;
+import java.util.Map;
 import java.util.Objects;
 
 import static io.netty.util.CharsetUtil.UTF_8;
@@ -66,6 +67,8 @@ public final class StartupMessage implements FrontendMessage {
 
     private final String database;
 
+    private final Map<String, String> options;
+
     private final String username;
 
     /**
@@ -74,12 +77,14 @@ public final class StartupMessage implements FrontendMessage {
      * @param applicationName the name of the application connecting to the database
      * @param database        the database to connect to. Defaults to the user name.
      * @param username        the database user name to connect as
+     * @param options         database connection options
      * @throws IllegalArgumentException if {@code applicationName} or {@code username} is {@code null}
      */
-    public StartupMessage(String applicationName, @Nullable String database, String username) {
+    public StartupMessage(String applicationName, @Nullable String database, String username, @Nullable Map<String, String> options) {
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
         this.database = database;
         this.username = Assert.requireNonNull(username, "username must not be null");
+        this.options = options;
     }
 
     @Override
@@ -102,6 +107,13 @@ public final class StartupMessage implements FrontendMessage {
             writeParameter(out, DATE_STYLE, ISO);
             writeParameter(out, EXTRA_FLOAT_DIGITS, NUMERAL_2);
             writeParameter(out, TIMEZONE, SYSTEM_TIME_ZONE);
+            if (this.options != null) {
+                for (Map.Entry<String, String> option : this.options.entrySet()) {
+                    ByteBuf key = Unpooled.copiedBuffer(option.getKey(), UTF_8).asReadOnly();
+                    writeParameter(out, key, option.getValue());
+                    key.release();
+                }
+            }
             writeByte(out, 0);
 
             return Mono.just(writeSize(out, 0));
@@ -119,12 +131,13 @@ public final class StartupMessage implements FrontendMessage {
         StartupMessage that = (StartupMessage) o;
         return Objects.equals(this.applicationName, that.applicationName) &&
             Objects.equals(this.database, that.database) &&
-            Objects.equals(this.username, that.username);
+            Objects.equals(this.username, that.username) &&
+            Objects.equals(this.options, that.options);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.applicationName, this.database, this.username);
+        return Objects.hash(this.applicationName, this.database, this.username, this.options);
     }
 
     @Override
@@ -133,6 +146,7 @@ public final class StartupMessage implements FrontendMessage {
             "applicationName='" + applicationName + '\'' +
             ", database='" + database + '\'' +
             ", username='" + username + '\'' +
+            ", options='" + options + '\'' +
             '}';
     }
 

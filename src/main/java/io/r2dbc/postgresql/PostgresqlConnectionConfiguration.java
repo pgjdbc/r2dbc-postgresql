@@ -21,6 +21,8 @@ import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
 import java.time.Duration;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * Connection configuration information for connecting to a PostgreSQL database.
@@ -42,6 +44,8 @@ public final class PostgresqlConnectionConfiguration {
 
     private final String host;
 
+    private final Map<String, String> options;
+
     private final String password;
 
     private final int port;
@@ -50,14 +54,15 @@ public final class PostgresqlConnectionConfiguration {
 
     private final String username;
 
-    private PostgresqlConnectionConfiguration(String applicationName, @Nullable Duration connectTimeout, @Nullable String database, boolean forceBinary, String host, String password, int port,
-                                              @Nullable String schema, String username) {
+    private PostgresqlConnectionConfiguration(String applicationName, @Nullable Duration connectTimeout, @Nullable String database, boolean forceBinary, String host,
+                                              @Nullable Map<String, String> options, String password, int port, @Nullable String schema, String username) {
 
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
         this.connectTimeout = connectTimeout;
         this.database = database;
         this.forceBinary = forceBinary;
         this.host = Assert.requireNonNull(host, "host must not be null");
+        this.options = options;
         this.password = Assert.requireNonNull(password, "password must not be null");
         this.port = port;
         this.schema = schema;
@@ -81,6 +86,7 @@ public final class PostgresqlConnectionConfiguration {
             ", database='" + this.database + '\'' +
             ", forceBinary='" + this.forceBinary + '\'' +
             ", host='" + this.host + '\'' +
+            ", options='" + this.options + '\'' +
             ", password='" + this.password + '\'' +
             ", port=" + this.port +
             ", schema='" + this.schema + '\'' +
@@ -105,6 +111,9 @@ public final class PostgresqlConnectionConfiguration {
     String getHost() {
         return this.host;
     }
+
+    @Nullable
+    Map<String, String> getOptions() { return this.options; }
 
     String getPassword() {
         return this.password;
@@ -144,6 +153,8 @@ public final class PostgresqlConnectionConfiguration {
 
         private String host;
 
+        private Map<String, String> options;
+
         private String password;
 
         private int port = DEFAULT_PORT;
@@ -173,7 +184,7 @@ public final class PostgresqlConnectionConfiguration {
          * @return a configured {@link PostgresqlConnectionConfiguration}
          */
         public PostgresqlConnectionConfiguration build() {
-            return new PostgresqlConnectionConfiguration(this.applicationName, this.connectTimeout, this.database, this.forceBinary, this.host, this.password, this.port, this.schema, this.username);
+            return new PostgresqlConnectionConfiguration(this.applicationName, this.connectTimeout, this.database, this.forceBinary, this.host, this.options, this.password, this.port, this.schema, this.username);
         }
 
         public Builder connectTimeout(@Nullable Duration connectTimeout) {
@@ -212,6 +223,29 @@ public final class PostgresqlConnectionConfiguration {
          */
         public Builder host(String host) {
             this.host = Assert.requireNonNull(host, "host must not be null");
+            return this;
+        }
+
+        /**
+         * Configure connection initialization parameters.
+         *
+         * These parameters are applied once after creating a new connection. This is useful for setting up client-specific
+         * <a href="https://www.postgresql.org/docs/current/runtime-config-client.html#RUNTIME-CONFIG-CLIENT-FORMAT">runtime parameters</a>
+         * like statement timeouts, time zones etc.
+         *
+         * @param options the options
+         * @return this {@link Builder}
+         * @throws IllegalArgumentException if {@code options} or any key or value of {@code options} is {@code null}
+         */
+        public Builder options(Map<String, String> options) {
+            if (options == null) throw new IllegalArgumentException("options map must not be null");
+
+            options.forEach((k, v) -> {
+                Assert.requireNonNull(k, "option keys must not be null");
+                Assert.requireNonNull(v, "option values must not be null");
+            });
+
+            this.options = options;
             return this;
         }
 
@@ -257,6 +291,7 @@ public final class PostgresqlConnectionConfiguration {
                 ", database='" + this.database + '\'' +
                 ", forceBinary='" + this.forceBinary + '\'' +
                 ", host='" + this.host + '\'' +
+                ", parameters='" + this.options + '\'' +
                 ", password='" + this.password + '\'' +
                 ", port=" + this.port +
                 ", schema='" + this.schema + '\'' +
