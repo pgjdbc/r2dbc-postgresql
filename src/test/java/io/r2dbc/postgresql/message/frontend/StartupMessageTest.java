@@ -28,19 +28,19 @@ final class StartupMessageTest {
 
     @Test
     void constructorNoApplicationName() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new StartupMessage(null, "test-database", "test-username"))
+        assertThatIllegalArgumentException().isThrownBy(() -> new StartupMessage(null, "test-database", "test-username", null))
             .withMessage("applicationName must not be null");
     }
 
     @Test
     void constructorNoUsername() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new StartupMessage("test-application-name", "test-database", null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new StartupMessage("test-application-name", "test-database", null, null))
             .withMessage("username must not be null");
     }
 
     @Test
     void encode() {
-        assertThat(new StartupMessage("test-application-name", "test-database", "test-username")).encoded()
+        assertThat(new StartupMessage("test-application-name", "test-database", "test-username", null)).encoded()
             .isDeferred()
             .isEncodedAs(buffer -> {
                 buffer
@@ -97,7 +97,7 @@ final class StartupMessageTest {
 
     @Test
     void encodeNoDatabase() {
-        assertThat(new StartupMessage("test-application-name", null, "test-username")).encoded()
+        assertThat(new StartupMessage("test-application-name", null, "test-username", null)).encoded()
             .isDeferred()
             .isEncodedAs(buffer -> {
                 buffer

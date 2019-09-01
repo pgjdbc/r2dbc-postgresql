@@ -19,6 +19,8 @@ package io.r2dbc.postgresql;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -51,11 +53,16 @@ final class PostgresqlConnectionConfigurationTest {
 
     @Test
     void configuration() {
+        Map<String, String> options = new HashMap<>();
+        options.put("lock_timeout", "10s");
+        options.put("statement_timeout", "60000"); // [ms]
+
         PostgresqlConnectionConfiguration configuration = PostgresqlConnectionConfiguration.builder()
             .applicationName("test-application-name")
             .connectTimeout(Duration.ofMillis(1000))
             .database("test-database")
             .host("test-host")
+            .options(options)
             .password("test-password")
             .port(100)
             .schema("test-schema")
@@ -67,6 +74,7 @@ final class PostgresqlConnectionConfigurationTest {
             .hasFieldOrPropertyWithValue("connectTimeout", Duration.ofMillis(1000))
             .hasFieldOrPropertyWithValue("database", "test-database")
             .hasFieldOrPropertyWithValue("host", "test-host")
+            .hasFieldOrPropertyWithValue("options", options)
             .hasFieldOrPropertyWithValue("password", "test-password")
             .hasFieldOrPropertyWithValue("port", 100)
             .hasFieldOrPropertyWithValue("schema", "test-schema")
@@ -118,6 +126,41 @@ final class PostgresqlConnectionConfigurationTest {
             .password("test-password")
             .build())
             .withMessage("username must not be null");
+    }
+
+    @Test
+    void constructorInvalidOptions() {
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder()
+            .host("test-host")
+            .username("test-username")
+            .password("test-password")
+            .options(null)
+            .build())
+            .withMessage("options map must not be null");
+
+        assertThatIllegalArgumentException().isThrownBy(() -> {
+            final Map<String, String> options = new HashMap<>();
+            options.put(null, "test-value");
+            PostgresqlConnectionConfiguration.builder()
+                    .host("test-host")
+                    .username("test-username")
+                    .password("test-password")
+                    .options(options)
+                    .build();
+                })
+                .withMessage("option keys must not be null");
+
+        assertThatIllegalArgumentException().isThrownBy(() -> {
+            final Map<String, String> options = new HashMap<>();
+            options.put("test-option", null);
+            PostgresqlConnectionConfiguration.builder()
+                    .host("test-host")
+                    .username("test-username")
+                    .password("test-password")
+                    .options(options)
+                    .build();
+                })
+                .withMessage("option values must not be null");
     }
 
 }

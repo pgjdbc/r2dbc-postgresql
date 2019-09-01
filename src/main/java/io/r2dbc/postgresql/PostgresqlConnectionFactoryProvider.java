@@ -16,12 +16,19 @@
 
 package io.r2dbc.postgresql;
 
-import static io.r2dbc.spi.ConnectionFactoryOptions.*;
-
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.ConnectionFactoryProvider;
 import io.r2dbc.spi.Option;
+import reactor.util.annotation.Nullable;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import static io.r2dbc.spi.ConnectionFactoryOptions.*;
 
 /**
  * An implementation of {@link ConnectionFactoryProvider} for creating {@link PostgresqlConnectionFactory}s.
@@ -48,6 +55,11 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
      */
     public static final Option<String> SCHEMA = Option.valueOf("schema");
 
+    /**
+     * Connection options which are applied once after the connection has been created.
+     */
+    public static final Option<Map<String, String>> OPTIONS = Option.valueOf("options");
+
     @Override
     public PostgresqlConnectionFactory create(ConnectionFactoryOptions connectionFactoryOptions) {
         Assert.requireNonNull(connectionFactoryOptions, "connectionFactoryOptions must not be null");
@@ -69,6 +81,11 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         Integer port = connectionFactoryOptions.getValue(PORT);
         if (port != null) {
             builder.port(port);
+        }
+
+        Map<String, String> options = connectionFactoryOptions.getValue(OPTIONS);
+        if (options != null) {
+            builder.options(options);
         }
 
         return new PostgresqlConnectionFactory(builder.build());
@@ -97,7 +114,5 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         }
 
         return connectionFactoryOptions.hasOption(USER);
-
     }
-
 }

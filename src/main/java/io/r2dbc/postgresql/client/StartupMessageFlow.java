@@ -28,6 +28,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.util.annotation.Nullable;
 
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
@@ -47,11 +48,12 @@ public final class StartupMessageFlow {
      * @param client                        the {@link Client} to exchange messages with
      * @param database                      the database to connect to
      * @param username                      the username to authenticate with
+     * @param options                       the connection options
      * @return the messages received after authentication is complete, in response to this exchange
      * @throws IllegalArgumentException if {@code applicationName}, {@code authenticationHandler}, {@code client}, or {@code username} is {@code null}
      */
     public static Flux<BackendMessage> exchange(String applicationName, Function<AuthenticationMessage, AuthenticationHandler> authenticationHandlerProvider, Client client,
-                                                @Nullable String database, String username) {
+                                                @Nullable String database, String username, @Nullable Map<String, String> options) {
 
         Assert.requireNonNull(applicationName, "applicationName must not be null");
         Assert.requireNonNull(authenticationHandlerProvider, "authenticationHandlerProvider must not be null");
@@ -62,7 +64,7 @@ public final class StartupMessageFlow {
         FluxSink<FrontendMessage> requests = requestProcessor.sink();
         AtomicReference<AuthenticationHandler> authenticationHandler = new AtomicReference<>(null);
 
-        return client.exchange(requestProcessor.startWith(new StartupMessage(applicationName, database, username)))
+        return client.exchange(requestProcessor.startWith(new StartupMessage(applicationName, database, username, options)))
             .handle((message, sink) -> {
                 if (message instanceof AuthenticationOk) {
                     requests.complete();
