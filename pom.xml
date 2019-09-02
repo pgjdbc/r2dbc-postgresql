@@ -230,7 +230,7 @@
                 <configuration>
                     <runOrder>random</runOrder>
                     <includes>
-                        <include>**/*Example.java</include>
+                        <include>**/*TestKit.java</include>
                         <include>**/*Test.java</include>
                     </includes>
                 </configuration>
