@@ -57,6 +57,10 @@ public final class PostgresqlConnection implements Connection {
 
     private final Flux<Integer> validationQuery;
 
+    private volatile boolean autoCommit;
+
+    private volatile IsolationLevel isolationLevel;
+
     PostgresqlConnection(Client client, Codecs codecs, PortalNameSupplier portalNameSupplier, StatementCache statementCache, boolean forceBinary) {
         this.client = Assert.requireNonNull(client, "client must not be null");
         this.codecs = Assert.requireNonNull(codecs, "codecs must not be null");
@@ -64,6 +68,8 @@ public final class PostgresqlConnection implements Connection {
         this.statementCache = Assert.requireNonNull(statementCache, "statementCache must not be null");
         this.forceBinary = forceBinary;
         this.validationQuery = new SimpleQueryPostgresqlStatement(this.client, this.codecs, "SELECT 1").fetchSize(0).execute().flatMap(PostgresqlResult::getRowsUpdated);
+        this.autoCommit = true;
+        this.isolationLevel = IsolationLevel.READ_COMMITTED;
     }
 
     @Override
@@ -107,15 +113,21 @@ public final class PostgresqlConnection implements Connection {
     public Mono<Void> createSavepoint(String name) {
         Assert.requireNonNull(name, "name must not be null");
 
-        return useTransactionStatus(transactionStatus -> {
-            if (OPEN == transactionStatus) {
-                return SimpleQueryMessageFlow.exchange(this.client, String.format("SAVEPOINT %s", name))
-                    .handle(PostgresqlExceptionFactory::handleErrorResponse);
-            } else {
-                this.logger.debug("Skipping create savepoint because status is {}", transactionStatus);
-                return Mono.empty();
-            }
-        });
+        return beginTransaction()
+            .then(useTransactionStatus(transactionStatus -> {
+                if (OPEN == transactionStatus) {
+
+                    if (this.autoCommit) {
+                        logger.debug("Setting auto-commit mode to [false]");
+                    }
+                    return SimpleQueryMessageFlow.exchange(this.client, String.format("SAVEPOINT %s", name))
+                        .doOnComplete(() -> this.autoCommit = false)
+                        .handle(PostgresqlExceptionFactory::handleErrorResponse);
+                } else {
+                    this.logger.debug("Skipping create savepoint because status is {}", transactionStatus);
+                    return Mono.empty();
+                }
+            }));
     }
 
     @Override
@@ -129,6 +141,16 @@ public final class PostgresqlConnection implements Connection {
         } else {
             throw new IllegalArgumentException(String.format("Statement '%s' cannot be created. This is often due to the presence of both multiple statements and parameters at the same time.", sql));
         }
+    }
+
+    @Override
+    public IsolationLevel getTransactionIsolationLevel() {
+        return this.isolationLevel;
+    }
+
+    @Override
+    public boolean isAutoCommit() {
+        return this.autoCommit;
     }
 
     @Override
@@ -175,13 +197,31 @@ public final class PostgresqlConnection implements Connection {
     }
 
     @Override
+    public Mono<Void> setAutoCommit(boolean autoCommit) {
+
+        return Mono.defer(() -> {
+
+            logger.debug(String.format("Setting auto-commit mode to [%s]", autoCommit));
+
+            if (this.autoCommit != autoCommit) {
+
+                logger.debug("Committing pending transactions");
+                return commitTransaction().doOnSuccess(ignore -> this.autoCommit = autoCommit);
+            }
+
+            return Mono.empty();
+        });
+    }
+
+    @Override
     public Mono<Void> setTransactionIsolationLevel(IsolationLevel isolationLevel) {
         Assert.requireNonNull(isolationLevel, "isolationLevel must not be null");
 
         return withTransactionStatus(getTransactionIsolationLevelQuery(isolationLevel))
             .flatMapMany(query -> SimpleQueryMessageFlow.exchange(this.client, query))
             .handle(PostgresqlExceptionFactory::handleErrorResponse)
-            .then();
+            .then()
+            .doOnSuccess(ignore -> this.isolationLevel = isolationLevel);
     }
 
     @Override
@@ -196,7 +236,7 @@ public final class PostgresqlConnection implements Connection {
     }
 
     @Override
-    public Publisher<Boolean> validate(ValidationDepth depth) {
+    public Mono<Boolean> validate(ValidationDepth depth) {
 
         if (depth == ValidationDepth.LOCAL) {
             return Mono.fromSupplier(this.client::isConnected);
