@@ -187,7 +187,8 @@ This reference table shows the type mapping between [PostgreSQL][p] and Java dat
 | [`inet`][psql-inet-ref]                         | [**`InetAddress`**][java-inet-ref]|
 | [`integer`][psql-integer-ref]                   | [**`Integer`**][java-integer-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref]|
 | [`interval`][psql-interval-ref]                 | Not yet supported.|
-| [`json`][psql-json-ref]                         | Not yet supported.|
+| [`json`][psql-json-ref]                         | [`byte[]`][java-primitive-ref]|
+| [`jsonb`][psql-json-ref]                        | [`byte[]`][java-primitive-ref]|
 | [`line`][psql-line-ref]                         | Not yet supported.|
 | [`lseg`][psql-lseq-ref]                         | Not yet supported.|
 | [`macaddr`][psql-macaddr-ref]                   | Not yet supported.|
@@ -274,6 +275,7 @@ Support for the following single-dimensional arrays (read and write):
 [java-ld-ref]: https://docs.oracle.com/javase/8/docs/api/java/time/LocalDate.html
 [java-lt-ref]: https://docs.oracle.com/javase/8/docs/api/java/time/LocalTime.html
 [java-odt-ref]: https://docs.oracle.com/javase/8/docs/api/java/time/OffsetDateTime.html
+[java-primitive-ref]: https://docs.oracle.com/javase/tutorial/java/nutsandbolts/datatypes.html
 [java-short-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/Short.html
 [java-string-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/String.html
 [java-uuid-ref]: https://docs.oracle.com/javase/8/docs/api/java/util/UUID.html

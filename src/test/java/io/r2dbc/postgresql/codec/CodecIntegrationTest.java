@@ -16,20 +16,8 @@
 
 package io.r2dbc.postgresql.codec;
 
-import io.netty.buffer.ByteBuf;
-import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
-import io.r2dbc.postgresql.PostgresqlConnectionFactory;
-import io.r2dbc.postgresql.PostgresqlResult;
-import io.r2dbc.postgresql.util.PostgresqlServerExtension;
-import io.r2dbc.spi.Blob;
-import io.r2dbc.spi.Clob;
-import io.r2dbc.spi.Connection;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
-import org.reactivestreams.Publisher;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
+import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
 import java.net.InetAddress;
@@ -50,8 +38,21 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.reactivestreams.Publisher;
+
+import io.netty.buffer.ByteBuf;
+import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
+import io.r2dbc.postgresql.PostgresqlConnectionFactory;
+import io.r2dbc.postgresql.PostgresqlResult;
+import io.r2dbc.postgresql.util.PostgresqlServerExtension;
+import io.r2dbc.spi.Blob;
+import io.r2dbc.spi.Clob;
+import io.r2dbc.spi.Connection;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 final class CodecIntegrationTest {
 
@@ -281,6 +282,18 @@ final class CodecIntegrationTest {
     @Test
     void zonedDateTime() {
         testCodec(ZonedDateTime.class, ZonedDateTime.now(), (actual, expected) -> assertThat(actual.isEqual(expected)).isTrue(), "TIMESTAMP WITH TIME ZONE");
+    }
+    
+    @Test
+    void json() {
+        final String json = "{\"name\": \"John Doe\"}";
+        testCodec(byte[].class, json.getBytes(), "JSON");
+    }
+    
+    @Test
+    void jsonB() {
+        final String json = "{\"name\": \"John Doe\"}";
+        testCodec(byte[].class, json.getBytes(), "JSONB");
     }
 
     private static <T> Mono<T> close(Connection connection) {
