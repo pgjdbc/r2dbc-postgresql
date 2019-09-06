@@ -26,7 +26,11 @@ import io.r2dbc.postgresql.codec.DefaultCodecs;
 import io.r2dbc.postgresql.message.backend.AuthenticationMessage;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.IsolationLevel;
+import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import reactor.core.publisher.Mono;
+
+import java.util.Locale;
 
 /**
  * An implementation of {@link ConnectionFactory} for creating connections to a PostgreSQL database.
@@ -63,9 +67,23 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
                 StartupMessageFlow
                     .exchange(this.configuration.getApplicationName(), this::getAuthenticationHandler, client, this.configuration.getDatabase(), this.configuration.getUsername())
                     .handle(PostgresqlExceptionFactory::handleErrorResponse))
-            .map(client -> new PostgresqlConnection(client, new DefaultCodecs(client.getByteBufAllocator()), DefaultPortalNameSupplier.INSTANCE, new IndefiniteStatementCache(client),
-                configuration.isForceBinary()))
-            .delayUntil(this::setSchema);
+            .flatMap(client -> {
+
+                DefaultCodecs codecs = new DefaultCodecs(client.getByteBufAllocator());
+
+                return getIsolationLevel(client, codecs).map(it -> {
+                    return new PostgresqlConnection(client, codecs, DefaultPortalNameSupplier.INSTANCE, new IndefiniteStatementCache(client), it,
+                        configuration.isForceBinary());
+                }).delayUntil(this::setSchema).onErrorResume(throwable -> {
+                    return closeWithError(client, throwable);
+                });
+            });
+    }
+
+    private Mono<PostgresqlConnection> closeWithError(Client client, Throwable throwable) {
+        return client.close().then(Mono.error(new R2dbcNonTransientResourceException(String.format("Cannot connect to %s:%d", this.configuration.getHost(),
+            this.configuration.getPort()),
+            throwable)));
     }
 
     @Override
@@ -89,6 +107,20 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
         } else {
             throw new IllegalStateException(String.format("Unable to provide AuthenticationHandler capable of handling %s", message));
         }
+    }
+
+    private Mono<IsolationLevel> getIsolationLevel(Client client, DefaultCodecs codecs) {
+        return new SimpleQueryPostgresqlStatement(client, codecs, "SHOW TRANSACTION ISOLATION LEVEL")
+            .execute()
+            .flatMap(it -> it.map((row, rowMetadata) -> {
+                String level = row.get(0, String.class);
+
+                if (level == null) {
+                    return IsolationLevel.READ_COMMITTED; // Best guess.
+                }
+
+                return IsolationLevel.valueOf(level.toUpperCase(Locale.US));
+            })).defaultIfEmpty(IsolationLevel.READ_COMMITTED).last();
     }
 
     private Mono<Void> setSchema(PostgresqlConnection connection) {

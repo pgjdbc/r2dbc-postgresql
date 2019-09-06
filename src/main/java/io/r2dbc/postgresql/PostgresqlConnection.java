@@ -61,15 +61,15 @@ public final class PostgresqlConnection implements Connection {
 
     private volatile IsolationLevel isolationLevel;
 
-    PostgresqlConnection(Client client, Codecs codecs, PortalNameSupplier portalNameSupplier, StatementCache statementCache, boolean forceBinary) {
+    PostgresqlConnection(Client client, Codecs codecs, PortalNameSupplier portalNameSupplier, StatementCache statementCache, IsolationLevel isolationLevel, boolean forceBinary) {
         this.client = Assert.requireNonNull(client, "client must not be null");
         this.codecs = Assert.requireNonNull(codecs, "codecs must not be null");
         this.portalNameSupplier = Assert.requireNonNull(portalNameSupplier, "portalNameSupplier must not be null");
         this.statementCache = Assert.requireNonNull(statementCache, "statementCache must not be null");
         this.forceBinary = forceBinary;
+        this.isolationLevel = Assert.requireNonNull(isolationLevel, "isolationLevel must not be null");
         this.validationQuery = new SimpleQueryPostgresqlStatement(this.client, this.codecs, "SELECT 1").fetchSize(0).execute().flatMap(PostgresqlResult::getRowsUpdated);
         this.autoCommit = true;
-        this.isolationLevel = IsolationLevel.READ_COMMITTED;
     }
 
     @Override
@@ -77,7 +77,7 @@ public final class PostgresqlConnection implements Connection {
         return useTransactionStatus(transactionStatus -> {
             if (IDLE == transactionStatus) {
                 return SimpleQueryMessageFlow.exchange(this.client, "BEGIN")
-                    .handle(PostgresqlExceptionFactory::handleErrorResponse);
+                    .handle(PostgresqlExceptionFactory::handleErrorResponse).doOnComplete(() -> this.autoCommit = false);
             } else {
                 this.logger.debug("Skipping begin transaction because status is {}", transactionStatus);
                 return Mono.empty();
@@ -96,7 +96,7 @@ public final class PostgresqlConnection implements Connection {
         return useTransactionStatus(transactionStatus -> {
             if (OPEN == transactionStatus) {
                 return SimpleQueryMessageFlow.exchange(this.client, "COMMIT")
-                    .handle(PostgresqlExceptionFactory::handleErrorResponse);
+                    .handle(PostgresqlExceptionFactory::handleErrorResponse).doOnComplete(() -> this.autoCommit = true);
             } else {
                 this.logger.debug("Skipping commit transaction because status is {}", transactionStatus);
                 return Mono.empty();
@@ -121,7 +121,6 @@ public final class PostgresqlConnection implements Connection {
                         logger.debug("Setting auto-commit mode to [false]");
                     }
                     return SimpleQueryMessageFlow.exchange(this.client, String.format("SAVEPOINT %s", name))
-                        .doOnComplete(() -> this.autoCommit = false)
                         .handle(PostgresqlExceptionFactory::handleErrorResponse);
                 } else {
                     this.logger.debug("Skipping create savepoint because status is {}", transactionStatus);
@@ -150,6 +149,11 @@ public final class PostgresqlConnection implements Connection {
 
     @Override
     public boolean isAutoCommit() {
+
+        if (this.client.getTransactionStatus() == OPEN) {
+            return false;
+        }
+
         return this.autoCommit;
     }
 
@@ -173,7 +177,7 @@ public final class PostgresqlConnection implements Connection {
         return useTransactionStatus(transactionStatus -> {
             if (IDLE != transactionStatus) {
                 return SimpleQueryMessageFlow.exchange(this.client, "ROLLBACK")
-                    .handle(PostgresqlExceptionFactory::handleErrorResponse);
+                    .handle(PostgresqlExceptionFactory::handleErrorResponse).doOnComplete(() -> this.autoCommit = true);
             } else {
                 this.logger.debug("Skipping rollback transaction because status is {}", transactionStatus);
                 return Mono.empty();
@@ -203,10 +207,16 @@ public final class PostgresqlConnection implements Connection {
 
             logger.debug(String.format("Setting auto-commit mode to [%s]", autoCommit));
 
-            if (this.autoCommit != autoCommit) {
 
-                logger.debug("Committing pending transactions");
-                return commitTransaction().doOnSuccess(ignore -> this.autoCommit = autoCommit);
+            if (this.autoCommit) {
+                if (autoCommit == false) {
+
+                    logger.debug("Committing pending transactions");
+                    return commitTransaction().doOnSuccess(ignore -> this.autoCommit = false);
+                }
+            } else {
+                logger.debug("Beginning transaction");
+                return beginTransaction();
             }
 
             return Mono.empty();
