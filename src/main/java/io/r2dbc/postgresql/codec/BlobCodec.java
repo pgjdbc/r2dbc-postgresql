@@ -20,7 +20,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
-import io.netty.util.internal.StringUtil;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
@@ -84,12 +83,16 @@ final class BlobCodec extends AbstractCodec<Blob> {
     private ByteBuf toHexFormat(ByteBuf b) {
         int blobSize = b.readableBytes();
         ByteBuf buf = this.byteBufAllocator.buffer(2 + blobSize * 2);
-        buf.writeByte('\\')
-            .writeByte('x');
-        while (b.readableBytes() > 0) {
-            String s = StringUtil.byteToHexStringPadded(b.readByte());
-            buf.writeCharSequence(s, StandardCharsets.US_ASCII);
+        buf.writeByte('\\').writeByte('x');
+
+        int chunkSize = 1024;
+
+        while (b.isReadable()) {
+            chunkSize = Math.min(chunkSize, b.readableBytes());
+            buf.writeCharSequence(ByteBufUtil.hexDump(b, b.readerIndex(), chunkSize), StandardCharsets.US_ASCII);
+            b.skipBytes(chunkSize);
         }
+
         return buf;
     }
 
