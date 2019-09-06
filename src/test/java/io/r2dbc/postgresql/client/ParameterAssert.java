@@ -57,7 +57,7 @@ public final class ParameterAssert extends AbstractAssert<ParameterAssert, Param
     public ParameterAssert hasValue(ByteBuf... expected) {
         isNotNull();
 
-        Flux.from(this.actual.getValue())
+        Flux.<ByteBuf>from(this.actual.getValue())
             .as(StepVerifier::create)
             .expectNext(expected)
             .verifyComplete();
