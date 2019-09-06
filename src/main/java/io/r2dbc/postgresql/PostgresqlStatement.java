@@ -22,6 +22,7 @@ import reactor.core.publisher.Flux;
 /**
  * A strongly typed implementation of {@link Statement} for a PostgreSQL database.
  */
+@SuppressWarnings("deprecation")
 public interface PostgresqlStatement extends Statement {
 
     /**

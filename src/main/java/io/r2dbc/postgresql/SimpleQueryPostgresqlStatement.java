@@ -30,6 +30,7 @@ import reactor.util.annotation.Nullable;
 import static io.r2dbc.postgresql.client.ExtendedQueryMessageFlow.PARAMETER_SYMBOL;
 import static io.r2dbc.postgresql.util.PredicateUtils.or;
 
+@SuppressWarnings("deprecation")
 final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
 
     private final Client client;
