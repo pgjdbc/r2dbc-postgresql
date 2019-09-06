@@ -122,6 +122,32 @@ final class ReactorNettyClientTest {
     }
 
     @Test
+    void handleTransactionStatusAfterCommand() {
+        assertThat(this.client.getTransactionStatus()).isEqualTo(TransactionStatus.IDLE);
+
+        this.client
+            .exchange(Mono.just(new Query("SELECT value FROM test")))
+            .blockLast();
+
+        assertThat(this.client.getTransactionStatus()).isEqualTo(TransactionStatus.IDLE);
+    }
+
+    @Test
+    void handleTransactionStatusAfterCommit() {
+        assertThat(this.client.getTransactionStatus()).isEqualTo(TransactionStatus.IDLE);
+
+        this.client
+            .exchange(Mono.just(new Query("BEGIN")))
+            .blockLast();
+
+        this.client
+            .exchange(Mono.just(new Query("COMMIT")))
+            .blockLast();
+
+        assertThat(this.client.getTransactionStatus()).isEqualTo(TransactionStatus.IDLE);
+    }
+
+    @Test
     void largePayload() {
         IntStream.range(0, 1_000)
             .forEach(i -> SERVER.getJdbcOperations().update("INSERT INTO test VALUES(?)", i));
