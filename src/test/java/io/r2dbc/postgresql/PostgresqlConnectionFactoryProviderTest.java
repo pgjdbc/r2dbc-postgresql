@@ -31,6 +31,7 @@ import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
 import static io.r2dbc.spi.ConnectionFactoryOptions.USER;
 import static io.r2dbc.spi.ConnectionFactoryOptions.builder;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 final class PostgresqlConnectionFactoryProviderTest {
 
@@ -56,30 +57,30 @@ final class PostgresqlConnectionFactoryProviderTest {
     }
 
     @Test
-    void doesNotSupportWithoutHost() {
+    void createFailsWithoutHost() {
+        assertThatThrownBy(() -> this.provider.create(ConnectionFactoryOptions.builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .build())).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void supportsWithoutHost() {
         assertThat(this.provider.supports(ConnectionFactoryOptions.builder()
             .option(DRIVER, POSTGRESQL_DRIVER)
             .option(PASSWORD, "test-password")
             .option(USER, "test-user")
-            .build())).isFalse();
+            .build())).isTrue();
     }
 
     @Test
-    void doesNotSupportWithoutPassword() {
+    void supportsWithoutPassword() {
         assertThat(this.provider.supports(ConnectionFactoryOptions.builder()
             .option(DRIVER, POSTGRESQL_DRIVER)
             .option(HOST, "test-host")
             .option(USER, "test-user")
-            .build())).isFalse();
-    }
-
-    @Test
-    void doesNotSupportWithoutUser() {
-        assertThat(this.provider.supports(ConnectionFactoryOptions.builder()
-            .option(DRIVER, POSTGRESQL_DRIVER)
-            .option(HOST, "test-host")
-            .option(PASSWORD, "test-password")
-            .build())).isFalse();
+            .build())).isTrue();
     }
 
     @Test
@@ -107,6 +108,14 @@ final class PostgresqlConnectionFactoryProviderTest {
             .build())).isTrue();
     }
 
+    @Test
+    void supportsWithoutUser() {
+        assertThat(this.provider.supports(ConnectionFactoryOptions.builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .build())).isTrue();
+    }
 
     @Test
     void providerShouldparseAndHandleConnectionParameters() {

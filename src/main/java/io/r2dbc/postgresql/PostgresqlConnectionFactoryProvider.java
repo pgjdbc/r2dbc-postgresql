@@ -106,14 +106,6 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
             return false;
         }
 
-        if (!connectionFactoryOptions.hasOption(HOST)) {
-            return false;
-        }
-
-        if (!connectionFactoryOptions.hasOption(PASSWORD)) {
-            return false;
-        }
-
-        return connectionFactoryOptions.hasOption(USER);
+        return true;
     }
 }
