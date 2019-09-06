@@ -92,7 +92,7 @@ final class BlobCodecTest {
         ParameterAssert.assertThat(new BlobCodec(TEST).doEncode(Blob))
             .hasFormat(FORMAT_TEXT)
             .hasType(BYTEA.getObjectId())
-            .hasValue(encode(TEST, "\\\\x746573742d76616c7565"));
+            .hasValue(encode(TEST, "\\x746573742d76616c7565"));
 
         assertThat(Blob.isDiscardCalled()).isTrue();
     }
