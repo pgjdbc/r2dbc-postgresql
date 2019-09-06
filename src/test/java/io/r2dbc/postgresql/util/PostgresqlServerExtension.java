@@ -23,12 +23,29 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.testcontainers.containers.JdbcDatabaseContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import reactor.util.annotation.Nullable;
 
+import java.io.IOException;
+import java.net.Socket;
+import java.util.function.Supplier;
+
 public final class PostgresqlServerExtension implements BeforeAllCallback, AfterAllCallback {
 
-    private final PostgreSQLContainer<?> container = new PostgreSQLContainer<>("postgres:latest");
+    private volatile PostgreSQLContainer<?> containerInstance = null;
+
+    private final Supplier<PostgreSQLContainer<?>> container = () -> {
+
+        if (this.containerInstance != null) {
+            return this.containerInstance;
+        }
+        return this.containerInstance = new PostgreSQLContainer<>("postgres:latest");
+    };
+
+    private final DatabaseContainer postgres = new TestContainer(this.container.get());
+
+    private final boolean useTestContainer = this.postgres instanceof TestContainer;
 
     private HikariDataSource dataSource;
 
@@ -37,18 +54,22 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
     @Override
     public void afterAll(ExtensionContext context) {
         this.dataSource.close();
-        this.container.stop();
+        if (this.useTestContainer) {
+            this.container.get().stop();
+        }
     }
 
     @Override
     public void beforeAll(ExtensionContext context) {
-        this.container.start();
+        if (this.useTestContainer) {
+            this.container.get().start();
+        }
 
         this.dataSource = DataSourceBuilder.create()
             .type(HikariDataSource.class)
-            .url(this.container.getJdbcUrl())
-            .username(this.container.getUsername())
-            .password(this.container.getPassword())
+            .url(String.format("jdbc:postgresql://%s:%d/%s", getHost(), getPort(), getDatabase()))
+            .username(getUsername())
+            .password(getPassword())
             .build();
 
         this.dataSource.setMaximumPoolSize(1);
@@ -57,11 +78,7 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
     }
 
     public String getDatabase() {
-        return this.container.getDatabaseName();
-    }
-
-    public String getHost() {
-        return this.container.getContainerIpAddress();
+        return this.postgres.getDatabase();
     }
 
     @Nullable
@@ -69,16 +86,121 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
         return this.jdbcOperations;
     }
 
-    public String getPassword() {
-        return this.container.getPassword();
+    public String getHost() {
+        return this.postgres.getHost();
     }
 
     public int getPort() {
-        return this.container.getMappedPort(5432);
+        return this.postgres.getPort();
     }
 
     public String getUsername() {
-        return this.container.getUsername();
+        return this.postgres.getUsername();
     }
 
+    public String getPassword() {
+        return this.postgres.getPassword();
+    }
+
+    /**
+     * Interface to be implemented by database providers (provided database, test container).
+     */
+    interface DatabaseContainer {
+
+        String getHost();
+
+        int getPort();
+
+        String getDatabase();
+
+        String getUsername();
+
+        String getPassword();
+    }
+
+    /**
+     * Externally provided Postgres instance.
+     */
+    static class External implements DatabaseContainer {
+
+        public static final External INSTANCE = new External();
+
+        @Override
+        public String getHost() {
+            return "localhost";
+        }
+
+        @Override
+        public int getPort() {
+            return 5432;
+        }
+
+        @Override
+        public String getDatabase() {
+            return "postgres";
+        }
+
+        @Override
+        public String getUsername() {
+            return "postgres";
+        }
+
+        @Override
+        public String getPassword() {
+            return "postgres";
+        }
+
+        /**
+         * Returns whether this container is available.
+         *
+         * @return
+         */
+        @SuppressWarnings("try")
+        boolean isAvailable() {
+
+            try (Socket ignored = new Socket(getHost(), getPort())) {
+
+                return true;
+            } catch (IOException e) {
+                return false;
+            }
+        }
+    }
+
+    /**
+     * {@link DatabaseContainer} provided by {@link JdbcDatabaseContainer}.
+     */
+    static class TestContainer implements DatabaseContainer {
+
+        private final JdbcDatabaseContainer<?> container;
+
+        TestContainer(JdbcDatabaseContainer<?> container) {
+            this.container = container;
+        }
+
+        @Override
+        public String getHost() {
+            return this.container.getContainerIpAddress();
+        }
+
+        @Override
+        public int getPort() {
+            return this.container.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT);
+        }
+
+        @Override
+        public String getDatabase() {
+            return this.container.getDatabaseName();
+        }
+
+        @Override
+        public String getUsername() {
+            return this.container.getUsername();
+        }
+
+        @Override
+        public String getPassword() {
+            return this.container.getPassword();
+        }
+    }
 }
