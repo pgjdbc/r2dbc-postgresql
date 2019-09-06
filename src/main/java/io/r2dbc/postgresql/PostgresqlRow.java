@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * An implementation of {@link Row} for a PostgreSQL database.
  */
+@SuppressWarnings("deprecation")
 public final class PostgresqlRow implements Row {
 
     private final Codecs codecs;

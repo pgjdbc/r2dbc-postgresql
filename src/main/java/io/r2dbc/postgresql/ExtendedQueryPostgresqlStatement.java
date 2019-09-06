@@ -34,6 +34,7 @@ import java.util.regex.Matcher;
 
 import static io.r2dbc.postgresql.client.ExtendedQueryMessageFlow.PARAMETER_SYMBOL;
 
+@SuppressWarnings("deprecation")
 final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
 
     private final Bindings bindings;
