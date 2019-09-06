@@ -30,7 +30,9 @@ import reactor.test.StepVerifier;
 import java.util.Collections;
 
 import static io.r2dbc.postgresql.client.TestClient.NO_OP;
-import static io.r2dbc.postgresql.client.TransactionStatus.*;
+import static io.r2dbc.postgresql.client.TransactionStatus.FAILED;
+import static io.r2dbc.postgresql.client.TransactionStatus.IDLE;
+import static io.r2dbc.postgresql.client.TransactionStatus.OPEN;
 import static io.r2dbc.spi.IsolationLevel.READ_COMMITTED;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -52,8 +54,6 @@ final class PostgresqlConnectionTest {
         connection.beginTransaction()
             .as(StepVerifier::create)
             .verifyComplete();
-
-        assertThat(connection.isAutoCommit()).isFalse();
     }
 
     @Test
@@ -308,14 +308,14 @@ final class PostgresqlConnectionTest {
     @Test
     void rollbackTransactionFailed() {
         Client client = TestClient.builder()
-                .transactionStatus(FAILED)
-                .expectRequest(new Query("ROLLBACK")).thenRespond(new CommandComplete("ROLLBACK", null, null))
-                .build();
+            .transactionStatus(FAILED)
+            .expectRequest(new Query("ROLLBACK")).thenRespond(new CommandComplete("ROLLBACK", null, null))
+            .build();
 
-        new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache, false)
-                .rollbackTransaction()
-                .as(StepVerifier::create)
-                .verifyComplete();
+        createConnection(client, MockCodecs.empty(), this.statementCache)
+            .rollbackTransaction()
+            .as(StepVerifier::create)
+            .verifyComplete();
     }
 
     @Test
@@ -395,8 +395,6 @@ final class PostgresqlConnectionTest {
         connection.setAutoCommit(false)
             .as(StepVerifier::create)
             .verifyComplete();
-
-        assertThat(connection.isAutoCommit()).isFalse();
     }
 
     @Test
