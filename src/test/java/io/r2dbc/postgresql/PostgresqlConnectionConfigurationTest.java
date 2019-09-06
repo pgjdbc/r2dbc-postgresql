@@ -142,25 +142,25 @@ final class PostgresqlConnectionConfigurationTest {
             final Map<String, String> options = new HashMap<>();
             options.put(null, "test-value");
             PostgresqlConnectionConfiguration.builder()
-                    .host("test-host")
-                    .username("test-username")
-                    .password("test-password")
-                    .options(options)
-                    .build();
-                })
-                .withMessage("option keys must not be null");
+                .host("test-host")
+                .username("test-username")
+                .password("test-password")
+                .options(options)
+                .build();
+        })
+            .withMessage("option keys must not be null");
 
         assertThatIllegalArgumentException().isThrownBy(() -> {
             final Map<String, String> options = new HashMap<>();
             options.put("test-option", null);
             PostgresqlConnectionConfiguration.builder()
-                    .host("test-host")
-                    .username("test-username")
-                    .password("test-password")
-                    .options(options)
-                    .build();
-                })
-                .withMessage("option values must not be null");
+                .host("test-host")
+                .username("test-username")
+                .password("test-password")
+                .options(options)
+                .build();
+        })
+            .withMessage("option values must not be null");
     }
 
 }

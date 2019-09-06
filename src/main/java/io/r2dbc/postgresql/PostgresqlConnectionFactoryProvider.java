@@ -20,15 +20,16 @@ import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.ConnectionFactoryProvider;
 import io.r2dbc.spi.Option;
-import reactor.util.annotation.Nullable;
 
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
-import static io.r2dbc.spi.ConnectionFactoryOptions.*;
+import static io.r2dbc.spi.ConnectionFactoryOptions.CONNECT_TIMEOUT;
+import static io.r2dbc.spi.ConnectionFactoryOptions.DATABASE;
+import static io.r2dbc.spi.ConnectionFactoryOptions.DRIVER;
+import static io.r2dbc.spi.ConnectionFactoryOptions.HOST;
+import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
+import static io.r2dbc.spi.ConnectionFactoryOptions.PORT;
+import static io.r2dbc.spi.ConnectionFactoryOptions.USER;
 
 /**
  * An implementation of {@link ConnectionFactoryProvider} for creating {@link PostgresqlConnectionFactory}s.

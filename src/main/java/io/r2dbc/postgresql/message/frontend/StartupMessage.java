@@ -109,7 +109,7 @@ public final class StartupMessage implements FrontendMessage {
             writeParameter(out, TIMEZONE, SYSTEM_TIME_ZONE);
             if (this.options != null) {
                 for (Map.Entry<String, String> option : this.options.entrySet()) {
-                    ByteBuf key = Unpooled.copiedBuffer(option.getKey(), UTF_8).asReadOnly();
+                    ByteBuf key = Unpooled.copiedBuffer(option.getKey(), UTF_8);
                     writeParameter(out, key, option.getValue());
                     key.release();
                 }

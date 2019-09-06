@@ -22,7 +22,6 @@ import reactor.util.annotation.Nullable;
 
 import java.time.Duration;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * Connection configuration information for connecting to a PostgreSQL database.
@@ -113,7 +112,9 @@ public final class PostgresqlConnectionConfiguration {
     }
 
     @Nullable
-    Map<String, String> getOptions() { return this.options; }
+    Map<String, String> getOptions() {
+        return this.options;
+    }
 
     String getPassword() {
         return this.password;
@@ -184,7 +185,8 @@ public final class PostgresqlConnectionConfiguration {
          * @return a configured {@link PostgresqlConnectionConfiguration}
          */
         public PostgresqlConnectionConfiguration build() {
-            return new PostgresqlConnectionConfiguration(this.applicationName, this.connectTimeout, this.database, this.forceBinary, this.host, this.options, this.password, this.port, this.schema, this.username);
+            return new PostgresqlConnectionConfiguration(this.applicationName, this.connectTimeout, this.database, this.forceBinary, this.host, this.options, this.password, this.port, this.schema,
+                this.username);
         }
 
         public Builder connectTimeout(@Nullable Duration connectTimeout) {
@@ -228,7 +230,7 @@ public final class PostgresqlConnectionConfiguration {
 
         /**
          * Configure connection initialization parameters.
-         *
+         * <p>
          * These parameters are applied once after creating a new connection. This is useful for setting up client-specific
          * <a href="https://www.postgresql.org/docs/current/runtime-config-client.html#RUNTIME-CONFIG-CLIENT-FORMAT">runtime parameters</a>
          * like statement timeouts, time zones etc.
@@ -238,7 +240,7 @@ public final class PostgresqlConnectionConfiguration {
          * @throws IllegalArgumentException if {@code options} or any key or value of {@code options} is {@code null}
          */
         public Builder options(Map<String, String> options) {
-            if (options == null) throw new IllegalArgumentException("options map must not be null");
+            Assert.requireNonNull(options, "options map must not be null");
 
             options.forEach((k, v) -> {
                 Assert.requireNonNull(k, "option keys must not be null");

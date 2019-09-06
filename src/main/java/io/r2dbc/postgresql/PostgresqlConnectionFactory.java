@@ -30,8 +30,6 @@ import io.r2dbc.spi.IsolationLevel;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import reactor.core.publisher.Mono;
 
-import java.util.Map;
-
 import java.util.Locale;
 
 /**
@@ -67,7 +65,8 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
         return this.clientFactory
             .delayUntil(client ->
                 StartupMessageFlow
-                    .exchange(this.configuration.getApplicationName(), this::getAuthenticationHandler, client, this.configuration.getDatabase(), this.configuration.getUsername(), this.configuration.getOptions())
+                    .exchange(this.configuration.getApplicationName(), this::getAuthenticationHandler, client, this.configuration.getDatabase(), this.configuration.getUsername(),
+                        this.configuration.getOptions())
                     .handle(PostgresqlExceptionFactory::handleErrorResponse))
             .flatMap(client -> {
 
