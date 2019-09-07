@@ -16,10 +16,12 @@
 
 package io.r2dbc.postgresql.codec;
 
+import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.postgresql.PostgresqlResult;
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
+import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.Clob;
 import io.r2dbc.spi.Connection;
 import org.junit.jupiter.api.Test;
@@ -35,6 +37,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -47,6 +50,7 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 final class CodecIntegrationTest {
@@ -108,6 +112,32 @@ final class CodecIntegrationTest {
                 .assertNext(t -> assertThat(t.getT1()).isEqualToIgnoringWhitespace(t.getT2()))
                 .verifyComplete()
             , "TEXT");
+    }
+
+    @Test
+    void blob() {
+        final byte[] bytes = {1, 2, 3, 4};
+        testCodec(Blob.class,
+            new Blob() {
+
+                @Override
+                public Publisher<Void> discard() {
+                    return Mono.empty();
+                }
+
+                @Override
+                public Publisher<ByteBuffer> stream() {
+                    return Mono.just(ByteBuffer.wrap(bytes));
+                }
+            },
+            (actual, expected) -> Flux.zip(
+                Flux.from(actual.stream()).reduce(TEST.heapBuffer(), ByteBuf::writeBytes),
+                Flux.from(expected.stream()).reduce(TEST.heapBuffer(), ByteBuf::writeBytes)
+            )
+                .as(StepVerifier::create)
+                .assertNext(t -> assertThat(t.getT1()).isEqualTo(t.getT2()))
+                .verifyComplete()
+            , "BYTEA");
     }
 
     @Test

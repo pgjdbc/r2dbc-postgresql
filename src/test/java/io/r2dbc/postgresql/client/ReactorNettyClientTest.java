@@ -38,6 +38,7 @@ import reactor.test.StepVerifier;
 
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -50,7 +51,8 @@ final class ReactorNettyClientTest {
 
     private final ReactorNettyClient client = ReactorNettyClient.connect(SERVER.getHost(), SERVER.getPort())
         .delayUntil(client -> StartupMessageFlow
-            .exchange(this.getClass().getName(), m -> new PasswordAuthenticationHandler(SERVER.getPassword(), SERVER.getUsername()), client, SERVER.getDatabase(), SERVER.getUsername()))
+            .exchange(this.getClass().getName(), m -> new PasswordAuthenticationHandler(SERVER.getPassword(), SERVER.getUsername()), client, SERVER.getDatabase(), SERVER.getUsername(),
+                Collections.emptyMap()))
         .block();
 
     @Test
@@ -117,6 +119,32 @@ final class ReactorNettyClientTest {
             .blockLast();
 
         assertThat(this.client.getTransactionStatus()).isEqualTo(TransactionStatus.OPEN);
+    }
+
+    @Test
+    void handleTransactionStatusAfterCommand() {
+        assertThat(this.client.getTransactionStatus()).isEqualTo(TransactionStatus.IDLE);
+
+        this.client
+            .exchange(Mono.just(new Query("SELECT value FROM test")))
+            .blockLast();
+
+        assertThat(this.client.getTransactionStatus()).isEqualTo(TransactionStatus.IDLE);
+    }
+
+    @Test
+    void handleTransactionStatusAfterCommit() {
+        assertThat(this.client.getTransactionStatus()).isEqualTo(TransactionStatus.IDLE);
+
+        this.client
+            .exchange(Mono.just(new Query("BEGIN")))
+            .blockLast();
+
+        this.client
+            .exchange(Mono.just(new Query("COMMIT")))
+            .blockLast();
+
+        assertThat(this.client.getTransactionStatus()).isEqualTo(TransactionStatus.IDLE);
     }
 
     @Test

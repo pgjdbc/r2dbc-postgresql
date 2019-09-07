@@ -24,9 +24,12 @@ import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.IsolationLevel;
+import io.r2dbc.spi.ValidationDepth;
 import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.CoreSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -52,12 +55,18 @@ public final class PostgresqlConnection implements Connection {
 
     private final StatementCache statementCache;
 
-    PostgresqlConnection(Client client, Codecs codecs, PortalNameSupplier portalNameSupplier, StatementCache statementCache, boolean forceBinary) {
+    private final Flux<Integer> validationQuery;
+
+    private volatile IsolationLevel isolationLevel;
+
+    PostgresqlConnection(Client client, Codecs codecs, PortalNameSupplier portalNameSupplier, StatementCache statementCache, IsolationLevel isolationLevel, boolean forceBinary) {
         this.client = Assert.requireNonNull(client, "client must not be null");
         this.codecs = Assert.requireNonNull(codecs, "codecs must not be null");
         this.portalNameSupplier = Assert.requireNonNull(portalNameSupplier, "portalNameSupplier must not be null");
         this.statementCache = Assert.requireNonNull(statementCache, "statementCache must not be null");
         this.forceBinary = forceBinary;
+        this.isolationLevel = Assert.requireNonNull(isolationLevel, "isolationLevel must not be null");
+        this.validationQuery = new SimpleQueryPostgresqlStatement(this.client, this.codecs, "SELECT 1").fetchSize(0).execute().flatMap(PostgresqlResult::getRowsUpdated);
     }
 
     @Override
@@ -101,15 +110,17 @@ public final class PostgresqlConnection implements Connection {
     public Mono<Void> createSavepoint(String name) {
         Assert.requireNonNull(name, "name must not be null");
 
-        return useTransactionStatus(transactionStatus -> {
-            if (OPEN == transactionStatus) {
-                return SimpleQueryMessageFlow.exchange(this.client, String.format("SAVEPOINT %s", name))
-                    .handle(PostgresqlExceptionFactory::handleErrorResponse);
-            } else {
-                this.logger.debug("Skipping create savepoint because status is {}", transactionStatus);
-                return Mono.empty();
-            }
-        });
+        return beginTransaction()
+            .then(useTransactionStatus(transactionStatus -> {
+                if (OPEN == transactionStatus) {
+
+                    return SimpleQueryMessageFlow.exchange(this.client, String.format("SAVEPOINT %s", name))
+                        .handle(PostgresqlExceptionFactory::handleErrorResponse);
+                } else {
+                    this.logger.debug("Skipping create savepoint because status is {}", transactionStatus);
+                    return Mono.empty();
+                }
+            }));
     }
 
     @Override
@@ -123,6 +134,21 @@ public final class PostgresqlConnection implements Connection {
         } else {
             throw new IllegalArgumentException(String.format("Statement '%s' cannot be created. This is often due to the presence of both multiple statements and parameters at the same time.", sql));
         }
+    }
+
+    @Override
+    public IsolationLevel getTransactionIsolationLevel() {
+        return this.isolationLevel;
+    }
+
+    @Override
+    public boolean isAutoCommit() {
+
+        if (this.client.getTransactionStatus() == IDLE) {
+            return true;
+        }
+
+        return false;
     }
 
     @Override
@@ -143,7 +169,7 @@ public final class PostgresqlConnection implements Connection {
     @Override
     public Mono<Void> rollbackTransaction() {
         return useTransactionStatus(transactionStatus -> {
-            if (OPEN == transactionStatus) {
+            if (IDLE != transactionStatus) {
                 return SimpleQueryMessageFlow.exchange(this.client, "ROLLBACK")
                     .handle(PostgresqlExceptionFactory::handleErrorResponse);
             } else {
@@ -158,7 +184,7 @@ public final class PostgresqlConnection implements Connection {
         Assert.requireNonNull(name, "name must not be null");
 
         return useTransactionStatus(transactionStatus -> {
-            if (OPEN == transactionStatus) {
+            if (IDLE != transactionStatus) {
                 return SimpleQueryMessageFlow.exchange(this.client, String.format("ROLLBACK TO SAVEPOINT %s", name))
                     .handle(PostgresqlExceptionFactory::handleErrorResponse);
             } else {
@@ -169,13 +195,38 @@ public final class PostgresqlConnection implements Connection {
     }
 
     @Override
+    public Mono<Void> setAutoCommit(boolean autoCommit) {
+
+        return useTransactionStatus(transactionStatus -> {
+
+            logger.debug(String.format("Setting auto-commit mode to [%s]", autoCommit));
+
+            if (isAutoCommit()) {
+                if (!autoCommit) {
+                    logger.debug("Beginning transaction");
+                    return beginTransaction();
+                }
+            } else {
+
+                if (autoCommit) {
+                    logger.debug("Committing pending transactions");
+                    return commitTransaction();
+                }
+            }
+
+            return Mono.empty();
+        });
+    }
+
+    @Override
     public Mono<Void> setTransactionIsolationLevel(IsolationLevel isolationLevel) {
         Assert.requireNonNull(isolationLevel, "isolationLevel must not be null");
 
         return withTransactionStatus(getTransactionIsolationLevelQuery(isolationLevel))
             .flatMapMany(query -> SimpleQueryMessageFlow.exchange(this.client, query))
             .handle(PostgresqlExceptionFactory::handleErrorResponse)
-            .then();
+            .then()
+            .doOnSuccess(ignore -> this.isolationLevel = isolationLevel);
     }
 
     @Override
@@ -187,6 +238,46 @@ public final class PostgresqlConnection implements Connection {
             ", portalNameSupplier=" + this.portalNameSupplier +
             ", statementCache=" + this.statementCache +
             '}';
+    }
+
+    @Override
+    public Mono<Boolean> validate(ValidationDepth depth) {
+
+        if (depth == ValidationDepth.LOCAL) {
+            return Mono.fromSupplier(this.client::isConnected);
+        }
+
+        return Mono.create(sink -> {
+
+            if (!this.client.isConnected()) {
+                sink.success(false);
+                return;
+            }
+
+            this.validationQuery.subscribe(new CoreSubscriber<Integer>() {
+
+                @Override
+                public void onSubscribe(Subscription s) {
+                    s.request(Integer.MAX_VALUE);
+                }
+
+                @Override
+                public void onNext(Integer integer) {
+
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                    logger.debug("Validation failed", t);
+                    sink.success(false);
+                }
+
+                @Override
+                public void onComplete() {
+                    sink.success(true);
+                }
+            });
+        });
     }
 
     private static Function<TransactionStatus, String> getTransactionIsolationLevelQuery(IsolationLevel isolationLevel) {

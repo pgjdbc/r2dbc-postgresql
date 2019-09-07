@@ -16,12 +16,22 @@
 
 package io.r2dbc.postgresql;
 
-import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.*;
-import static io.r2dbc.spi.ConnectionFactoryOptions.*;
-import static org.assertj.core.api.Assertions.*;
-
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import org.junit.jupiter.api.Test;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.LEGACY_POSTGRESQL_DRIVER;
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.OPTIONS;
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.POSTGRESQL_DRIVER;
+import static io.r2dbc.spi.ConnectionFactoryOptions.DRIVER;
+import static io.r2dbc.spi.ConnectionFactoryOptions.HOST;
+import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
+import static io.r2dbc.spi.ConnectionFactoryOptions.USER;
+import static io.r2dbc.spi.ConnectionFactoryOptions.builder;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 final class PostgresqlConnectionFactoryProviderTest {
 
@@ -47,30 +57,30 @@ final class PostgresqlConnectionFactoryProviderTest {
     }
 
     @Test
-    void doesNotSupportWithoutHost() {
+    void createFailsWithoutHost() {
+        assertThatThrownBy(() -> this.provider.create(ConnectionFactoryOptions.builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .build())).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void supportsWithoutHost() {
         assertThat(this.provider.supports(ConnectionFactoryOptions.builder()
             .option(DRIVER, POSTGRESQL_DRIVER)
             .option(PASSWORD, "test-password")
             .option(USER, "test-user")
-            .build())).isFalse();
+            .build())).isTrue();
     }
 
     @Test
-    void doesNotSupportWithoutPassword() {
+    void supportsWithoutPassword() {
         assertThat(this.provider.supports(ConnectionFactoryOptions.builder()
             .option(DRIVER, POSTGRESQL_DRIVER)
             .option(HOST, "test-host")
             .option(USER, "test-user")
-            .build())).isFalse();
-    }
-
-    @Test
-    void doesNotSupportWithoutUser() {
-        assertThat(this.provider.supports(ConnectionFactoryOptions.builder()
-            .option(DRIVER, POSTGRESQL_DRIVER)
-            .option(HOST, "test-host")
-            .option(PASSWORD, "test-password")
-            .build())).isFalse();
+            .build())).isTrue();
     }
 
     @Test
@@ -97,4 +107,33 @@ final class PostgresqlConnectionFactoryProviderTest {
             .option(USER, "test-user")
             .build())).isTrue();
     }
+
+    @Test
+    void supportsWithoutUser() {
+        assertThat(this.provider.supports(ConnectionFactoryOptions.builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .build())).isTrue();
+    }
+
+    @Test
+    void providerShouldparseAndHandleConnectionParameters() {
+        Map<String, String> expectedOptions = new HashMap<>();
+        expectedOptions.put("lock_timeout", "5s");
+        expectedOptions.put("statement_timeout", "6000");
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, LEGACY_POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(OPTIONS, expectedOptions)
+            .build());
+
+        Map<String, String> actualOptions = factory.getConfiguration().getOptions();
+
+        assertThat(actualOptions).isNotNull();
+        assertThat(actualOptions).isEqualTo(expectedOptions);
+    }
+
 }

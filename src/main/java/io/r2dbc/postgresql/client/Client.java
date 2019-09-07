@@ -75,4 +75,11 @@ public interface Client {
      */
     TransactionStatus getTransactionStatus();
 
+    /**
+     * Returns whether the client is connected to a server.
+     *
+     * @return {@literal true} if the client is connected to a server.
+     */
+    boolean isConnected();
+
 }

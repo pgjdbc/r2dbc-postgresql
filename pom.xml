@@ -37,15 +37,15 @@
         <junit.version>5.4.2</junit.version>
         <logback.version>1.2.3</logback.version>
         <mockito.version>3.0.0</mockito.version>
-        <postgresql.version>42.2.5</postgresql.version>
+        <postgresql.version>42.2.6</postgresql.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <r2dbc-spi.version>${project.version}</r2dbc-spi.version>
-        <reactor.version>Dysprosium-M1</reactor.version>
+        <reactor.version>Dysprosium-RC1</reactor.version>
         <scram-client.version>1.0.0-beta.2</scram-client.version>
         <slf4j.version>1.7.26</slf4j.version>
-        <spring-boot.version>2.1.4.RELEASE</spring-boot.version>
-        <testcontainers.version>1.11.2</testcontainers.version>
+        <spring-boot.version>2.1.7.RELEASE</spring-boot.version>
+        <testcontainers.version>1.12.0</testcontainers.version>
     </properties>
 
     <dependencyManagement>
@@ -169,7 +169,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.0</version>
+                <version>3.8.1</version>
                 <configuration>
                     <compilerArgs>
                         <arg>-Werror</arg>
@@ -230,7 +230,7 @@
                 <configuration>
                     <runOrder>random</runOrder>
                     <includes>
-                        <include>**/*Example.java</include>
+                        <include>**/*TestKit.java</include>
                         <include>**/*Test.java</include>
                     </includes>
                 </configuration>

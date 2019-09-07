@@ -24,15 +24,19 @@ import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.message.backend.CloseComplete;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.GeneratedValuesUtils;
+import io.r2dbc.spi.Statement;
 import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 
 import static io.r2dbc.postgresql.client.ExtendedQueryMessageFlow.PARAMETER_SYMBOL;
 
+@SuppressWarnings("deprecation")
 final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
 
     private final Bindings bindings;
@@ -113,6 +117,11 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
     }
 
     @Override
+    public Statement fetchSize(int rows) {
+        return this;
+    }
+
+    @Override
     public ExtendedQueryPostgresqlStatement returnGeneratedValues(String... columns) {
         Assert.requireNonNull(columns, "columns must not be null");
 
@@ -154,10 +163,13 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
 
     private static int expectedSize(String sql) {
         Matcher m = PARAMETER_SYMBOL.matcher(sql);
+        Set<String> paramNames = new HashSet<>();
 
         int count = 0;
         while (m.find()) {
-            count++;
+            if (paramNames.add(m.group())) {
+                count++;
+            }
         }
 
         return count;

@@ -31,6 +31,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -73,10 +74,26 @@ final class BlobCodec extends AbstractCodec<Blob> {
         return create(FORMAT_TEXT, BYTEA,
             Flux.from(value.stream())
                 .reduce(this.byteBufAllocator.compositeBuffer(), (a, b) -> a.addComponent(true, Unpooled.wrappedBuffer(b)))
-                .map(b -> ByteBufUtils.encode(this.byteBufAllocator, String.format("\\\\x%s", ByteBufUtil.hexDump(b))))
+                .map(this::toHexFormat)
                 .concatWith(Flux.from(value.discard())
                     .then(Mono.empty()))
         );
+    }
+
+    private ByteBuf toHexFormat(ByteBuf b) {
+        int blobSize = b.readableBytes();
+        ByteBuf buf = this.byteBufAllocator.buffer(2 + blobSize * 2);
+        buf.writeByte('\\').writeByte('x');
+
+        int chunkSize = 1024;
+
+        while (b.isReadable()) {
+            chunkSize = Math.min(chunkSize, b.readableBytes());
+            buf.writeCharSequence(ByteBufUtil.hexDump(b, b.readerIndex(), chunkSize), StandardCharsets.US_ASCII);
+            b.skipBytes(chunkSize);
+        }
+
+        return buf;
     }
 
     private static final class ByteABlob implements Blob {

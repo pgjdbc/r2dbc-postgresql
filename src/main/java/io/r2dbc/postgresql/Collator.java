@@ -16,17 +16,12 @@
 
 package io.r2dbc.postgresql;
 
-import java.util.Locale;
+import java.util.Comparator;
 
 final class Collator {
 
-    static final java.text.Collator DEFAULT;
+    static final Comparator<String> IGNORE_CASE_COMPARATOR = (o1, o2) -> o2.compareToIgnoreCase(o1);
 
-    static {
-        java.text.Collator collator = java.text.Collator.getInstance(Locale.US);
-        collator.setStrength(java.text.Collator.SECONDARY);
-        DEFAULT = collator;
-    }
 
 
 }

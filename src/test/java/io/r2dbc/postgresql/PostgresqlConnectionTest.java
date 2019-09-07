@@ -23,12 +23,14 @@ import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.frontend.Query;
 import io.r2dbc.postgresql.message.frontend.Terminate;
+import io.r2dbc.spi.IsolationLevel;
 import org.junit.jupiter.api.Test;
 import reactor.test.StepVerifier;
 
 import java.util.Collections;
 
 import static io.r2dbc.postgresql.client.TestClient.NO_OP;
+import static io.r2dbc.postgresql.client.TransactionStatus.FAILED;
 import static io.r2dbc.postgresql.client.TransactionStatus.IDLE;
 import static io.r2dbc.postgresql.client.TransactionStatus.OPEN;
 import static io.r2dbc.spi.IsolationLevel.READ_COMMITTED;
@@ -47,8 +49,10 @@ final class PostgresqlConnectionTest {
             .expectRequest(new Query("BEGIN")).thenRespond(new CommandComplete("BEGIN", null, null))
             .build();
 
-        new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache, false)
-            .beginTransaction()
+        PostgresqlConnection connection = createConnection(client, MockCodecs.empty(), this.statementCache);
+        assertThat(connection.isAutoCommit()).isTrue();
+
+        connection.beginTransaction()
             .as(StepVerifier::create)
             .verifyComplete();
     }
@@ -59,7 +63,7 @@ final class PostgresqlConnectionTest {
             .expectRequest(new Query("BEGIN")).thenRespond(new ErrorResponse(Collections.emptyList()))
             .build();
 
-        new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache, false)
+        createConnection(client, MockCodecs.empty(), this.statementCache)
             .beginTransaction()
             .as(StepVerifier::create)
             .verifyErrorMatches(PostgresqlServerErrorException.class::isInstance);
@@ -71,7 +75,7 @@ final class PostgresqlConnectionTest {
             .transactionStatus(OPEN)
             .build();
 
-        new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache, false)
+        createConnection(client, MockCodecs.empty(), this.statementCache)
             .beginTransaction()
             .as(StepVerifier::create)
             .verifyComplete();
@@ -84,7 +88,7 @@ final class PostgresqlConnectionTest {
             .expectClose()
             .build();
 
-        new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache, false)
+        createConnection(client, MockCodecs.empty(), this.statementCache)
             .close()
             .as(StepVerifier::create)
             .verifyComplete();
@@ -97,8 +101,10 @@ final class PostgresqlConnectionTest {
             .expectRequest(new Query("COMMIT")).thenRespond(new CommandComplete("COMMIT", null, null))
             .build();
 
-        new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache, false)
-            .commitTransaction()
+        PostgresqlConnection connection = createConnection(client, MockCodecs.empty(), this.statementCache);
+
+        assertThat(connection.isAutoCommit()).isFalse();
+        connection.commitTransaction()
             .as(StepVerifier::create)
             .verifyComplete();
     }
@@ -110,7 +116,7 @@ final class PostgresqlConnectionTest {
             .expectRequest(new Query("COMMIT")).thenRespond(new ErrorResponse(Collections.emptyList()))
             .build();
 
-        new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache, false)
+        createConnection(client, MockCodecs.empty(), this.statementCache)
             .commitTransaction()
             .as(StepVerifier::create)
             .verifyErrorMatches(PostgresqlServerErrorException.class::isInstance);
@@ -122,7 +128,7 @@ final class PostgresqlConnectionTest {
             .transactionStatus(IDLE)
             .build();
 
-        new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache, false)
+        createConnection(client, MockCodecs.empty(), this.statementCache)
             .commitTransaction()
             .as(StepVerifier::create)
             .verifyComplete();
@@ -130,31 +136,31 @@ final class PostgresqlConnectionTest {
 
     @Test
     void constructorNoClient() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlConnection(null, MockCodecs.empty(), () -> "", this.statementCache, false))
+        assertThatIllegalArgumentException().isThrownBy(() -> createConnection(null, MockCodecs.empty(), this.statementCache))
             .withMessage("client must not be null");
     }
 
     @Test
     void constructorNoCodec() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlConnection(NO_OP, null, () -> "", this.statementCache, false))
+        assertThatIllegalArgumentException().isThrownBy(() -> createConnection(NO_OP, null, this.statementCache))
             .withMessage("codecs must not be null");
     }
 
     @Test
     void constructorNoPortalNameSupplier() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), null, this.statementCache, false))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), null, this.statementCache, IsolationLevel.READ_COMMITTED, false))
             .withMessage("portalNameSupplier must not be null");
     }
 
     @Test
     void constructorNoStatementCache() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), () -> "", null, false))
+        assertThatIllegalArgumentException().isThrownBy(() -> createConnection(NO_OP, MockCodecs.empty(), null))
             .withMessage("statementCache must not be null");
     }
 
     @Test
     void createBatch() {
-        assertThat(new PostgresqlConnection(NO_OP, MockCodecs.empty(), () -> "", this.statementCache, false).createBatch()).isInstanceOf(PostgresqlBatch.class);
+        assertThat(createConnection(NO_OP, MockCodecs.empty(), this.statementCache).createBatch()).isInstanceOf(PostgresqlBatch.class);
     }
 
     @Test
@@ -164,7 +170,7 @@ final class PostgresqlConnectionTest {
             .expectRequest(new Query("SAVEPOINT test-name")).thenRespond(new CommandComplete("SAVEPOINT", null, null))
             .build();
 
-        new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache, false)
+        createConnection(client, MockCodecs.empty(), this.statementCache)
             .createSavepoint("test-name")
             .as(StepVerifier::create)
             .verifyComplete();
@@ -177,7 +183,7 @@ final class PostgresqlConnectionTest {
             .expectRequest(new Query("SAVEPOINT test-name")).thenRespond(new ErrorResponse(Collections.emptyList()))
             .build();
 
-        new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache, false)
+        createConnection(client, MockCodecs.empty(), this.statementCache)
             .createSavepoint("test-name")
             .as(StepVerifier::create)
             .verifyErrorMatches(PostgresqlServerErrorException.class::isInstance);
@@ -185,7 +191,7 @@ final class PostgresqlConnectionTest {
 
     @Test
     void createSavepointNoName() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), () -> "", this.statementCache, false).createSavepoint(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> createConnection(NO_OP, MockCodecs.empty(), this.statementCache).createSavepoint(null))
             .withMessage("name must not be null");
     }
 
@@ -195,7 +201,7 @@ final class PostgresqlConnectionTest {
             .transactionStatus(IDLE)
             .build();
 
-        new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache, false)
+        createConnection(client, MockCodecs.empty(), this.statementCache)
             .createSavepoint("test-name")
             .as(StepVerifier::create)
             .verifyComplete();
@@ -203,19 +209,19 @@ final class PostgresqlConnectionTest {
 
     @Test
     void createStatementExtended() {
-        assertThat(new PostgresqlConnection(NO_OP, MockCodecs.empty(), () -> "", this.statementCache, false).createStatement("test-query-$1")).isInstanceOf(ExtendedQueryPostgresqlStatement.class);
+        assertThat(createConnection(NO_OP, MockCodecs.empty(), this.statementCache).createStatement("test-query-$1")).isInstanceOf(ExtendedQueryPostgresqlStatement.class);
     }
 
     @Test
     void createStatementIllegal() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), () -> "", this.statementCache, false).createStatement("test-query-$1-1 ; " +
+        assertThatIllegalArgumentException().isThrownBy(() -> createConnection(NO_OP, MockCodecs.empty(), this.statementCache).createStatement("test-query-$1-1 ; " +
             "test-query-$1-2"))
             .withMessage("Statement 'test-query-$1-1 ; test-query-$1-2' cannot be created. This is often due to the presence of both multiple statements and parameters at the same time.");
     }
 
     @Test
     void createStatementSimple() {
-        assertThat(new PostgresqlConnection(NO_OP, MockCodecs.empty(), () -> "", this.statementCache, false).createStatement("test-query-1; test-query-2")).isInstanceOf(SimpleQueryPostgresqlStatement.class);
+        assertThat(createConnection(NO_OP, MockCodecs.empty(), this.statementCache).createStatement("test-query-1; test-query-2")).isInstanceOf(SimpleQueryPostgresqlStatement.class);
     }
 
     @Test
@@ -225,7 +231,7 @@ final class PostgresqlConnectionTest {
             .expectRequest(new Query("RELEASE SAVEPOINT test-name")).thenRespond(new CommandComplete("RELEASE", null, null))
             .build();
 
-        new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache, false)
+        createConnection(client, MockCodecs.empty(), this.statementCache)
             .releaseSavepoint("test-name")
             .as(StepVerifier::create)
             .verifyComplete();
@@ -238,7 +244,7 @@ final class PostgresqlConnectionTest {
             .expectRequest(new Query("RELEASE SAVEPOINT test-name")).thenRespond(new ErrorResponse(Collections.emptyList()))
             .build();
 
-        new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache, false)
+        createConnection(client, MockCodecs.empty(), this.statementCache)
             .releaseSavepoint("test-name")
             .as(StepVerifier::create)
             .verifyErrorMatches(PostgresqlServerErrorException.class::isInstance);
@@ -246,7 +252,7 @@ final class PostgresqlConnectionTest {
 
     @Test
     void releaseSavepointNoName() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), () -> "", this.statementCache, false).releaseSavepoint(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> createConnection(NO_OP, MockCodecs.empty(), this.statementCache).releaseSavepoint(null))
             .withMessage("name must not be null");
     }
 
@@ -256,7 +262,7 @@ final class PostgresqlConnectionTest {
             .transactionStatus(IDLE)
             .build();
 
-        new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache, false)
+        createConnection(client, MockCodecs.empty(), this.statementCache)
             .releaseSavepoint("test-name")
             .as(StepVerifier::create)
             .verifyComplete();
@@ -269,8 +275,9 @@ final class PostgresqlConnectionTest {
             .expectRequest(new Query("ROLLBACK")).thenRespond(new CommandComplete("ROLLBACK", null, null))
             .build();
 
-        new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache, false)
-            .rollbackTransaction()
+        PostgresqlConnection connection = createConnection(client, MockCodecs.empty(), this.statementCache);
+
+        connection.rollbackTransaction()
             .as(StepVerifier::create)
             .verifyComplete();
     }
@@ -282,19 +289,32 @@ final class PostgresqlConnectionTest {
             .expectRequest(new Query("ROLLBACK")).thenRespond(new ErrorResponse(Collections.emptyList()))
             .build();
 
-        new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache, false)
+        createConnection(client, MockCodecs.empty(), this.statementCache)
             .rollbackTransaction()
             .as(StepVerifier::create)
             .verifyErrorMatches(PostgresqlServerErrorException.class::isInstance);
     }
 
     @Test
-    void rollbackTransactionNonOpen() {
+    void rollbackTransactionIdle() {
         Client client = TestClient.builder()
             .transactionStatus(IDLE)
             .build();
 
-        new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache, false)
+        createConnection(client, MockCodecs.empty(), this.statementCache)
+            .rollbackTransaction()
+            .as(StepVerifier::create)
+            .verifyComplete();
+    }
+
+    @Test
+    void rollbackTransactionFailed() {
+        Client client = TestClient.builder()
+            .transactionStatus(FAILED)
+            .expectRequest(new Query("ROLLBACK")).thenRespond(new CommandComplete("ROLLBACK", null, null))
+            .build();
+
+        createConnection(client, MockCodecs.empty(), this.statementCache)
             .rollbackTransaction()
             .as(StepVerifier::create)
             .verifyComplete();
@@ -307,7 +327,7 @@ final class PostgresqlConnectionTest {
             .expectRequest(new Query("ROLLBACK TO SAVEPOINT test-name")).thenRespond(new CommandComplete("ROLLBACK", null, null))
             .build();
 
-        new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache, false)
+        createConnection(client, MockCodecs.empty(), this.statementCache)
             .rollbackTransactionToSavepoint("test-name")
             .as(StepVerifier::create)
             .verifyComplete();
@@ -320,7 +340,7 @@ final class PostgresqlConnectionTest {
             .expectRequest(new Query("ROLLBACK TO SAVEPOINT test-name")).thenRespond(new ErrorResponse(Collections.emptyList()))
             .build();
 
-        new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache, false)
+        createConnection(client, MockCodecs.empty(), this.statementCache)
             .rollbackTransactionToSavepoint("test-name")
             .as(StepVerifier::create)
             .verifyErrorMatches(PostgresqlServerErrorException.class::isInstance);
@@ -328,7 +348,7 @@ final class PostgresqlConnectionTest {
 
     @Test
     void rollbackTransactionToSavepointNoName() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), () -> "", this.statementCache, false).rollbackTransactionToSavepoint(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> createConnection(NO_OP, MockCodecs.empty(), this.statementCache).rollbackTransactionToSavepoint(null))
             .withMessage("name must not be null");
     }
 
@@ -338,10 +358,59 @@ final class PostgresqlConnectionTest {
             .transactionStatus(IDLE)
             .build();
 
-        new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache, false)
+        createConnection(client, MockCodecs.empty(), this.statementCache)
             .rollbackTransactionToSavepoint("test-name")
             .as(StepVerifier::create)
             .verifyComplete();
+    }
+
+    @Test
+    void isAutoCommitFalseOnOpenTransaction() {
+        Client client = TestClient.builder()
+            .transactionStatus(OPEN)
+            .build();
+
+        PostgresqlConnection connection = createConnection(client, MockCodecs.empty(), this.statementCache);
+
+        assertThat(connection.isAutoCommit()).isFalse();
+    }
+
+    @Test
+    void isAutoCommitTrueByDefault() {
+        Client client = TestClient.builder()
+            .transactionStatus(IDLE)
+            .build();
+
+        PostgresqlConnection connection = createConnection(client, MockCodecs.empty(), this.statementCache);
+
+        assertThat(connection.isAutoCommit()).isTrue();
+    }
+
+    @Test
+    void setAutoCommitFalseBeginsTransaction() {
+        Client client = TestClient.builder()
+            .expectRequest(new Query("BEGIN")).thenRespond(new CommandComplete("BEGIN", null, null))
+            .build();
+
+        PostgresqlConnection connection = createConnection(client, MockCodecs.empty(), this.statementCache);
+
+        connection.setAutoCommit(false)
+            .as(StepVerifier::create)
+            .verifyComplete();
+    }
+
+    @Test
+    void setAutoCommitTrueIsNoOpBeginsTransaction() {
+        Client client = TestClient.builder()
+            .build();
+
+        PostgresqlConnection connection = createConnection(client, MockCodecs.empty(), this.statementCache);
+
+        connection.setAutoCommit(true)
+            .as(StepVerifier::create)
+            .verifyComplete();
+
+        assertThat(connection.isAutoCommit()).isTrue();
     }
 
     @Test
@@ -351,7 +420,7 @@ final class PostgresqlConnectionTest {
             .expectRequest(new Query("SET TRANSACTION ISOLATION LEVEL READ COMMITTED")).thenRespond(new CommandComplete("SET", null, null))
             .build();
 
-        new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache, false)
+        createConnection(client, MockCodecs.empty(), this.statementCache)
             .setTransactionIsolationLevel(READ_COMMITTED)
             .as(StepVerifier::create)
             .verifyComplete();
@@ -364,7 +433,7 @@ final class PostgresqlConnectionTest {
             .expectRequest(new Query("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL READ COMMITTED")).thenRespond(new ErrorResponse(Collections.emptyList()))
             .build();
 
-        new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache, false)
+        createConnection(client, MockCodecs.empty(), this.statementCache)
             .setTransactionIsolationLevel(READ_COMMITTED)
             .as(StepVerifier::create)
             .verifyErrorMatches(PostgresqlServerErrorException.class::isInstance);
@@ -372,7 +441,7 @@ final class PostgresqlConnectionTest {
 
     @Test
     void setTransactionIsolationLevelNoIsolationLevel() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), () -> "", this.statementCache, false).setTransactionIsolationLevel(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> createConnection(NO_OP, MockCodecs.empty(), this.statementCache).setTransactionIsolationLevel(null))
             .withMessage("isolationLevel must not be null");
     }
 
@@ -383,10 +452,13 @@ final class PostgresqlConnectionTest {
             .expectRequest(new Query("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL READ COMMITTED")).thenRespond(new CommandComplete("SET", null, null))
             .build();
 
-        new PostgresqlConnection(client, MockCodecs.empty(), () -> "", this.statementCache, false)
+        createConnection(client, MockCodecs.empty(), this.statementCache)
             .setTransactionIsolationLevel(READ_COMMITTED)
             .as(StepVerifier::create)
             .verifyComplete();
     }
 
+    private PostgresqlConnection createConnection(Client client, MockCodecs codecs, StatementCache cache) {
+        return new PostgresqlConnection(client, codecs, () -> "", cache, IsolationLevel.READ_COMMITTED, false);
+    }
 }

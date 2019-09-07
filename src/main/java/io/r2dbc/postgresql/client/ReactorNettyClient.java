@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.client;
 
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOption;
@@ -279,6 +280,16 @@ public final class ReactorNettyClient implements Client {
     @Override
     public TransactionStatus getTransactionStatus() {
         return this.transactionStatus.get();
+    }
+
+    @Override
+    public boolean isConnected() {
+        if (this.isClosed.get()) {
+            return false;
+        }
+
+        Channel channel = this.connection.get().channel();
+        return channel.isOpen();
     }
 
     @SuppressWarnings("unchecked")

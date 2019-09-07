@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * An implementation of {@link Row} for a PostgreSQL database.
  */
+@SuppressWarnings("deprecation")
 public final class PostgresqlRow implements Row {
 
     private final Codecs codecs;
@@ -155,7 +156,7 @@ public final class PostgresqlRow implements Row {
     }
 
     private Map<String, Column> getNameKeyedColumns(List<Column> columns) {
-        Map<String, Column> nameKeyedColumns = new TreeMap<>(Collator.DEFAULT);
+        Map<String, Column> nameKeyedColumns = new TreeMap<>(Collator.IGNORE_CASE_COMPARATOR);
 
         for (Column column : columns) {
             if (!nameKeyedColumns.containsKey(column.getName())) {
