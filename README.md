@@ -116,9 +116,7 @@ mono.map(connection -> connection
                 .bind("$1", 1)
                 .bind("$2", "Walter")
                 .bind("$3", "White")
-                .execute())
-                .block()
-                .blockFirst();
+                .execute());
 ```
 
 Binding also allowed positional index (zero-based) references.  The parameter index is derived from the parameter discovery order when parsing the query.
