@@ -50,6 +50,25 @@ public final class PostgresqlRowMetadata implements RowMetadata {
     }
 
     @Override
+    public PostgresqlColumnMetadata getColumnMetadata(int index) {
+        if (index >= this.columnMetadatas.size()) {
+            throw new IllegalArgumentException(String.format("Column index %d is larger than the number of columns %d", index, this.columnMetadatas.size()));
+        }
+
+        return this.columnMetadatas.get(index);
+    }
+
+    @Override
+    public PostgresqlColumnMetadata getColumnMetadata(String name) {
+        Assert.requireNonNull(name, "name must not be null");
+        if (!this.nameKeyedColumnMetadatas.containsKey(name)) {
+            throw new IllegalArgumentException(String.format("Column name '%s' does not exist in column names %s", name, this.columnNames));
+        }
+
+        return this.nameKeyedColumnMetadatas.get(name);
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
@@ -59,24 +78,6 @@ public final class PostgresqlRowMetadata implements RowMetadata {
         }
         PostgresqlRowMetadata that = (PostgresqlRowMetadata) o;
         return Objects.equals(this.columnMetadatas, that.columnMetadatas);
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @throws IllegalArgumentException if {@code identifier} does not correspond to a column
-     */
-    @Override
-    public PostgresqlColumnMetadata getColumnMetadata(Object identifier) {
-        Assert.requireNonNull(identifier, "identifier must not be null");
-
-        if (identifier instanceof Integer) {
-            return getColumnMetadata((Integer) identifier);
-        } else if (identifier instanceof String) {
-            return getColumnMetadata((String) identifier);
-        }
-
-        throw new IllegalArgumentException(String.format("Identifier '%s' is not a valid identifier. Should either be an Integer index or a String column name.", identifier));
     }
 
     @Override
@@ -118,22 +119,6 @@ public final class PostgresqlRowMetadata implements RowMetadata {
         }
 
         return columnMetadatas;
-    }
-
-    private PostgresqlColumnMetadata getColumnMetadata(Integer index) {
-        if (index >= this.columnMetadatas.size()) {
-            throw new IllegalArgumentException(String.format("Column index %d is larger than the number of columns %d", index, this.columnMetadatas.size()));
-        }
-
-        return this.columnMetadatas.get(index);
-    }
-
-    private PostgresqlColumnMetadata getColumnMetadata(String name) {
-        if (!this.nameKeyedColumnMetadatas.containsKey(name)) {
-            throw new IllegalArgumentException(String.format("Column name '%s' does not exist in column names %s", name, this.columnNames));
-        }
-
-        return this.nameKeyedColumnMetadatas.get(name);
     }
 
     private Collection<String> getColumnNames(List<PostgresqlColumnMetadata> columnMetadatas) {

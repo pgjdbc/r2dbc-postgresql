@@ -71,15 +71,7 @@ final class PostgresqlRowMetadataTest {
     @Test
     void getColumnMetadataNoIdentifier() {
         assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRowMetadata(this.columnMetadatas).getColumnMetadata(null))
-            .withMessage("identifier must not be null");
-    }
-
-    @Test
-    void getColumnMetadataWrongIdentifierType() {
-        Object identifier = new Object();
-
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRowMetadata(this.columnMetadatas).getColumnMetadata(identifier))
-            .withMessage("Identifier '%s' is not a valid identifier. Should either be an Integer index or a String column name.", identifier.toString());
+            .withMessage("name must not be null");
     }
 
     @Test
