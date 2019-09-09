@@ -73,11 +73,11 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
     }
 
     @Override
-    public ExtendedQueryPostgresqlStatement bind(Object identifier, Object value) {
+    public ExtendedQueryPostgresqlStatement bind(String identifier, Object value) {
         Assert.requireNonNull(identifier, "identifier must not be null");
         Assert.requireType(identifier, String.class, "identifier must be a String");
 
-        return bind(getIndex((String) identifier), value);
+        return bind(getIndex(identifier), value);
     }
 
     @Override
@@ -90,12 +90,12 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
     }
 
     @Override
-    public ExtendedQueryPostgresqlStatement bindNull(Object identifier, Class<?> type) {
+    public ExtendedQueryPostgresqlStatement bindNull(String identifier, Class<?> type) {
         Assert.requireNonNull(identifier, "identifier must not be null");
         Assert.requireType(identifier, String.class, "identifier must be a String");
         Assert.requireNonNull(type, "type must not be null");
 
-        bindNull(getIndex((String) identifier), type);
+        bindNull(getIndex(identifier), type);
         return this;
     }
 

@@ -30,7 +30,6 @@ import reactor.util.annotation.Nullable;
 import static io.r2dbc.postgresql.client.ExtendedQueryMessageFlow.PARAMETER_SYMBOL;
 import static io.r2dbc.postgresql.util.PredicateUtils.or;
 
-@SuppressWarnings("deprecation")
 final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
 
     private final Client client;
@@ -53,7 +52,7 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
     }
 
     @Override
-    public SimpleQueryPostgresqlStatement bind(@Nullable Object identifier, @Nullable Object value) {
+    public SimpleQueryPostgresqlStatement bind(@Nullable String identifier, @Nullable Object value) {
         throw new UnsupportedOperationException(String.format("Binding parameters is not supported for the statement '%s'", this.sql));
     }
 
@@ -63,7 +62,7 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
     }
 
     @Override
-    public SimpleQueryPostgresqlStatement bindNull(@Nullable Object identifier, @Nullable Class<?> type) {
+    public SimpleQueryPostgresqlStatement bindNull(@Nullable String identifier, @Nullable Class<?> type) {
         throw new UnsupportedOperationException(String.format("Binding parameters is not supported for the statement '%s'", this.sql));
     }
 

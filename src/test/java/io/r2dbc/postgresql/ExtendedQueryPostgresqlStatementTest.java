@@ -131,21 +131,9 @@ final class ExtendedQueryPostgresqlStatementTest {
     }
 
     @Test
-    void bindNullWrongIdentifierType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> this.statement.bindNull(new Object(), Integer.class))
-            .withMessage("identifier must be a String");
-    }
-
-    @Test
     void bindWrongIdentifierFormat() {
         assertThatIllegalArgumentException().isThrownBy(() -> this.statement.bind("foo", ""))
             .withMessage("Identifier 'foo' is not a valid identifier. Should be of the pattern '\\$([\\d]+)'.");
-    }
-
-    @Test
-    void bindWrongIdentifierType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> this.statement.bind(new Object(), ""))
-            .withMessage("identifier must be a String");
     }
 
     @Test
