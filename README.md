@@ -111,7 +111,7 @@ INSERT INTO person (id, first_name, last_name) VALUES ($1, $2, $3)
 Parameters are referenced using the same identifiers when binding these:
 
 ```java
-mono.map(connection -> connection
+mono.flatMapMany(connection -> connection
                 .createStatement("INSERT INTO person (id, first_name, last_name) VALUES ($1, $2, $3)")
                 .bind("$1", 1)
                 .bind("$2", "Walter")
