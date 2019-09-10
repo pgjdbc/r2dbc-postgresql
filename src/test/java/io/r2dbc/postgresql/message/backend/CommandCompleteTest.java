@@ -121,8 +121,6 @@ final class CommandCompleteTest {
             })
             .isEqualTo(new CommandComplete("SELECT", null, null));
     }
-    
-
 
     @Test
     void decodeUpdate() {
