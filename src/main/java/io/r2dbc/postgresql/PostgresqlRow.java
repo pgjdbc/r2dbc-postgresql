@@ -48,7 +48,6 @@ public final class PostgresqlRow implements Row {
     PostgresqlRow(Codecs codecs, List<Column> columns) {
         this.codecs = Assert.requireNonNull(codecs, "codecs must not be null");
         this.columns = Assert.requireNonNull(columns, "columns must not be null");
-
         this.nameKeyedColumns = getNameKeyedColumns(this.columns);
     }
 

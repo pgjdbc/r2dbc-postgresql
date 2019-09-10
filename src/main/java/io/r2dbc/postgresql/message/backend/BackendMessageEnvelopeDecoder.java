@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
@@ -29,7 +30,10 @@ import java.util.function.Function;
 
 import static io.r2dbc.postgresql.message.backend.BackendMessageUtils.getEnvelope;
 
-public class BackendMessageEnvelopeDecoder implements Function<ByteBuf, Publisher<CompositeByteBuf>> {
+/**
+ * Envelope decoder for inbound {@link BackendMessage}s.
+ */
+public final class BackendMessageEnvelopeDecoder implements Function<ByteBuf, Publisher<CompositeByteBuf>> {
 
     private final CompositeByteBuf byteBuf;
 
@@ -38,7 +42,6 @@ public class BackendMessageEnvelopeDecoder implements Function<ByteBuf, Publishe
     public BackendMessageEnvelopeDecoder(ByteBufAllocator allocator) {
         this.byteBuf = allocator.compositeBuffer();
     }
-
 
     /**
      * Splits a {@link ByteBuf} into a {@link Flux} of {@link CompositeByteBuf}s contains exactly one backend envelope.
@@ -67,7 +70,6 @@ public class BackendMessageEnvelopeDecoder implements Function<ByteBuf, Publishe
             }
         });
     }
-
 
     public void dispose() {
         if (this.disposed.compareAndSet(false, true)) {

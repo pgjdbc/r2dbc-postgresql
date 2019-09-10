@@ -29,12 +29,12 @@ import java.util.function.Function;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
-class BackendMessageEnvelopeDecoderTest {
+final class BackendMessageEnvelopeDecoderTest {
 
     @Test
     void testEmptyBuf() {
         testSplit(
-            s -> s.verifyComplete(),
+            StepVerifier.LastStep::verifyComplete,
             TEST.buffer());
     }
 
