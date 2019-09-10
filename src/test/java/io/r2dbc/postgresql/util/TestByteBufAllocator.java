@@ -22,7 +22,7 @@ import io.netty.util.internal.PlatformDependent;
 
 public final class TestByteBufAllocator {
 
-    public static final ByteBufAllocator TEST = new UnpooledByteBufAllocator(PlatformDependent.directBufferPreferred(), true);
+    public static final ByteBufAllocator TEST = new UnpooledByteBufAllocator(false, true);
 
     private TestByteBufAllocator() {
     }

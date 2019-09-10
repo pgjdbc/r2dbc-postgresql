@@ -17,7 +17,6 @@
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.CompositeByteBuf;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Flux;
 
@@ -34,7 +33,7 @@ public final class BackendMessageDecoder {
      * @param envelope the {@link ByteBuf} to decode
      * @return a {@link Flux} of {@link BackendMessage}s
      */
-    public static BackendMessage decode(CompositeByteBuf envelope) {
+    public static BackendMessage decode(ByteBuf envelope) {
         Assert.requireNonNull(envelope, "in must not be null");
 
         try {
