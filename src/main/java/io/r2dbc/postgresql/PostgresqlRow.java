@@ -49,7 +49,6 @@ public final class PostgresqlRow implements Row {
     PostgresqlRow(Codecs codecs, List<Column> columns) {
         this.codecs = Assert.requireNonNull(codecs, "codecs must not be null");
         this.columns = Assert.requireNonNull(columns, "columns must not be null");
-
         this.nameKeyedColumns = getNameKeyedColumns(this.columns);
     }
 
@@ -83,16 +82,10 @@ public final class PostgresqlRow implements Row {
 
         ByteBuf data = column.getByteBuf();
         if (data != null) {
-            data.markReaderIndex();
+            data = data.slice();
         }
 
-        T value = this.codecs.decode(data, column.getDataType(), column.getFormat(), type);
-
-        if (data != null) {
-            data.resetReaderIndex();
-        }
-
-        return value;
+        return this.codecs.decode(data, column.getDataType(), column.getFormat(), type);
     }
 
     @Override

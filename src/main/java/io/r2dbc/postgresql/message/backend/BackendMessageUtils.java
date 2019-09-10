@@ -17,8 +17,11 @@
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.CompositeByteBuf;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
+
+import java.util.List;
 
 import static io.netty.util.CharsetUtil.UTF_8;
 
@@ -36,7 +39,7 @@ final class BackendMessageUtils {
     }
 
     @Nullable
-    static ByteBuf getEnvelope(ByteBuf in) {
+    static CompositeByteBuf getEnvelope(CompositeByteBuf in) {
         Assert.requireNonNull(in, "in must not be null");
 
         if (in.readableBytes() < 5) {
@@ -48,7 +51,20 @@ final class BackendMessageUtils {
             return null;
         }
 
-        return in.readSlice(length);
+        return readComposite(in, length);
+    }
+
+    static CompositeByteBuf readComposite(CompositeByteBuf in, int length) {
+        if (length == 0) {
+            return in.alloc().compositeBuffer(1);
+        }
+        List<ByteBuf> decompose = in.decompose(in.readerIndex(), length);
+        CompositeByteBuf byteBufs = in.alloc().compositeBuffer(decompose.size());
+        for (ByteBuf byteBuf : decompose) {
+            byteBufs.addComponent(true, byteBuf.retain());
+        }
+        in.readSlice(length);
+        return byteBufs;
     }
 
     static String readCStringUTF8(ByteBuf src) {
