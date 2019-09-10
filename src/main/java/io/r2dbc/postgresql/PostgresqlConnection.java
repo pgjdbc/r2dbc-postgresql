@@ -142,6 +142,11 @@ public final class PostgresqlConnection implements Connection {
     }
 
     @Override
+    public PostgresqlConnectionMetadata getMetadata() {
+        return new PostgresqlConnectionMetadata(this.client.getVersion());
+    }
+
+    @Override
     public boolean isAutoCommit() {
 
         if (this.client.getTransactionStatus() == IDLE) {

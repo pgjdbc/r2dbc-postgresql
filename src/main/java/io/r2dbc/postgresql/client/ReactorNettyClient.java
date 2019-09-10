@@ -28,6 +28,7 @@ import io.r2dbc.postgresql.message.backend.BackendMessageEnvelopeDecoder;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.Field;
 import io.r2dbc.postgresql.message.backend.NoticeResponse;
+import io.r2dbc.postgresql.message.backend.ParameterStatus;
 import io.r2dbc.postgresql.message.backend.ReadyForQuery;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.message.frontend.Terminate;
@@ -103,6 +104,31 @@ public final class ReactorNettyClient implements Client {
 
     private final AtomicReference<TransactionStatus> transactionStatus = new AtomicReference<>(IDLE);
 
+    private final AtomicReference<Version> version = new AtomicReference<>(new Version("", 0));
+
+    private final BiConsumer<BackendMessage, SynchronousSink<BackendMessage>> handleBackendParameterStatus = handleBackendMessage(ParameterStatus.class,
+        (message, sink) -> {
+
+            Version existingVersion = version.get();
+
+            String versionString = existingVersion.getVersion();
+            int versionNum = existingVersion.getVersionNumber();
+
+            if (message.getName().equals("server_version_num")) {
+                versionNum = Integer.parseInt(message.getValue());
+            }
+
+            if (message.getName().equals("server_version")) {
+                versionString = message.getValue();
+
+                if (versionNum == 0) {
+                    versionNum = Version.parseServerVersionStr(versionString);
+                }
+            }
+
+            version.set(new Version(versionString, versionNum));
+        });
+
     private final BiConsumer<BackendMessage, SynchronousSink<BackendMessage>> handleReadyForQuery = handleBackendMessage(ReadyForQuery.class,
         (message, sink) -> {
             this.transactionStatus.set(TransactionStatus.valueOf(message.getTransactionStatus()));
@@ -131,6 +157,7 @@ public final class ReactorNettyClient implements Client {
             .doOnNext(message -> this.logger.debug("Response: {}", message))
             .handle(this.handleNoticeResponse)
             .handle(this.handleErrorResponse)
+            .handle(this.handleBackendParameterStatus)
             .handle(this.handleBackendKeyData)
             .handle(this.handleReadyForQuery)
             .windowWhile(not(ReadyForQuery.class::isInstance))
@@ -285,6 +312,11 @@ public final class ReactorNettyClient implements Client {
     @Override
     public TransactionStatus getTransactionStatus() {
         return this.transactionStatus.get();
+    }
+
+    @Override
+    public Version getVersion() {
+        return this.version.get();
     }
 
     @Override

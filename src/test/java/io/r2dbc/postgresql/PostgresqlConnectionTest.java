@@ -18,6 +18,7 @@ package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.TestClient;
+import io.r2dbc.postgresql.client.Version;
 import io.r2dbc.postgresql.codec.MockCodecs;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
@@ -362,6 +363,18 @@ final class PostgresqlConnectionTest {
             .rollbackTransactionToSavepoint("test-name")
             .as(StepVerifier::create)
             .verifyComplete();
+    }
+
+    @Test
+    void getMetadata() {
+        Client client = TestClient.builder().withVersion(new Version("9.4")).build();
+
+        PostgresqlConnection connection = createConnection(client, MockCodecs.empty(), this.statementCache);
+
+        PostgresqlConnectionMetadata metadata = connection.getMetadata();
+
+        assertThat(metadata.getDatabaseProductName()).isEqualTo("PostgreSQL");
+        assertThat(metadata.getDatabaseVersion()).isEqualTo("9.4");
     }
 
     @Test

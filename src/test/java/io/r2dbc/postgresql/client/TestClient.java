@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.client;
 
 import io.netty.buffer.ByteBufAllocator;
+import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.util.Assert;
@@ -37,7 +38,7 @@ import static io.r2dbc.postgresql.client.TransactionStatus.IDLE;
 
 public final class TestClient implements Client {
 
-    public static final TestClient NO_OP = new TestClient(false, true, null, null, Flux.empty(), IDLE);
+    public static final TestClient NO_OP = new TestClient(false, true, null, null, Flux.empty(), IDLE, new Version("9.4"));
 
     private final boolean expectClose;
 
@@ -55,12 +56,15 @@ public final class TestClient implements Client {
 
     private final TransactionStatus transactionStatus;
 
-    private TestClient(boolean expectClose, boolean connected, @Nullable Integer processId, @Nullable Integer secretKey, Flux<Window> windows, TransactionStatus transactionStatus) {
+    private final Version version;
+
+    private TestClient(boolean expectClose, boolean connected, @Nullable Integer processId, @Nullable Integer secretKey, Flux<Window> windows, TransactionStatus transactionStatus, Version version) {
         this.expectClose = expectClose;
         this.connected = connected;
         this.processId = processId;
         this.secretKey = secretKey;
         this.transactionStatus = Assert.requireNonNull(transactionStatus, "transactionStatus must not be null");
+        this.version = version;
 
         FluxSink<Flux<BackendMessage>> responses = this.responseProcessor.sink();
 
@@ -124,6 +128,11 @@ public final class TestClient implements Client {
     }
 
     @Override
+    public Version getVersion() {
+        return this.version;
+    }
+
+    @Override
     public boolean isConnected() {
         return this.connected;
     }
@@ -142,11 +151,13 @@ public final class TestClient implements Client {
 
         private TransactionStatus transactionStatus = IDLE;
 
+        private Version version = new Version("9.4beta1");
+
         private Builder() {
         }
 
         public TestClient build() {
-            return new TestClient(this.expectClose, this.connected, this.processId, this.secretKey, Flux.fromIterable(this.windows).map(Window.Builder::build), this.transactionStatus);
+            return new TestClient(this.expectClose, this.connected, this.processId, this.secretKey, Flux.fromIterable(this.windows).map(Window.Builder::build), this.transactionStatus, this.version);
         }
 
         public Builder expectClose() {
@@ -192,6 +203,10 @@ public final class TestClient implements Client {
             return window;
         }
 
+        public Builder withVersion(Version version) {
+            this.version = version;
+            return this;
+        }
     }
 
     private static final class Exchange {

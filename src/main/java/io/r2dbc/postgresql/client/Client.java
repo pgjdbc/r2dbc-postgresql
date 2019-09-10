@@ -76,6 +76,13 @@ public interface Client {
     TransactionStatus getTransactionStatus();
 
     /**
+     * Return the server version.
+     *
+     * @return the server version from {@code server_version}/{@code server_version_num} startup parameters.
+     */
+    Version getVersion();
+
+    /**
      * Returns whether the client is connected to a server.
      *
      * @return {@literal true} if the client is connected to a server.

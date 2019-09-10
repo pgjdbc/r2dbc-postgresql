@@ -111,6 +111,13 @@ final class ReactorNettyClientTest {
     }
 
     @Test
+    void handleParameterStatus() {
+        Version version = this.client.getVersion();
+        assertThat(version.getVersion()).isNotEmpty();
+        assertThat(version.getVersionNumber()).isNotZero();
+    }
+
+    @Test
     void handleTransactionStatus() {
         assertThat(this.client.getTransactionStatus()).isEqualTo(TransactionStatus.IDLE);
 
