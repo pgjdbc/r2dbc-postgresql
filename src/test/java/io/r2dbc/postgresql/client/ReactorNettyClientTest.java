@@ -288,7 +288,9 @@ final class ReactorNettyClientTest {
 
         this.client
             .exchange(Mono.just(new Query("LISTEN events")))
-            .blockLast();
+            .as(StepVerifier::create)
+            .expectNextCount(1)
+            .verifyComplete();
 
         SERVER.getJdbcOperations().execute("INSERT INTO test VALUES (100)");
         SERVER.getJdbcOperations().execute("INSERT INTO test VALUES (1000)");

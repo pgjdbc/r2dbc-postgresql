@@ -38,6 +38,7 @@ import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.Disposable;
+import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
@@ -138,7 +139,7 @@ public final class ReactorNettyClient implements Client {
             sink.next(message);
         });
 
-    private final EmitterProcessor<NotificationResponse> notificationProcessor = EmitterProcessor.create(false);
+    private final DirectProcessor<NotificationResponse> notificationProcessor = DirectProcessor.create();
 
     private final BiConsumer<BackendMessage, SynchronousSink<BackendMessage>> handleNotificationResponse = handleBackendMessage(NotificationResponse.class,
         (message, sink) -> this.notificationProcessor.onNext(message));

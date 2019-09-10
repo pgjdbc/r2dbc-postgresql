@@ -21,7 +21,6 @@ import io.r2dbc.postgresql.client.PortalNameSupplier;
 import io.r2dbc.postgresql.client.SimpleQueryMessageFlow;
 import io.r2dbc.postgresql.client.TransactionStatus;
 import io.r2dbc.postgresql.codec.Codecs;
-import io.r2dbc.postgresql.message.backend.NotificationResponse;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.IsolationLevel;
@@ -32,10 +31,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.CoreSubscriber;
 import reactor.core.Disposable;
+import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
+import reactor.util.annotation.Nullable;
 
-import java.util.function.Consumer;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import static io.r2dbc.postgresql.client.TransactionStatus.IDLE;
@@ -59,6 +61,8 @@ public final class PostgresqlConnection implements Connection {
     private final StatementCache statementCache;
 
     private final Flux<Integer> validationQuery;
+
+    private final AtomicReference<NotificationAdapter> notificationAdapter = new AtomicReference<>();
 
     private volatile IsolationLevel isolationLevel;
 
@@ -87,8 +91,14 @@ public final class PostgresqlConnection implements Connection {
 
     @Override
     public Mono<Void> close() {
-        return this.client.close()
-            .then(Mono.empty());
+        return this.client.close().doOnSubscribe(subscription -> {
+
+            NotificationAdapter notificationAdapter = this.notificationAdapter.get();
+
+            if (notificationAdapter != null && this.notificationAdapter.compareAndSet(notificationAdapter, null)) {
+                notificationAdapter.dispose();
+            }
+        }).then(Mono.empty());
     }
 
     @Override
@@ -139,14 +149,38 @@ public final class PostgresqlConnection implements Connection {
         }
     }
 
-    @Override
-    public IsolationLevel getTransactionIsolationLevel() {
-        return this.isolationLevel;
+    /**
+     * Return a {@link Flux} of {@link Notification} received from {@code LISTEN} registrations.
+     * The stream is a hot stream producing messages as they are received.
+     *
+     * @return a hot {@link Flux} of {@link Notification Notifications}.
+     */
+    public Flux<Notification> getNotifications() {
+
+        NotificationAdapter notifications = this.notificationAdapter.get();
+
+        if (notifications == null) {
+
+            notifications = new NotificationAdapter();
+
+            if (this.notificationAdapter.compareAndSet(null, notifications)) {
+                notifications.register(this.client);
+            } else {
+                notifications = this.notificationAdapter.get();
+            }
+        }
+
+        return notifications.getEvents();
     }
 
     @Override
     public PostgresqlConnectionMetadata getMetadata() {
         return new PostgresqlConnectionMetadata(this.client.getVersion());
+    }
+
+    @Override
+    public IsolationLevel getTransactionIsolationLevel() {
+        return this.isolationLevel;
     }
 
     @Override
@@ -224,12 +258,6 @@ public final class PostgresqlConnection implements Connection {
 
             return Mono.empty();
         });
-    }
-
-    public Disposable addNotificationListener(Consumer<NotificationResponse> consumer) {
-        Assert.requireNonNull(consumer, "consumer must not be null");
-
-        return this.client.addNotificationListener(consumer);
     }
 
     @Override
@@ -311,6 +339,38 @@ public final class PostgresqlConnection implements Connection {
 
     private <T> Mono<T> withTransactionStatus(Function<TransactionStatus, T> f) {
         return Mono.defer(() -> Mono.just(f.apply(this.client.getTransactionStatus())));
+    }
+
+
+    /**
+     * Adapter to publish {@link Notification}s.
+     */
+    static class NotificationAdapter {
+
+        private final DirectProcessor<Notification> processor = DirectProcessor.create();
+
+        private final FluxSink<Notification> sink = processor.sink();
+
+        @Nullable
+        private volatile Disposable subscription = null;
+
+        void dispose() {
+            Disposable subscription = this.subscription;
+            if (subscription != null && !subscription.isDisposed()) {
+                subscription.dispose();
+            }
+        }
+
+        void register(Client client) {
+
+            this.subscription = client.addNotificationListener(notificationResponse -> {
+                sink.next(new NotificationResponseWrapper(notificationResponse));
+            });
+        }
+
+        Flux<Notification> getEvents() {
+            return processor;
+        }
     }
 
 }

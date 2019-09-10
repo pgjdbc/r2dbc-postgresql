@@ -35,6 +35,15 @@ import java.util.function.Consumer;
 public interface Client {
 
     /**
+     * Add a consumer of notification messages.
+     *
+     * @param consumer the consumer of notification messages
+     * @return a new {@link Disposable} that can be used to cancel the underlying subscription.
+     * @throws IllegalArgumentException if {@code consumer} is {@code null}
+     */
+    Disposable addNotificationListener(Consumer<NotificationResponse> consumer);
+
+    /**
      * Release any resources held by the {@link Client}.
      *
      * @return a {@link Mono} that indicates that a client has been closed
@@ -92,12 +101,4 @@ public interface Client {
      */
     boolean isConnected();
 
-    /**
-     * Add a consumer of notification messages.
-     *
-     * @param consumer the consumer of notification messages
-     * @return a new {@link Disposable} that can be used to cancel the underlying subscription.
-     * @throws IllegalArgumentException if {@code consumer} is {@code null}
-     */
-    Disposable addNotificationListener(Consumer<NotificationResponse> consumer);
 }

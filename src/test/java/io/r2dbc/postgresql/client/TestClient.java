@@ -17,9 +17,7 @@
 package io.r2dbc.postgresql.client;
 
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
-import io.r2dbc.postgresql.message.backend.NotificationResponse;
 import io.r2dbc.postgresql.message.backend.NotificationResponse;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.util.Assert;
@@ -146,6 +144,10 @@ public final class TestClient implements Client {
     @Override
     public Disposable addNotificationListener(Consumer<NotificationResponse> consumer) {
         return this.notificationProcessor.subscribe(consumer);
+    }
+
+    public void notify(NotificationResponse notification) {
+        this.notificationProcessor.onNext(notification);
     }
 
     public static final class Builder {

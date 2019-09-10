@@ -122,6 +122,30 @@ mono.flatMapMany(connection -> connection
 Binding also allowed positional index (zero-based) references.  The parameter index is derived from the parameter discovery order when parsing the query.
 
 
+## Listen/Notify
+
+Listen and Notify provide a simple form of signal or inter-process communication mechanism for processes accessing the same Postgres database.
+For Listen/Notify, two actors are involved: The sender (notify) and the receiver (listen). The following example uses two connections
+to illustrate how they work together:
+
+```java
+Connection sender = …;
+Connection receiver = …;
+
+Flux<Notification> listen = receiver.createStatement("LISTEN mymessage")
+                                .execute()
+                                .flatMap(PostgresqlResult::getRowsUpdated)
+                                .thenMany(listen.getNotifications());
+
+Mono<Void> notify = sender.createStatement("NOTIFY mymessage, 'Hello World'")
+                            .execute()
+                            .flatMap(PostgresqlResult::getRowsUpdated)
+                            .then();
+```                                                                                                                       
+
+Upon subscription, the first connection enters listen mode and publishes incoming `Notification`s as `Flux`.
+The second connection broadcasts a notification to the `mymessage` channel upon subscription.
+
 ## Data Type Mapping
 
 This reference table shows the type mapping between [PostgreSQL][p] and Java data types:
