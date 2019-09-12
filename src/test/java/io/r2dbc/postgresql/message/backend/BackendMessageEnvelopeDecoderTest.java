@@ -32,19 +32,34 @@ import static org.assertj.core.api.Assertions.assertThat;
 final class BackendMessageEnvelopeDecoderTest {
 
     @Test
-    void testEmptyBuf() {
-        testSplit(
-            StepVerifier.LastStep::verifyComplete,
-            TEST.buffer());
-    }
-
-    @Test
     void testCompleteEnvelope() {
         testSplit(
             s -> s
                 .expectNextCount(1)
                 .verifyComplete(),
             envelope('R', buffer -> buffer.writeInt(3)));
+    }
+
+    @Test
+    void testDisposeWhileSplitting() {
+        ByteBuf envelope = envelope('R', buffer -> buffer.writeInt(3));
+        CompositeByteBuf buf = TEST.compositeBuffer()
+            .addComponent(true, envelope.copy())
+            .addComponent(true, envelope.copy());
+
+        BackendMessageEnvelopeDecoder splitter = new BackendMessageEnvelopeDecoder(TEST);
+        splitter.apply(buf)
+            .doOnNext(next -> splitter.dispose())
+            .as(StepVerifier::create)
+            .expectNextCount(2)
+            .verifyComplete();
+    }
+
+    @Test
+    void testEmptyBuf() {
+        testSplit(
+            StepVerifier.LastStep::verifyComplete,
+            TEST.buffer());
     }
 
     @Test
@@ -77,21 +92,6 @@ final class BackendMessageEnvelopeDecoderTest {
                 .verifyComplete(),
             part1, part2, part3);
 
-    }
-
-    @Test
-    void testDisposeWhileSplitting() {
-        ByteBuf envelope = envelope('R', buffer -> buffer.writeInt(3));
-        CompositeByteBuf buf = TEST.compositeBuffer()
-            .addComponent(true, envelope.copy())
-            .addComponent(true, envelope.copy());
-
-        BackendMessageEnvelopeDecoder splitter = new BackendMessageEnvelopeDecoder(TEST);
-        splitter.apply(buf)
-            .doOnNext(next -> splitter.dispose())
-            .as(StepVerifier::create)
-            .expectNextCount(2)
-            .verifyComplete();
     }
 
     private ByteBuf envelope(char discriminator, Function<ByteBuf, ByteBuf> payloadWriter) {
