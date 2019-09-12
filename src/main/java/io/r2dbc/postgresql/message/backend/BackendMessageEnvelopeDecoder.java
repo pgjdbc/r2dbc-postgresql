@@ -56,8 +56,9 @@ public final class BackendMessageEnvelopeDecoder implements Function<ByteBuf, Pu
         Assert.requireNonNull(in, "in must not be null");
 
         this.byteBuf.addComponent(true, in);
+        this.byteBuf.retain();
 
-        return EmitterProcessor.create(sink -> {
+        return EmitterProcessor.<CompositeByteBuf>create(sink -> {
             try {
                 CompositeByteBuf envelope = getEnvelope(this.byteBuf);
                 while (envelope != null) {
@@ -68,7 +69,8 @@ public final class BackendMessageEnvelopeDecoder implements Function<ByteBuf, Pu
             } finally {
                 this.byteBuf.discardReadComponents();
             }
-        });
+        })
+            .doFinally(s -> ReferenceCountUtil.release(this.byteBuf));
     }
 
     public void dispose() {
