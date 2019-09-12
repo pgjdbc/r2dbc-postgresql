@@ -79,6 +79,21 @@ final class BackendMessageEnvelopeDecoderTest {
 
     }
 
+    @Test
+    void testDisposeWhileSplitting() {
+        ByteBuf envelope = envelope('R', buffer -> buffer.writeInt(3));
+        CompositeByteBuf buf = TEST.compositeBuffer()
+            .addComponent(true, envelope.copy())
+            .addComponent(true, envelope.copy());
+
+        BackendMessageEnvelopeDecoder splitter = new BackendMessageEnvelopeDecoder(TEST);
+        splitter.apply(buf)
+            .doOnNext(next -> splitter.dispose())
+            .as(StepVerifier::create)
+            .expectNextCount(2)
+            .verifyComplete();
+    }
+
     private ByteBuf envelope(char discriminator, Function<ByteBuf, ByteBuf> payloadWriter) {
         ByteBuf payload = payloadWriter.apply(TEST.buffer());
         ByteBuf envelope = TEST.buffer(5 + payload.readableBytes())
