@@ -30,6 +30,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -74,9 +75,15 @@ abstract class AbstractCodecIntegrationTest {
     }
 
     @Test
+    void binary() {
+        testCodec(ByteBuffer.class, ByteBuffer.wrap(new byte[]{1, 2, 3, 4}), "BYTEA");
+    }
+
+    @Test
     void bytePrimitive() {
         testCodec(Byte.class, (byte) 10, "INT2");
     }
+
 
     @Test
     void charPrimitive() {
@@ -252,6 +259,22 @@ abstract class AbstractCodecIntegrationTest {
         SERVER.getJdbcOperations().execute(String.format("CREATE TABLE test ( value %s )", sqlType));
 
         try {
+            this.connectionFactory.create()
+                .flatMapMany(connection -> connection
+
+                    .createStatement("INSERT INTO test VALUES ($1)")
+                    .bindNull("$1", javaType)
+                    .execute()
+
+                    .flatMap(PostgresqlResult::getRowsUpdated)
+
+                    .concatWith(close(connection)))
+                .as(StepVerifier::create)
+                .expectNext(1)
+                .verifyComplete();
+
+            SERVER.getJdbcOperations().execute("DELETE FROM test");
+
             this.connectionFactory.create()
                 .flatMapMany(connection -> connection
 
