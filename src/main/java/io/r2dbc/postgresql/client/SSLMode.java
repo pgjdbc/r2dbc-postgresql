@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.r2dbc.postgresql;
+package io.r2dbc.postgresql.client;
 
 public enum SSLMode {
     /**
@@ -72,5 +72,14 @@ public enum SSLMode {
 
     public boolean verifyPeerName() {
         return this == VERIFY_FULL;
+    }
+
+    public static SSLMode fromValue(String sslModeString) {
+        for (SSLMode sslMode : values()) {
+            if (sslMode.value.equalsIgnoreCase(sslModeString)) {
+                return sslMode;
+            }
+        }
+        throw new IllegalArgumentException("Invalid ssl mode value: " + sslModeString);
     }
 }

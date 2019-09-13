@@ -22,7 +22,6 @@ import io.r2dbc.postgresql.PostgresqlConnection;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.postgresql.PostgresqlServerErrorException;
-import io.r2dbc.postgresql.SSLMode;
 import io.r2dbc.postgresql.authentication.PasswordAuthenticationHandler;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.DataRow;
@@ -340,7 +339,7 @@ final class ReactorNettyClientTest {
         @Test
         void userIsNotAllowedToLoginWithoutSsl() {
             client(
-                c -> c.ssl(false)
+                c -> c.sslMode(SSLMode.DISABLE)
                     .username("test-ssl")
                     .password("test-ssl"),
                 c -> c
@@ -356,7 +355,6 @@ final class ReactorNettyClientTest {
                 .port(SERVER.getPort())
                 .username("test-ssl-with-cert")
                 .password(null)
-                .ssl(true)
                 .sslMode(SSLMode.VERIFY_FULL)
                 .sslRootCert(SERVER.getServerCrt())
                 .sslCert(SERVER.getClientCrt())

@@ -24,8 +24,6 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
-import io.r2dbc.postgresql.SSLConfig;
-import io.r2dbc.postgresql.SSLMode;
 import io.r2dbc.postgresql.message.frontend.SSLRequest;
 import reactor.core.publisher.Mono;
 
@@ -49,9 +47,7 @@ public class SSLSessionHandlerAdapter extends ChannelInboundHandlerAdapter imple
     public SSLSessionHandlerAdapter(ByteBufAllocator alloc, SSLConfig sslConfig) {
         this.alloc = alloc;
         this.sslConfig = sslConfig;
-        this.sslEngine = sslConfig.getSslProviderSupplier()
-            .get()
-            .build()
+        this.sslEngine = sslConfig.getSslProvider()
             .getSslContext()
             .newEngine(alloc);
         this.handshakeFuture = new CompletableFuture<>();

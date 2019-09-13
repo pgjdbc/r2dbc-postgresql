@@ -21,6 +21,8 @@ import io.r2dbc.postgresql.authentication.PasswordAuthenticationHandler;
 import io.r2dbc.postgresql.authentication.SASLAuthenticationHandler;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.ReactorNettyClient;
+import io.r2dbc.postgresql.client.SSLConfig;
+import io.r2dbc.postgresql.client.SSLMode;
 import io.r2dbc.postgresql.client.StartupMessageFlow;
 import io.r2dbc.postgresql.codec.DefaultCodecs;
 import io.r2dbc.postgresql.message.backend.AuthenticationMessage;
@@ -33,8 +35,6 @@ import reactor.core.publisher.Mono;
 import java.util.Locale;
 import java.util.function.Function;
 import java.util.function.Predicate;
-
-import static io.r2dbc.postgresql.SSLConfig.createSslConfig;
 
 /**
  * An implementation of {@link ConnectionFactory} for creating connections to a PostgreSQL database.
@@ -66,7 +66,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
 
     @Override
     public Mono<PostgresqlConnection> create() {
-        SSLConfig sslConfig = createSslConfig(configuration);
+        SSLConfig sslConfig = this.configuration.getSslConfig();
         Predicate<Throwable> isAuthSpecificationError = e ->
             (e instanceof PostgresqlAuthenticationFailure) && ((PostgresqlAuthenticationFailure) e).getCode().equals(PostgresqlExceptionFactory.INVALID_AUTHORIZATION_SPECIFICATION_CODE);
         return this.tryConnectWithConfig(sslConfig)

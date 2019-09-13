@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.r2dbc.postgresql;
+package io.r2dbc.postgresql.client;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +35,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class PGHostnameVerifier implements HostnameVerifier {
+public final class PGHostnameVerifier implements HostnameVerifier {
 
     public static final PGHostnameVerifier INSTANCE = new PGHostnameVerifier();
 

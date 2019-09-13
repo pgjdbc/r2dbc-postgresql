@@ -89,19 +89,20 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
                 "touch /tmp/server.key\n",
                 "chown postgres:postgres /tmp/server.key\n",
                 "chmod 0600 /tmp/server.key\n",
-                "cat /var/server.key > /tmp/server.key\n",
+                "cp /var/server.key /tmp/server.key\n",
                 "echo \"/tmp/server.key initialized\"\n",
                 "touch /tmp/pg_hba.conf\n",
                 "chmod 0600 /tmp/pg_hba.conf\n",
                 "chown postgres:postgres /tmp/pg_hba.conf\n",
-                "cat /var/pg_hba.conf > /tmp/pg_hba.conf\n",
-                "echo \"/tmp/pg_hba initialized\"\n",
-                "cat /var/server.crt\n");
+                "cp /var/pg_hba.conf /tmp/pg_hba.conf\n",
+                "echo \"/tmp/pg_hba initialized\"\n"
+            );
             pgHba = createTempFile("pg_hba.conf",
                 "hostnossl         all       test                    all     md5\n",
                 "hostnossl         all       test-scram              all     scram-sha-256\n",
                 "hostssl           all       test-ssl                all     password\n",
-                "hostssl           all       test-ssl-with-cert      all     cert\n");
+                "hostssl           all       test-ssl-with-cert      all     cert\n"
+            );
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

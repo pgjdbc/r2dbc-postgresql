@@ -21,8 +21,6 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOption;
-import io.r2dbc.postgresql.SSLConfig;
-import io.r2dbc.postgresql.SSLMode;
 import io.r2dbc.postgresql.message.backend.BackendKeyData;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.BackendMessageDecoder;

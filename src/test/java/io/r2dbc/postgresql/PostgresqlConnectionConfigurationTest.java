@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql;
 
+import io.r2dbc.postgresql.client.SSLMode;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -61,7 +62,7 @@ final class PostgresqlConnectionConfigurationTest {
             .port(100)
             .schema("test-schema")
             .username("test-username")
-            .ssl(true)
+            .sslMode(SSLMode.ALLOW)
             .build();
 
         assertThat(configuration)
@@ -74,7 +75,7 @@ final class PostgresqlConnectionConfigurationTest {
             .hasFieldOrPropertyWithValue("port", 100)
             .hasFieldOrPropertyWithValue("schema", "test-schema")
             .hasFieldOrPropertyWithValue("username", "test-username")
-            .hasFieldOrPropertyWithValue("ssl", true);
+            .hasFieldOrProperty("sslConfig");
     }
 
     @Test
@@ -95,7 +96,7 @@ final class PostgresqlConnectionConfigurationTest {
             .hasFieldOrPropertyWithValue("port", 5432)
             .hasFieldOrPropertyWithValue("schema", "test-schema")
             .hasFieldOrPropertyWithValue("username", "test-username")
-            .hasFieldOrPropertyWithValue("ssl", false);
+            .hasFieldOrProperty("sslConfig");
     }
 
     @Test

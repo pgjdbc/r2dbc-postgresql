@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql;
 
+import io.r2dbc.postgresql.client.SSLMode;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.ConnectionFactoryProvider;
@@ -29,7 +30,6 @@ import static io.r2dbc.spi.ConnectionFactoryOptions.DRIVER;
 import static io.r2dbc.spi.ConnectionFactoryOptions.HOST;
 import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
 import static io.r2dbc.spi.ConnectionFactoryOptions.PORT;
-import static io.r2dbc.spi.ConnectionFactoryOptions.SSL;
 import static io.r2dbc.spi.ConnectionFactoryOptions.USER;
 
 /**
@@ -63,7 +63,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<String> SSL_CERT = Option.valueOf("sslCert");
 
     /**
-     * Class name of hostname verifier. Defaults to using io.r2dbc.postgresql.PGHostnameVerifier
+     * Class name of hostname verifier. Defaults to using io.r2dbc.postgresql.client.PGHostnameVerifier
      */
     public static final Option<String> SSL_HOSTNAME_VERIFIER = Option.valueOf("sslHostnameVerifier");
 
@@ -120,14 +120,13 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
             builder.options(options);
         }
 
-        Boolean ssl = connectionFactoryOptions.getValue(SSL);
-        if (ssl != null) {
-            builder.ssl(ssl);
-        }
-
-        SSLMode sslMode = connectionFactoryOptions.getValue(SSL_MODE);
+        Object sslMode = connectionFactoryOptions.getValue(SSL_MODE);
         if (sslMode != null) {
-            builder.sslMode(sslMode);
+            if (sslMode instanceof String) {
+                builder.sslMode((String) sslMode);
+            } else if (sslMode instanceof SSLMode) {
+                builder.sslMode((SSLMode) sslMode);
+            }
         }
 
         String sslRootCert = connectionFactoryOptions.getValue(SSL_ROOT_CERT);
