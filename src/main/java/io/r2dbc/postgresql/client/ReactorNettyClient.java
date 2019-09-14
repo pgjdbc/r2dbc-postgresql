@@ -55,13 +55,12 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
+import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static io.r2dbc.postgresql.client.TransactionStatus.IDLE;
 import static io.r2dbc.postgresql.util.PredicateUtils.not;
@@ -73,24 +72,13 @@ import static io.r2dbc.postgresql.util.PredicateUtils.not;
  */
 public final class ReactorNettyClient implements Client {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private static final Logger logger = LoggerFactory.getLogger(ReactorNettyClient.class);
 
-    private final AtomicReference<ByteBufAllocator> byteBufAllocator = new AtomicReference<>();
+    private static final boolean DEBUG_ENABLED = logger.isDebugEnabled();
 
-    private final AtomicReference<Connection> connection = new AtomicReference<>();
+    private final ByteBufAllocator byteBufAllocator;
 
-    private final BiConsumer<BackendMessage, SynchronousSink<BackendMessage>> handleErrorResponse = handleBackendMessage(ErrorResponse.class,
-        (message, sink) -> {
-            this.logger.error("Error: {}", toString(message.getFields()));
-            sink.next(message);
-        });
-
-    private final BiConsumer<BackendMessage, SynchronousSink<BackendMessage>> handleNoticeResponse = handleBackendMessage(NoticeResponse.class,
-        (message, sink) -> this.logger.warn("Notice: {}", toString(message.getFields())));
-
-    private final AtomicBoolean isClosed = new AtomicBoolean(false);
-
-    private final AtomicReference<Integer> processId = new AtomicReference<>();
+    private final Connection connection;
 
     private final EmitterProcessor<FrontendMessage> requestProcessor = EmitterProcessor.create(false);
 
@@ -98,51 +86,17 @@ public final class ReactorNettyClient implements Client {
 
     private final Queue<MonoSink<Flux<BackendMessage>>> responseReceivers = Queues.<MonoSink<Flux<BackendMessage>>>unbounded().get();
 
-    private final AtomicReference<Integer> secretKey = new AtomicReference<>();
-
-    private final BiConsumer<BackendMessage, SynchronousSink<BackendMessage>> handleBackendKeyData = handleBackendMessage(BackendKeyData.class,
-        (message, sink) -> {
-            this.processId.set(message.getProcessId());
-            this.secretKey.set(message.getSecretKey());
-        });
-
-    private final AtomicReference<TransactionStatus> transactionStatus = new AtomicReference<>(IDLE);
-
-    private final AtomicReference<Version> version = new AtomicReference<>(new Version("", 0));
-
-    private final BiConsumer<BackendMessage, SynchronousSink<BackendMessage>> handleBackendParameterStatus = handleBackendMessage(ParameterStatus.class,
-        (message, sink) -> {
-
-            Version existingVersion = version.get();
-
-            String versionString = existingVersion.getVersion();
-            int versionNum = existingVersion.getVersionNumber();
-
-            if (message.getName().equals("server_version_num")) {
-                versionNum = Integer.parseInt(message.getValue());
-            }
-
-            if (message.getName().equals("server_version")) {
-                versionString = message.getValue();
-
-                if (versionNum == 0) {
-                    versionNum = Version.parseServerVersionStr(versionString);
-                }
-            }
-
-            version.set(new Version(versionString, versionNum));
-        });
-
-    private final BiConsumer<BackendMessage, SynchronousSink<BackendMessage>> handleReadyForQuery = handleBackendMessage(ReadyForQuery.class,
-        (message, sink) -> {
-            this.transactionStatus.set(TransactionStatus.valueOf(message.getTransactionStatus()));
-            sink.next(message);
-        });
-
     private final DirectProcessor<NotificationResponse> notificationProcessor = DirectProcessor.create();
 
-    private final BiConsumer<BackendMessage, SynchronousSink<BackendMessage>> handleNotificationResponse = handleBackendMessage(NotificationResponse.class,
-        (message, sink) -> this.notificationProcessor.onNext(message));
+    private final AtomicBoolean isClosed = new AtomicBoolean(false);
+
+    private volatile Integer processId;
+
+    private volatile Integer secretKey;
+
+    private volatile TransactionStatus transactionStatus = IDLE;
+
+    private volatile Version version = new Version("", 0);
 
     /**
      * Creates a new frame processor connected to a given TCP connection.
@@ -165,22 +119,16 @@ public final class ReactorNettyClient implements Client {
         }
 
         connection.addHandler(new EnsureSubscribersCompleteChannelHandler(this.requestProcessor, this.responseReceivers));
+        this.connection = connection;
+        this.byteBufAllocator = connection.outbound().alloc();
 
-        ByteBufAllocator alloc = connection.outbound().alloc();
-        BackendMessageEnvelopeDecoder envelopeDecoder = new BackendMessageEnvelopeDecoder(alloc);
-        this.byteBufAllocator.set(alloc);
+        BackendMessageEnvelopeDecoder envelopeDecoder = new BackendMessageEnvelopeDecoder(byteBufAllocator);
 
         Mono<Void> receive = connection.inbound().receive()
             .retain()
             .concatMap(envelopeDecoder)
             .map(BackendMessageDecoder::decode)
-            .doOnNext(message -> this.logger.debug("Response: {}", message))
-            .handle(this.handleNoticeResponse)
-            .handle(this.handleNotificationResponse)
-            .handle(this.handleErrorResponse)
-            .handle(this.handleBackendParameterStatus)
-            .handle(this.handleBackendKeyData)
-            .handle(this.handleReadyForQuery)
+            .handle(this::handleResponse)
             .windowWhile(not(ReadyForQuery.class::isInstance))
             .doOnNext(fluxOfMessages -> {
                 MonoSink<Flux<BackendMessage>> receiver = this.responseReceivers.poll();
@@ -198,7 +146,7 @@ public final class ReactorNettyClient implements Client {
 
         Mono<Void> request = sslHandshake
             .thenMany(this.requestProcessor)
-            .doOnNext(message -> this.logger.debug("Request:  {}", message))
+            .doOnNext(message -> logger.debug("Request:  {}", message))
             .concatMap(message -> connection.outbound().send(message.encode(connection.outbound().alloc())))
             .then();
 
@@ -206,7 +154,7 @@ public final class ReactorNettyClient implements Client {
             .doFinally(s -> envelopeDecoder.dispose())
             .subscribe();
 
-        Flux.merge(receive, request)
+        receive
             .onErrorResume(throwable -> {
                 MonoSink<Flux<BackendMessage>> receiver = this.responseReceivers.poll();
                 if (receiver != null) {
@@ -218,7 +166,74 @@ public final class ReactorNettyClient implements Client {
             })
             .subscribe();
 
-        this.connection.set(connection);
+        request
+            .onErrorResume(throwable -> {
+                logger.error("Connection Error", throwable);
+                return close();
+            })
+            .subscribe();
+    }
+
+    private void handleResponse(BackendMessage message, SynchronousSink<BackendMessage> sink) {
+
+        if (DEBUG_ENABLED) {
+            logger.debug("Response: {}", message);
+        }
+
+        if (message.getClass() == NoticeResponse.class) {
+            logger.warn("Notice: {}", toString(((NoticeResponse) message).getFields()));
+            return;
+        }
+
+        if (message.getClass() == BackendKeyData.class) {
+
+            BackendKeyData backendKeyData = (BackendKeyData) message;
+
+            this.processId = backendKeyData.getProcessId();
+            this.secretKey = backendKeyData.getSecretKey();
+            return;
+        }
+
+        if (message.getClass() == ErrorResponse.class) {
+            logger.warn("Error: {}", toString(((ErrorResponse) message).getFields()));
+        }
+
+        if (message.getClass() == ParameterStatus.class) {
+            handleParameterStatus((ParameterStatus) message);
+        }
+
+        if (message.getClass() == ReadyForQuery.class) {
+            this.transactionStatus = TransactionStatus.valueOf(((ReadyForQuery) message).getTransactionStatus());
+        }
+
+        if (message.getClass() == NotificationResponse.class) {
+            this.notificationProcessor.onNext((NotificationResponse) message);
+            return;
+        }
+
+        sink.next(message);
+    }
+
+    private void handleParameterStatus(ParameterStatus message) {
+
+        Version existingVersion = this.version;
+
+        String versionString = existingVersion.getVersion();
+        int versionNum = existingVersion.getVersionNumber();
+
+        if (message.getName().equals("server_version_num")) {
+            versionNum = Integer.parseInt(message.getValue());
+        }
+
+        if (message.getName().equals("server_version")) {
+            versionString = message.getValue();
+
+            if (versionNum == 0) {
+                versionNum = Version.parseServerVersionStr(versionString);
+            }
+        }
+
+        version = new Version(versionString, versionNum);
     }
 
     /**
@@ -276,24 +291,22 @@ public final class ReactorNettyClient implements Client {
     @Override
     public Mono<Void> close() {
         return Mono.defer(() -> {
-            Connection connection = this.connection.getAndSet(null);
 
-            if (connection == null) {
-                return Mono.empty();
-            }
+            if (this.isClosed.compareAndSet(false, true)) {
 
-            if (!connection.channel().isOpen()) {
+                if (!connection.channel().isOpen()) {
                 this.isClosed.set(true);
                 return connection.onDispose();
+            }return Flux.just(Terminate.INSTANCE)
+                    .doOnNext(message -> logger.debug("Request:  {}", message))
+                    .concatMap(message -> connection.outbound().send(message.encode(connection.outbound().alloc())))
+                    .then()
+                    .doOnSuccess(v -> connection.dispose())
+                    .then(connection.onDispose())
+                    .doOnSuccess(v -> this.isClosed.set(true));
             }
 
-            return Flux.just(Terminate.INSTANCE)
-                .doOnNext(message -> this.logger.debug("Request:  {}", message))
-                .concatMap(message -> connection.outbound().send(message.encode(connection.outbound().alloc())))
-                .then()
-                .doOnSuccess(v -> connection.dispose())
-                .then(connection.onDispose())
-                .doOnSuccess(v -> this.isClosed.set(true));
+            return Mono.empty();
         });
     }
 
@@ -328,27 +341,27 @@ public final class ReactorNettyClient implements Client {
 
     @Override
     public ByteBufAllocator getByteBufAllocator() {
-        return this.byteBufAllocator.get();
+        return this.byteBufAllocator;
     }
 
     @Override
     public Optional<Integer> getProcessId() {
-        return Optional.ofNullable(this.processId.get());
+        return Optional.ofNullable(this.processId);
     }
 
     @Override
     public Optional<Integer> getSecretKey() {
-        return Optional.ofNullable(this.secretKey.get());
+        return Optional.ofNullable(this.secretKey);
     }
 
     @Override
     public TransactionStatus getTransactionStatus() {
-        return this.transactionStatus.get();
+        return this.transactionStatus;
     }
 
     @Override
     public Version getVersion() {
-        return this.version.get();
+        return this.version;
     }
 
     @Override
@@ -357,7 +370,7 @@ public final class ReactorNettyClient implements Client {
             return false;
         }
 
-        Channel channel = this.connection.get().channel();
+        Channel channel = this.connection.channel();
         return channel.isOpen();
     }
 
@@ -378,9 +391,13 @@ public final class ReactorNettyClient implements Client {
     }
 
     private static String toString(List<Field> fields) {
-        return fields.stream()
-            .map(field -> String.format("%s=%s", field.getType().name(), field.getValue()))
-            .collect(Collectors.joining(", "));
+
+        StringJoiner joiner = new StringJoiner(", ");
+        for (Field field : fields) {
+            joiner.add(field.getType().name() + "=" + field.getValue());
+        }
+
+        return joiner.toString();
     }
 
     private static final class EnsureSubscribersCompleteChannelHandler extends ChannelDuplexHandler {
