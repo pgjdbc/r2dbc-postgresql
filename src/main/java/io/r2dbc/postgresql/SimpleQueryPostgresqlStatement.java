@@ -19,6 +19,7 @@ package io.r2dbc.postgresql;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.SimpleQueryMessageFlow;
 import io.r2dbc.postgresql.codec.Codecs;
+import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.EmptyQueryResponse;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
@@ -27,10 +28,14 @@ import io.r2dbc.postgresql.util.GeneratedValuesUtils;
 import reactor.core.publisher.Flux;
 import reactor.util.annotation.Nullable;
 
+import java.util.function.Predicate;
+
 import static io.r2dbc.postgresql.client.ExtendedQueryMessageFlow.PARAMETER_SYMBOL;
 import static io.r2dbc.postgresql.util.PredicateUtils.or;
 
 final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
+
+    private static final Predicate<BackendMessage> WINDOW_UNTIL = or(CommandComplete.class::isInstance, EmptyQueryResponse.class::isInstance, ErrorResponse.class::isInstance);
 
     private final Client client;
 
@@ -121,7 +126,7 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
         return SimpleQueryMessageFlow
             .exchange(this.client, sql)
             .handle(factory::handleErrorResponse)
-            .windowUntil(or(CommandComplete.class::isInstance, EmptyQueryResponse.class::isInstance, ErrorResponse.class::isInstance))
+            .windowUntil(WINDOW_UNTIL)
             .map(dataRow -> PostgresqlResult.toResult(this.codecs, dataRow));
     }
 

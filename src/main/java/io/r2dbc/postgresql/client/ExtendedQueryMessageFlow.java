@@ -54,6 +54,8 @@ public final class ExtendedQueryMessageFlow {
      */
     public static final Pattern PARAMETER_SYMBOL = Pattern.compile("\\$([\\d]+)", Pattern.DOTALL);
 
+    private static final Predicate<BackendMessage> TAKE_UNTIL = or(RowDescription.class::isInstance, NoData.class::isInstance);
+
     private ExtendedQueryMessageFlow() {
     }
 
@@ -96,7 +98,7 @@ public final class ExtendedQueryMessageFlow {
         Assert.requireNonNull(types, "types must not be null");
 
         return client.exchange(Flux.just(new Parse(name, types, query), new Describe(name, STATEMENT), Sync.INSTANCE))
-            .takeUntil(or(RowDescription.class::isInstance, NoData.class::isInstance));
+            .takeUntil(TAKE_UNTIL);
     }
 
     private static Collection<Format> resultFormat(boolean forceBinary) {

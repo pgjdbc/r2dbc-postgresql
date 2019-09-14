@@ -27,11 +27,11 @@ import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
-import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.function.BiFunction;
+import java.util.function.Predicate;
 
 import static io.r2dbc.postgresql.util.PredicateUtils.or;
 
@@ -40,74 +40,25 @@ import static io.r2dbc.postgresql.util.PredicateUtils.or;
  */
 public final class PostgresqlResult implements Result {
 
+    private static final Predicate<BackendMessage> TAKE_UNTIL = or(CommandComplete.class::isInstance, EmptyQueryResponse.class::isInstance, PortalSuspended.class::isInstance);
+
     private final Codecs codecs;
 
-    private final Mono<PostgresqlRowMetadata> rowMetadata;
+    private final Flux<BackendMessage> messages;
 
-    private final Flux<PostgresqlRow> rows;
+    private volatile PostgresqlRowMetadata metadata;
 
-    private final Mono<Integer> rowsUpdated;
+    private volatile RowDescription rowDescription;
 
-    PostgresqlResult(Codecs codecs, Mono<PostgresqlRowMetadata> rowMetadata, Flux<PostgresqlRow> rows, Mono<Integer> rowsUpdated) {
+    PostgresqlResult(Codecs codecs, Flux<BackendMessage> messages) {
         this.codecs = Assert.requireNonNull(codecs, "codecs must not be null");
-        this.rowMetadata = Assert.requireNonNull(rowMetadata, "rowMetadata must not be null");
-        this.rows = Assert.requireNonNull(rows, "rows must not be null");
-        this.rowsUpdated = Assert.requireNonNull(rowsUpdated, "rowsUpdated must not be null");
+        this.messages = Assert.requireNonNull(messages, "messages must not be null");
     }
 
     @Override
     public Mono<Integer> getRowsUpdated() {
-        return this.rowsUpdated;
-    }
 
-    @Override
-    public <T> Flux<T> map(BiFunction<Row, RowMetadata, ? extends T> f) {
-        Assert.requireNonNull(f, "f must not be null");
-
-        return this.rows
-            .zipWith(this.rowMetadata.repeat())
-            .map(tuple -> {
-                try {
-                    return f.apply(tuple.getT1(), tuple.getT2());
-                } finally {
-                    tuple.getT1().release();
-                }
-            });
-    }
-
-    @Override
-    public String toString() {
-        return "PostgresqlResult{" +
-            "codecs=" + this.codecs +
-            ", rowMetadata=" + this.rowMetadata +
-            ", rows=" + this.rows +
-            ", rowsUpdated=" + this.rowsUpdated +
-            '}';
-    }
-
-    static PostgresqlResult toResult(Codecs codecs, Flux<BackendMessage> messages) {
-        Assert.requireNonNull(codecs, "codecs must not be null");
-        Assert.requireNonNull(messages, "messages must not be null");
-
-        EmitterProcessor<BackendMessage> processor = EmitterProcessor.create(false);
-        Flux<BackendMessage> firstMessages = processor.take(3).cache();
-
-        Mono<RowDescription> rowDescription = firstMessages
-            .ofType(RowDescription.class)
-            .singleOrEmpty()
-            .cache();
-
-        Mono<PostgresqlRowMetadata> rowMetadata = rowDescription
-            .map(d -> PostgresqlRowMetadata.toRowMetadata(codecs, d));
-
-        Flux<PostgresqlRow> rows = processor
-            .startWith(firstMessages)
-            .takeUntil(or(CommandComplete.class::isInstance, EmptyQueryResponse.class::isInstance, PortalSuspended.class::isInstance))
-            .ofType(DataRow.class)
-            .zipWith(rowDescription.repeat())
-            .map(tuple -> PostgresqlRow.toRow(codecs, tuple.getT1(), tuple.getT2()));
-
-        Mono<Integer> rowsUpdated = firstMessages
+        return messages
             .ofType(CommandComplete.class)
             .singleOrEmpty()
             .handle((commandComplete, sink) -> {
@@ -118,12 +69,46 @@ public final class PostgresqlResult implements Result {
                     sink.complete();
                 }
             });
+    }
 
-        messages
-            .hide()
-            .subscribe(processor);
+    @Override
+    public <T> Flux<T> map(BiFunction<Row, RowMetadata, ? extends T> f) {
+        Assert.requireNonNull(f, "f must not be null");
 
-        return new PostgresqlResult(codecs, rowMetadata, rows, rowsUpdated);
+        return messages.takeUntil(TAKE_UNTIL)
+            .handle((message, sink) -> {
+
+                if (message instanceof RowDescription) {
+                    this.rowDescription = (RowDescription) message;
+                    this.metadata = PostgresqlRowMetadata.toRowMetadata(codecs, (RowDescription) message);
+                    return;
+                }
+
+                if (message instanceof DataRow) {
+                    PostgresqlRow row = PostgresqlRow.toRow(codecs, (DataRow) message, this.rowDescription);
+
+                    try {
+                        sink.next(f.apply(row, this.metadata));
+                    } finally {
+                        row.release();
+                    }
+                }
+            });
+    }
+
+    @Override
+    public String toString() {
+        return "PostgresqlResult{" +
+            "codecs=" + this.codecs +
+            ", messages=" + this.messages +
+            '}';
+    }
+
+    static PostgresqlResult toResult(Codecs codecs, Flux<BackendMessage> messages) {
+        Assert.requireNonNull(codecs, "codecs must not be null");
+        Assert.requireNonNull(messages, "messages must not be null");
+
+        return new PostgresqlResult(codecs, messages);
     }
 
 }
