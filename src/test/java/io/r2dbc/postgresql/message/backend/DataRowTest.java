@@ -16,9 +16,8 @@
 
 package io.r2dbc.postgresql.message.backend;
 
+import io.netty.buffer.ByteBuf;
 import org.junit.jupiter.api.Test;
-
-import java.util.Collections;
 
 import static io.r2dbc.postgresql.message.backend.BackendMessageAssert.assertThat;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
@@ -28,7 +27,7 @@ final class DataRowTest {
 
     @Test
     void constructorNoColumns() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new DataRow(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new DataRow((ByteBuf[]) null))
             .withMessage("columns must not be null");
     }
 
@@ -39,7 +38,7 @@ final class DataRowTest {
                 .writeShort(1)
                 .writeInt(4)
                 .writeInt(100))
-            .isEqualTo(new DataRow(Collections.singletonList(TEST.buffer(4).writeInt(100))));
+            .isEqualTo(new DataRow(TEST.buffer(4).writeInt(100)));
     }
 
     @Test
@@ -48,7 +47,7 @@ final class DataRowTest {
             .decoded(buffer -> buffer
                 .writeShort(1)
                 .writeInt(-1))
-            .isEqualTo(new DataRow(Collections.singletonList(null)));
+            .isEqualTo(new DataRow(new ByteBuf[]{null}));
     }
 
 }

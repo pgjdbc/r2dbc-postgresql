@@ -32,7 +32,7 @@ import static io.r2dbc.postgresql.message.backend.BackendMessageUtils.getEnvelop
 /**
  * Envelope decoder for inbound {@link BackendMessage}s.
  */
-public final class BackendMessageEnvelopeDecoder implements Function<ByteBuf, Publisher<CompositeByteBuf>> {
+public final class BackendMessageEnvelopeDecoder implements Function<ByteBuf, Publisher<ByteBuf>> {
 
     private final CompositeByteBuf byteBuf;
 
@@ -51,15 +51,15 @@ public final class BackendMessageEnvelopeDecoder implements Function<ByteBuf, Pu
      * @return a {@link Flux} of {@link BackendMessage}s
      */
     @Override
-    public Flux<CompositeByteBuf> apply(ByteBuf in) {
+    public Flux<ByteBuf> apply(ByteBuf in) {
         Assert.requireNonNull(in, "in must not be null");
 
         this.byteBuf.addComponent(true, in);
         this.byteBuf.retain();
 
-        return Flux.<CompositeByteBuf>create(sink -> {
+        return Flux.<ByteBuf>create(sink -> {
             try {
-                CompositeByteBuf envelope = getEnvelope(this.byteBuf);
+                ByteBuf envelope = getEnvelope(this.byteBuf);
                 while (envelope != null) {
                     sink.next(envelope);
                     envelope = getEnvelope(this.byteBuf);

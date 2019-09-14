@@ -28,20 +28,14 @@ final class PostgresqlColumnMetadataTest {
 
     @Test
     void constructorNoName() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlColumnMetadata(Object.class, null, 200, (short) 100))
-            .withMessage("name must not be null");
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlColumnMetadata(null, null))
+            .withMessage("codecs must not be null");
     }
 
     @Test
     void constructorNoNativeType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlColumnMetadata(Object.class, "test-name", null, (short) 100))
-            .withMessage("nativeType must not be null");
-    }
-
-    @Test
-    void constructorNoPrecision() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlColumnMetadata(Object.class, "test-name", 200, null))
-            .withMessage("precision must not be null");
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlColumnMetadata(MockCodecs.empty(), null))
+            .withMessage("field must not be null");
     }
 
     @Test

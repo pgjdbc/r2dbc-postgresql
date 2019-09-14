@@ -104,7 +104,7 @@ final class BackendMessageEnvelopeDecoderTest {
         return envelope;
     }
 
-    private void testSplit(Consumer<StepVerifier.FirstStep<CompositeByteBuf>> stepConsumer, ByteBuf... bufs) {
+    private void testSplit(Consumer<StepVerifier.FirstStep<ByteBuf>> stepConsumer, ByteBuf... bufs) {
         BackendMessageEnvelopeDecoder splitter = new BackendMessageEnvelopeDecoder(TEST);
 
         stepConsumer.accept(Flux.just(bufs)

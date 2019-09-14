@@ -20,9 +20,7 @@ import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.Arrays;
 
 /**
  * The DataRow message.
@@ -31,7 +29,7 @@ public final class DataRow implements BackendMessage {
 
     private static final int NULL = -1;
 
-    private final List<ByteBuf> columns;
+    private final ByteBuf[] columns;
 
     /**
      * Creates a new message.
@@ -39,7 +37,7 @@ public final class DataRow implements BackendMessage {
      * @param columns the values of the columns
      * @throws IllegalArgumentException if {@code columns} is {@code null}
      */
-    public DataRow(List<ByteBuf> columns) {
+    public DataRow(ByteBuf... columns) {
         this.columns = Assert.requireNonNull(columns, "columns must not be null");
 
         for (ByteBuf column : this.columns) {
@@ -58,7 +56,7 @@ public final class DataRow implements BackendMessage {
             return false;
         }
         DataRow dataRow = (DataRow) o;
-        return Objects.equals(this.columns, dataRow.columns);
+        return Arrays.equals(this.columns, dataRow.columns);
     }
 
     /**
@@ -66,13 +64,13 @@ public final class DataRow implements BackendMessage {
      *
      * @return the values of the columns
      */
-    public List<ByteBuf> getColumns() {
-        return columns;
+    public ByteBuf[] getColumns() {
+        return this.columns;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.columns);
+        return Arrays.hashCode(this.columns);
     }
 
     /**
@@ -89,7 +87,7 @@ public final class DataRow implements BackendMessage {
     @Override
     public String toString() {
         return "DataRow{" +
-            "columns=" + this.columns +
+            "columns=" + Arrays.toString(this.columns) +
             '}';
     }
 
@@ -97,10 +95,10 @@ public final class DataRow implements BackendMessage {
         Assert.requireNonNull(in, "in must not be null");
 
         int columnCount = in.readShort();
-        List<ByteBuf> columns = new ArrayList<>(columnCount);
+        ByteBuf[] columns = new ByteBuf[columnCount];
 
         for (int i = 0; i < columnCount; i++) {
-            columns.add(decodeColumn(in));
+            columns[i] = decodeColumn(in);
         }
         return new DataRow(columns);
     }

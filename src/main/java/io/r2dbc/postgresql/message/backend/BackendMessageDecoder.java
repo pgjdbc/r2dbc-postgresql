@@ -186,19 +186,29 @@ public final class BackendMessageDecoder {
         READY_FOR_QUERY('Z'),
         ROW_DESCRIPTION('T');
 
-        private final char discriminator;
+        private static final MessageType CACHE[] = new MessageType[Math.abs(Byte.MIN_VALUE) + Byte.MAX_VALUE];
+
+        static {
+
+            for (MessageType messageType : values()) {
+                CACHE[Math.abs(Byte.MIN_VALUE) + (byte) messageType.discriminator] = messageType;
+            }
+        }
 
         MessageType(char discriminator) {
             this.discriminator = discriminator;
         }
 
+        private final char discriminator;
+
         static MessageType valueOf(byte b) {
-            for (MessageType messageType : values()) {
-                if (messageType.discriminator == b) {
-                    return messageType;
-                }
+
+            MessageType messageType = CACHE[Math.abs(Byte.MIN_VALUE) + b];
+            if (messageType == null) {
+                throw new IllegalArgumentException(String.format("%c is not a valid message type", b));
             }
-            throw new IllegalArgumentException(String.format("%c is not a valid message type", b));
+
+            return messageType;
         }
 
     }

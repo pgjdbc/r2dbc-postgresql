@@ -16,7 +16,7 @@
 
 package io.r2dbc.postgresql;
 
-import io.r2dbc.postgresql.PostgresqlRow.Column;
+import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.codec.MockCodecs;
 import io.r2dbc.postgresql.message.backend.DataRow;
 import io.r2dbc.postgresql.message.backend.RowDescription;
@@ -35,22 +35,24 @@ import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 
 final class PostgresqlRowTest {
 
-    private final List<Column> columns = Arrays.asList(
-        new Column(TEST.buffer(4).writeInt(100), 200, FORMAT_BINARY, "test-name-1"),
-        new Column(TEST.buffer(4).writeInt(300), 400, FORMAT_TEXT, "test-name-2"),
-        new Column(null, 400, FORMAT_TEXT, "test-name-3")
+    private final List<RowDescription.Field> columns = Arrays.asList(
+        new RowDescription.Field((short) 100, 200, 300, (short) 400, FORMAT_BINARY, "test-name-1", 500),
+        new RowDescription.Field((short) 300, 400, 300, (short) 400, FORMAT_TEXT, "test-name-2", 500),
+        new RowDescription.Field((short) 400, 400, 300, (short) 400, FORMAT_TEXT, "test-name-3", 500)
     );
+
+    private final ByteBuf[] data = new ByteBuf[]{TEST.buffer(4).writeInt(100), TEST.buffer(4).writeInt(300), null};
 
     @Test
     void constructorNoCodecs() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRow(null, Collections.emptyList()))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRow(null, Collections.emptyList(), null))
             .withMessage("codecs must not be null");
     }
 
     @Test
     void constructorNoColumns() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRow(MockCodecs.empty(), null))
-            .withMessage("columns must not be null");
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRow(MockCodecs.empty(), null, null))
+            .withMessage("fields must not be null");
     }
 
     @Test
@@ -61,7 +63,7 @@ final class PostgresqlRowTest {
             .decoding(TEST.buffer(4).writeInt(300), 400, FORMAT_TEXT, Object.class, value)
             .build();
 
-        PostgresqlRow row = new PostgresqlRow(codecs, this.columns);
+        PostgresqlRow row = new PostgresqlRow(codecs, this.columns, new ByteBuf[0]);
         row.release();
 
         assertThatIllegalStateException().isThrownBy(() -> row.get("test-name-2", Object.class))
@@ -76,7 +78,7 @@ final class PostgresqlRowTest {
             .decoding(TEST.buffer(4).writeInt(300), 400, FORMAT_TEXT, Object.class, value)
             .build();
 
-        assertThat(new PostgresqlRow(codecs, this.columns).get("test-name-2")).isSameAs(value);
+        assertThat(new PostgresqlRow(codecs, this.columns, this.data).get("test-name-2")).isSameAs(value);
     }
 
     @Test
@@ -87,18 +89,18 @@ final class PostgresqlRowTest {
             .decoding(TEST.buffer(4).writeInt(300), 400, FORMAT_TEXT, Object.class, value)
             .build();
 
-        assertThat(new PostgresqlRow(codecs, this.columns).get(1, Object.class)).isSameAs(value);
+        assertThat(new PostgresqlRow(codecs, this.columns, this.data).get(1, Object.class)).isSameAs(value);
     }
 
     @Test
     void getInvalidIndex() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRow(MockCodecs.empty(), this.columns).get(3, Object.class))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRow(MockCodecs.empty(), this.columns, new ByteBuf[0]).get(3, Object.class))
             .withMessage("Column index 3 is larger than the number of columns 3");
     }
 
     @Test
     void getInvalidName() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRow(MockCodecs.empty(), this.columns).get("test-name-4", Object.class))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRow(MockCodecs.empty(), this.columns, new ByteBuf[0]).get("test-name-4", Object.class))
             .withMessageMatching("Column name 'test-name-4' does not exist in column names \\[test-name-[\\d], test-name-[\\d], test-name-[\\d]\\]");
     }
 
@@ -110,18 +112,18 @@ final class PostgresqlRowTest {
             .decoding(TEST.buffer(4).writeInt(300), 400, FORMAT_TEXT, Object.class, value)
             .build();
 
-        assertThat(new PostgresqlRow(codecs, this.columns).get("test-name-2", Object.class)).isSameAs(value);
+        assertThat(new PostgresqlRow(codecs, this.columns, this.data).get("test-name-2", Object.class)).isSameAs(value);
     }
 
     @Test
     void getNoIdentifier() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRow(MockCodecs.empty(), this.columns).get(null, Object.class))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRow(MockCodecs.empty(), this.columns, new ByteBuf[0]).get(null, Object.class))
             .withMessage("name must not be null");
     }
 
     @Test
     void getNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRow(MockCodecs.empty(), this.columns).get("", null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRow(MockCodecs.empty(), this.columns, new ByteBuf[0]).get("", null))
             .withMessage("type must not be null");
     }
 
@@ -131,7 +133,7 @@ final class PostgresqlRowTest {
             .decoding(null, 400, FORMAT_TEXT, Object.class, null)
             .build();
 
-        assertThat(new PostgresqlRow(codecs, this.columns).get("test-name-3", Object.class)).isNull();
+        assertThat(new PostgresqlRow(codecs, this.columns, this.data).get("test-name-3", Object.class)).isNull();
     }
 
     @Test
@@ -142,7 +144,7 @@ final class PostgresqlRowTest {
             .decoding(TEST.buffer(4).writeInt(100), 300, FORMAT_TEXT, Object.class, value)
             .build();
 
-        PostgresqlRow row = PostgresqlRow.toRow(codecs, new DataRow(Collections.singletonList(TEST.buffer(4).writeInt(100))),
+        PostgresqlRow row = PostgresqlRow.toRow(codecs, new DataRow(TEST.buffer(4).writeInt(100)),
             new RowDescription(Collections.singletonList(new RowDescription.Field((short) 200, 300, (short) 400, (short) 500, FORMAT_TEXT, "test-name-1", 600))));
 
         assertThat(row.get(0, Object.class)).isSameAs(value);
@@ -150,7 +152,7 @@ final class PostgresqlRowTest {
 
     @Test
     void toRowNoCodecs() {
-        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlRow.toRow(null, new DataRow(Collections.singletonList(TEST.buffer(4).writeInt(100))),
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlRow.toRow(null, new DataRow(TEST.buffer(4).writeInt(100)),
             new RowDescription(Collections.emptyList())))
             .withMessage("codecs must not be null");
     }
@@ -163,7 +165,7 @@ final class PostgresqlRowTest {
 
     @Test
     void toRowNoRowDescription() {
-        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlRow.toRow(MockCodecs.empty(), new DataRow(Collections.singletonList(TEST.buffer(4).writeInt(100))), null))
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlRow.toRow(MockCodecs.empty(), new DataRow(TEST.buffer(4).writeInt(100)), null))
             .withMessage("rowDescription must not be null");
     }
 

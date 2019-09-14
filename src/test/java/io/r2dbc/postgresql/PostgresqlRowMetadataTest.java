@@ -34,8 +34,8 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 final class PostgresqlRowMetadataTest {
 
     private final List<PostgresqlColumnMetadata> columnMetadatas = Arrays.asList(
-        new PostgresqlColumnMetadata(String.class, "test-name-2", 400, (short) 300),
-        new PostgresqlColumnMetadata(Integer.class, "test-name-1", 200, (short) 100)
+        new PostgresqlColumnMetadata(MockCodecs.empty(), "test-name-2", 400, (short) 300),
+        new PostgresqlColumnMetadata(MockCodecs.empty(), "test-name-1", 200, (short) 100)
     );
 
     @Test
@@ -47,7 +47,7 @@ final class PostgresqlRowMetadataTest {
     @Test
     void getColumnMetadataIndex() {
         assertThat(new PostgresqlRowMetadata(this.columnMetadatas).getColumnMetadata(0))
-            .isEqualTo(new PostgresqlColumnMetadata(String.class, "test-name-2", 400, (short) 300));
+            .isEqualTo(new PostgresqlColumnMetadata(MockCodecs.empty(), "test-name-2", 400, (short) 300));
     }
 
     @Test
@@ -65,7 +65,7 @@ final class PostgresqlRowMetadataTest {
     @Test
     void getColumnMetadataName() {
         assertThat(new PostgresqlRowMetadata(this.columnMetadatas).getColumnMetadata("test-name-2"))
-            .isEqualTo(new PostgresqlColumnMetadata(String.class, "test-name-2", 400, (short) 300));
+            .isEqualTo(new PostgresqlColumnMetadata(MockCodecs.empty(), "test-name-2", 400, (short) 300));
     }
 
     @Test

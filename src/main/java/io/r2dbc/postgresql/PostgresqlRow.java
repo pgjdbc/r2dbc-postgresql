@@ -18,7 +18,6 @@ package io.r2dbc.postgresql;
 
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.codec.Codecs;
-import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.message.backend.DataRow;
 import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.postgresql.util.Assert;
@@ -27,10 +26,7 @@ import reactor.util.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * An implementation of {@link Row} for a PostgreSQL database.
@@ -39,16 +35,16 @@ public final class PostgresqlRow implements Row {
 
     private final Codecs codecs;
 
-    private final List<Column> columns;
+    private final List<RowDescription.Field> fields;
 
-    private final AtomicBoolean isReleased = new AtomicBoolean(false);
+    private final ByteBuf[] data;
 
-    private final Map<String, Column> nameKeyedColumns;
+    private volatile boolean isReleased = false;
 
-    PostgresqlRow(Codecs codecs, List<Column> columns) {
+    PostgresqlRow(Codecs codecs, List<RowDescription.Field> fields, ByteBuf[] data) {
         this.codecs = Assert.requireNonNull(codecs, "codecs must not be null");
-        this.columns = Assert.requireNonNull(columns, "columns must not be null");
-        this.nameKeyedColumns = getNameKeyedColumns(this.columns);
+        this.fields = Assert.requireNonNull(fields, "fields must not be null");
+        this.data = Assert.requireNonNull(data, "data must not be null");
     }
 
     @Override
@@ -60,7 +56,7 @@ public final class PostgresqlRow implements Row {
             return false;
         }
         PostgresqlRow that = (PostgresqlRow) o;
-        return Objects.equals(this.columns, that.columns);
+        return Objects.equals(this.fields, that.fields);
     }
 
     @Nullable
@@ -83,15 +79,16 @@ public final class PostgresqlRow implements Row {
     }
 
     @Nullable
-    private <T> T decode(Column column, Class<T> type) {
-        ByteBuf data = column.getByteBuf();
+    private <T> T decode(int index, Class<T> type) {
+        ByteBuf data = this.data[index];
         if (data == null) {
             return null;
         }
 
         int readerIndex = data.readerIndex();
         try {
-            return this.codecs.decode(data, column.getDataType(), column.getFormat(), type);
+            RowDescription.Field field = this.fields.get(index);
+            return this.codecs.decode(data, field.getDataType(), field.getFormat(), type);
         } finally {
             data.readerIndex(readerIndex);
         }
@@ -99,16 +96,15 @@ public final class PostgresqlRow implements Row {
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.columns);
+        return Objects.hash(this.fields);
     }
 
     @Override
     public String toString() {
         return "PostgresqlRow{" +
             "codecs=" + this.codecs +
-            ", columns=" + this.columns +
+            ", columns=" + this.fields +
             ", isReleased=" + this.isReleased +
-            ", nameKeyedColumns=" + this.nameKeyedColumns +
             '}';
     }
 
@@ -117,134 +113,53 @@ public final class PostgresqlRow implements Row {
         Assert.requireNonNull(dataRow, "dataRow must not be null");
         Assert.requireNonNull(rowDescription, "rowDescription must not be null");
 
-        List<Column> columns = getColumns(dataRow.getColumns(), rowDescription.getFields());
-        dataRow.release();
-
-        return new PostgresqlRow(codecs, columns);
+        return new PostgresqlRow(codecs, rowDescription.getFields(), dataRow.getColumns());
     }
 
     void release() {
-        this.columns.forEach(Column::release);
-        this.isReleased.set(true);
-    }
 
-    private static List<Column> getColumns(List<ByteBuf> byteBufs, List<RowDescription.Field> fields) {
-        List<Column> columns = new ArrayList<>(byteBufs.size());
-
-        for (int i = 0; i < byteBufs.size(); i++) {
-            ByteBuf byteBuf = byteBufs.get(i);
-            RowDescription.Field field = fields.get(i);
-
-            columns.add(new Column(byteBuf, field.getDataType(), field.getFormat(), field.getName()));
+        for (ByteBuf datum : this.data) {
+            if (datum != null) {
+                datum.release();
+            }
         }
-
-        return columns;
+        this.isReleased = true;
     }
 
-    private Column getColumn(String name) {
-        if (!this.nameKeyedColumns.containsKey(name)) {
-            throw new IllegalArgumentException(String.format("Column name '%s' does not exist in column names %s", name, this.nameKeyedColumns.keySet()));
-        }
+    private int getColumn(String name) {
+        for (int i = 0; i < this.fields.size(); i++) {
+            RowDescription.Field field = this.fields.get(i);
 
-        return this.nameKeyedColumns.get(name);
-    }
-
-    private Column getColumn(Integer index) {
-        if (index >= this.columns.size()) {
-            throw new IllegalArgumentException(String.format("Column index %d is larger than the number of columns %d", index, this.columns.size()));
-        }
-
-        return this.columns.get(index);
-    }
-
-    private Map<String, Column> getNameKeyedColumns(List<Column> columns) {
-        Map<String, Column> nameKeyedColumns = new TreeMap<>(Collator.IGNORE_CASE_COMPARATOR);
-
-        for (Column column : columns) {
-            if (!nameKeyedColumns.containsKey(column.getName())) {
-                nameKeyedColumns.put(column.getName(), column);
+            if (field.getName().equalsIgnoreCase(name)) {
+                return i;
             }
         }
 
-        return nameKeyedColumns;
+        throw new IllegalArgumentException(String.format("Column name '%s' does not exist in column names %s", name, toColumnNames()));
+    }
+
+    private List<String> toColumnNames() {
+        List<String> names = new ArrayList<>(this.fields.size());
+
+        for (RowDescription.Field field : this.fields) {
+            names.add(field.getName());
+        }
+
+        return names;
+    }
+
+    private int getColumn(int index) {
+        if (index >= this.fields.size()) {
+            throw new IllegalArgumentException(String.format("Column index %d is larger than the number of columns %d", index, this.fields.size()));
+        }
+
+        return index;
     }
 
     private void requireNotReleased() {
-        if (this.isReleased.get()) {
+        if (this.isReleased) {
             throw new IllegalStateException("Value cannot be retrieved after row has been released");
         }
-    }
-
-    static final class Column {
-
-        private final ByteBuf byteBuf;
-
-        private final Integer dataType;
-
-        private final Format format;
-
-        private final String name;
-
-        Column(@Nullable ByteBuf byteBuf, Integer dataType, Format format, String name) {
-            this.byteBuf = byteBuf == null ? null : byteBuf.retain();
-            this.dataType = Assert.requireNonNull(dataType, "dataType must not be null");
-            this.format = Assert.requireNonNull(format, "format must not be null");
-            this.name = Assert.requireNonNull(name, "name must not be null");
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            Column that = (Column) o;
-            return Objects.equals(this.byteBuf, that.byteBuf) &&
-                Objects.equals(this.dataType, that.dataType) &&
-                this.format == that.format &&
-                Objects.equals(this.name, that.name);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(this.byteBuf, this.dataType, this.format, this.name);
-        }
-
-        @Override
-        public String toString() {
-            return "Column{" +
-                "byteBuf=" + this.byteBuf +
-                ", dataType=" + this.dataType +
-                ", format=" + this.format +
-                ", name='" + this.name + '\'' +
-                '}';
-        }
-
-        @Nullable
-        private ByteBuf getByteBuf() {
-            return this.byteBuf;
-        }
-
-        private Integer getDataType() {
-            return this.dataType;
-        }
-
-        private Format getFormat() {
-            return this.format;
-        }
-
-        private String getName() {
-            return this.name;
-        }
-
-        private void release() {
-            if (this.byteBuf != null) {
-                this.byteBuf.release();
-            }
-        }
-
     }
 
 }

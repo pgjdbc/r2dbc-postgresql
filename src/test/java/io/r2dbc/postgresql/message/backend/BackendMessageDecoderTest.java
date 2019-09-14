@@ -183,7 +183,7 @@ final class BackendMessageDecoderTest {
             .writeShort(1)
             .writeInt(4)
             .writeInt(100));
-        assertThat(message).isEqualTo(new DataRow(Collections.singletonList(TEST.buffer(4).writeInt(100))));
+        assertThat(message).isEqualTo(new DataRow(TEST.buffer(4).writeInt(100)));
         message.release();
     }
 

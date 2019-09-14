@@ -161,7 +161,7 @@ public final class ReactorNettyClient implements Client {
                     receiver.error(throwable);
                 }
                 this.requestProcessor.onComplete();
-                this.logger.error("Connection Error", throwable);
+                logger.error("Connection Error", throwable);
                 return close();
             })
             .subscribe();
@@ -295,9 +295,10 @@ public final class ReactorNettyClient implements Client {
             if (this.isClosed.compareAndSet(false, true)) {
 
                 if (!connection.channel().isOpen()) {
-                this.isClosed.set(true);
-                return connection.onDispose();
-            }return Flux.just(Terminate.INSTANCE)
+                    this.isClosed.set(true);
+                    return connection.onDispose();
+                }
+                return Flux.just(Terminate.INSTANCE)
                     .doOnNext(message -> logger.debug("Request:  {}", message))
                     .concatMap(message -> connection.outbound().send(message.encode(connection.outbound().alloc())))
                     .then()

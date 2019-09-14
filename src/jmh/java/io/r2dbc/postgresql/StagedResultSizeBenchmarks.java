@@ -78,7 +78,6 @@ public class StagedResultSizeBenchmarks extends BenchmarkSettings {
                 Statement statement = jdbc.createStatement();
 
                 statement.execute("DROP TABLE IF EXISTS result_sizes");
-
                 statement.execute("CREATE TABLE result_sizes (id int, name VARCHAR(255))");
 
                 for (int i = 0; i < resultSize; i++) {

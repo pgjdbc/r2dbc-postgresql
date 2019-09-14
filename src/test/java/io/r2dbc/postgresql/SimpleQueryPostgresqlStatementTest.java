@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql;
 
+import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.TestClient;
 import io.r2dbc.postgresql.codec.MockCodecs;
@@ -178,11 +179,12 @@ final class SimpleQueryPostgresqlStatementTest {
 
     @Test
     void executeRowDescriptionRows() {
+        RowDescription.Field field = new RowDescription.Field((short) 100, 200, 300, (short) 400, FORMAT_TEXT, "test-name", 500);
         Client client = TestClient.builder()
             .expectRequest(new Query("test-query"))
             .thenRespond(
-                new RowDescription(Collections.singletonList(new RowDescription.Field((short) 100, 200, 300, (short) 400, FORMAT_TEXT, "test-name", 500))),
-                new DataRow(Collections.singletonList(TEST.buffer(4).writeInt(100))),
+                new RowDescription(Collections.singletonList(field)),
+                new DataRow(TEST.buffer(4).writeInt(100)),
                 new CommandComplete("test", null, null))
             .build();
 
@@ -194,7 +196,8 @@ final class SimpleQueryPostgresqlStatementTest {
             .execute()
             .flatMap(result -> result.map((row, rowMetadata) -> row))
             .as(StepVerifier::create)
-            .expectNext(new PostgresqlRow(MockCodecs.empty(), Collections.singletonList(new PostgresqlRow.Column(TEST.buffer(4).writeInt(100), 200, FORMAT_TEXT, "test-name"))))
+            .expectNext(new PostgresqlRow(MockCodecs.empty(), Collections.singletonList(field),
+                new ByteBuf[]{TEST.buffer(4).writeInt(100)}))
             .verifyComplete();
     }
 
@@ -204,7 +207,7 @@ final class SimpleQueryPostgresqlStatementTest {
             .expectRequest(new Query("test-query"))
             .thenRespond(
                 new RowDescription(Collections.singletonList(new RowDescription.Field((short) 100, 200, 300, (short) 400, FORMAT_TEXT, "test-name", 500))),
-                new DataRow(Collections.singletonList(TEST.buffer(4).writeInt(100))),
+                new DataRow(TEST.buffer(4).writeInt(100)),
                 new CommandComplete("test", null, null))
             .build();
 

@@ -85,7 +85,7 @@ final class PostgresqlResultTest {
 
     @Test
     void toResultRowDescription() {
-        PostgresqlResult result = PostgresqlResult.toResult(MockCodecs.empty(), Flux.just(new RowDescription(Collections.emptyList()), new DataRow(Collections.emptyList()), new CommandComplete
+        PostgresqlResult result = PostgresqlResult.toResult(MockCodecs.empty(), Flux.just(new RowDescription(Collections.emptyList()), new DataRow(), new CommandComplete
             ("test", null, null)));
 
         result.map((row, rowMetadata) -> row)

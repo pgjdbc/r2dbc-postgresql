@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.util;
 
 import com.zaxxer.hikari.HikariDataSource;
+import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -27,6 +28,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.MountableFile;
 import reactor.util.annotation.Nullable;
 
+import javax.sql.DataSource;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.URISyntaxException;
@@ -68,7 +70,7 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
 
     @Override
     public void afterAll(ExtensionContext context) {
-        int nesting = nestingCounter.decrementAndGet();
+        int nesting = this.nestingCounter.decrementAndGet();
         if (nesting == 0) {
             if (this.dataSource != null) {
                 this.dataSource.close();
@@ -81,7 +83,11 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
 
     @Override
     public void beforeAll(ExtensionContext context) {
-        int nesting = nestingCounter.incrementAndGet();
+        initialize();
+    }
+
+    public void initialize() {
+        int nesting = this.nestingCounter.incrementAndGet();
         if (nesting == 1) {
             if (this.useTestContainer) {
                 this.container.get().start();
@@ -110,8 +116,20 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
         return getResourcePath("client.key").toAbsolutePath().toString();
     }
 
+    public PostgresqlConnectionConfiguration.Builder configBuilder() {
+        return PostgresqlConnectionConfiguration.builder().database(getDatabase()).host(getHost()).port(getPort()).username(getUsername()).password(getPassword());
+    }
+
+    public PostgresqlConnectionConfiguration getConnectionConfiguration() {
+        return configBuilder().build();
+    }
+
     public String getDatabase() {
         return this.postgres.getDatabase();
+    }
+
+    public DataSource getDataSource() {
+        return dataSource;
     }
 
     @Nullable
