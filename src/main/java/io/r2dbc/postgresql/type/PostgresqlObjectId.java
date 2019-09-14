@@ -333,7 +333,17 @@ public enum PostgresqlObjectId {
      */
     XML_ARRAY(143);
 
+    private static final int OID_CACHE_SIZE = 4096;
+
+    private static final PostgresqlObjectId[] CACHE = new PostgresqlObjectId[OID_CACHE_SIZE];
+
     private final int objectId;
+
+    static {
+        for (PostgresqlObjectId oid : values()) {
+            CACHE[oid.getObjectId()] = oid;
+        }
+    }
 
     PostgresqlObjectId(int objectId) {
         this.objectId = objectId;
@@ -347,6 +357,17 @@ public enum PostgresqlObjectId {
      * @throws IllegalArgumentException if {@code objectId} isn't a valid object id
      */
     public static PostgresqlObjectId valueOf(int objectId) {
+
+        if (objectId >= 0 && objectId < OID_CACHE_SIZE) {
+            PostgresqlObjectId oid = CACHE[objectId];
+
+            if (oid == null) {
+                throw new IllegalArgumentException(String.format("%d is not a valid object id", objectId));
+            }
+
+            return oid;
+        }
+
         for (PostgresqlObjectId type : values()) {
             if (type.objectId == objectId) {
                 return type;

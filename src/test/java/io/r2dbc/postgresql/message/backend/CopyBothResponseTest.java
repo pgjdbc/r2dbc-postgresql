@@ -18,7 +18,7 @@ package io.r2dbc.postgresql.message.backend;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
+import java.util.EnumSet;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.backend.BackendMessageAssert.assertThat;
@@ -34,7 +34,7 @@ final class CopyBothResponseTest {
 
     @Test
     void constructorOverallFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new CopyBothResponse(Collections.singletonList(FORMAT_BINARY), null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new CopyBothResponse(EnumSet.of(FORMAT_BINARY), null))
             .withMessage("overallFormat must not be null");
     }
 
@@ -45,7 +45,7 @@ final class CopyBothResponseTest {
                 .writeByte(1)
                 .writeShort(1)
                 .writeShort(1))
-            .isEqualTo(new CopyBothResponse(Collections.singletonList(FORMAT_BINARY), FORMAT_BINARY));
+            .isEqualTo(new CopyBothResponse(EnumSet.of(FORMAT_BINARY), FORMAT_BINARY));
     }
 
 }

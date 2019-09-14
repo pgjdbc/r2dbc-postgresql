@@ -19,10 +19,9 @@ package io.r2dbc.postgresql.message.backend;
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.util.Assert;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * The ParameterDescription message.
@@ -77,10 +76,11 @@ public final class ParameterDescription implements BackendMessage {
     static ParameterDescription decode(ByteBuf in) {
         Assert.requireNonNull(in, "in must not be null");
 
-        List<Integer> parameters = IntStream.range(0, in.readShort())
-            .map(i -> in.readInt())
-            .boxed()
-            .collect(Collectors.toList());
+        int count = in.readShort();
+        List<Integer> parameters = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            parameters.add(in.readInt());
+        }
 
         return new ParameterDescription(parameters);
     }

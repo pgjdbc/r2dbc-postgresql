@@ -20,10 +20,9 @@ import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static io.r2dbc.postgresql.message.backend.BackendMessageUtils.readCStringUTF8;
 
@@ -80,9 +79,11 @@ public final class RowDescription implements BackendMessage {
     static RowDescription decode(ByteBuf in) {
         Assert.requireNonNull(in, "in must not be null");
 
-        List<Field> fields = IntStream.range(0, in.readShort())
-            .mapToObj(i -> Field.decode(in))
-            .collect(Collectors.toList());
+        int fieldCount = in.readShort();
+        List<Field> fields = new ArrayList<>(fieldCount);
+        for (int i = 0; i < fieldCount; i++) {
+            fields.add(Field.decode(in));
+        }
 
         return new RowDescription(fields);
     }

@@ -21,6 +21,7 @@ import io.netty.buffer.CompositeByteBuf;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.function.Function;
 
 import static io.netty.util.CharsetUtil.UTF_8;
@@ -143,7 +144,7 @@ final class BackendMessageDecoderTest {
             .writeByte(1)
             .writeShort(1)
             .writeShort(1));
-        assertThat(message).isEqualTo(new CopyBothResponse(Collections.singletonList(FORMAT_BINARY), FORMAT_BINARY));
+        assertThat(message).isEqualTo(new CopyBothResponse(EnumSet.of(FORMAT_BINARY), FORMAT_BINARY));
     }
 
     @Test
@@ -164,7 +165,7 @@ final class BackendMessageDecoderTest {
             .writeByte(1)
             .writeShort(1)
             .writeShort(1));
-        assertThat(message).isEqualTo(new CopyInResponse(Collections.singletonList(FORMAT_BINARY), FORMAT_BINARY));
+        assertThat(message).isEqualTo(new CopyInResponse(EnumSet.of(FORMAT_BINARY), FORMAT_BINARY));
     }
 
     @Test
@@ -173,7 +174,7 @@ final class BackendMessageDecoderTest {
             .writeByte(1)
             .writeShort(1)
             .writeShort(1));
-        assertThat(message).isEqualTo(new CopyOutResponse(Collections.singletonList(FORMAT_BINARY), FORMAT_BINARY));
+        assertThat(message).isEqualTo(new CopyOutResponse(EnumSet.of(FORMAT_BINARY), FORMAT_BINARY));
     }
 
     @Test

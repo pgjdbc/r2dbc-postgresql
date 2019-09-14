@@ -20,7 +20,7 @@ import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
  * The CopyOutResponse message.
@@ -33,7 +33,7 @@ public final class CopyOutResponse extends AbstractCopyResponse {
      * @param columnFormats the column formats
      * @param overallFormat the overall format
      */
-    public CopyOutResponse(List<Format> columnFormats, Format overallFormat) {
+    public CopyOutResponse(Collection<Format> columnFormats, Format overallFormat) {
         super(columnFormats, overallFormat);
     }
 
@@ -46,7 +46,7 @@ public final class CopyOutResponse extends AbstractCopyResponse {
         Assert.requireNonNull(in, "in must not be null");
 
         Format overallFormat = Format.valueOf(in.readByte());
-        List<Format> columnFormats = readColumnFormats(in);
+        Collection<Format> columnFormats = readColumnFormats(in);
 
         return new CopyOutResponse(columnFormats, overallFormat);
     }

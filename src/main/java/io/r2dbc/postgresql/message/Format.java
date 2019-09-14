@@ -19,6 +19,10 @@ package io.r2dbc.postgresql.message;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Set;
+
 /**
  * An enumeration of argument formats as used by {@link BackendMessage}s and {@link FrontendMessage}s.
  */
@@ -34,6 +38,12 @@ public enum Format {
      */
     FORMAT_TEXT((byte) 0);
 
+    private static final Set<Format> BINARY = Collections.unmodifiableSet(EnumSet.of(Format.FORMAT_BINARY));
+
+    private static final Set<Format> TEXT = Collections.unmodifiableSet(EnumSet.of(Format.FORMAT_BINARY));
+
+    private static final Set<Format> ALL = Collections.unmodifiableSet(EnumSet.of(Format.FORMAT_BINARY, FORMAT_TEXT));
+
     private final byte discriminator;
 
     Format(byte discriminator) {
@@ -47,12 +57,42 @@ public enum Format {
      * @return the enum constant of this type with the specified discriminator
      */
     public static Format valueOf(short s) {
-        for (Format format : values()) {
-            if (format.discriminator == s) {
-                return format;
-            }
+
+        switch (s) {
+            case 0:
+                return FORMAT_TEXT;
+            case 1:
+                return FORMAT_BINARY;
         }
+
         throw new IllegalArgumentException(String.format("%d is not a valid format", s));
+    }
+
+    /**
+     * Returns the {@link Set} for binary formats.
+     *
+     * @return the {@link Set} for binary formats.
+     */
+    public static Set<Format> binary() {
+        return BINARY;
+    }
+
+    /**
+     * Returns the {@link Set} for text formats.
+     *
+     * @return the {@link Set} for text formats.
+     */
+    public static Set<Format> text() {
+        return TEXT;
+    }
+
+    /**
+     * Returns the {@link Set} for all formats.
+     *
+     * @return the {@link Set} for all formats.
+     */
+    public static Set<Format> all() {
+        return ALL;
     }
 
     /**

@@ -39,6 +39,8 @@ public enum TransactionStatus {
      */
     OPEN(ReadyForQuery.TransactionStatus.TRANSACTION);
 
+    private static final TransactionStatus CACHE[] = values();
+
     private final ReadyForQuery.TransactionStatus discriminator;
 
     TransactionStatus(ReadyForQuery.TransactionStatus discriminator) {
@@ -48,7 +50,7 @@ public enum TransactionStatus {
     static TransactionStatus valueOf(ReadyForQuery.TransactionStatus t) {
         Assert.requireNonNull(t, "t must not be null");
 
-        for (TransactionStatus transactionStatus : values()) {
+        for (TransactionStatus transactionStatus : CACHE) {
             if (transactionStatus.discriminator == t) {
                 return transactionStatus;
             }

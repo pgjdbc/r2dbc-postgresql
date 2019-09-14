@@ -20,18 +20,18 @@ import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 
-import java.util.List;
+import java.util.Collection;
+import java.util.EnumSet;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.Set;
 
 abstract class AbstractCopyResponse implements BackendMessage {
 
-    private final List<Format> columnFormats;
+    private final Collection<Format> columnFormats;
 
     private final Format overallFormat;
 
-    AbstractCopyResponse(List<Format> columnFormats, Format overallFormat) {
+    AbstractCopyResponse(Collection<Format> columnFormats, Format overallFormat) {
         this.columnFormats = Assert.requireNonNull(columnFormats, "columnFormats must not be null");
         this.overallFormat = Assert.requireNonNull(overallFormat, "overallFormat must not be null");
     }
@@ -54,7 +54,7 @@ abstract class AbstractCopyResponse implements BackendMessage {
      *
      * @return the column formats
      */
-    public final List<Format> getColumnFormats() {
+    public final Collection<Format> getColumnFormats() {
         return this.columnFormats;
     }
 
@@ -80,12 +80,27 @@ abstract class AbstractCopyResponse implements BackendMessage {
             '}';
     }
 
-    static List<Format> readColumnFormats(ByteBuf in) {
+    static Set<Format> readColumnFormats(ByteBuf in) {
         Assert.requireNonNull(in, "in must not be null");
 
-        return IntStream.range(0, in.readShort())
-            .mapToObj(i -> Format.valueOf(in.readShort()))
-            .collect(Collectors.toList());
+        int count = in.readShort();
+
+        switch (count) {
+            case 0:
+                return EnumSet.noneOf(Format.class);
+            case 1:
+                short format = in.readShort();
+                return format == 0 ? Format.text() : Format.binary();
+            case 2:
+                return Format.all();
+            default:
+                Set<Format> formatSet = EnumSet.noneOf(Format.class);
+                for (int i = 0; i < count; i++) {
+                    formatSet.add(Format.valueOf(in.readShort()));
+                }
+
+                return formatSet;
+        }
     }
 
 }

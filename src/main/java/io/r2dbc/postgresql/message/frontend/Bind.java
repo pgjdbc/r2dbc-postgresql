@@ -24,6 +24,7 @@ import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
@@ -59,11 +60,11 @@ public final class Bind implements FrontendMessage {
 
     private final String name;
 
-    private final List<Format> parameterFormats;
+    private final Collection<Format> parameterFormats;
 
-    private final List<ByteBuf> parameters;
+    private final Collection<ByteBuf> parameters;
 
-    private final List<Format> resultFormats;
+    private final Collection<Format> resultFormats;
 
     private final String source;
 
@@ -79,7 +80,7 @@ public final class Bind implements FrontendMessage {
      * @see #UNNAMED_PORTAL
      * @see #UNNAMED_STATEMENT
      */
-    public Bind(String name, List<Format> parameterFormats, List<ByteBuf> parameters, List<Format> resultFormats, String source) {
+    public Bind(String name, List<Format> parameterFormats, List<ByteBuf> parameters, Collection<Format> resultFormats, String source) {
         this.name = Assert.requireNonNull(name, "name must not be null");
         this.parameterFormats = Assert.requireNonNull(parameterFormats, "parameterFormats must not be null");
         this.parameters = Assert.requireNonNull(parameters, "parameters must not be null");

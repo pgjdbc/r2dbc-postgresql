@@ -19,6 +19,7 @@ package io.r2dbc.postgresql.message.backend;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
+import java.util.EnumSet;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.backend.BackendMessageAssert.assertThat;
@@ -45,7 +46,7 @@ final class CopyOutResponseTest {
                 .writeByte(1)
                 .writeShort(1)
                 .writeShort(1))
-            .isEqualTo(new CopyOutResponse(Collections.singletonList(FORMAT_BINARY), FORMAT_BINARY));
+            .isEqualTo(new CopyOutResponse(EnumSet.of(FORMAT_BINARY), FORMAT_BINARY));
     }
 
 }

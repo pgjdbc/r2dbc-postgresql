@@ -21,7 +21,6 @@ import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
 import java.util.Objects;
-import java.util.stream.Stream;
 
 import static io.r2dbc.postgresql.message.backend.BackendMessageUtils.readCStringUTF8;
 
@@ -30,6 +29,8 @@ import static io.r2dbc.postgresql.message.backend.BackendMessageUtils.readCStrin
  * The CommandComplete message.
  */
 public final class CommandComplete implements BackendMessage {
+
+    private final static String[] NO_ROW_ID_TAGS = {"SELECT", "UPDATE", "DELETE", "COPY", "FETCH", "MOVE",};
 
     private final String command;
 
@@ -114,14 +115,35 @@ public final class CommandComplete implements BackendMessage {
         String tag = readCStringUTF8(in);
 
         if (tag.startsWith("INSERT")) {
-            String[] tokens = tag.split(" ");
-            return new CommandComplete(tokens[0], Integer.parseInt(tokens[1]), Integer.parseInt(tokens[2]));
-        } else if (Stream.of("COPY", "DELETE", "FETCH", "MOVE", "SELECT", "UPDATE").anyMatch(tag::startsWith)) {
-            String[] tokens = tag.split(" ");
-            return new CommandComplete(tokens[0], null, tokens.length > 1 ? Integer.parseInt(tokens[1]) : null);
+
+            int index1 = tag.indexOf(' ');
+            int index2 = tag.indexOf(' ', index1 + 1);
+            int index3 = tag.indexOf(' ', index2 + 1);
+            String command = tag.substring(0, index1);
+            String rowId = tag.substring(index1 + 1, index2);
+            String rows = tag.substring(index2 + 1, index3 != -1 ? index3 : tag.length());
+
+            return new CommandComplete(command, Integer.parseInt(rowId), Integer.parseInt(rows));
+        } else if (isNoRowId(tag)) {
+
+            int index1 = tag.indexOf(' ');
+            int index2 = tag.indexOf(' ', index1 + 1);
+            String command = tag.substring(0, index1 != -1 ? index1 : tag.length());
+            String rows = index1 != -1 ? tag.substring(index1 + 1, index2 != -1 ? index2 : tag.length()) : null;
+
+            return new CommandComplete(command, null, rows != null ? Integer.parseInt(rows) : null);
         } else {
             return new CommandComplete(tag, null, null);
         }
+    }
+
+    private static boolean isNoRowId(String tag) {
+        for (String noRowIdTag : NO_ROW_ID_TAGS) {
+            if (tag.startsWith(noRowIdTag)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

@@ -33,8 +33,10 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import static io.r2dbc.postgresql.message.frontend.Execute.NO_LIMIT;
@@ -97,9 +99,9 @@ public final class ExtendedQueryMessageFlow {
             .takeUntil(or(RowDescription.class::isInstance, NoData.class::isInstance));
     }
 
-    private static List<Format> resultFormat(boolean forceBinary) {
+    private static Collection<Format> resultFormat(boolean forceBinary) {
         if (forceBinary) {
-            return Collections.singletonList(Format.FORMAT_BINARY);
+            return Format.binary();
         } else {
             return Collections.emptyList();
         }
