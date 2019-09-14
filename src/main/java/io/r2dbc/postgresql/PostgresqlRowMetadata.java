@@ -25,10 +25,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
@@ -38,15 +36,10 @@ public final class PostgresqlRowMetadata implements RowMetadata {
 
     private final List<PostgresqlColumnMetadata> columnMetadatas;
 
-    private final Collection<String> columnNames;
-
-    private final Map<String, PostgresqlColumnMetadata> nameKeyedColumnMetadatas;
+    private volatile Collection<String> columnNames;
 
     PostgresqlRowMetadata(List<PostgresqlColumnMetadata> columnMetadatas) {
         this.columnMetadatas = Assert.requireNonNull(columnMetadatas, "columnMetadatas must not be null");
-
-        this.columnNames = getColumnNames(columnMetadatas);
-        this.nameKeyedColumnMetadatas = getNameKeyedColumnMetadatas(columnMetadatas);
     }
 
     @Override
@@ -61,11 +54,15 @@ public final class PostgresqlRowMetadata implements RowMetadata {
     @Override
     public PostgresqlColumnMetadata getColumnMetadata(String name) {
         Assert.requireNonNull(name, "name must not be null");
-        if (!this.nameKeyedColumnMetadatas.containsKey(name)) {
-            throw new IllegalArgumentException(String.format("Column name '%s' does not exist in column names %s", name, this.columnNames));
+
+        for (PostgresqlColumnMetadata metadata : this.columnMetadatas) {
+
+            if (metadata.getName().equalsIgnoreCase(name)) {
+                return metadata;
+            }
         }
 
-        return this.nameKeyedColumnMetadatas.get(name);
+        throw new IllegalArgumentException(String.format("Column name '%s' does not exist in column names %s", name, getColumnNames()));
     }
 
     @Override
@@ -87,6 +84,11 @@ public final class PostgresqlRowMetadata implements RowMetadata {
 
     @Override
     public Collection<String> getColumnNames() {
+
+        if (this.columnNames == null) {
+            this.columnNames = getColumnNames(this.columnMetadatas);
+        }
+
         return Collections.unmodifiableCollection(this.columnNames);
     }
 
@@ -100,7 +102,6 @@ public final class PostgresqlRowMetadata implements RowMetadata {
         return "PostgresqlRowMetadata{" +
             "columnMetadatas=" + this.columnMetadatas +
             ", columnNames=" + this.columnNames +
-            ", nameKeyedColumnMetadatas=" + this.nameKeyedColumnMetadatas +
             '}';
     }
 
@@ -131,14 +132,5 @@ public final class PostgresqlRowMetadata implements RowMetadata {
         return columnNames;
     }
 
-    private Map<String, PostgresqlColumnMetadata> getNameKeyedColumnMetadatas(List<PostgresqlColumnMetadata> columnMetadatas) {
-        Map<String, PostgresqlColumnMetadata> nameKeyedColumnMetadatas = new TreeMap<>(Collator.IGNORE_CASE_COMPARATOR);
-
-        for (PostgresqlColumnMetadata columnMetadata : columnMetadatas) {
-            nameKeyedColumnMetadatas.put(columnMetadata.getName(), columnMetadata);
-        }
-
-        return nameKeyedColumnMetadatas;
-    }
 
 }
