@@ -22,7 +22,6 @@ import io.netty.buffer.CompositeByteBuf;
 import io.netty.util.ReferenceCountUtil;
 import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
-import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -58,7 +57,7 @@ public final class BackendMessageEnvelopeDecoder implements Function<ByteBuf, Pu
         this.byteBuf.addComponent(true, in);
         this.byteBuf.retain();
 
-        return EmitterProcessor.<CompositeByteBuf>create(sink -> {
+        return Flux.<CompositeByteBuf>create(sink -> {
             try {
                 CompositeByteBuf envelope = getEnvelope(this.byteBuf);
                 while (envelope != null) {

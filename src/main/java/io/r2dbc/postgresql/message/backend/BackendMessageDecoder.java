@@ -31,7 +31,7 @@ public final class BackendMessageDecoder {
      * Decode a {@link ByteBuf} into a {@link BackendMessage}.
      *
      * @param envelope the {@link ByteBuf} to decode
-     * @return a {@link Flux} of {@link BackendMessage}s
+     * @return a {@link BackendMessage}.
      */
     public static BackendMessage decode(ByteBuf envelope) {
         Assert.requireNonNull(envelope, "in must not be null");
