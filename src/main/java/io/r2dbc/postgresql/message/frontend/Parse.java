@@ -73,7 +73,7 @@ public final class Parse implements FrontendMessage {
     public Publisher<ByteBuf> encode(ByteBufAllocator byteBufAllocator) {
         Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
 
-        return Mono.defer(() -> {
+        return Mono.fromSupplier(() -> {
             ByteBuf out = byteBufAllocator.ioBuffer();
 
             writeByte(out, 'P');
@@ -84,7 +84,7 @@ public final class Parse implements FrontendMessage {
             writeShort(out, this.parameters.size());
             this.parameters.forEach(parameter -> writeInt(out, parameter));
 
-            return Mono.just(writeSize(out));
+            return writeSize(out);
         });
     }
 

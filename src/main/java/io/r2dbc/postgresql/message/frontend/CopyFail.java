@@ -50,14 +50,14 @@ public final class CopyFail implements FrontendMessage {
     public Publisher<ByteBuf> encode(ByteBufAllocator byteBufAllocator) {
         Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
 
-        return Mono.defer(() -> {
+        return Mono.fromSupplier(() -> {
             ByteBuf out = byteBufAllocator.ioBuffer();
 
             writeByte(out, 'f');
             writeLengthPlaceholder(out);
             writeCStringUTF8(out, this.message);
 
-            return Mono.just(writeSize(out));
+            return writeSize(out);
         });
     }
 

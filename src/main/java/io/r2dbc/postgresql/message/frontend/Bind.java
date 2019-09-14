@@ -92,7 +92,7 @@ public final class Bind implements FrontendMessage {
     public Publisher<ByteBuf> encode(ByteBufAllocator byteBufAllocator) {
         Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
 
-        return Mono.defer(() -> {
+        return Mono.fromSupplier(() -> {
             ByteBuf out = byteBufAllocator.ioBuffer();
 
             writeByte(out, 'B');
@@ -117,7 +117,7 @@ public final class Bind implements FrontendMessage {
             writeShort(out, this.resultFormats.size());
             this.resultFormats.forEach(format -> writeShort(out, format.getDiscriminator()));
 
-            return Mono.just(writeSize(out));
+            return writeSize(out);
         });
     }
 

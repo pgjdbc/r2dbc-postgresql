@@ -58,7 +58,7 @@ public final class SASLInitialResponse implements FrontendMessage {
     public Publisher<ByteBuf> encode(ByteBufAllocator byteBufAllocator) {
         Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
 
-        return Mono.defer(() -> {
+        return Mono.fromSupplier(() -> {
             ByteBuf out = byteBufAllocator.ioBuffer();
 
             writeByte(out, 'p');
@@ -72,7 +72,7 @@ public final class SASLInitialResponse implements FrontendMessage {
                 writeBytes(out, this.initialResponse);
             }
 
-            return Mono.just(writeSize(out));
+            return writeSize(out);
         });
     }
 

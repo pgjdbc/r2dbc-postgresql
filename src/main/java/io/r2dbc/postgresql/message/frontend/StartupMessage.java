@@ -91,7 +91,7 @@ public final class StartupMessage implements FrontendMessage {
     public Publisher<ByteBuf> encode(ByteBufAllocator byteBufAllocator) {
         Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
 
-        return Mono.defer(() -> {
+        return Mono.fromSupplier(() -> {
             ByteBuf out = byteBufAllocator.ioBuffer();
 
             writeLengthPlaceholder(out);
@@ -116,7 +116,7 @@ public final class StartupMessage implements FrontendMessage {
             }
             writeByte(out, 0);
 
-            return Mono.just(writeSize(out, 0));
+            return writeSize(out, 0);
         });
     }
 

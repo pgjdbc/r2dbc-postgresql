@@ -44,11 +44,11 @@ final class FrontendMessageAssert extends AbstractObjectAssert<FrontendMessageAs
 
     static final class EncodedAssert extends AbstractObjectAssert<EncodedAssert, Publisher<ByteBuf>> {
 
-        private static final Class<?> MONO_DEFER;
+        private static final Class<?> MONO_SUPPLIER;
 
         static {
             try {
-                MONO_DEFER = Class.forName("reactor.core.publisher.MonoDefer");
+                MONO_SUPPLIER = Class.forName("reactor.core.publisher.MonoSupplier");
             } catch (ClassNotFoundException e) {
                 throw new RuntimeException(e);
             }
@@ -60,7 +60,7 @@ final class FrontendMessageAssert extends AbstractObjectAssert<FrontendMessageAs
 
         EncodedAssert isDeferred() {
             isNotNull();
-            isInstanceOf(MONO_DEFER);
+            isInstanceOf(MONO_SUPPLIER);
 
             return this;
         }

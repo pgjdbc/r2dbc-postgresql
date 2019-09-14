@@ -67,7 +67,7 @@ public final class Execute implements FrontendMessage {
     public Publisher<ByteBuf> encode(ByteBufAllocator byteBufAllocator) {
         Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
 
-        return Mono.defer(() -> {
+        return Mono.fromSupplier(() -> {
             ByteBuf out = byteBufAllocator.ioBuffer();
 
             writeByte(out, 'E');
@@ -75,7 +75,7 @@ public final class Execute implements FrontendMessage {
             writeCStringUTF8(out, this.name);
             writeInt(out, this.rows);
 
-            return Mono.just(writeSize(out));
+            return writeSize(out);
         });
     }
 
