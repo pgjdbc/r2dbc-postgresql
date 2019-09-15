@@ -18,6 +18,7 @@ package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.util.Assert;
+import io.r2dbc.postgresql.util.ByteBufferUtils;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -38,7 +39,7 @@ public final class AuthenticationSASLFinal implements AuthenticationMessage {
     public AuthenticationSASLFinal(ByteBuf additionalData) {
         Assert.requireNonNull(additionalData, "additionalData must not be null");
 
-        this.additionalData = additionalData.nioBuffer();
+        this.additionalData = ByteBufferUtils.toByteBuffer(additionalData);
     }
 
     @Override

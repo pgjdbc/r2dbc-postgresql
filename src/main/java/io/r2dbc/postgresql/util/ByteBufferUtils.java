@@ -16,6 +16,8 @@
 
 package io.r2dbc.postgresql.util;
 
+import io.netty.buffer.ByteBuf;
+
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
@@ -53,6 +55,21 @@ public final class ByteBufferUtils {
         ByteBuffer buffer = StandardCharsets.UTF_8.encode(s.toString());
         buffer.position(buffer.limit());
         return buffer;
+    }
+
+    /**
+     * Copy all readable bytes from {@link ByteBuf} to {@link ByteBuffer}.
+     *
+     * @param source the {@link ByteBuf} to read from.
+     * @return the copied {@link ByteBuffer} that is ready to be read from.
+     */
+    public static ByteBuffer toByteBuffer(ByteBuf source) {
+        Assert.requireNonNull(source, "source must not be null");
+
+        ByteBuffer out = ByteBuffer.allocate(source.readableBytes());
+        source.readBytes(out);
+        out.flip();
+        return out;
     }
 
 }

@@ -18,6 +18,7 @@ package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.util.Assert;
+import io.r2dbc.postgresql.util.ByteBufferUtils;
 import reactor.util.annotation.Nullable;
 
 import java.nio.ByteBuffer;
@@ -38,7 +39,7 @@ public final class FunctionCallResponse implements BackendMessage {
      * @param value the value of the function result, in the format indicated by the associated format code.
      */
     public FunctionCallResponse(@Nullable ByteBuf value) {
-        this.value = value == null ? null : value.nioBuffer();
+        this.value = value == null ? null : ByteBufferUtils.toByteBuffer(value);
     }
 
     @Override
