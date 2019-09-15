@@ -104,10 +104,13 @@ public final class ReadyForQuery implements BackendMessage {
         }
 
         static TransactionStatus valueOf(byte b) {
-            for (TransactionStatus transactionStatus : values()) {
-                if (transactionStatus.discriminator == b) {
-                    return transactionStatus;
-                }
+            switch (b) {
+                case 'E':
+                    return ERROR;
+                case 'I':
+                    return IDLE;
+                case 'T':
+                    return TRANSACTION;
             }
             throw new IllegalArgumentException(String.format("%c is not a valid transaction status", b));
         }

@@ -39,12 +39,6 @@ public final class DataRow implements BackendMessage {
      */
     public DataRow(ByteBuf... columns) {
         this.columns = Assert.requireNonNull(columns, "columns must not be null");
-
-        for (ByteBuf column : this.columns) {
-            if (column != null) {
-                column.retain();
-            }
-        }
     }
 
     @Override
@@ -108,7 +102,7 @@ public final class DataRow implements BackendMessage {
         Assert.requireNonNull(in, "in must not be null");
 
         int length = in.readInt();
-        return NULL == length ? null : in.readSlice(length);
+        return NULL == length ? null : in.readRetainedSlice(length);
     }
 
 }

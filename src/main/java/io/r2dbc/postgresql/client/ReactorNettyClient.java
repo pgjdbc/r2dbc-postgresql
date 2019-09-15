@@ -58,7 +58,6 @@ import java.util.Queue;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -142,13 +141,13 @@ public final class ReactorNettyClient implements Client {
 
         Mono<Void> request = sslHandshake
             .thenMany(this.requestProcessor)
-            .concatMap(message -> {
+            .flatMap(message -> {
                 if (DEBUG_ENABLED) {
                     logger.debug("Request:  {}", message);
                 }
 
                 return connection.outbound().send(message.encode(this.byteBufAllocator));
-            })
+            }, 1)
             .then();
 
         receive
@@ -230,7 +229,7 @@ public final class ReactorNettyClient implements Client {
             }
         }
 
-        version = new Version(versionString, versionNum);
+        this.version = new Version(versionString, versionNum);
     }
 
     /**
@@ -297,10 +296,10 @@ public final class ReactorNettyClient implements Client {
                 }
                 return Flux.just(Terminate.INSTANCE)
                     .doOnNext(message -> logger.debug("Request:  {}", message))
-                    .concatMap(message -> connection.outbound().send(message.encode(connection.outbound().alloc())))
+                    .concatMap(message -> this.connection.outbound().send(message.encode(this.connection.outbound().alloc())))
                     .then()
-                    .doOnSuccess(v -> connection.dispose())
-                    .then(connection.onDispose())
+                    .doOnSuccess(v -> this.connection.dispose())
+                    .then(this.connection.onDispose())
                     .doOnSuccess(v -> this.isClosed.set(true));
             }
 
@@ -375,17 +374,6 @@ public final class ReactorNettyClient implements Client {
     @Override
     public Disposable addNotificationListener(Consumer<NotificationResponse> consumer) {
         return this.notificationProcessor.subscribe(consumer);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <T extends BackendMessage> BiConsumer<BackendMessage, SynchronousSink<BackendMessage>> handleBackendMessage(Class<T> type, BiConsumer<T, SynchronousSink<BackendMessage>> consumer) {
-        return (message, sink) -> {
-            if (type.isInstance(message)) {
-                consumer.accept((T) message, sink);
-            } else {
-                sink.next(message);
-            }
-        };
     }
 
     private static String toString(List<Field> fields) {

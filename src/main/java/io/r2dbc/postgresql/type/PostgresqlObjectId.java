@@ -333,7 +333,7 @@ public enum PostgresqlObjectId {
      */
     XML_ARRAY(143);
 
-    private static final int OID_CACHE_SIZE = 4096;
+    public static final int OID_CACHE_SIZE = 4096;
 
     private static final PostgresqlObjectId[] CACHE = new PostgresqlObjectId[OID_CACHE_SIZE];
 
@@ -347,6 +347,15 @@ public enum PostgresqlObjectId {
 
     PostgresqlObjectId(int objectId) {
         this.objectId = objectId;
+    }
+
+    public static boolean isValid(int i) {
+        try {
+            valueOf(i);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     /**

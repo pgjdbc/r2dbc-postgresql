@@ -30,7 +30,6 @@ import reactor.util.annotation.Nullable;
 
 import java.util.function.Predicate;
 
-import static io.r2dbc.postgresql.client.ExtendedQueryMessageFlow.PARAMETER_SYMBOL;
 import static io.r2dbc.postgresql.util.PredicateUtils.or;
 
 final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
@@ -118,7 +117,7 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
     static boolean supports(String sql) {
         Assert.requireNonNull(sql, "sql must not be null");
 
-        return sql.trim().isEmpty() || !PARAMETER_SYMBOL.matcher(sql).find();
+        return sql.trim().isEmpty() || !sql.contains("$1");
     }
 
     private Flux<PostgresqlResult> execute(String sql) {

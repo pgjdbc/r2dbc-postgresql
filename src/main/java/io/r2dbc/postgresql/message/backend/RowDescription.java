@@ -21,6 +21,7 @@ import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -80,9 +81,21 @@ public final class RowDescription implements BackendMessage {
         Assert.requireNonNull(in, "in must not be null");
 
         int fieldCount = in.readShort();
-        List<Field> fields = new ArrayList<>(fieldCount);
-        for (int i = 0; i < fieldCount; i++) {
-            fields.add(Field.decode(in));
+
+        List<Field> fields;
+
+        switch (fieldCount) {
+            case 0:
+                fields = Collections.emptyList();
+                break;
+            case 1:
+                fields = Collections.singletonList(Field.decode(in));
+                break;
+            default:
+                fields = new ArrayList<>(fieldCount);
+                for (int i = 0; i < fieldCount; i++) {
+                    fields.add(Field.decode(in));
+                }
         }
 
         return new RowDescription(fields);

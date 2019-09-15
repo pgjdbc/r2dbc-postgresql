@@ -17,10 +17,7 @@
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.CompositeByteBuf;
-import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.util.Assert;
-import reactor.util.annotation.Nullable;
 
 import static io.netty.util.CharsetUtil.UTF_8;
 
@@ -31,42 +28,11 @@ final class BackendMessageUtils {
     private BackendMessageUtils() {
     }
 
-    static ByteBuf getBody(ByteBuf in) {
-        Assert.requireNonNull(in, "in must not be null");
-
-        return in.readSlice(in.readInt() - 4);
-    }
-
-    @Nullable
-    static ByteBuf getEnvelope(CompositeByteBuf in) {
-        Assert.requireNonNull(in, "in must not be null");
-
-        if (in.readableBytes() < 5) {
-            return null;
-        }
-
-        int length = 1 + in.getInt(in.readerIndex() + 1);
-        if (in.readableBytes() < length) {
-            return null;
-        }
-
-        return readComposite(in, length);
-    }
-
-    static ByteBuf readComposite(CompositeByteBuf in, int length) {
-        if (length == 0) {
-            return Unpooled.EMPTY_BUFFER;
-        }
-        ByteBuf buffer = in.alloc().buffer(length);
-        buffer.writeBytes(in, length);
-        return buffer;
-    }
-
     static String readCStringUTF8(ByteBuf src) {
         Assert.requireNonNull(src, "src must not be null");
 
         String s = src.readCharSequence(src.bytesBefore(TERMINAL), UTF_8).toString();
-        src.readByte();
+        src.skipBytes(1);
         return s;
     }
 

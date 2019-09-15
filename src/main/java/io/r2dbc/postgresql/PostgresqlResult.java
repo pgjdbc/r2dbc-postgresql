@@ -58,7 +58,7 @@ public final class PostgresqlResult implements Result {
     @Override
     public Mono<Integer> getRowsUpdated() {
 
-        return messages
+        return this.messages
             .ofType(CommandComplete.class)
             .singleOrEmpty()
             .handle((commandComplete, sink) -> {
@@ -75,17 +75,17 @@ public final class PostgresqlResult implements Result {
     public <T> Flux<T> map(BiFunction<Row, RowMetadata, ? extends T> f) {
         Assert.requireNonNull(f, "f must not be null");
 
-        return messages.takeUntil(TAKE_UNTIL)
+        return this.messages.takeUntil(TAKE_UNTIL)
             .handle((message, sink) -> {
 
                 if (message instanceof RowDescription) {
                     this.rowDescription = (RowDescription) message;
-                    this.metadata = PostgresqlRowMetadata.toRowMetadata(codecs, (RowDescription) message);
+                    this.metadata = PostgresqlRowMetadata.toRowMetadata(this.codecs, (RowDescription) message);
                     return;
                 }
 
                 if (message instanceof DataRow) {
-                    PostgresqlRow row = PostgresqlRow.toRow(codecs, (DataRow) message, this.rowDescription);
+                    PostgresqlRow row = PostgresqlRow.toRow(this.codecs, (DataRow) message, this.rowDescription);
 
                     try {
                         sink.next(f.apply(row, this.metadata));
