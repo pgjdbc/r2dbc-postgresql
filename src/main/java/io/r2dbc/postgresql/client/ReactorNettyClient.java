@@ -21,10 +21,10 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOption;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.r2dbc.postgresql.message.backend.BackendKeyData;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.BackendMessageDecoder;
-import io.r2dbc.postgresql.message.backend.BackendMessageEnvelopeDecoder;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.Field;
 import io.r2dbc.postgresql.message.backend.NoticeResponse;
@@ -63,7 +63,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static io.r2dbc.postgresql.client.TransactionStatus.IDLE;
-import static io.r2dbc.postgresql.util.PredicateUtils.not;
 
 /**
  * An implementation of client based on the Reactor Netty project.
@@ -118,18 +117,15 @@ public final class ReactorNettyClient implements Client {
             sslHandshake = Mono.empty();
         }
 
+        connection.addHandler(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE - 5, 1, 4, -4, 0));
         connection.addHandler(new EnsureSubscribersCompleteChannelHandler(this.requestProcessor, this.responseReceivers));
         this.connection = connection;
         this.byteBufAllocator = connection.outbound().alloc();
 
-        BackendMessageEnvelopeDecoder envelopeDecoder = new BackendMessageEnvelopeDecoder(byteBufAllocator);
-
         Mono<Void> receive = connection.inbound().receive()
-            .retain()
-            .concatMap(envelopeDecoder)
             .map(BackendMessageDecoder::decode)
             .handle(this::handleResponse)
-            .windowWhile(not(ReadyForQuery.class::isInstance))
+            .windowWhile(it -> it.getClass() != ReadyForQuery.class)
             .doOnNext(fluxOfMessages -> {
                 MonoSink<Flux<BackendMessage>> receiver = this.responseReceivers.poll();
                 if (receiver != null) {
@@ -146,13 +142,14 @@ public final class ReactorNettyClient implements Client {
 
         Mono<Void> request = sslHandshake
             .thenMany(this.requestProcessor)
-            .doOnNext(message -> logger.debug("Request:  {}", message))
-            .concatMap(message -> connection.outbound().send(message.encode(connection.outbound().alloc())))
-            .then();
+            .concatMap(message -> {
+                if (DEBUG_ENABLED) {
+                    logger.debug("Request:  {}", message);
+                }
 
-        connection.onDispose()
-            .doFinally(s -> envelopeDecoder.dispose())
-            .subscribe();
+                return connection.outbound().send(message.encode(this.byteBufAllocator));
+            })
+            .then();
 
         receive
             .onErrorResume(throwable -> {

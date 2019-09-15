@@ -20,8 +20,6 @@ import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Flux;
 
-import static io.r2dbc.postgresql.message.backend.BackendMessageUtils.getBody;
-
 /**
  * A decoder that reads {@link ByteBuf}s and returns a {@link Flux} of decoded {@link BackendMessage}s.
  */
@@ -36,13 +34,9 @@ public final class BackendMessageDecoder {
     public static BackendMessage decode(ByteBuf envelope) {
         Assert.requireNonNull(envelope, "in must not be null");
 
-        try {
-            MessageType messageType = MessageType.valueOf(envelope.readByte());
-            ByteBuf body = getBody(envelope);
-            return decodeBody(body, messageType);
-        } finally {
-            envelope.release();
-        }
+        MessageType messageType = MessageType.valueOf(envelope.readByte());
+        envelope.skipBytes(4);
+        return decodeBody(envelope, messageType);
     }
 
     private static BackendMessage decodeBody(ByteBuf body, MessageType messageType) {
