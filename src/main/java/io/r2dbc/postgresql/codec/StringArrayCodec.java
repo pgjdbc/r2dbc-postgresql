@@ -22,9 +22,9 @@ import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
+import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.core.publisher.Flux;
 
-import static io.netty.util.CharsetUtil.UTF_8;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR_ARRAY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.CHAR_ARRAY;
@@ -44,7 +44,7 @@ final class StringArrayCodec extends AbstractArrayCodec<String> {
 
     @Override
     String decodeItem(ByteBuf byteBuf) {
-        return byteBuf.toString(UTF_8);
+        return ByteBufUtils.decode(byteBuf);
     }
 
     @Override
@@ -57,7 +57,7 @@ final class StringArrayCodec extends AbstractArrayCodec<String> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return FORMAT_TEXT == format && (BPCHAR_ARRAY == type || CHAR_ARRAY == type || TEXT_ARRAY == type || VARCHAR_ARRAY == type);
+        return (BPCHAR_ARRAY == type || CHAR_ARRAY == type || TEXT_ARRAY == type || VARCHAR_ARRAY == type);
     }
 
     @Override

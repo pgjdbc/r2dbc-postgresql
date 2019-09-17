@@ -70,15 +70,15 @@ final class StringArrayCodecTest {
     @Test
     void doCanDecode() {
         assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_TEXT, BPCHAR)).isFalse();
-        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_BINARY, BPCHAR_ARRAY)).isFalse();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_BINARY, BPCHAR_ARRAY)).isTrue();
         assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_TEXT, CHAR)).isFalse();
-        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_BINARY, CHAR_ARRAY)).isFalse();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_BINARY, CHAR_ARRAY)).isTrue();
         assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_TEXT, CHAR_ARRAY)).isTrue();
         assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_TEXT, TEXT)).isFalse();
-        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_BINARY, TEXT_ARRAY)).isFalse();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_BINARY, TEXT_ARRAY)).isTrue();
         assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_TEXT, TEXT_ARRAY)).isTrue();
         assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_TEXT, VARCHAR)).isFalse();
-        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_BINARY, VARCHAR_ARRAY)).isFalse();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_BINARY, VARCHAR_ARRAY)).isTrue();
         assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_TEXT, VARCHAR_ARRAY)).isTrue();
     }
 
