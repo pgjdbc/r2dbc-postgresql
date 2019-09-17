@@ -67,6 +67,10 @@ final class ExceptionFactory {
                 return new PostgresqlPermissionDeniedException(errorDetails);
             case "40000":
                 return new PostgresqlRollbackException(errorDetails);
+            case "28000":
+            case "28P01":
+                return new PostgresqlAuthenticationFailure(errorDetails);
+
         }
 
         String codeClass = errorDetails.getCode().length() > 2 ? errorDetails.getCode().substring(0, 2) : "99";
@@ -205,6 +209,24 @@ final class ExceptionFactory {
         private final ErrorDetails errorDetails;
 
         PostgresqlTransientException(ErrorDetails errorDetails) {
+            super(errorDetails.getMessage(), errorDetails.getCode());
+            this.errorDetails = errorDetails;
+        }
+
+        @Override
+        public ErrorDetails getErrorDetails() {
+            return this.errorDetails;
+        }
+    }
+
+    /**
+     * Postgres-specific {@link R2dbcPermissionDeniedException}.
+     */
+    static final class PostgresqlAuthenticationFailure extends R2dbcPermissionDeniedException implements PostgresqlException {
+
+        private final ErrorDetails errorDetails;
+
+        PostgresqlAuthenticationFailure(ErrorDetails errorDetails) {
             super(errorDetails.getMessage(), errorDetails.getCode());
             this.errorDetails = errorDetails;
         }

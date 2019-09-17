@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql;
 
+import io.r2dbc.postgresql.client.SSLMode;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -40,12 +41,6 @@ final class PostgresqlConnectionConfigurationTest {
     }
 
     @Test
-    void builderNoPassword() {
-        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().password(null))
-            .withMessage("password must not be null");
-    }
-
-    @Test
     void builderNoUsername() {
         assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().username(null))
             .withMessage("username must not be null");
@@ -67,6 +62,7 @@ final class PostgresqlConnectionConfigurationTest {
             .port(100)
             .schema("test-schema")
             .username("test-username")
+            .sslMode(SSLMode.ALLOW)
             .build();
 
         assertThat(configuration)
@@ -78,7 +74,8 @@ final class PostgresqlConnectionConfigurationTest {
             .hasFieldOrPropertyWithValue("password", "test-password")
             .hasFieldOrPropertyWithValue("port", 100)
             .hasFieldOrPropertyWithValue("schema", "test-schema")
-            .hasFieldOrPropertyWithValue("username", "test-username");
+            .hasFieldOrPropertyWithValue("username", "test-username")
+            .hasFieldOrProperty("sslConfig");
     }
 
     @Test
@@ -98,7 +95,8 @@ final class PostgresqlConnectionConfigurationTest {
             .hasFieldOrPropertyWithValue("password", "test-password")
             .hasFieldOrPropertyWithValue("port", 5432)
             .hasFieldOrPropertyWithValue("schema", "test-schema")
-            .hasFieldOrPropertyWithValue("username", "test-username");
+            .hasFieldOrPropertyWithValue("username", "test-username")
+            .hasFieldOrProperty("sslConfig");
     }
 
     @Test

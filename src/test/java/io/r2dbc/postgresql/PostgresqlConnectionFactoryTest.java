@@ -77,7 +77,7 @@ final class PostgresqlConnectionFactoryTest {
             .password("test-password")
             .build();
 
-        new PostgresqlConnectionFactory(Mono.just(client), configuration)
+        new PostgresqlConnectionFactory(c -> Mono.just(client), configuration)
             .create()
             .as(StepVerifier::create)
             .expectNextCount(1)
@@ -128,7 +128,7 @@ final class PostgresqlConnectionFactoryTest {
             .password("test-password")
             .build();
 
-        new PostgresqlConnectionFactory(Mono.just(client), configuration).create()
+        new PostgresqlConnectionFactory(c -> Mono.just(client), configuration).create()
             .as(StepVerifier::create)
             .verifyErrorMatches(R2dbcNonTransientResourceException.class::isInstance);
     }
@@ -152,7 +152,7 @@ final class PostgresqlConnectionFactoryTest {
             .password("test-password")
             .build();
 
-        assertThat(new PostgresqlConnectionFactory(Mono.just(client), configuration).getMetadata()).isNotNull();
+        assertThat(new PostgresqlConnectionFactory(c -> Mono.just(client), configuration).getMetadata()).isNotNull();
     }
 
 }

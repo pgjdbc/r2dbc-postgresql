@@ -50,6 +50,23 @@ final class ExceptionFactoryTest {
 
         ExceptionFactory.INSTANCE.handleErrorResponse(message, sink);
 
+        verify(sink, times(1)).error(isA(ExceptionFactory.PostgresqlAuthenticationFailure.class));
+        verify(sink, times(0)).next(eq(message));
+    }
+
+    @Test
+    void isCreatingAuthenticationExceptionInvalidAuthorizationSpecification() {
+        List<Field> fields = Arrays.asList(
+            new Field(FieldType.CODE, "28P01"),
+            new Field(FieldType.MESSAGE, "error message desc")
+        );
+
+        BackendMessage message = new ErrorResponse(fields);
+
+        SynchronousSink<BackendMessage> sink = createSinkMock();
+
+        ExceptionFactory.INSTANCE.handleErrorResponse(message, sink);
+
         verify(sink, times(1)).error(isA(R2dbcPermissionDeniedException.class));
         verify(sink, times(0)).next(eq(message));
     }

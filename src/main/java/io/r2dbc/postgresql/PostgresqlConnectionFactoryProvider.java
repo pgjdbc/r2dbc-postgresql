@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql;
 
+import io.r2dbc.postgresql.client.SSLMode;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.ConnectionFactoryProvider;
@@ -57,6 +58,36 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<String> SCHEMA = Option.valueOf("schema");
 
     /**
+     * Full path for the certificate file.
+     */
+    public static final Option<String> SSL_CERT = Option.valueOf("sslCert");
+
+    /**
+     * Class name of hostname verifier. Defaults to using io.r2dbc.postgresql.client.PGHostnameVerifier
+     */
+    public static final Option<String> SSL_HOSTNAME_VERIFIER = Option.valueOf("sslHostnameVerifier");
+
+    /**
+     * Full path for the key file.
+     */
+    public static final Option<String> SSL_KEY = Option.valueOf("sslKey");
+
+    /**
+     * Ssl mode. Default: disabled
+     */
+    public static final Option<SSLMode> SSL_MODE = Option.valueOf("sslMode");
+
+    /**
+     * SSL key password
+     */
+    public static final Option<String> SSL_PASSWORD = Option.valueOf("sslPassword");
+
+    /**
+     * File name of the SSL root certificate.
+     */
+    public static final Option<String> SSL_ROOT_CERT = Option.valueOf("sslRootCert");
+
+    /**
      * Connection options which are applied once after the connection has been created.
      */
     public static final Option<Map<String, String>> OPTIONS = Option.valueOf("options");
@@ -87,6 +118,40 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         Map<String, String> options = connectionFactoryOptions.getValue(OPTIONS);
         if (options != null) {
             builder.options(options);
+        }
+
+        Object sslMode = connectionFactoryOptions.getValue(SSL_MODE);
+        if (sslMode != null) {
+            if (sslMode instanceof String) {
+                builder.sslMode((String) sslMode);
+            } else if (sslMode instanceof SSLMode) {
+                builder.sslMode((SSLMode) sslMode);
+            }
+        }
+
+        String sslRootCert = connectionFactoryOptions.getValue(SSL_ROOT_CERT);
+        if (sslRootCert != null) {
+            builder.sslRootCert(sslRootCert);
+        }
+
+        String sslCert = connectionFactoryOptions.getValue(SSL_CERT);
+        if (sslCert != null) {
+            builder.sslCert(sslCert);
+        }
+
+        String sslKey = connectionFactoryOptions.getValue(SSL_KEY);
+        if (sslKey != null) {
+            builder.sslKey(sslKey);
+        }
+
+        String sslPassword = connectionFactoryOptions.getValue(SSL_PASSWORD);
+        if (sslPassword != null) {
+            builder.sslPassword(sslPassword);
+        }
+
+        String sslHostnameVerifier = connectionFactoryOptions.getValue(SSL_HOSTNAME_VERIFIER);
+        if (sslHostnameVerifier != null) {
+            builder.sslHostnameVerifier(sslHostnameVerifier);
         }
 
         return new PostgresqlConnectionFactory(builder.build());
