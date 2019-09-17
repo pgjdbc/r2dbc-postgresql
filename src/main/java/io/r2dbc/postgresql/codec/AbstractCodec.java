@@ -26,10 +26,21 @@ import reactor.util.annotation.Nullable;
 
 import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 
+/**
+ * Abstract codec class that provides a basis for all concrete
+ * implementations of a {@link Codec}.
+ *
+ * @param <T> the type that is handled by this {@link Codec}.
+ */
 abstract class AbstractCodec<T> implements Codec<T> {
 
     private final Class<T> type;
 
+    /**
+     * Creates a new {@link AbstractCodec}.
+     *
+     * @param type the type handled by this codec
+     */
     AbstractCodec(Class<T> type) {
         this.type = Assert.requireNonNull(type, "type must not be null");
     }
@@ -40,7 +51,7 @@ abstract class AbstractCodec<T> implements Codec<T> {
         Assert.requireNonNull(type, "type must not be null");
 
         return (type == Object.class || isTypeAssignable(type)) &&
-            doCanDecode(format, PostgresqlObjectId.valueOf(dataType));
+            doCanDecode(PostgresqlObjectId.valueOf(dataType), format);
     }
 
     @Override
@@ -59,12 +70,12 @@ abstract class AbstractCodec<T> implements Codec<T> {
 
     @Nullable
     @Override
-    public final T decode(@Nullable ByteBuf byteBuf, Format format, Class<? extends T> type) {
-        if (byteBuf == null) {
+    public final T decode(@Nullable ByteBuf buffer, int dataType, Format format, Class<? extends T> type) {
+        if (buffer == null) {
             return null;
         }
 
-        return doDecode(byteBuf, format, type);
+        return doDecode(buffer, PostgresqlObjectId.valueOf(dataType), format, type);
     }
 
     @Override
@@ -80,21 +91,48 @@ abstract class AbstractCodec<T> implements Codec<T> {
         return this.type;
     }
 
-    static Parameter create(Format format, PostgresqlObjectId type, @Nullable Publisher<? extends ByteBuf> value) {
+    static Parameter create(PostgresqlObjectId type, Format format, @Nullable Publisher<? extends ByteBuf> value) {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
         return new Parameter(format, type.getObjectId(), value);
     }
 
-    static Parameter createNull(Format format, PostgresqlObjectId type) {
-        return create(format, type, NULL_VALUE);
+    /**
+     * Encode a {@code null} value.
+     *
+     * @param type
+     * @param format the data type {@link Format}, text or binary
+     * @return the encoded {@code null} value.
+     */
+    static Parameter createNull(PostgresqlObjectId type, Format format) {
+        return create(type, format, NULL_VALUE);
     }
 
-    abstract boolean doCanDecode(Format format, PostgresqlObjectId type);
+    /**
+     * Determine whether this {@link Codec} is capable of decoding column values based on the given {@link Format} and {@link PostgresqlObjectId}.
+     *
+     * @param type
+     * @param format the data type {@link Format}, text or binary
+     * @return {@code true} if this codec is able to decode values of {@link Format} and {@link PostgresqlObjectId}.
+     */
+    abstract boolean doCanDecode(PostgresqlObjectId type, Format format);
 
-    abstract T doDecode(ByteBuf byteBuf, Format format, Class<? extends T> type);
+    /**
+     * Decode the {@link ByteBuf data} into the {@link Class value type}.
+     *
+     * @param buffer   the data buffer
+     * @param dataType the data type
+     * @param format   data type format
+     * @param type     the desired value type.
+     * @return the decoded value. Can be {@code null} if the column value is {@code null}.
+     */
+    abstract T doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, Class<? extends T> type);
 
+    /**
+     * @param value the  {@code value}.
+     * @return the encoded value.
+     */
     abstract Parameter doEncode(T value);
 
     boolean isTypeAssignable(Class<?> type) {

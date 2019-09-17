@@ -49,11 +49,11 @@ final class BlobCodec extends AbstractCodec<Blob> {
 
     @Override
     public Parameter encodeNull() {
-        return createNull(FORMAT_TEXT, BYTEA);
+        return createNull(BYTEA, FORMAT_TEXT);
     }
 
     @Override
-    boolean doCanDecode(Format format, PostgresqlObjectId type) {
+    boolean doCanDecode(PostgresqlObjectId type, Format format) {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
@@ -61,17 +61,17 @@ final class BlobCodec extends AbstractCodec<Blob> {
     }
 
     @Override
-    Blob doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends Blob> type) {
-        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+    Blob doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends Blob> type) {
+        Assert.requireNonNull(buffer, "byteBuf must not be null");
 
-        return new ByteABlob(byteBuf);
+        return new ByteABlob(buffer);
     }
 
     @Override
     Parameter doEncode(Blob value) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return create(FORMAT_TEXT, BYTEA,
+        return create(BYTEA, FORMAT_TEXT,
             Flux.from(value.stream())
                 .reduce(this.byteBufAllocator.compositeBuffer(), (a, b) -> a.addComponent(true, Unpooled.wrappedBuffer(b)))
                 .map(this::toHexFormat)

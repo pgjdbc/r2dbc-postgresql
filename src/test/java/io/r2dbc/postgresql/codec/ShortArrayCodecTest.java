@@ -26,12 +26,15 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT2;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT2_ARRAY;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class ShortArrayCodecTest {
+
+    private static final int dataType = INT2_ARRAY.getObjectId();
 
     private final ByteBuf BINARY_ARRAY = TEST
         .buffer()
@@ -47,22 +50,22 @@ final class ShortArrayCodecTest {
 
     @Test
     void decodeItem() {
-        assertThat(new ShortArrayCodec(TEST).decode(BINARY_ARRAY, FORMAT_BINARY, Short[].class)).isEqualTo(new short[]{100, 200});
-        assertThat(new ShortArrayCodec(TEST).decode(encode(TEST, "{100,200}"), FORMAT_TEXT, Short[].class)).isEqualTo(new short[]{100, 200});
+        assertThat(new ShortArrayCodec(TEST).decode(BINARY_ARRAY, dataType, FORMAT_BINARY, Short[].class)).isEqualTo(new short[]{100, 200});
+        assertThat(new ShortArrayCodec(TEST).decode(encode(TEST, "{100,200}"), dataType, FORMAT_TEXT, Short[].class)).isEqualTo(new short[]{100, 200});
     }
 
     @Test
     @SuppressWarnings({"rawtypes", "unchecked"})
     void decodeObject() {
-        assertThat(((Codec) new ShortArrayCodec(TEST)).decode(BINARY_ARRAY, FORMAT_BINARY, Object.class)).isEqualTo(new short[]{100, 200});
-        assertThat(((Codec) new ShortArrayCodec(TEST)).decode(encode(TEST, "{100,200}"), FORMAT_TEXT, Object.class)).isEqualTo(new short[]{100, 200});
+        assertThat(((Codec) new ShortArrayCodec(TEST)).decode(BINARY_ARRAY, dataType, FORMAT_BINARY, Object.class)).isEqualTo(new short[]{100, 200});
+        assertThat(((Codec) new ShortArrayCodec(TEST)).decode(encode(TEST, "{100,200}"), dataType, FORMAT_TEXT, Object.class)).isEqualTo(new short[]{100, 200});
     }
 
     @Test
     void doCanDecode() {
-        assertThat(new ShortArrayCodec(TEST).doCanDecode(FORMAT_TEXT, INT2)).isFalse();
-        assertThat(new ShortArrayCodec(TEST).doCanDecode(FORMAT_TEXT, INT2_ARRAY)).isTrue();
-        assertThat(new ShortArrayCodec(TEST).doCanDecode(FORMAT_BINARY, INT2_ARRAY)).isTrue();
+        assertThat(new ShortArrayCodec(TEST).doCanDecode(INT2, FORMAT_TEXT)).isFalse();
+        assertThat(new ShortArrayCodec(TEST).doCanDecode(INT2_ARRAY, FORMAT_TEXT)).isTrue();
+        assertThat(new ShortArrayCodec(TEST).doCanDecode(INT2_ARRAY, FORMAT_BINARY)).isTrue();
     }
 
     @Test

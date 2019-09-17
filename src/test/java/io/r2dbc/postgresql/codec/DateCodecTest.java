@@ -26,6 +26,7 @@ import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.DATE;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMP;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
@@ -35,6 +36,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class DateCodecTest {
+
+    private static final int dataType = DATE.getObjectId();
 
     @Test
     void constructorNoByteBufAllocator() {
@@ -46,33 +49,33 @@ final class DateCodecTest {
     void decode() {
         Date date = Date.from(Instant.parse("2018-11-04T15:37:31.177Z"));
 
-        assertThat(new DateCodec(TEST).decode(encode(TEST, "2018-11-04 15:37:31.177"), FORMAT_TEXT, Date.class))
+        assertThat(new DateCodec(TEST).decode(encode(TEST, "2018-11-04 15:37:31.177"), dataType, FORMAT_TEXT, Date.class))
             .isEqualTo(date);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new DateCodec(TEST).decode(null, FORMAT_TEXT, Date.class)).isNull();
+        assertThat(new DateCodec(TEST).decode(null, dataType, FORMAT_TEXT, Date.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         DateCodec codec = new DateCodec(TEST);
 
-        assertThat(codec.doCanDecode(FORMAT_BINARY, TIMESTAMP)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, TIMESTAMP)).isTrue();
+        assertThat(codec.doCanDecode(TIMESTAMP, FORMAT_BINARY)).isTrue();
+        assertThat(codec.doCanDecode(MONEY, FORMAT_TEXT)).isFalse();
+        assertThat(codec.doCanDecode(TIMESTAMP, FORMAT_TEXT)).isTrue();
     }
 
     @Test
     void doCanDecodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new DateCodec(TEST).doCanDecode(null, VARCHAR))
+        assertThatIllegalArgumentException().isThrownBy(() -> new DateCodec(TEST).doCanDecode(VARCHAR, null))
             .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new DateCodec(TEST).doCanDecode(FORMAT_TEXT, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new DateCodec(TEST).doCanDecode(null, FORMAT_TEXT))
             .withMessage("type must not be null");
     }
 

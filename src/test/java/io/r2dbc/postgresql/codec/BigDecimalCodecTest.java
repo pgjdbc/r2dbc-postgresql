@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.codec;
 
 import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -35,6 +36,8 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 
 final class BigDecimalCodecTest {
 
+    private static final int dataType = NUMERIC.getObjectId();
+
     @Test
     void constructorNoByteBufAllocator() {
         assertThatIllegalArgumentException().isThrownBy(() -> new BigDecimalCodec(null))
@@ -45,33 +48,33 @@ final class BigDecimalCodecTest {
     void decode() {
         BigDecimal bigDecimal = new BigDecimal("100");
 
-        assertThat(new BigDecimalCodec(TEST).decode(encode(TEST, bigDecimal.toString()), FORMAT_TEXT, BigDecimal.class))
+        assertThat(new BigDecimalCodec(TEST).decode(encode(TEST, bigDecimal.toString()), dataType, FORMAT_TEXT, BigDecimal.class))
             .isEqualTo(bigDecimal);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new BigDecimalCodec(TEST).decode(null, FORMAT_TEXT, BigDecimal.class)).isNull();
+        assertThat(new BigDecimalCodec(TEST).decode(null, dataType, FORMAT_TEXT, BigDecimal.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         BigDecimalCodec codec = new BigDecimalCodec(TEST);
 
-        assertThat(codec.doCanDecode(FORMAT_BINARY, NUMERIC)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, NUMERIC)).isTrue();
+        assertThat(codec.doCanDecode(NUMERIC, FORMAT_BINARY)).isTrue();
+        assertThat(codec.doCanDecode(MONEY, FORMAT_TEXT)).isFalse();
+        assertThat(codec.doCanDecode(NUMERIC, FORMAT_TEXT)).isTrue();
     }
 
     @Test
     void doCanDecodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new BigDecimalCodec(TEST).doCanDecode(null, VARCHAR))
+        assertThatIllegalArgumentException().isThrownBy(() -> new BigDecimalCodec(TEST).doCanDecode(VARCHAR, null))
             .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new BigDecimalCodec(TEST).doCanDecode(FORMAT_TEXT, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new BigDecimalCodec(TEST).doCanDecode(null, FORMAT_TEXT))
             .withMessage("type must not be null");
     }
 

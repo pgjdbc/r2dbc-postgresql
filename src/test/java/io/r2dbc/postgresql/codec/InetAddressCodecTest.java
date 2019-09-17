@@ -27,6 +27,7 @@ import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.FLOAT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
@@ -35,6 +36,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class InetAddressCodecTest {
+
+    private static final int dataType = VARCHAR.getObjectId();
 
     @Test
     void constructorNoByteBufAllocator() {
@@ -46,34 +49,34 @@ final class InetAddressCodecTest {
     void decode() throws UnknownHostException {
         InetAddress inetAddress = InetAddress.getByName("localhost");
 
-        assertThat(new InetAddressCodec(TEST).decode(encode(TEST, inetAddress.getHostAddress()), FORMAT_TEXT, InetAddress.class))
+        assertThat(new InetAddressCodec(TEST).decode(encode(TEST, inetAddress.getHostAddress()), dataType, FORMAT_TEXT, InetAddress.class))
             .isEqualTo(inetAddress);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new InetAddressCodec(TEST).decode(null, FORMAT_TEXT, InetAddress.class)).isNull();
+        assertThat(new InetAddressCodec(TEST).decode(null, dataType, FORMAT_TEXT, InetAddress.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         InetAddressCodec codec = new InetAddressCodec(TEST);
 
-        assertThat(codec.doCanDecode(FORMAT_BINARY, VARCHAR)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, BPCHAR)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, VARCHAR)).isTrue();
+        assertThat(codec.doCanDecode(VARCHAR, FORMAT_BINARY)).isTrue();
+        assertThat(codec.doCanDecode(MONEY, FORMAT_TEXT)).isFalse();
+        assertThat(codec.doCanDecode(BPCHAR, FORMAT_TEXT)).isTrue();
+        assertThat(codec.doCanDecode(VARCHAR, FORMAT_TEXT)).isTrue();
     }
 
     @Test
     void doCanDecodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new InetAddressCodec(TEST).doCanDecode(null, VARCHAR))
+        assertThatIllegalArgumentException().isThrownBy(() -> new InetAddressCodec(TEST).doCanDecode(VARCHAR, null))
             .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new InetAddressCodec(TEST).doCanDecode(FORMAT_TEXT, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new InetAddressCodec(TEST).doCanDecode(null, FORMAT_TEXT))
             .withMessage("type must not be null");
     }
 

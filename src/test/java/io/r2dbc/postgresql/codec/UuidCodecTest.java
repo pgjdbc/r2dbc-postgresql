@@ -26,6 +26,7 @@ import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
@@ -34,6 +35,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class UuidCodecTest {
+
+    private static final int dataType = PostgresqlObjectId.UUID.getObjectId();
 
     @Test
     void constructorNoByteBufAllocator() {
@@ -45,33 +48,33 @@ final class UuidCodecTest {
     void decode() {
         UUID uuid = UUID.randomUUID();
 
-        assertThat(new UuidCodec(TEST).decode(encode(TEST, uuid.toString()), FORMAT_TEXT, UUID.class))
+        assertThat(new UuidCodec(TEST).decode(encode(TEST, uuid.toString()), dataType, FORMAT_TEXT, UUID.class))
             .isEqualTo(uuid);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new UuidCodec(TEST).decode(null, FORMAT_TEXT, UUID.class)).isNull();
+        assertThat(new UuidCodec(TEST).decode(null, dataType, FORMAT_TEXT, UUID.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         UuidCodec codec = new UuidCodec(TEST);
 
-        assertThat(codec.doCanDecode(FORMAT_TEXT, PostgresqlObjectId.UUID)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_BINARY, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_BINARY, PostgresqlObjectId.UUID)).isTrue();
+        assertThat(codec.doCanDecode(PostgresqlObjectId.UUID, FORMAT_TEXT)).isTrue();
+        assertThat(codec.doCanDecode(MONEY, FORMAT_BINARY)).isFalse();
+        assertThat(codec.doCanDecode(PostgresqlObjectId.UUID, FORMAT_BINARY)).isTrue();
     }
 
     @Test
     void doCanDecodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new UuidCodec(TEST).doCanDecode(null, VARCHAR))
+        assertThatIllegalArgumentException().isThrownBy(() -> new UuidCodec(TEST).doCanDecode(VARCHAR, null))
             .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new UuidCodec(TEST).doCanDecode(FORMAT_TEXT, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new UuidCodec(TEST).doCanDecode(null, FORMAT_TEXT))
             .withMessage("type must not be null");
     }
 

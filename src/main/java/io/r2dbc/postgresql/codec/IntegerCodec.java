@@ -40,25 +40,25 @@ final class IntegerCodec extends AbstractCodec<Integer> {
 
     @Override
     public Parameter encodeNull() {
-        return createNull(FORMAT_BINARY, INT4);
+        return createNull(INT4, FORMAT_BINARY);
     }
 
     @Override
-    boolean doCanDecode(@Nullable Format format, PostgresqlObjectId type) {
+    boolean doCanDecode(PostgresqlObjectId type, @Nullable Format format) {
         Assert.requireNonNull(type, "type must not be null");
 
         return INT4 == type;
     }
 
     @Override
-    Integer doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends Integer> type) {
-        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+    Integer doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends Integer> type) {
+        Assert.requireNonNull(buffer, "byteBuf must not be null");
         Assert.requireNonNull(format, "format must not be null");
 
         if (FORMAT_BINARY == format) {
-            return byteBuf.readInt();
+            return buffer.readInt();
         } else {
-            return Integer.parseInt(ByteBufUtils.decode(byteBuf));
+            return Integer.parseInt(ByteBufUtils.decode(buffer));
         }
     }
 
@@ -67,7 +67,7 @@ final class IntegerCodec extends AbstractCodec<Integer> {
         Assert.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = this.byteBufAllocator.buffer(4).writeInt(value);
-        return create(FORMAT_BINARY, INT4, Flux.just(encoded));
+        return create(INT4, FORMAT_BINARY, Flux.just(encoded));
     }
 
 }

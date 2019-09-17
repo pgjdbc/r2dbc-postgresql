@@ -43,11 +43,11 @@ final class LocalDateCodec extends AbstractCodec<LocalDate> {
 
     @Override
     public Parameter encodeNull() {
-        return createNull(FORMAT_TEXT, DATE);
+        return createNull(DATE, FORMAT_TEXT);
     }
 
     @Override
-    boolean doCanDecode(Format format, PostgresqlObjectId type) {
+    boolean doCanDecode(PostgresqlObjectId type, Format format) {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
@@ -55,14 +55,14 @@ final class LocalDateCodec extends AbstractCodec<LocalDate> {
     }
 
     @Override
-    LocalDate doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends LocalDate> type) {
-        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+    LocalDate doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends LocalDate> type) {
+        Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         if (FORMAT_BINARY == format) {
-            return LocalDate.ofEpochDay(EpochTime.fromInt(byteBuf.readInt()).getJavaDays());
+            return LocalDate.ofEpochDay(EpochTime.fromInt(buffer.readInt()).getJavaDays());
         }
 
-        return LocalDate.parse(ByteBufUtils.decode(byteBuf));
+        return LocalDate.parse(ByteBufUtils.decode(buffer));
     }
 
     @Override
@@ -70,7 +70,7 @@ final class LocalDateCodec extends AbstractCodec<LocalDate> {
         Assert.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toString());
-        return create(FORMAT_TEXT, DATE, Flux.just(encoded));
+        return create(DATE, FORMAT_TEXT, Flux.just(encoded));
     }
 
 }

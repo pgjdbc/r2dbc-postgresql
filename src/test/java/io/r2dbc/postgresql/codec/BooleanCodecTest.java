@@ -26,6 +26,7 @@ import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.BOOL;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.BYTEA;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
@@ -34,6 +35,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class BooleanCodecTest {
+
+    private static final int dataType = BOOL.getObjectId();
 
     @Test
     void constructorNoByteBufAllocator() {
@@ -46,35 +49,35 @@ final class BooleanCodecTest {
         BooleanCodec codec = new BooleanCodec(TEST);
 
         Arrays.asList("1", "True", "T", "Yes", "Y", "On")
-            .forEach(input -> assertThat(codec.decode(encode(TEST, input), FORMAT_TEXT, Boolean.class)).isTrue());
+            .forEach(input -> assertThat(codec.decode(encode(TEST, input), dataType, FORMAT_TEXT, Boolean.class)).isTrue());
 
         Arrays.asList("0", "False", "F", "No", "N", "Off")
-            .forEach(input -> assertThat(codec.decode(encode(TEST, input), FORMAT_TEXT, Boolean.class)).isFalse());
+            .forEach(input -> assertThat(codec.decode(encode(TEST, input), dataType, FORMAT_TEXT, Boolean.class)).isFalse());
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new BooleanCodec(TEST).decode(null, FORMAT_TEXT, Boolean.class)).isNull();
+        assertThat(new BooleanCodec(TEST).decode(null, dataType, FORMAT_TEXT, Boolean.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         BooleanCodec codec = new BooleanCodec(TEST);
 
-        assertThat(codec.doCanDecode(FORMAT_BINARY, BOOL)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, BOOL)).isTrue();
+        assertThat(codec.doCanDecode(BOOL, FORMAT_BINARY)).isTrue();
+        assertThat(codec.doCanDecode(MONEY, FORMAT_TEXT)).isFalse();
+        assertThat(codec.doCanDecode(BOOL, FORMAT_TEXT)).isTrue();
     }
 
     @Test
     void doCanDecodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new BooleanCodec(TEST).doCanDecode(null, VARCHAR))
+        assertThatIllegalArgumentException().isThrownBy(() -> new BooleanCodec(TEST).doCanDecode(VARCHAR, null))
             .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new BooleanCodec(TEST).doCanDecode(FORMAT_TEXT, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new BooleanCodec(TEST).doCanDecode(null, FORMAT_TEXT))
             .withMessage("type must not be null");
     }
 

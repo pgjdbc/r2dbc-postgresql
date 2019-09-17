@@ -26,6 +26,7 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.CHAR;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.UNKNOWN;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
@@ -36,6 +37,8 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 
 final class StringCodecTest {
 
+    private static final int dataType = VARCHAR.getObjectId();
+
     @Test
     void constructorNoByteBufAllocator() {
         assertThatIllegalArgumentException().isThrownBy(() -> new StringCodec(null))
@@ -44,37 +47,37 @@ final class StringCodecTest {
 
     @Test
     void decode() {
-        assertThat(new StringCodec(TEST).decode(encode(TEST, "test"), FORMAT_TEXT, String.class))
+        assertThat(new StringCodec(TEST).decode(encode(TEST, "test"), dataType, FORMAT_TEXT, String.class))
             .isEqualTo("test");
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new StringCodec(TEST).decode(null, FORMAT_TEXT, String.class)).isNull();
+        assertThat(new StringCodec(TEST).decode(null, dataType, FORMAT_TEXT, String.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         StringCodec codec = new StringCodec(TEST);
 
-        assertThat(codec.doCanDecode(FORMAT_BINARY, VARCHAR)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, BPCHAR)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, CHAR)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, PostgresqlObjectId.TEXT)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, UNKNOWN)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, VARCHAR)).isTrue();
+        assertThat(codec.doCanDecode(VARCHAR, FORMAT_BINARY)).isTrue();
+        assertThat(codec.doCanDecode(MONEY, FORMAT_TEXT)).isFalse();
+        assertThat(codec.doCanDecode(BPCHAR, FORMAT_TEXT)).isTrue();
+        assertThat(codec.doCanDecode(CHAR, FORMAT_TEXT)).isTrue();
+        assertThat(codec.doCanDecode(PostgresqlObjectId.TEXT, FORMAT_TEXT)).isTrue();
+        assertThat(codec.doCanDecode(UNKNOWN, FORMAT_TEXT)).isTrue();
+        assertThat(codec.doCanDecode(VARCHAR, FORMAT_TEXT)).isTrue();
     }
 
     @Test
     void doCanDecodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new StringCodec(TEST).doCanDecode(null, VARCHAR))
+        assertThatIllegalArgumentException().isThrownBy(() -> new StringCodec(TEST).doCanDecode(VARCHAR, null))
             .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new StringCodec(TEST).doCanDecode(FORMAT_TEXT, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new StringCodec(TEST).doCanDecode(null, FORMAT_TEXT))
             .withMessage("type must not be null");
     }
 

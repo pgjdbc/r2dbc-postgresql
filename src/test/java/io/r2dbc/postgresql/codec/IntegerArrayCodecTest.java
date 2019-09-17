@@ -25,6 +25,7 @@ import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.FLOAT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4_ARRAY;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
@@ -33,6 +34,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class IntegerArrayCodecTest {
+
+    private static final int dataType = INT4_ARRAY.getObjectId();
 
     private final ByteBuf SINGLE_DIM_BINARY_ARRAY = TEST
         .buffer()
@@ -61,14 +64,14 @@ final class IntegerArrayCodecTest {
 
     @Test
     void decodeItem() {
-        assertThat(new IntegerArrayCodec(TEST).decode(SINGLE_DIM_BINARY_ARRAY, FORMAT_BINARY, Integer[].class)).isEqualTo(new int[]{100, 200});
-        assertThat(new IntegerArrayCodec(TEST).decode(encode(TEST, "{100,200}"), FORMAT_TEXT, Integer[].class))
+        assertThat(new IntegerArrayCodec(TEST).decode(SINGLE_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Integer[].class)).isEqualTo(new int[]{100, 200});
+        assertThat(new IntegerArrayCodec(TEST).decode(encode(TEST, "{100,200}"), dataType, FORMAT_TEXT, Integer[].class))
             .isEqualTo(new int[]{100, 200});
     }
 
     @Test
     void decodeItem_emptyArray() {
-        assertThat(new IntegerArrayCodec(TEST).decode(encode(TEST, "{}"), FORMAT_TEXT, Integer[][].class))
+        assertThat(new IntegerArrayCodec(TEST).decode(encode(TEST, "{}"), dataType, FORMAT_TEXT, Integer[][].class))
             .isEqualTo(new int[][]{});
     }
 
@@ -80,46 +83,46 @@ final class IntegerArrayCodecTest {
             .writeInt(0)
             .writeInt(23);
 
-        assertThat(new IntegerArrayCodec(TEST).decode(buf, FORMAT_BINARY, Integer[][].class)).isEqualTo(new int[][]{});
+        assertThat(new IntegerArrayCodec(TEST).decode(buf, dataType, FORMAT_BINARY, Integer[][].class)).isEqualTo(new int[][]{});
     }
 
     @Test
     void decodeItem_expectedLessDimensionsInArray() {
         assertThatIllegalArgumentException()
-            .isThrownBy(() -> new IntegerArrayCodec(TEST).decode(encode(TEST, "{{100}}"), FORMAT_TEXT, Integer[].class))
+            .isThrownBy(() -> new IntegerArrayCodec(TEST).decode(encode(TEST, "{{100}}"), dataType, FORMAT_TEXT, Integer[].class))
             .withMessage("Dimensions mismatch: 1 expected, but 2 returned from DB");
     }
 
     @Test
     void decodeItem_expectedLessDimensionsInBinaryArray() {
         assertThatIllegalArgumentException()
-            .isThrownBy(() -> new IntegerArrayCodec(TEST).decode(TWO_DIM_BINARY_ARRAY, FORMAT_BINARY, Integer[].class))
+            .isThrownBy(() -> new IntegerArrayCodec(TEST).decode(TWO_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Integer[].class))
             .withMessage("Dimensions mismatch: 1 expected, but 2 returned from DB");
     }
 
     @Test
     void decodeItem_expectedMoreDimensionsInArray() {
         assertThatIllegalArgumentException()
-            .isThrownBy(() -> new IntegerArrayCodec(TEST).decode(encode(TEST, "{100,200}"), FORMAT_TEXT, Integer[][].class))
+            .isThrownBy(() -> new IntegerArrayCodec(TEST).decode(encode(TEST, "{100,200}"), dataType, FORMAT_TEXT, Integer[][].class))
             .withMessage("Dimensions mismatch: 2 expected, but 1 returned from DB");
     }
 
     @Test
     void decodeItem_expectedMoreDimensionsInBinaryArray() {
         assertThatIllegalArgumentException()
-            .isThrownBy(() -> new IntegerArrayCodec(TEST).decode(SINGLE_DIM_BINARY_ARRAY, FORMAT_BINARY, Integer[][].class))
+            .isThrownBy(() -> new IntegerArrayCodec(TEST).decode(SINGLE_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Integer[][].class))
             .withMessage("Dimensions mismatch: 2 expected, but 1 returned from DB");
     }
 
     @Test
     void decodeItem_twoDimensionalArrayWithNull() {
-        assertThat(new IntegerArrayCodec(TEST).decode(encode(TEST, "{{100},{NULL}}"), FORMAT_TEXT, Integer[][].class))
+        assertThat(new IntegerArrayCodec(TEST).decode(encode(TEST, "{{100},{NULL}}"), dataType, FORMAT_TEXT, Integer[][].class))
             .isEqualTo(new Integer[][]{{100}, {null}});
     }
 
     @Test
     void decodeItem_twoDimensionalBinaryArrayWithNull() {
-        assertThat(new IntegerArrayCodec(TEST).decode(TWO_DIM_BINARY_ARRAY, FORMAT_BINARY, Integer[][].class)).isEqualTo(new Integer[][]{{100}, {null}});
+        assertThat(new IntegerArrayCodec(TEST).decode(TWO_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Integer[][].class)).isEqualTo(new Integer[][]{{100}, {null}});
     }
 
     @Test
@@ -128,15 +131,15 @@ final class IntegerArrayCodecTest {
         Codec codec = new IntegerArrayCodec(TEST);
         codec.canDecode(PostgresqlObjectId.INT4_ARRAY.getObjectId(), FORMAT_TEXT, Object.class);
 
-        assertThat(codec.decode(SINGLE_DIM_BINARY_ARRAY, FORMAT_BINARY, Object.class)).isEqualTo(new int[]{100, 200});
-        assertThat(codec.decode(encode(TEST, "{100,200}"), FORMAT_TEXT, Object.class)).isEqualTo(new int[]{100, 200});
+        assertThat(codec.decode(SINGLE_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Object.class)).isEqualTo(new int[]{100, 200});
+        assertThat(codec.decode(encode(TEST, "{100,200}"), dataType, FORMAT_TEXT, Object.class)).isEqualTo(new int[]{100, 200});
     }
 
     @Test
     void doCanDecode() {
-        assertThat(new IntegerArrayCodec(TEST).doCanDecode(FORMAT_TEXT, INT4)).isFalse();
-        assertThat(new IntegerArrayCodec(TEST).doCanDecode(FORMAT_TEXT, INT4_ARRAY)).isTrue();
-        assertThat(new IntegerArrayCodec(TEST).doCanDecode(FORMAT_BINARY, INT4_ARRAY)).isTrue();
+        assertThat(new IntegerArrayCodec(TEST).doCanDecode(INT4, FORMAT_TEXT)).isFalse();
+        assertThat(new IntegerArrayCodec(TEST).doCanDecode(INT4_ARRAY, FORMAT_TEXT)).isTrue();
+        assertThat(new IntegerArrayCodec(TEST).doCanDecode(INT4_ARRAY, FORMAT_BINARY)).isTrue();
     }
 
     @Test

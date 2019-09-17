@@ -43,11 +43,11 @@ final class BigDecimalCodec extends AbstractCodec<BigDecimal> {
 
     @Override
     public Parameter encodeNull() {
-        return createNull(FORMAT_TEXT, NUMERIC);
+        return createNull(NUMERIC, FORMAT_TEXT);
     }
 
     @Override
-    boolean doCanDecode(Format format, PostgresqlObjectId type) {
+    boolean doCanDecode(PostgresqlObjectId type, Format format) {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
@@ -55,14 +55,14 @@ final class BigDecimalCodec extends AbstractCodec<BigDecimal> {
     }
 
     @Override
-    BigDecimal doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends BigDecimal> type) {
-        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+    BigDecimal doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends BigDecimal> type) {
+        Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         if (format == FORMAT_BINARY) {
-            return doDecodeBinary(byteBuf);
+            return doDecodeBinary(buffer);
         }
 
-        return new BigDecimal(ByteBufUtils.decode(byteBuf));
+        return new BigDecimal(ByteBufUtils.decode(buffer));
     }
 
     @Override
@@ -70,7 +70,7 @@ final class BigDecimalCodec extends AbstractCodec<BigDecimal> {
         Assert.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toString());
-        return create(FORMAT_TEXT, NUMERIC, Flux.just(encoded));
+        return create(NUMERIC, FORMAT_TEXT, Flux.just(encoded));
     }
 
     private BigDecimal doDecodeBinary(ByteBuf byteBuf) {

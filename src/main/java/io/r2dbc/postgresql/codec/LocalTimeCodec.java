@@ -43,11 +43,11 @@ final class LocalTimeCodec extends AbstractCodec<LocalTime> {
 
     @Override
     public Parameter encodeNull() {
-        return createNull(FORMAT_TEXT, TIME);
+        return createNull(TIME, FORMAT_TEXT);
     }
 
     @Override
-    boolean doCanDecode(Format format, PostgresqlObjectId type) {
+    boolean doCanDecode(PostgresqlObjectId type, Format format) {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
@@ -55,14 +55,14 @@ final class LocalTimeCodec extends AbstractCodec<LocalTime> {
     }
 
     @Override
-    LocalTime doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends LocalTime> type) {
-        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+    LocalTime doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends LocalTime> type) {
+        Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         if (FORMAT_BINARY == format) {
-            return LocalTime.ofNanoOfDay(byteBuf.readLong() * 1000);
+            return LocalTime.ofNanoOfDay(buffer.readLong() * 1000);
         }
 
-        return LocalTime.parse(ByteBufUtils.decode(byteBuf));
+        return LocalTime.parse(ByteBufUtils.decode(buffer));
     }
 
     @Override
@@ -70,7 +70,7 @@ final class LocalTimeCodec extends AbstractCodec<LocalTime> {
         Assert.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toString());
-        return create(FORMAT_TEXT, TIME, Flux.just(encoded));
+        return create(TIME, FORMAT_TEXT, Flux.just(encoded));
     }
 
 }

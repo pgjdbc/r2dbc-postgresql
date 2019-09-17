@@ -19,6 +19,7 @@ package io.r2dbc.postgresql.codec;
 import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.client.ParameterAssert;
+import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.test.MockBlob;
@@ -31,6 +32,7 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.BYTEA;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.NUMERIC;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
@@ -38,6 +40,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class BlobCodecTest {
+
+    private static final int dataType = BYTEA.getObjectId();
 
     @Test
     void constructorNoByteBufAllocator() {
@@ -47,7 +51,7 @@ final class BlobCodecTest {
 
     @Test
     void decode() {
-        Flux.from(new BlobCodec(TEST).decode(encode(TEST, "\\\\x746573742d76616c7565"), FORMAT_TEXT, Blob.class).stream())
+        Flux.from(new BlobCodec(TEST).decode(encode(TEST, "\\\\x746573742d76616c7565"), dataType, FORMAT_TEXT, Blob.class).stream())
             .reduce(TEST.compositeBuffer(), (a, b) -> a.addComponent(true, Unpooled.wrappedBuffer(b)))
             .map(ByteBufUtils::decode)
             .as(StepVerifier::create)
@@ -57,27 +61,27 @@ final class BlobCodecTest {
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new BlobCodec(TEST).decode(null, FORMAT_TEXT, Blob.class)).isNull();
+        assertThat(new BlobCodec(TEST).decode(null, dataType, FORMAT_TEXT, Blob.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         BlobCodec codec = new BlobCodec(TEST);
 
-        assertThat(codec.doCanDecode(FORMAT_BINARY, VARCHAR)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, BYTEA)).isTrue();
+        assertThat(codec.doCanDecode(VARCHAR, FORMAT_BINARY)).isFalse();
+        assertThat(codec.doCanDecode(MONEY, FORMAT_TEXT)).isFalse();
+        assertThat(codec.doCanDecode(BYTEA, FORMAT_TEXT)).isTrue();
     }
 
     @Test
     void doCanDecodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new BlobCodec(TEST).doCanDecode(null, BYTEA))
+        assertThatIllegalArgumentException().isThrownBy(() -> new BlobCodec(TEST).doCanDecode(BYTEA, null))
             .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new BlobCodec(TEST).doCanDecode(FORMAT_TEXT, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new BlobCodec(TEST).doCanDecode(null, FORMAT_TEXT))
             .withMessage("type must not be null");
     }
 

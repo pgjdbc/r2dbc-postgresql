@@ -51,19 +51,19 @@ final class UrlCodec extends AbstractCodec<URL> {
     }
 
     @Override
-    boolean doCanDecode(Format format, PostgresqlObjectId type) {
+    boolean doCanDecode(PostgresqlObjectId type, Format format) {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return this.delegate.doCanDecode(format, type);
+        return this.delegate.doCanDecode(type, format);
     }
 
     @Override
-    URL doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends URL> type) {
-        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+    URL doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends URL> type) {
+        Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         try {
-            return new URL(this.delegate.doDecode(byteBuf, format, String.class).trim());
+            return new URL(this.delegate.doDecode(buffer, dataType, format, String.class).trim());
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException(e);
         }

@@ -25,6 +25,7 @@ import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIME;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
@@ -34,6 +35,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class LocalTimeCodecTest {
+
+    private static final int dataType = TIME.getObjectId();
 
     @Test
     void constructorNoByteBufAllocator() {
@@ -45,33 +48,33 @@ final class LocalTimeCodecTest {
     void decode() {
         LocalTime localTime = LocalTime.now();
 
-        assertThat(new LocalTimeCodec(TEST).decode(encode(TEST, localTime.toString()), FORMAT_TEXT, LocalTime.class))
+        assertThat(new LocalTimeCodec(TEST).decode(encode(TEST, localTime.toString()), dataType, FORMAT_TEXT, LocalTime.class))
             .isEqualTo(localTime);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new LocalTimeCodec(TEST).decode(null, FORMAT_TEXT, LocalTime.class)).isNull();
+        assertThat(new LocalTimeCodec(TEST).decode(null, dataType, FORMAT_TEXT, LocalTime.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         LocalTimeCodec codec = new LocalTimeCodec(TEST);
 
-        assertThat(codec.doCanDecode(FORMAT_BINARY, TIME)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, TIME)).isTrue();
+        assertThat(codec.doCanDecode(TIME, FORMAT_BINARY)).isTrue();
+        assertThat(codec.doCanDecode(MONEY, FORMAT_TEXT)).isFalse();
+        assertThat(codec.doCanDecode(TIME, FORMAT_TEXT)).isTrue();
     }
 
     @Test
     void doCanDecodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new LocalTimeCodec(TEST).doCanDecode(null, VARCHAR))
+        assertThatIllegalArgumentException().isThrownBy(() -> new LocalTimeCodec(TEST).doCanDecode(VARCHAR, null))
             .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new LocalTimeCodec(TEST).doCanDecode(FORMAT_TEXT, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new LocalTimeCodec(TEST).doCanDecode(null, FORMAT_TEXT))
             .withMessage("type must not be null");
     }
 

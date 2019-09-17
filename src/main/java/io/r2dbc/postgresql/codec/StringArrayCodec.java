@@ -39,7 +39,7 @@ final class StringArrayCodec extends AbstractArrayCodec<String> {
 
     @Override
     public Parameter encodeNull() {
-        return createNull(FORMAT_TEXT, TEXT_ARRAY);
+        return createNull(TEXT_ARRAY, FORMAT_TEXT);
     }
 
     @Override
@@ -53,7 +53,7 @@ final class StringArrayCodec extends AbstractArrayCodec<String> {
     }
 
     @Override
-    boolean doCanDecode(Format format, PostgresqlObjectId type) {
+    boolean doCanDecode(PostgresqlObjectId type, Format format) {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
@@ -64,7 +64,7 @@ final class StringArrayCodec extends AbstractArrayCodec<String> {
     Parameter encodeArray(ByteBuf byteBuf) {
         Assert.requireNonNull(byteBuf, "byteBuf must not be null");
 
-        return create(FORMAT_TEXT, TEXT_ARRAY, Flux.just(byteBuf));
+        return create(TEXT_ARRAY, FORMAT_TEXT, Flux.just(byteBuf));
     }
 
     @Override

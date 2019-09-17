@@ -24,6 +24,7 @@ import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.BYTEA;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT2;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
@@ -31,6 +32,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class ByteCodecTest {
+
+    private static final int dataType = INT2.getObjectId();
 
     @Test
     void constructorNoByteBufAllocator() {
@@ -42,18 +45,18 @@ final class ByteCodecTest {
     void decode() {
         ByteCodec codec = new ByteCodec(TEST);
 
-        assertThat(codec.decode(TEST.buffer(2).writeShort((byte) 100), FORMAT_BINARY, Byte.class)).isEqualTo((byte) 100);
-        assertThat(codec.decode(ByteBufUtils.encode(TEST, "100"), FORMAT_TEXT, Byte.class)).isEqualTo((byte) 100);
+        assertThat(codec.decode(TEST.buffer(2).writeShort((byte) 100), dataType, FORMAT_BINARY, Byte.class)).isEqualTo((byte) 100);
+        assertThat(codec.decode(ByteBufUtils.encode(TEST, "100"), dataType, FORMAT_TEXT, Byte.class)).isEqualTo((byte) 100);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new ByteCodec(TEST).decode(null, FORMAT_BINARY, Byte.class)).isNull();
+        assertThat(new ByteCodec(TEST).decode(null, dataType, FORMAT_BINARY, Byte.class)).isNull();
     }
 
     @Test
     void decodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new ByteCodec(TEST).decode(TEST.buffer(0), null, Byte.class))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ByteCodec(TEST).decode(TEST.buffer(0), dataType, null, Byte.class))
             .withMessage("format must not be null");
     }
 
@@ -61,9 +64,9 @@ final class ByteCodecTest {
     void doCanDecode() {
         ByteCodec codec = new ByteCodec(TEST);
 
-        assertThat(codec.doCanDecode(FORMAT_BINARY, VARCHAR)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_BINARY, INT2)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, INT2)).isTrue();
+        assertThat(codec.doCanDecode(VARCHAR, FORMAT_BINARY)).isFalse();
+        assertThat(codec.doCanDecode(INT2, FORMAT_BINARY)).isTrue();
+        assertThat(codec.doCanDecode(INT2, FORMAT_TEXT)).isTrue();
     }
 
     @Test

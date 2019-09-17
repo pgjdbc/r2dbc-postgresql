@@ -40,11 +40,11 @@ final class BooleanCodec extends AbstractCodec<Boolean> {
 
     @Override
     public Parameter encodeNull() {
-        return createNull(FORMAT_TEXT, BOOL);
+        return createNull(BOOL, FORMAT_TEXT);
     }
 
     @Override
-    boolean doCanDecode(Format format, PostgresqlObjectId type) {
+    boolean doCanDecode(PostgresqlObjectId type, Format format) {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
@@ -52,14 +52,14 @@ final class BooleanCodec extends AbstractCodec<Boolean> {
     }
 
     @Override
-    Boolean doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends Boolean> type) {
-        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+    Boolean doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends Boolean> type) {
+        Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         if (format == Format.FORMAT_BINARY) {
-            return byteBuf.readBoolean();
+            return buffer.readBoolean();
         }
 
-        String decoded = ByteBufUtils.decode(byteBuf);
+        String decoded = ByteBufUtils.decode(buffer);
         return "1".equals(decoded)
             || "true".equalsIgnoreCase(decoded)
             || "t".equalsIgnoreCase(decoded)
@@ -73,7 +73,7 @@ final class BooleanCodec extends AbstractCodec<Boolean> {
         Assert.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value ? "TRUE" : "FALSE");
-        return create(FORMAT_TEXT, BOOL, Flux.just(encoded));
+        return create(BOOL, FORMAT_TEXT, Flux.just(encoded));
     }
 
 }

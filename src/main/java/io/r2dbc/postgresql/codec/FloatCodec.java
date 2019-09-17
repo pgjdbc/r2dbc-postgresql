@@ -40,25 +40,25 @@ final class FloatCodec extends AbstractCodec<Float> {
 
     @Override
     public Parameter encodeNull() {
-        return createNull(FORMAT_BINARY, FLOAT4);
+        return createNull(FLOAT4, FORMAT_BINARY);
     }
 
     @Override
-    boolean doCanDecode(@Nullable Format format, PostgresqlObjectId type) {
+    boolean doCanDecode(PostgresqlObjectId type, @Nullable Format format) {
         Assert.requireNonNull(type, "type must not be null");
 
         return FLOAT4 == type;
     }
 
     @Override
-    Float doDecode(ByteBuf byteBuf, Format format, @Nullable Class<? extends Float> type) {
-        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+    Float doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, @Nullable Class<? extends Float> type) {
+        Assert.requireNonNull(buffer, "byteBuf must not be null");
         Assert.requireNonNull(format, "format must not be null");
 
         if (FORMAT_BINARY == format) {
-            return byteBuf.readFloat();
+            return buffer.readFloat();
         } else {
-            return Float.parseFloat(ByteBufUtils.decode(byteBuf));
+            return Float.parseFloat(ByteBufUtils.decode(buffer));
         }
     }
 
@@ -67,6 +67,6 @@ final class FloatCodec extends AbstractCodec<Float> {
         Assert.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = this.byteBufAllocator.buffer(4).writeFloat(value);
-        return create(FORMAT_BINARY, FLOAT4, Flux.just(encoded));
+        return create(FLOAT4, FORMAT_BINARY, Flux.just(encoded));
     }
 }

@@ -43,18 +43,18 @@ final class UriCodec extends AbstractCodec<URI> {
     }
 
     @Override
-    boolean doCanDecode(Format format, PostgresqlObjectId type) {
+    boolean doCanDecode(PostgresqlObjectId type, Format format) {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return this.delegate.doCanDecode(format, type);
+        return this.delegate.doCanDecode(type, format);
     }
 
     @Override
-    URI doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends URI> type) {
-        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+    URI doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends URI> type) {
+        Assert.requireNonNull(buffer, "byteBuf must not be null");
 
-        return URI.create(this.delegate.doDecode(byteBuf, format, String.class).trim());
+        return URI.create(this.delegate.doDecode(buffer, dataType, format, String.class).trim());
     }
 
     @Override

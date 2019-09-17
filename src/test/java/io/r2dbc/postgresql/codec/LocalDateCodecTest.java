@@ -35,6 +35,8 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 
 final class LocalDateCodecTest {
 
+    private static final int dataType = DATE.getObjectId();
+
     @Test
     void constructorNoByteBufAllocator() {
         assertThatIllegalArgumentException().isThrownBy(() -> new LocalDateCodec(null))
@@ -45,33 +47,33 @@ final class LocalDateCodecTest {
     void decode() {
         LocalDate localDate = LocalDate.now();
 
-        assertThat(new LocalDateCodec(TEST).decode(encode(TEST, localDate.toString()), FORMAT_TEXT, LocalDate.class))
+        assertThat(new LocalDateCodec(TEST).decode(encode(TEST, localDate.toString()), dataType, FORMAT_TEXT, LocalDate.class))
             .isEqualTo(localDate);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new LocalDateCodec(TEST).decode(null, FORMAT_TEXT, LocalDate.class)).isNull();
+        assertThat(new LocalDateCodec(TEST).decode(null, dataType, FORMAT_TEXT, LocalDate.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         LocalDateCodec codec = new LocalDateCodec(TEST);
 
-        assertThat(codec.doCanDecode(FORMAT_BINARY, DATE)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, DATE)).isTrue();
+        assertThat(codec.doCanDecode(DATE, FORMAT_BINARY)).isTrue();
+        assertThat(codec.doCanDecode(MONEY, FORMAT_TEXT)).isFalse();
+        assertThat(codec.doCanDecode(DATE, FORMAT_TEXT)).isTrue();
     }
 
     @Test
     void doCanDecodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new LocalDateCodec(TEST).doCanDecode(null, VARCHAR))
+        assertThatIllegalArgumentException().isThrownBy(() -> new LocalDateCodec(TEST).doCanDecode(VARCHAR, null))
             .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new LocalDateCodec(TEST).doCanDecode(FORMAT_TEXT, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new LocalDateCodec(TEST).doCanDecode(null, FORMAT_TEXT))
             .withMessage("type must not be null");
     }
 

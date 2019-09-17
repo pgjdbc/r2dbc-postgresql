@@ -28,6 +28,7 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR_ARRAY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.CHAR;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.CHAR_ARRAY;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TEXT_ARRAY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
@@ -38,6 +39,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class StringArrayCodecTest {
+
+    private static final int dataType = VARCHAR_ARRAY.getObjectId();
 
     private final ByteBuf BINARY_ARRAY = TEST
         .buffer()
@@ -53,44 +56,44 @@ final class StringArrayCodecTest {
 
     @Test
     void decodeItem() {
-        assertThat(new StringArrayCodec(TEST).decode(BINARY_ARRAY, FORMAT_BINARY, String[].class)).isEqualTo(new String[]{"abc", "def"});
-        assertThat(new StringArrayCodec(TEST).decode(encode(TEST, "{alpha,bravo}"), FORMAT_TEXT, String[].class))
+        assertThat(new StringArrayCodec(TEST).decode(BINARY_ARRAY, dataType, FORMAT_BINARY, String[].class)).isEqualTo(new String[]{"abc", "def"});
+        assertThat(new StringArrayCodec(TEST).decode(encode(TEST, "{alpha,bravo}"), dataType, FORMAT_TEXT, String[].class))
             .isEqualTo(new String[]{"alpha", "bravo"});
-        assertThat(new StringArrayCodec(TEST).decode(encode(TEST, "{}"), FORMAT_TEXT, String[].class))
+        assertThat(new StringArrayCodec(TEST).decode(encode(TEST, "{}"), dataType, FORMAT_TEXT, String[].class))
             .isEqualTo(new String[]{});
     }
 
     @Test
     @SuppressWarnings({"rawtypes", "unchecked"})
     void decodeObject() {
-        assertThat(((Codec) new StringArrayCodec(TEST)).decode(encode(TEST, "{alpha,bravo}"), FORMAT_TEXT, Object.class))
+        assertThat(((Codec) new StringArrayCodec(TEST)).decode(encode(TEST, "{alpha,bravo}"), dataType, FORMAT_TEXT, Object.class))
             .isEqualTo(new String[]{"alpha", "bravo"});
     }
 
     @Test
     void doCanDecode() {
-        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_TEXT, BPCHAR)).isFalse();
-        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_BINARY, BPCHAR_ARRAY)).isTrue();
-        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_TEXT, CHAR)).isFalse();
-        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_BINARY, CHAR_ARRAY)).isTrue();
-        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_TEXT, CHAR_ARRAY)).isTrue();
-        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_TEXT, TEXT)).isFalse();
-        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_BINARY, TEXT_ARRAY)).isTrue();
-        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_TEXT, TEXT_ARRAY)).isTrue();
-        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_TEXT, VARCHAR)).isFalse();
-        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_BINARY, VARCHAR_ARRAY)).isTrue();
-        assertThat(new StringArrayCodec(TEST).doCanDecode(FORMAT_TEXT, VARCHAR_ARRAY)).isTrue();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(BPCHAR, FORMAT_TEXT)).isFalse();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(BPCHAR_ARRAY, FORMAT_BINARY)).isTrue();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(CHAR, FORMAT_TEXT)).isFalse();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(CHAR_ARRAY, FORMAT_BINARY)).isTrue();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(CHAR_ARRAY, FORMAT_TEXT)).isTrue();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(TEXT, FORMAT_TEXT)).isFalse();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(TEXT_ARRAY, FORMAT_BINARY)).isTrue();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(TEXT_ARRAY, FORMAT_TEXT)).isTrue();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(VARCHAR, FORMAT_TEXT)).isFalse();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(VARCHAR_ARRAY, FORMAT_BINARY)).isTrue();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(VARCHAR_ARRAY, FORMAT_TEXT)).isTrue();
     }
 
     @Test
     void doCanDecodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new StringArrayCodec(TEST).doCanDecode(null, VARCHAR_ARRAY))
+        assertThatIllegalArgumentException().isThrownBy(() -> new StringArrayCodec(TEST).doCanDecode(VARCHAR_ARRAY, null))
             .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new StringArrayCodec(TEST).doCanDecode(FORMAT_TEXT, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new StringArrayCodec(TEST).doCanDecode(null, FORMAT_TEXT))
             .withMessage("type must not be null");
     }
 

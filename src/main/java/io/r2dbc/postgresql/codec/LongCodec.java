@@ -40,25 +40,25 @@ final class LongCodec extends AbstractCodec<Long> {
 
     @Override
     public Parameter encodeNull() {
-        return createNull(FORMAT_BINARY, INT8);
+        return createNull(INT8, FORMAT_BINARY);
     }
 
     @Override
-    boolean doCanDecode(@Nullable Format format, PostgresqlObjectId type) {
+    boolean doCanDecode(PostgresqlObjectId type, @Nullable Format format) {
         Assert.requireNonNull(type, "type must not be null");
 
         return INT8 == type;
     }
 
     @Override
-    Long doDecode(ByteBuf byteBuf, Format format, @Nullable Class<? extends Long> type) {
-        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+    Long doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, @Nullable Class<? extends Long> type) {
+        Assert.requireNonNull(buffer, "byteBuf must not be null");
         Assert.requireNonNull(format, "format must not be null");
 
         if (FORMAT_BINARY == format) {
-            return byteBuf.readLong();
+            return buffer.readLong();
         } else {
-            return Long.parseLong(ByteBufUtils.decode(byteBuf));
+            return Long.parseLong(ByteBufUtils.decode(buffer));
         }
     }
 
@@ -67,7 +67,7 @@ final class LongCodec extends AbstractCodec<Long> {
         Assert.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = this.byteBufAllocator.buffer(8).writeLong(value);
-        return create(FORMAT_BINARY, INT8, Flux.just(encoded));
+        return create(INT8, FORMAT_BINARY, Flux.just(encoded));
     }
 
 }

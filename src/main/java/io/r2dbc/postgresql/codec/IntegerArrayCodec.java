@@ -35,7 +35,7 @@ final class IntegerArrayCodec extends AbstractArrayCodec<Integer> {
 
     @Override
     public Parameter encodeNull() {
-        return createNull(FORMAT_TEXT, INT4_ARRAY);
+        return createNull(INT4_ARRAY, FORMAT_TEXT);
     }
 
     @Override
@@ -49,7 +49,7 @@ final class IntegerArrayCodec extends AbstractArrayCodec<Integer> {
     }
 
     @Override
-    boolean doCanDecode(Format format, PostgresqlObjectId type) {
+    boolean doCanDecode(PostgresqlObjectId type, Format format) {
         Assert.requireNonNull(type, "type must not be null");
 
         return INT4_ARRAY == type;
@@ -59,7 +59,7 @@ final class IntegerArrayCodec extends AbstractArrayCodec<Integer> {
     Parameter encodeArray(ByteBuf byteBuf) {
         Assert.requireNonNull(byteBuf, "byteBuf must not be null");
 
-        return create(FORMAT_TEXT, INT4_ARRAY, Flux.just(byteBuf));
+        return create(INT4_ARRAY, FORMAT_TEXT, Flux.just(byteBuf));
     }
 
     @Override

@@ -43,18 +43,18 @@ final class ZoneIdCodec extends AbstractCodec<ZoneId> {
     }
 
     @Override
-    boolean doCanDecode(Format format, PostgresqlObjectId type) {
+    boolean doCanDecode(PostgresqlObjectId type, Format format) {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return this.delegate.doCanDecode(format, type);
+        return this.delegate.doCanDecode(type, format);
     }
 
     @Override
-    ZoneId doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends ZoneId> type) {
-        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+    ZoneId doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends ZoneId> type) {
+        Assert.requireNonNull(buffer, "byteBuf must not be null");
 
-        return ZoneId.of(this.delegate.doDecode(byteBuf, format, String.class).trim());
+        return ZoneId.of(this.delegate.doDecode(buffer, dataType, format, String.class).trim());
     }
 
     @Override

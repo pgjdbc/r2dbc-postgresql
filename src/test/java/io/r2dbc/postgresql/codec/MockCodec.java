@@ -67,7 +67,7 @@ public final class MockCodec<T> extends AbstractCodec<T> {
     }
 
     @Override
-    boolean doCanDecode(Format format, PostgresqlObjectId type) {
+    boolean doCanDecode(PostgresqlObjectId type, Format format) {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
@@ -75,15 +75,15 @@ public final class MockCodec<T> extends AbstractCodec<T> {
     }
 
     @Override
-    T doDecode(ByteBuf byteBuf, Format format, Class<? extends T> type) {
-        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+    T doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, Class<? extends T> type) {
+        Assert.requireNonNull(buffer, "byteBuf must not be null");
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        Decoding decoding = new Decoding(byteBuf, format);
+        Decoding decoding = new Decoding(buffer, format);
 
         if (!this.decodings.containsKey(decoding)) {
-            throw new AssertionError(String.format("Unexpected call to decode(ByteBuf, Format, Class) with values '%s', '%s', '%s'", byteBuf, format, type.getName()));
+            throw new AssertionError(String.format("Unexpected call to decode(ByteBuf, Format, Class) with values '%s', '%s', '%s'", buffer, format, type.getName()));
         }
 
         return this.decodings.get(decoding);

@@ -44,11 +44,11 @@ final class InetAddressCodec extends AbstractCodec<InetAddress> {
 
     @Override
     public Parameter encodeNull() {
-        return createNull(FORMAT_TEXT, VARCHAR);
+        return createNull(VARCHAR, FORMAT_TEXT);
     }
 
     @Override
-    boolean doCanDecode(Format format, PostgresqlObjectId type) {
+    boolean doCanDecode(PostgresqlObjectId type, Format format) {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
@@ -56,11 +56,11 @@ final class InetAddressCodec extends AbstractCodec<InetAddress> {
     }
 
     @Override
-    InetAddress doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends InetAddress> type) {
-        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+    InetAddress doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends InetAddress> type) {
+        Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         try {
-            return InetAddress.getByName(ByteBufUtils.decode(byteBuf).trim());
+            return InetAddress.getByName(ByteBufUtils.decode(buffer).trim());
         } catch (UnknownHostException e) {
             throw new IllegalArgumentException(e);
         }
@@ -71,7 +71,7 @@ final class InetAddressCodec extends AbstractCodec<InetAddress> {
         Assert.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.getHostAddress());
-        return create(FORMAT_TEXT, VARCHAR, Flux.just(encoded));
+        return create(VARCHAR, FORMAT_TEXT, Flux.just(encoded));
     }
 
 }

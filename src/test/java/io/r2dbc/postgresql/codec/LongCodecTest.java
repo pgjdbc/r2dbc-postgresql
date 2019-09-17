@@ -23,6 +23,7 @@ import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT8;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
@@ -31,6 +32,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class LongCodecTest {
+
+    private static final int dataType = INT8.getObjectId();
 
     @Test
     void constructorNoByteBufAllocator() {
@@ -42,18 +45,18 @@ final class LongCodecTest {
     void decode() {
         LongCodec codec = new LongCodec(TEST);
 
-        assertThat(codec.decode(TEST.buffer(8).writeLong(100L), FORMAT_BINARY, Long.class)).isEqualTo(100L);
-        assertThat(codec.decode(encode(TEST, "100"), FORMAT_TEXT, Long.class)).isEqualTo(100L);
+        assertThat(codec.decode(TEST.buffer(8).writeLong(100L), dataType, FORMAT_BINARY, Long.class)).isEqualTo(100L);
+        assertThat(codec.decode(encode(TEST, "100"), dataType, FORMAT_TEXT, Long.class)).isEqualTo(100L);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new LongCodec(TEST).decode(null, FORMAT_BINARY, Long.class)).isNull();
+        assertThat(new LongCodec(TEST).decode(null, dataType, FORMAT_BINARY, Long.class)).isNull();
     }
 
     @Test
     void decodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new LongCodec(TEST).decode(TEST.buffer(0), null, Long.class))
+        assertThatIllegalArgumentException().isThrownBy(() -> new LongCodec(TEST).decode(TEST.buffer(0), dataType, null, Long.class))
             .withMessage("format must not be null");
     }
 
@@ -61,9 +64,9 @@ final class LongCodecTest {
     void doCanDecode() {
         LongCodec codec = new LongCodec(TEST);
 
-        assertThat(codec.doCanDecode(FORMAT_BINARY, VARCHAR)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_BINARY, INT8)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, INT8)).isTrue();
+        assertThat(codec.doCanDecode(VARCHAR, FORMAT_BINARY)).isFalse();
+        assertThat(codec.doCanDecode(INT8, FORMAT_BINARY)).isTrue();
+        assertThat(codec.doCanDecode(INT8, FORMAT_TEXT)).isTrue();
     }
 
     @Test

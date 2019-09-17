@@ -25,6 +25,7 @@ import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMPTZ;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
@@ -34,6 +35,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class OffsetDateTimeCodecTest {
+
+    private static final int dataType = TIMESTAMPTZ.getObjectId();
 
     @Test
     void constructorNoByteBufAllocator() {
@@ -45,33 +48,33 @@ final class OffsetDateTimeCodecTest {
     void decode() {
         OffsetDateTime offsetDateTime = OffsetDateTime.parse("2018-11-05T00:16:00.899797+09:00");
 
-        assertThat(new OffsetDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:16:00.899797+09"), FORMAT_TEXT, OffsetDateTime.class))
+        assertThat(new OffsetDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:16:00.899797+09"), dataType, FORMAT_TEXT, OffsetDateTime.class))
             .isEqualTo(offsetDateTime);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new OffsetDateTimeCodec(TEST).decode(null, FORMAT_TEXT, OffsetDateTime.class)).isNull();
+        assertThat(new OffsetDateTimeCodec(TEST).decode(null, dataType, FORMAT_TEXT, OffsetDateTime.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         OffsetDateTimeCodec codec = new OffsetDateTimeCodec(TEST);
 
-        assertThat(codec.doCanDecode(FORMAT_BINARY, TIMESTAMPTZ)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, TIMESTAMPTZ)).isTrue();
+        assertThat(codec.doCanDecode(TIMESTAMPTZ, FORMAT_BINARY)).isTrue();
+        assertThat(codec.doCanDecode(MONEY, FORMAT_TEXT)).isFalse();
+        assertThat(codec.doCanDecode(TIMESTAMPTZ, FORMAT_TEXT)).isTrue();
     }
 
     @Test
     void doCanDecodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new OffsetDateTimeCodec(TEST).doCanDecode(null, VARCHAR))
+        assertThatIllegalArgumentException().isThrownBy(() -> new OffsetDateTimeCodec(TEST).doCanDecode(VARCHAR, null))
             .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new OffsetDateTimeCodec(TEST).doCanDecode(FORMAT_TEXT, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new OffsetDateTimeCodec(TEST).doCanDecode(null, FORMAT_TEXT))
             .withMessage("type must not be null");
     }
 

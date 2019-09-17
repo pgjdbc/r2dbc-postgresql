@@ -35,6 +35,8 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 
 final class ZoneIdCodecTest {
 
+    private static final int dataType = VARCHAR.getObjectId();
+
     @Test
     void constructorNoByteBufAllocator() {
         assertThatIllegalArgumentException().isThrownBy(() -> new ZoneIdCodec(null))
@@ -45,34 +47,34 @@ final class ZoneIdCodecTest {
     void decode() {
         ZoneId zoneId = ZoneId.systemDefault();
 
-        assertThat(new ZoneIdCodec(TEST).decode(encode(TEST, zoneId.getId()), FORMAT_TEXT, ZoneId.class))
+        assertThat(new ZoneIdCodec(TEST).decode(encode(TEST, zoneId.getId()), dataType, FORMAT_TEXT, ZoneId.class))
             .isEqualTo(zoneId);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new ZoneIdCodec(TEST).decode(null, FORMAT_TEXT, ZoneId.class)).isNull();
+        assertThat(new ZoneIdCodec(TEST).decode(null, dataType, FORMAT_TEXT, ZoneId.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         ZoneIdCodec codec = new ZoneIdCodec(TEST);
 
-        assertThat(codec.doCanDecode(FORMAT_BINARY, VARCHAR)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, BPCHAR)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, VARCHAR)).isTrue();
+        assertThat(codec.doCanDecode(VARCHAR, FORMAT_BINARY)).isTrue();
+        assertThat(codec.doCanDecode(MONEY, FORMAT_TEXT)).isFalse();
+        assertThat(codec.doCanDecode(BPCHAR, FORMAT_TEXT)).isTrue();
+        assertThat(codec.doCanDecode(VARCHAR, FORMAT_TEXT)).isTrue();
     }
 
     @Test
     void doCanDecodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new ZoneIdCodec(TEST).doCanDecode(null, VARCHAR))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ZoneIdCodec(TEST).doCanDecode(VARCHAR, null))
             .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new ZoneIdCodec(TEST).doCanDecode(FORMAT_TEXT, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ZoneIdCodec(TEST).doCanDecode(null, FORMAT_TEXT))
             .withMessage("type must not be null");
     }
 

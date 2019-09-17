@@ -23,6 +23,7 @@ import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.BYTEA;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.FLOAT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
@@ -31,6 +32,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class FloatCodecTest {
+
+    private static final int dataType = FLOAT4.getObjectId();
 
     @Test
     void constructorNoByteBufAllocator() {
@@ -42,18 +45,18 @@ final class FloatCodecTest {
     void decode() {
         FloatCodec codec = new FloatCodec(TEST);
 
-        assertThat(codec.decode(TEST.buffer(4).writeFloat(100.0f), FORMAT_BINARY, Float.class)).isEqualTo(100.0f);
-        assertThat(codec.decode(encode(TEST, "100.0"), FORMAT_TEXT, Float.class)).isEqualTo(100.0f);
+        assertThat(codec.decode(TEST.buffer(4).writeFloat(100.0f), dataType, FORMAT_BINARY, Float.class)).isEqualTo(100.0f);
+        assertThat(codec.decode(encode(TEST, "100.0"), dataType, FORMAT_TEXT, Float.class)).isEqualTo(100.0f);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new FloatCodec(TEST).decode(null, FORMAT_BINARY, Float.class)).isNull();
+        assertThat(new FloatCodec(TEST).decode(null, dataType, FORMAT_BINARY, Float.class)).isNull();
     }
 
     @Test
     void decodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new FloatCodec(TEST).decode(TEST.buffer(0), null, Float.class))
+        assertThatIllegalArgumentException().isThrownBy(() -> new FloatCodec(TEST).decode(TEST.buffer(0), dataType, null, Float.class))
             .withMessage("format must not be null");
     }
 
@@ -61,9 +64,9 @@ final class FloatCodecTest {
     void doCanDecode() {
         FloatCodec codec = new FloatCodec(TEST);
 
-        assertThat(codec.doCanDecode(FORMAT_BINARY, VARCHAR)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_BINARY, FLOAT4)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, FLOAT4)).isTrue();
+        assertThat(codec.doCanDecode(VARCHAR, FORMAT_BINARY)).isFalse();
+        assertThat(codec.doCanDecode(FLOAT4, FORMAT_BINARY)).isTrue();
+        assertThat(codec.doCanDecode(FLOAT4, FORMAT_TEXT)).isTrue();
     }
 
     @Test

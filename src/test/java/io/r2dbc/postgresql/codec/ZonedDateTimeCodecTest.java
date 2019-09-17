@@ -35,6 +35,8 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 
 final class ZonedDateTimeCodecTest {
 
+    private static final int dataType = TIMESTAMPTZ.getObjectId();
+
     @Test
     void constructorNoByteBufAllocator() {
         assertThatIllegalArgumentException().isThrownBy(() -> new ZonedDateTimeCodec(null))
@@ -45,33 +47,33 @@ final class ZonedDateTimeCodecTest {
     void decode() {
         ZonedDateTime zonedDateTime = ZonedDateTime.parse("2018-11-05T00:20:25.039883+09:00[Asia/Tokyo]");
 
-        assertThat(new ZonedDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:20:25.039883+09"), FORMAT_TEXT, ZonedDateTime.class))
+        assertThat(new ZonedDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:20:25.039883+09"), dataType, FORMAT_TEXT, ZonedDateTime.class))
             .isEqualTo(zonedDateTime);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new ZonedDateTimeCodec(TEST).decode(null, FORMAT_TEXT, ZonedDateTime.class)).isNull();
+        assertThat(new ZonedDateTimeCodec(TEST).decode(null, dataType, FORMAT_TEXT, ZonedDateTime.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         ZonedDateTimeCodec codec = new ZonedDateTimeCodec(TEST);
 
-        assertThat(codec.doCanDecode(FORMAT_BINARY, TIMESTAMPTZ)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, TIMESTAMPTZ)).isTrue();
+        assertThat(codec.doCanDecode(TIMESTAMPTZ, FORMAT_BINARY)).isTrue();
+        assertThat(codec.doCanDecode(MONEY, FORMAT_TEXT)).isFalse();
+        assertThat(codec.doCanDecode(TIMESTAMPTZ, FORMAT_TEXT)).isTrue();
     }
 
     @Test
     void doCanDecodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new ZonedDateTimeCodec(TEST).doCanDecode(null, VARCHAR))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ZonedDateTimeCodec(TEST).doCanDecode(VARCHAR, null))
             .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new ZonedDateTimeCodec(TEST).doCanDecode(FORMAT_TEXT, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ZonedDateTimeCodec(TEST).doCanDecode(null, FORMAT_TEXT))
             .withMessage("type must not be null");
     }
 

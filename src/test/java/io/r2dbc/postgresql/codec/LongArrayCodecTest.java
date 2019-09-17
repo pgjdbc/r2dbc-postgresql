@@ -24,6 +24,7 @@ import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT8;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT8_ARRAY;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
@@ -32,6 +33,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class LongArrayCodecTest {
+
+    private static final int dataType = INT8_ARRAY.getObjectId();
 
     private final ByteBuf BINARY_ARRAY = TEST
         .buffer()
@@ -47,24 +50,24 @@ final class LongArrayCodecTest {
 
     @Test
     void decodeItem() {
-        assertThat(new LongArrayCodec(TEST).decode(BINARY_ARRAY, FORMAT_BINARY, Long[].class)).isEqualTo(new long[]{100, 200});
-        assertThat(new LongArrayCodec(TEST).decode(TEST.buffer(), FORMAT_BINARY, Long[].class)).isEqualTo(new long[]{});
-        assertThat(new LongArrayCodec(TEST).decode(encode(TEST, "{100,200}"), FORMAT_TEXT, Long[].class)).isEqualTo(new long[]{100, 200});
-        assertThat(new LongArrayCodec(TEST).decode(encode(TEST, "{}"), FORMAT_TEXT, Long[].class)).isEqualTo(new long[]{});
+        assertThat(new LongArrayCodec(TEST).decode(BINARY_ARRAY, 0, FORMAT_BINARY, Long[].class)).isEqualTo(new long[]{100, 200});
+        assertThat(new LongArrayCodec(TEST).decode(TEST.buffer(), 0, FORMAT_BINARY, Long[].class)).isEqualTo(new long[]{});
+        assertThat(new LongArrayCodec(TEST).decode(encode(TEST, "{100,200}"), 0, FORMAT_TEXT, Long[].class)).isEqualTo(new long[]{100, 200});
+        assertThat(new LongArrayCodec(TEST).decode(encode(TEST, "{}"), 0, FORMAT_TEXT, Long[].class)).isEqualTo(new long[]{});
     }
 
     @Test
     @SuppressWarnings({"rawtypes", "unchecked"})
     void decodeObject() {
-        assertThat(((Codec) new LongArrayCodec(TEST)).decode(BINARY_ARRAY, FORMAT_BINARY, Object.class)).isEqualTo(new long[]{100, 200});
-        assertThat(((Codec) new LongArrayCodec(TEST)).decode(encode(TEST, "{100,200}"), FORMAT_TEXT, Object.class)).isEqualTo(new long[]{100, 200});
+        assertThat(((Codec) new LongArrayCodec(TEST)).decode(BINARY_ARRAY, 0, FORMAT_BINARY, Object.class)).isEqualTo(new long[]{100, 200});
+        assertThat(((Codec) new LongArrayCodec(TEST)).decode(encode(TEST, "{100,200}"), 0, FORMAT_TEXT, Object.class)).isEqualTo(new long[]{100, 200});
     }
 
     @Test
     void doCanDecode() {
-        assertThat(new LongArrayCodec(TEST).doCanDecode(FORMAT_TEXT, INT8)).isFalse();
-        assertThat(new LongArrayCodec(TEST).doCanDecode(FORMAT_TEXT, INT8_ARRAY)).isTrue();
-        assertThat(new LongArrayCodec(TEST).doCanDecode(FORMAT_BINARY, INT8_ARRAY)).isTrue();
+        assertThat(new LongArrayCodec(TEST).doCanDecode(INT8, FORMAT_TEXT)).isFalse();
+        assertThat(new LongArrayCodec(TEST).doCanDecode(INT8_ARRAY, FORMAT_TEXT)).isTrue();
+        assertThat(new LongArrayCodec(TEST).doCanDecode(INT8_ARRAY, FORMAT_BINARY)).isTrue();
     }
 
     @Test

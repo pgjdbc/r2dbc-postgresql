@@ -41,18 +41,18 @@ final class ByteCodec extends AbstractCodec<Byte> {
     }
 
     @Override
-    boolean doCanDecode(@Nullable Format format, PostgresqlObjectId type) {
+    boolean doCanDecode(PostgresqlObjectId type, @Nullable Format format) {
         Assert.requireNonNull(type, "type must not be null");
 
-        return this.delegate.doCanDecode(format, type);
+        return this.delegate.doCanDecode(type, format);
     }
 
     @Override
-    Byte doDecode(ByteBuf byteBuf, Format format, @Nullable Class<? extends Byte> type) {
-        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+    Byte doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, @Nullable Class<? extends Byte> type) {
+        Assert.requireNonNull(buffer, "byteBuf must not be null");
         Assert.requireNonNull(format, "format must not be null");
 
-        return this.delegate.doDecode(byteBuf, format, Short.class).byteValue();
+        return this.delegate.doDecode(buffer, dataType, format, Short.class).byteValue();
     }
 
     @Override

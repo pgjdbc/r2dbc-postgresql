@@ -36,7 +36,7 @@ final class ShortArrayCodec extends AbstractArrayCodec<Short> {
 
     @Override
     public Parameter encodeNull() {
-        return createNull(FORMAT_TEXT, INT2_ARRAY);
+        return createNull(INT2_ARRAY, FORMAT_TEXT);
     }
 
     @Override
@@ -50,7 +50,7 @@ final class ShortArrayCodec extends AbstractArrayCodec<Short> {
     }
 
     @Override
-    boolean doCanDecode(@Nullable Format format, PostgresqlObjectId type) {
+    boolean doCanDecode(PostgresqlObjectId type, @Nullable Format format) {
         Assert.requireNonNull(type, "type must not be null");
 
         return INT2_ARRAY == type;
@@ -60,7 +60,7 @@ final class ShortArrayCodec extends AbstractArrayCodec<Short> {
     Parameter encodeArray(ByteBuf byteBuf) {
         Assert.requireNonNull(byteBuf, "byteBuf must not be null");
 
-        return create(FORMAT_TEXT, INT2_ARRAY, Flux.just(byteBuf));
+        return create(INT2_ARRAY, FORMAT_TEXT, Flux.just(byteBuf));
     }
 
     @Override

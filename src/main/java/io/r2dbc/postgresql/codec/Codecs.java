@@ -38,7 +38,7 @@ public interface Codecs {
      * @throws IllegalArgumentException if {@code format} or {@code type} is {@code null}
      */
     @Nullable
-    <T> T decode(@Nullable ByteBuf byteBuf, int dataType, Format format, Class<? extends T> type);
+    <T> T decode(@Nullable ByteBuf buffer, int dataType, Format format, Class<? extends T> type);
 
     /**
      * Encode a value.

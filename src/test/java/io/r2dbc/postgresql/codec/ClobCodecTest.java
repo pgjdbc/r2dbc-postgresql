@@ -27,6 +27,7 @@ import reactor.test.StepVerifier;
 import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.BYTEA;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
@@ -37,6 +38,8 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 
 final class ClobCodecTest {
 
+    private static final int dataType = TEXT.getObjectId();
+
     @Test
     void constructorNoByteBufAllocator() {
         assertThatIllegalArgumentException().isThrownBy(() -> new ClobCodec(null))
@@ -45,7 +48,7 @@ final class ClobCodecTest {
 
     @Test
     void decode() {
-        Flux.from(new ClobCodec(TEST).decode(encode(TEST, "test"), FORMAT_TEXT, Clob.class).stream())
+        Flux.from(new ClobCodec(TEST).decode(encode(TEST, "test"), dataType, FORMAT_TEXT, Clob.class).stream())
             .reduce(new StringBuilder(), StringBuilder::append)
             .map(StringBuilder::toString)
             .as(StepVerifier::create)
@@ -55,27 +58,27 @@ final class ClobCodecTest {
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new ClobCodec(TEST).decode(null, FORMAT_TEXT, Clob.class)).isNull();
+        assertThat(new ClobCodec(TEST).decode(null, dataType, FORMAT_TEXT, Clob.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         ClobCodec codec = new ClobCodec(TEST);
 
-        assertThat(codec.doCanDecode(FORMAT_BINARY, VARCHAR)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, TEXT)).isTrue();
+        assertThat(codec.doCanDecode(VARCHAR, FORMAT_BINARY)).isFalse();
+        assertThat(codec.doCanDecode(MONEY, FORMAT_TEXT)).isFalse();
+        assertThat(codec.doCanDecode(TEXT, FORMAT_TEXT)).isTrue();
     }
 
     @Test
     void doCanDecodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new ClobCodec(TEST).doCanDecode(null, TEXT))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ClobCodec(TEST).doCanDecode(TEXT, null))
             .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new ClobCodec(TEST).doCanDecode(FORMAT_TEXT, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ClobCodec(TEST).doCanDecode(null, FORMAT_TEXT))
             .withMessage("type must not be null");
     }
 

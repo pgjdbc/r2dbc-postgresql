@@ -45,16 +45,16 @@ final class UuidCodec extends AbstractCodec<UUID> {
         Assert.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toString());
-        return create(FORMAT_TEXT, PostgresqlObjectId.UUID, Flux.just(encoded));
+        return create(PostgresqlObjectId.UUID, FORMAT_TEXT, Flux.just(encoded));
     }
 
     @Override
     public Parameter encodeNull() {
-        return createNull(FORMAT_TEXT, PostgresqlObjectId.UUID);
+        return createNull(PostgresqlObjectId.UUID, FORMAT_TEXT);
     }
 
     @Override
-    boolean doCanDecode(Format format, PostgresqlObjectId type) {
+    boolean doCanDecode(PostgresqlObjectId type, Format format) {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
@@ -62,14 +62,14 @@ final class UuidCodec extends AbstractCodec<UUID> {
     }
 
     @Override
-    UUID doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends UUID> type) {
-        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+    UUID doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends UUID> type) {
+        Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         if (format == FORMAT_BINARY) {
-            return new UUID(byteBuf.readLong(), byteBuf.readLong());
+            return new UUID(buffer.readLong(), buffer.readLong());
         }
 
-        String str = ByteBufUtils.decode(byteBuf);
+        String str = ByteBufUtils.decode(buffer);
         return UUID.fromString(str);
     }
 

@@ -44,18 +44,18 @@ final class DateCodec extends AbstractCodec<Date> {
     }
 
     @Override
-    boolean doCanDecode(Format format, PostgresqlObjectId type) {
+    boolean doCanDecode(PostgresqlObjectId type, Format format) {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return this.delegate.doCanDecode(format, type);
+        return this.delegate.doCanDecode(type, format);
     }
 
     @Override
-    Date doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends Date> type) {
-        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+    Date doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends Date> type) {
+        Assert.requireNonNull(buffer, "byteBuf must not be null");
 
-        return Date.from(this.delegate.doDecode(byteBuf, format, Instant.class));
+        return Date.from(this.delegate.doDecode(buffer, dataType, format, Instant.class));
     }
 
     @Override

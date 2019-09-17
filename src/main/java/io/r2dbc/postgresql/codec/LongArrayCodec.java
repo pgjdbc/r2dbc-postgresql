@@ -35,7 +35,7 @@ final class LongArrayCodec extends AbstractArrayCodec<Long> {
 
     @Override
     public Parameter encodeNull() {
-        return createNull(FORMAT_TEXT, INT8_ARRAY);
+        return createNull(INT8_ARRAY, FORMAT_TEXT);
     }
 
     @Override
@@ -49,7 +49,7 @@ final class LongArrayCodec extends AbstractArrayCodec<Long> {
     }
 
     @Override
-    boolean doCanDecode(Format format, PostgresqlObjectId type) {
+    boolean doCanDecode(PostgresqlObjectId type, Format format) {
         Assert.requireNonNull(type, "type must not be null");
 
         return INT8_ARRAY == type;
@@ -59,7 +59,7 @@ final class LongArrayCodec extends AbstractArrayCodec<Long> {
     Parameter encodeArray(ByteBuf byteBuf) {
         Assert.requireNonNull(byteBuf, "byteBuf must not be null");
 
-        return create(FORMAT_TEXT, INT8_ARRAY, Flux.just(byteBuf));
+        return create(INT8_ARRAY, FORMAT_TEXT, Flux.just(byteBuf));
     }
 
     @Override

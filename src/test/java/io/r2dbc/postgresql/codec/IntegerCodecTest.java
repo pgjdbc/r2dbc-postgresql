@@ -24,6 +24,7 @@ import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.FLOAT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
@@ -31,6 +32,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class IntegerCodecTest {
+
+    private static final int dataType = INT4.getObjectId();
 
     @Test
     void constructorNoByteBufAllocator() {
@@ -42,18 +45,18 @@ final class IntegerCodecTest {
     void decode() {
         IntegerCodec codec = new IntegerCodec(TEST);
 
-        assertThat(codec.decode(TEST.buffer(4).writeInt(100), FORMAT_BINARY, Integer.class)).isEqualTo(100);
-        assertThat(codec.decode(ByteBufUtils.encode(TEST, "100"), FORMAT_TEXT, Integer.class)).isEqualTo(100);
+        assertThat(codec.decode(TEST.buffer(4).writeInt(100), dataType, FORMAT_BINARY, Integer.class)).isEqualTo(100);
+        assertThat(codec.decode(ByteBufUtils.encode(TEST, "100"), dataType, FORMAT_TEXT, Integer.class)).isEqualTo(100);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new IntegerCodec(TEST).decode(null, FORMAT_BINARY, Integer.class)).isNull();
+        assertThat(new IntegerCodec(TEST).decode(null, dataType, FORMAT_BINARY, Integer.class)).isNull();
     }
 
     @Test
     void decodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new IntegerCodec(TEST).decode(TEST.buffer(0), null, Integer.class))
+        assertThatIllegalArgumentException().isThrownBy(() -> new IntegerCodec(TEST).decode(TEST.buffer(0), dataType, null, Integer.class))
             .withMessage("format must not be null");
     }
 
@@ -61,9 +64,9 @@ final class IntegerCodecTest {
     void doCanDecode() {
         IntegerCodec codec = new IntegerCodec(TEST);
 
-        assertThat(codec.doCanDecode(FORMAT_BINARY, VARCHAR)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_BINARY, INT4)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, INT4)).isTrue();
+        assertThat(codec.doCanDecode(VARCHAR, FORMAT_BINARY)).isFalse();
+        assertThat(codec.doCanDecode(INT4, FORMAT_BINARY)).isTrue();
+        assertThat(codec.doCanDecode(INT4, FORMAT_TEXT)).isTrue();
     }
 
     @Test

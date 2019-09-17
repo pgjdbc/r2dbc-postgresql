@@ -35,6 +35,8 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 
 final class InstantCodecTest {
 
+    private static final int dataType = TIMESTAMP.getObjectId();
+
     @Test
     void constructorNoByteBufAllocator() {
         assertThatIllegalArgumentException().isThrownBy(() -> new InstantCodec(null))
@@ -45,33 +47,33 @@ final class InstantCodecTest {
     void decode() {
         Instant instant = Instant.parse("2018-11-04T11:57:56.159600Z");
 
-        assertThat(new InstantCodec(TEST).decode(encode(TEST, "2018-11-04 11:57:56.159600"), FORMAT_TEXT, Instant.class))
+        assertThat(new InstantCodec(TEST).decode(encode(TEST, "2018-11-04 11:57:56.159600"), dataType, FORMAT_TEXT, Instant.class))
             .isEqualTo(instant);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new InstantCodec(TEST).decode(null, FORMAT_TEXT, Instant.class)).isNull();
+        assertThat(new InstantCodec(TEST).decode(null, dataType, FORMAT_TEXT, Instant.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         InstantCodec codec = new InstantCodec(TEST);
 
-        assertThat(codec.doCanDecode(FORMAT_BINARY, TIMESTAMP)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, TIMESTAMP)).isTrue();
+        assertThat(codec.doCanDecode(TIMESTAMP, FORMAT_BINARY)).isTrue();
+        assertThat(codec.doCanDecode(MONEY, FORMAT_TEXT)).isFalse();
+        assertThat(codec.doCanDecode(TIMESTAMP, FORMAT_TEXT)).isTrue();
     }
 
     @Test
     void doCanDecodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new InstantCodec(TEST).doCanDecode(null, VARCHAR))
+        assertThatIllegalArgumentException().isThrownBy(() -> new InstantCodec(TEST).doCanDecode(VARCHAR, null))
             .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new InstantCodec(TEST).doCanDecode(FORMAT_TEXT, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new InstantCodec(TEST).doCanDecode(null, FORMAT_TEXT))
             .withMessage("type must not be null");
     }
 

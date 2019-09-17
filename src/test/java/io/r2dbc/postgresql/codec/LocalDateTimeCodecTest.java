@@ -25,6 +25,7 @@ import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMP;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
@@ -34,6 +35,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class LocalDateTimeCodecTest {
+
+    private static final int dataType = TIMESTAMP.getObjectId();
 
     @Test
     void constructorNoByteBufAllocator() {
@@ -45,33 +48,33 @@ final class LocalDateTimeCodecTest {
     void decode() {
         LocalDateTime localDateTime = LocalDateTime.parse("2018-11-05T00:06:31.700426");
 
-        assertThat(new LocalDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:06:31.700426"), FORMAT_TEXT, LocalDateTime.class))
+        assertThat(new LocalDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:06:31.700426"), dataType, FORMAT_TEXT, LocalDateTime.class))
             .isEqualTo(localDateTime);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new LocalDateTimeCodec(TEST).decode(null, FORMAT_TEXT, LocalDateTime.class)).isNull();
+        assertThat(new LocalDateTimeCodec(TEST).decode(null, dataType, FORMAT_TEXT, LocalDateTime.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         LocalDateTimeCodec codec = new LocalDateTimeCodec(TEST);
 
-        assertThat(codec.doCanDecode(FORMAT_BINARY, TIMESTAMP)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, TIMESTAMP)).isTrue();
+        assertThat(codec.doCanDecode(TIMESTAMP, FORMAT_BINARY)).isTrue();
+        assertThat(codec.doCanDecode(MONEY, FORMAT_TEXT)).isFalse();
+        assertThat(codec.doCanDecode(TIMESTAMP, FORMAT_TEXT)).isTrue();
     }
 
     @Test
     void doCanDecodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new LocalDateTimeCodec(TEST).doCanDecode(null, VARCHAR))
+        assertThatIllegalArgumentException().isThrownBy(() -> new LocalDateTimeCodec(TEST).doCanDecode(VARCHAR, null))
             .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new LocalDateTimeCodec(TEST).doCanDecode(FORMAT_TEXT, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new LocalDateTimeCodec(TEST).doCanDecode(null, FORMAT_TEXT))
             .withMessage("type must not be null");
     }
 

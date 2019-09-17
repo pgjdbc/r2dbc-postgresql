@@ -44,11 +44,11 @@ final class StringCodec extends AbstractCodec<String> {
 
     @Override
     public Parameter encodeNull() {
-        return createNull(FORMAT_TEXT, VARCHAR);
+        return createNull(VARCHAR, FORMAT_TEXT);
     }
 
     @Override
-    boolean doCanDecode(Format format, PostgresqlObjectId type) {
+    boolean doCanDecode(PostgresqlObjectId type, Format format) {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
@@ -56,10 +56,10 @@ final class StringCodec extends AbstractCodec<String> {
     }
 
     @Override
-    String doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends String> type) {
-        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+    String doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends String> type) {
+        Assert.requireNonNull(buffer, "byteBuf must not be null");
 
-        return ByteBufUtils.decode(byteBuf);
+        return ByteBufUtils.decode(buffer);
     }
 
     @Override
@@ -67,7 +67,7 @@ final class StringCodec extends AbstractCodec<String> {
         Assert.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value);
-        return create(FORMAT_TEXT, VARCHAR, Flux.just(encoded));
+        return create(VARCHAR, FORMAT_TEXT, Flux.just(encoded));
     }
 
 }

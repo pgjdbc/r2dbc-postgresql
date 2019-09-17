@@ -43,11 +43,11 @@ final class OffsetDateTimeCodec extends AbstractCodec<OffsetDateTime> {
 
     @Override
     public Parameter encodeNull() {
-        return createNull(FORMAT_TEXT, TIMESTAMPTZ);
+        return createNull(TIMESTAMPTZ, FORMAT_TEXT);
     }
 
     @Override
-    boolean doCanDecode(Format format, PostgresqlObjectId type) {
+    boolean doCanDecode(PostgresqlObjectId type, Format format) {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
@@ -55,14 +55,14 @@ final class OffsetDateTimeCodec extends AbstractCodec<OffsetDateTime> {
     }
 
     @Override
-    OffsetDateTime doDecode(ByteBuf byteBuf, @Nullable Format format, @Nullable Class<? extends OffsetDateTime> type) {
-        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+    OffsetDateTime doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends OffsetDateTime> type) {
+        Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         if (FORMAT_BINARY == format) {
-            return EpochTime.fromLong(byteBuf.readLong()).toInstant().atOffset(OffsetDateTime.now().getOffset());
+            return EpochTime.fromLong(buffer.readLong()).toInstant().atOffset(OffsetDateTime.now().getOffset());
         }
 
-        return PostgresqlDateTimeFormatter.INSTANCE.parse(ByteBufUtils.decode(byteBuf), OffsetDateTime::from);
+        return PostgresqlDateTimeFormatter.INSTANCE.parse(ByteBufUtils.decode(buffer), OffsetDateTime::from);
     }
 
     @Override
@@ -70,7 +70,7 @@ final class OffsetDateTimeCodec extends AbstractCodec<OffsetDateTime> {
         Assert.requireNonNull(value, "value must not be null");
 
         ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toString());
-        return create(FORMAT_TEXT, TIMESTAMPTZ, Flux.just(encoded));
+        return create(TIMESTAMPTZ, FORMAT_TEXT, Flux.just(encoded));
     }
 
 }

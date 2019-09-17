@@ -80,17 +80,17 @@ public final class DefaultCodecs implements Codecs {
     @Override
     @Nullable
     @SuppressWarnings("unchecked")
-    public <T> T decode(@Nullable ByteBuf byteBuf, int dataType, Format format, Class<? extends T> type) {
+    public <T> T decode(@Nullable ByteBuf buffer, int dataType, Format format, Class<? extends T> type) {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        if (byteBuf == null) {
+        if (buffer == null) {
             return null;
         }
 
         for (Codec<?> codec : this.codecs) {
             if (codec.canDecode(dataType, format, type)) {
-                return ((Codec<T>) codec).decode(byteBuf, format, type);
+                return ((Codec<T>) codec).decode(buffer, dataType, format, type);
             }
         }
 

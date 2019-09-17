@@ -20,6 +20,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
+import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 
 import java.lang.reflect.Array;
@@ -31,6 +32,12 @@ import java.util.function.Function;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 
+/**
+ * Abstract codec class that provides a basis for all concrete
+ * implementations of a array-typed {@link Codec}.
+ *
+ * @param <T> the type that is handled by this {@link Codec}.
+ */
 abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
 
     private static final byte[] CLOSE_CURLY = "}".getBytes();
@@ -45,6 +52,12 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
 
     private final Class<T> componentType;
 
+    /**
+     * Creates a new {@link AbstractArrayCodec}.
+     *
+     * @param byteBufAllocator the buffer allocator
+     * @param componentType    the type handled by this codec
+     */
     AbstractArrayCodec(ByteBufAllocator byteBufAllocator, Class<T> componentType) {
         super(Object[].class);
         this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
@@ -78,15 +91,15 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
     abstract T decodeItem(String strValue);
 
     @Override
-    final Object[] doDecode(ByteBuf byteBuf, Format format, Class<? extends Object[]> type) {
-        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
+    final Object[] doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, Class<? extends Object[]> type) {
+        Assert.requireNonNull(buffer, "byteBuf must not be null");
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
         if (FORMAT_BINARY == format) {
-            return decodeBinary(byteBuf, type);
+            return decodeBinary(buffer, type);
         } else {
-            return decodeText(byteBuf, type);
+            return decodeText(buffer, type);
         }
     }
 

@@ -26,6 +26,7 @@ import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
@@ -35,6 +36,8 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 
 final class UriCodecTest {
 
+    private static final int dataType = VARCHAR.getObjectId();
+
     @Test
     void constructorNoByteBufAllocator() {
         assertThatIllegalArgumentException().isThrownBy(() -> new UriCodec(null))
@@ -43,34 +46,34 @@ final class UriCodecTest {
 
     @Test
     void decode() {
-        assertThat(new UriCodec(TEST).decode(encode(TEST, "http://localhost"), FORMAT_TEXT, URI.class))
+        assertThat(new UriCodec(TEST).decode(encode(TEST, "http://localhost"), dataType, FORMAT_TEXT, URI.class))
             .isEqualTo(URI.create("http://localhost"));
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new UriCodec(TEST).decode(null, FORMAT_TEXT, URI.class)).isNull();
+        assertThat(new UriCodec(TEST).decode(null, dataType, FORMAT_TEXT, URI.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
         UriCodec codec = new UriCodec(TEST);
 
-        assertThat(codec.doCanDecode(FORMAT_BINARY, VARCHAR)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, MONEY)).isFalse();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, BPCHAR)).isTrue();
-        assertThat(codec.doCanDecode(FORMAT_TEXT, VARCHAR)).isTrue();
+        assertThat(codec.doCanDecode(VARCHAR, FORMAT_BINARY)).isTrue();
+        assertThat(codec.doCanDecode(MONEY, FORMAT_TEXT)).isFalse();
+        assertThat(codec.doCanDecode(BPCHAR, FORMAT_TEXT)).isTrue();
+        assertThat(codec.doCanDecode(VARCHAR, FORMAT_TEXT)).isTrue();
     }
 
     @Test
     void doCanDecodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new UriCodec(TEST).doCanDecode(null, VARCHAR))
+        assertThatIllegalArgumentException().isThrownBy(() -> new UriCodec(TEST).doCanDecode(VARCHAR, null))
             .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new UriCodec(TEST).doCanDecode(FORMAT_TEXT, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new UriCodec(TEST).doCanDecode(null, FORMAT_TEXT))
             .withMessage("type must not be null");
     }
 
