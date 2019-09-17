@@ -21,7 +21,10 @@ import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.ExtendedQueryMessageFlow;
 import io.r2dbc.postgresql.client.PortalNameSupplier;
 import io.r2dbc.postgresql.codec.Codecs;
+import io.r2dbc.postgresql.message.backend.BackendMessage;
+import io.r2dbc.postgresql.message.backend.BindComplete;
 import io.r2dbc.postgresql.message.backend.CloseComplete;
+import io.r2dbc.postgresql.message.backend.NoData;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.GeneratedValuesUtils;
 import io.r2dbc.spi.Statement;
@@ -32,12 +35,17 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 
 import static io.r2dbc.postgresql.client.ExtendedQueryMessageFlow.PARAMETER_SYMBOL;
+import static io.r2dbc.postgresql.util.PredicateUtils.not;
+import static io.r2dbc.postgresql.util.PredicateUtils.or;
 
 @SuppressWarnings("deprecation")
 final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
+
+    private static final Predicate<BackendMessage> RESULT_FRAME_FILTER = not(or(BindComplete.class::isInstance, NoData.class::isInstance));
 
     private final Bindings bindings;
 
@@ -181,6 +189,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
         return this.statementCache.getName(this.bindings.first(), sql)
             .flatMapMany(name -> ExtendedQueryMessageFlow
                 .execute(Flux.fromIterable(this.bindings.bindings), this.client, this.portalNameSupplier, name, this.forceBinary))
+            .filter(RESULT_FRAME_FILTER)
             .handle(PostgresqlExceptionFactory::handleErrorResponse)
             .windowUntil(CloseComplete.class::isInstance)
             .map(messages -> PostgresqlResult.toResult(this.codecs, messages));

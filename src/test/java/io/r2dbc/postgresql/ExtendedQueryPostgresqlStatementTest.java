@@ -220,7 +220,7 @@ final class ExtendedQueryPostgresqlStatementTest {
                 new Execute("B_0", 0),
                 new Close("B_0", ExecutionType.PORTAL),
                 Sync.INSTANCE)
-            .thenRespond(new ErrorResponse(Collections.emptyList()))
+            .thenRespond(BindComplete.INSTANCE, NoData.INSTANCE, new ErrorResponse(Collections.emptyList()))
             .build();
 
         MockCodecs codecs = MockCodecs.builder()
