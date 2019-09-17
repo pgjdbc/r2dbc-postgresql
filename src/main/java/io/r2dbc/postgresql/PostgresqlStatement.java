@@ -35,10 +35,26 @@ public interface PostgresqlStatement extends Statement {
     /**
      * {@inheritDoc}
      *
+     * @throws IndexOutOfBoundsException if the parameter {@code index} is out of range
+     */
+    @Override
+    PostgresqlStatement bind(int index, Object value);
+
+    /**
+     * {@inheritDoc}
+     *
      * @throws IllegalArgumentException if {@code identifier} is not a {@link String} like {@code $1}, {@code $2}, etc.
      */
     @Override
     PostgresqlStatement bindNull(String identifier, Class<?> type);
+
+    /**
+     * {@inheritDoc}
+     *
+     * @throws IndexOutOfBoundsException if the parameter {@code index} is out of range
+     */
+    @Override
+    PostgresqlStatement bindNull(int index, Class<?> type);
 
     @Override
     Flux<PostgresqlResult> execute();

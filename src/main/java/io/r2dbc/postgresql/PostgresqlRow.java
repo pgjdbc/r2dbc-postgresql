@@ -35,7 +35,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * An implementation of {@link Row} for a PostgreSQL database.
  */
-@SuppressWarnings("deprecation")
 public final class PostgresqlRow implements Row {
 
     private final Codecs codecs;
@@ -66,26 +65,36 @@ public final class PostgresqlRow implements Row {
 
     @Nullable
     @Override
-    public <T> T get(Object identifier, Class<T> type) {
-        Assert.requireNonNull(identifier, "identifier must not be null");
+    public <T> T get(int index, Class<T> type) {
         Assert.requireNonNull(type, "type must not be null");
         requireNotReleased();
 
-        Column column;
-        if (identifier instanceof Integer) {
-            column = getColumn((Integer) identifier);
-        } else if (identifier instanceof String) {
-            column = getColumn((String) identifier);
-        } else {
-            throw new IllegalArgumentException(String.format("Identifier '%s' is not a valid identifier. Should either be an Integer index or a String column name.", identifier));
-        }
+        return decode(getColumn(index), type);
+    }
 
+    @Nullable
+    @Override
+    public <T> T get(String name, Class<T> type) {
+        Assert.requireNonNull(name, "name must not be null");
+        Assert.requireNonNull(type, "type must not be null");
+        requireNotReleased();
+
+        return decode(getColumn(name), type);
+    }
+
+    @Nullable
+    private <T> T decode(Column column, Class<T> type) {
         ByteBuf data = column.getByteBuf();
-        if (data != null) {
-            data = data.slice();
+        if (data == null) {
+            return null;
         }
 
-        return this.codecs.decode(data, column.getDataType(), column.getFormat(), type);
+        int readerIndex = data.readerIndex();
+        try {
+            return this.codecs.decode(data, column.getDataType(), column.getFormat(), type);
+        } finally {
+            data.readerIndex(readerIndex);
+        }
     }
 
     @Override

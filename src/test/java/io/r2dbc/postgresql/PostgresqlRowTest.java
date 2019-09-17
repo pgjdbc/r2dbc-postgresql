@@ -116,12 +116,12 @@ final class PostgresqlRowTest {
     @Test
     void getNoIdentifier() {
         assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRow(MockCodecs.empty(), this.columns).get(null, Object.class))
-            .withMessage("identifier must not be null");
+            .withMessage("name must not be null");
     }
 
     @Test
     void getNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRow(MockCodecs.empty(), this.columns).get(new Object(), null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRow(MockCodecs.empty(), this.columns).get("", null))
             .withMessage("type must not be null");
     }
 
@@ -132,14 +132,6 @@ final class PostgresqlRowTest {
             .build();
 
         assertThat(new PostgresqlRow(codecs, this.columns).get("test-name-3", Object.class)).isNull();
-    }
-
-    @Test
-    void getWrongIdentifierType() {
-        Object identifier = new Object();
-
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRow(MockCodecs.empty(), this.columns).get(identifier, Object.class))
-            .withMessage("Identifier '%s' is not a valid identifier. Should either be an Integer index or a String column name.", identifier);
     }
 
     @Test

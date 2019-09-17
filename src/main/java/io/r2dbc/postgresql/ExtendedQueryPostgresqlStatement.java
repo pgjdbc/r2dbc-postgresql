@@ -42,7 +42,6 @@ import static io.r2dbc.postgresql.client.ExtendedQueryMessageFlow.PARAMETER_SYMB
 import static io.r2dbc.postgresql.util.PredicateUtils.not;
 import static io.r2dbc.postgresql.util.PredicateUtils.or;
 
-@SuppressWarnings("deprecation")
 final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
 
     private static final Predicate<BackendMessage> RESULT_FRAME_FILTER = not(or(BindComplete.class::isInstance, NoData.class::isInstance));
