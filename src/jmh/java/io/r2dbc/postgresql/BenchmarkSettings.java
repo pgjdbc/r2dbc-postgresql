@@ -27,8 +27,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Global benchmark settings.
- *
- * @author Mark Paluch
  */
 @Warmup(iterations = 5, time = 2000, timeUnit = TimeUnit.MILLISECONDS)
 @Measurement(iterations = 5, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
