@@ -26,13 +26,15 @@ import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.core.publisher.Flux;
 import reactor.util.annotation.Nullable;
 
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
-import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.DATE;
 
-final class LocalDateCodec extends AbstractCodec<LocalDate> {
+final class LocalDateCodec extends AbstractTemporalCodec<LocalDate> {
 
     private final ByteBufAllocator byteBufAllocator;
 
@@ -47,22 +49,15 @@ final class LocalDateCodec extends AbstractCodec<LocalDate> {
     }
 
     @Override
-    boolean doCanDecode(PostgresqlObjectId type, Format format) {
-        Assert.requireNonNull(format, "format must not be null");
-        Assert.requireNonNull(type, "type must not be null");
-
-        return DATE == type;
-    }
-
-    @Override
-    LocalDate doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends LocalDate> type) {
+    LocalDate doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, Class<? extends LocalDate> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
-        if (FORMAT_BINARY == format) {
-            return LocalDate.ofEpochDay(EpochTime.fromInt(buffer.readInt()).getJavaDays());
-        }
-
-        return LocalDate.parse(ByteBufUtils.decode(buffer));
+        return decodeTemporal(buffer, dataType, format, LocalDate.class, temporal -> {
+            if (temporal instanceof LocalDateTime) {
+                return ((LocalDateTime) temporal).toLocalDate();
+            }
+            return Instant.from(temporal).atOffset(ZoneOffset.UTC).toLocalDate();
+        });
     }
 
     @Override
@@ -73,4 +68,8 @@ final class LocalDateCodec extends AbstractCodec<LocalDate> {
         return create(DATE, FORMAT_TEXT, Flux.just(encoded));
     }
 
+    @Override
+    PostgresqlObjectId getDefaultType() {
+        return DATE;
+    }
 }

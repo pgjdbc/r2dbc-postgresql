@@ -19,15 +19,18 @@ package io.r2dbc.postgresql.codec;
 import io.r2dbc.postgresql.client.Parameter;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZonedDateTime;
 
 import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIME;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMP;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMPTZ;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
@@ -49,6 +52,15 @@ final class LocalTimeCodecTest {
         LocalTime localTime = LocalTime.now();
 
         assertThat(new LocalTimeCodec(TEST).decode(encode(TEST, localTime.toString()), dataType, FORMAT_TEXT, LocalTime.class))
+            .isEqualTo(localTime);
+    }
+
+    @Test
+    void decodeFromTimestamp() {
+        LocalDateTime localDateTime = LocalDateTime.parse("2018-11-05T00:06:31.700426");
+        LocalTime localTime = localDateTime.toLocalTime();
+
+        assertThat(new LocalTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:06:31.700426"), TIMESTAMP.getObjectId(), FORMAT_TEXT, LocalTime.class))
             .isEqualTo(localTime);
     }
 

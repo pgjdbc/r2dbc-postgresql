@@ -26,14 +26,14 @@ import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.core.publisher.Flux;
 import reactor.util.annotation.Nullable;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
 
-import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMP;
 
-final class LocalDateTimeCodec extends AbstractCodec<LocalDateTime> {
+final class LocalDateTimeCodec extends AbstractTemporalCodec<LocalDateTime> {
 
     private final ByteBufAllocator byteBufAllocator;
 
@@ -48,22 +48,12 @@ final class LocalDateTimeCodec extends AbstractCodec<LocalDateTime> {
     }
 
     @Override
-    boolean doCanDecode(PostgresqlObjectId type, Format format) {
-        Assert.requireNonNull(format, "format must not be null");
-        Assert.requireNonNull(type, "type must not be null");
-
-        return TIMESTAMP == type;
-    }
-
-    @Override
     LocalDateTime doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends LocalDateTime> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
-        if (format == FORMAT_BINARY) {
-            return LocalDateTime.ofInstant(EpochTime.fromLong(buffer.readLong()).toInstant(), ZoneId.of("UTC"));
-        }
-
-        return PostgresqlDateTimeFormatter.INSTANCE.parse(ByteBufUtils.decode(buffer), LocalDateTime::from);
+        return decodeTemporal(buffer, dataType, format, LocalDateTime.class, temporal -> {
+            return Instant.from(temporal).atOffset(ZoneOffset.UTC).toLocalDateTime();
+        });
     }
 
     @Override
@@ -74,4 +64,8 @@ final class LocalDateTimeCodec extends AbstractCodec<LocalDateTime> {
         return create(TIMESTAMP, FORMAT_TEXT, Flux.just(encoded));
     }
 
+    @Override
+    PostgresqlObjectId getDefaultType() {
+        return TIMESTAMP;
+    }
 }

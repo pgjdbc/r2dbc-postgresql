@@ -1,6 +1,8 @@
 package io.r2dbc.postgresql.codec;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 class EpochTime {
 
@@ -36,6 +38,10 @@ class EpochTime {
 
     Instant toInstant() {
         return Instant.ofEpochSecond(getSeconds(), getNanos());
+    }
+
+    LocalDateTime toLocalDateTime() {
+        return LocalDateTime.ofEpochSecond(getSeconds(), getNanos(), ZoneOffset.UTC);
     }
 
     /**

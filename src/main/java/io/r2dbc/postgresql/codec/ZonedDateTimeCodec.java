@@ -26,14 +26,12 @@ import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.core.publisher.Flux;
 import reactor.util.annotation.Nullable;
 
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
-import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMPTZ;
 
-final class ZonedDateTimeCodec extends AbstractCodec<ZonedDateTime> {
+final class ZonedDateTimeCodec extends AbstractTemporalCodec<ZonedDateTime> {
 
     private final ByteBufAllocator byteBufAllocator;
 
@@ -48,22 +46,10 @@ final class ZonedDateTimeCodec extends AbstractCodec<ZonedDateTime> {
     }
 
     @Override
-    boolean doCanDecode(PostgresqlObjectId type, Format format) {
-        Assert.requireNonNull(format, "format must not be null");
-        Assert.requireNonNull(type, "type must not be null");
-
-        return TIMESTAMPTZ == type;
-    }
-
-    @Override
-    ZonedDateTime doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends ZonedDateTime> type) {
+    ZonedDateTime doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, Class<? extends ZonedDateTime> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
-        if (FORMAT_BINARY == format) {
-            return EpochTime.fromLong(buffer.readLong()).toInstant().atZone(ZoneId.systemDefault());
-        }
-
-        return PostgresqlDateTimeFormatter.INSTANCE.parse(ByteBufUtils.decode(buffer), ZonedDateTime::from);
+        return decodeTemporal(buffer, dataType, format, ZonedDateTime.class, ZonedDateTime::from);
     }
 
     @Override
@@ -74,4 +60,8 @@ final class ZonedDateTimeCodec extends AbstractCodec<ZonedDateTime> {
         return create(TIMESTAMPTZ, FORMAT_TEXT, Flux.just(encoded));
     }
 
+    @Override
+    PostgresqlObjectId getDefaultType() {
+        return null;
+    }
 }

@@ -326,7 +326,7 @@ final class CodecIntegrationTest {
                 .assertNext(r2dbc -> equality.accept(r2dbc, value))
                 .verifyComplete();
         } finally {
-            SERVER.getJdbcOperations().execute("DROP TABLE test");
+            //SERVER.getJdbcOperations().execute("DROP TABLE test");
         }
     }
 

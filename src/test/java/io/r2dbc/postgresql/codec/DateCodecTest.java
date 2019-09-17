@@ -20,6 +20,8 @@ import io.r2dbc.postgresql.client.Parameter;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 
 import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
@@ -37,7 +39,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 
 final class DateCodecTest {
 
-    private static final int dataType = DATE.getObjectId();
+    private static final int dataType = TIMESTAMP.getObjectId();
 
     @Test
     void constructorNoByteBufAllocator() {
@@ -50,6 +52,14 @@ final class DateCodecTest {
         Date date = Date.from(Instant.parse("2018-11-04T15:37:31.177Z"));
 
         assertThat(new DateCodec(TEST).decode(encode(TEST, "2018-11-04 15:37:31.177"), dataType, FORMAT_TEXT, Date.class))
+            .isEqualTo(date);
+    }
+
+    @Test
+    void decodeFromDate() {
+        Date date = Date.from(LocalDateTime.parse("2018-11-04T00:00:00.000").atZone(ZoneId.systemDefault()).toInstant());
+
+        assertThat(new DateCodec(TEST).decode(encode(TEST, "2018-11-04"), DATE.getObjectId(), FORMAT_TEXT, Date.class))
             .isEqualTo(date);
     }
 

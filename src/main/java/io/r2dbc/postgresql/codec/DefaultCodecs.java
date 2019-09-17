@@ -53,7 +53,6 @@ public final class DefaultCodecs implements Codecs {
             new BooleanCodec(byteBufAllocator),
             new CharacterCodec(byteBufAllocator),
             new ClobCodec(byteBufAllocator),
-            new DateCodec(byteBufAllocator),
             new DoubleCodec(byteBufAllocator),
             new FloatCodec(byteBufAllocator),
             new InetAddressCodec(byteBufAllocator),
@@ -71,6 +70,7 @@ public final class DefaultCodecs implements Codecs {
 
             // Fallback for Object.class
             new ByteCodec(byteBufAllocator),
+            new DateCodec(byteBufAllocator),
 
             new ShortArrayCodec(byteBufAllocator),
             new StringArrayCodec(byteBufAllocator),

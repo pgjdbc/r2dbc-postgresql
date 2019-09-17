@@ -27,15 +27,15 @@ import reactor.core.publisher.Flux;
 import reactor.util.annotation.Nullable;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 
-import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMP;
 
-final class InstantCodec extends AbstractCodec<Instant> {
+final class InstantCodec extends AbstractTemporalCodec<Instant> {
 
     private final ByteBufAllocator byteBufAllocator;
 
@@ -50,22 +50,21 @@ final class InstantCodec extends AbstractCodec<Instant> {
     }
 
     @Override
-    boolean doCanDecode(PostgresqlObjectId type, Format format) {
-        Assert.requireNonNull(format, "format must not be null");
-        Assert.requireNonNull(type, "type must not be null");
-
-        return TIMESTAMP == type;
-    }
-
-    @Override
-    Instant doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends Instant> type) {
+    Instant doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, Class<? extends Instant> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
-        if (FORMAT_BINARY == format) {
-            return EpochTime.fromLong(buffer.readLong()).toInstant();
-        }
+        return decodeTemporal(buffer, dataType, format, Instant.class, temporal -> {
 
-        return PostgresqlDateTimeFormatter.INSTANCE.parse(ByteBufUtils.decode(buffer), temporal -> ZonedDateTime.of(LocalDateTime.from(temporal), ZoneOffset.UTC).toInstant());
+            if (temporal instanceof LocalDateTime) {
+                return ((LocalDateTime) temporal).toInstant(ZoneOffset.UTC);
+            }
+
+            if (temporal instanceof LocalDate) {
+                return ((LocalDate) temporal).atStartOfDay(ZoneId.systemDefault()).toInstant();
+            }
+
+            return Instant.from(temporal);
+        });
     }
 
     @Override
@@ -74,5 +73,10 @@ final class InstantCodec extends AbstractCodec<Instant> {
 
         ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toString());
         return create(TIMESTAMP, FORMAT_TEXT, Flux.just(encoded));
+    }
+
+    @Override
+    PostgresqlObjectId getDefaultType() {
+        return null;
     }
 }

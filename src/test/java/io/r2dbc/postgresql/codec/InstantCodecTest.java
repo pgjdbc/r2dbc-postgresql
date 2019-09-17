@@ -20,6 +20,8 @@ import io.r2dbc.postgresql.client.Parameter;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.time.LocalTime;
+import java.time.ZonedDateTime;
 
 import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
@@ -27,6 +29,7 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMP;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMPTZ;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
@@ -48,6 +51,15 @@ final class InstantCodecTest {
         Instant instant = Instant.parse("2018-11-04T11:57:56.159600Z");
 
         assertThat(new InstantCodec(TEST).decode(encode(TEST, "2018-11-04 11:57:56.159600"), dataType, FORMAT_TEXT, Instant.class))
+            .isEqualTo(instant);
+    }
+
+    @Test
+    void decodeFromTimestampWithTimezone() {
+        ZonedDateTime zonedDateTime = ZonedDateTime.parse("2018-11-05T00:20:25.039883+09:00[Asia/Tokyo]");
+        Instant instant = zonedDateTime.toInstant();
+
+        assertThat(new InstantCodec(TEST).decode(encode(TEST, "2018-11-05 00:20:25.039883+09"), TIMESTAMPTZ.getObjectId(), FORMAT_TEXT, Instant.class))
             .isEqualTo(instant);
     }
 

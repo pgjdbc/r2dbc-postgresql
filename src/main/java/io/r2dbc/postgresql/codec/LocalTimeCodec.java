@@ -26,13 +26,15 @@ import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.core.publisher.Flux;
 import reactor.util.annotation.Nullable;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneOffset;
 
-import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIME;
 
-final class LocalTimeCodec extends AbstractCodec<LocalTime> {
+final class LocalTimeCodec extends AbstractTemporalCodec<LocalTime> {
 
     private final ByteBufAllocator byteBufAllocator;
 
@@ -47,22 +49,16 @@ final class LocalTimeCodec extends AbstractCodec<LocalTime> {
     }
 
     @Override
-    boolean doCanDecode(PostgresqlObjectId type, Format format) {
-        Assert.requireNonNull(format, "format must not be null");
-        Assert.requireNonNull(type, "type must not be null");
-
-        return TIME == type;
-    }
-
-    @Override
-    LocalTime doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends LocalTime> type) {
+    LocalTime doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, Class<? extends LocalTime> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
-        if (FORMAT_BINARY == format) {
-            return LocalTime.ofNanoOfDay(buffer.readLong() * 1000);
-        }
+        return decodeTemporal(buffer, dataType, format, LocalTime.class, temporal -> {
 
-        return LocalTime.parse(ByteBufUtils.decode(buffer));
+            if (temporal instanceof LocalDateTime) {
+                return ((LocalDateTime) temporal).toLocalTime();
+            }
+            return Instant.from(temporal).atOffset(ZoneOffset.UTC).toLocalTime();
+        });
     }
 
     @Override
@@ -73,4 +69,8 @@ final class LocalTimeCodec extends AbstractCodec<LocalTime> {
         return create(TIME, FORMAT_TEXT, Flux.just(encoded));
     }
 
+    @Override
+    PostgresqlObjectId getDefaultType() {
+        return TIME;
+    }
 }

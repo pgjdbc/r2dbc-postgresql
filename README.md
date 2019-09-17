@@ -185,8 +185,8 @@ This reference table shows the type mapping between [PostgreSQL][p] and Java dat
 | [`text`][psql-text-ref]                         | [`String`][java-string-ref]|
 | [`time [without time zone]`][psql-time-ref]     | [`LocalTime`][java-lt-ref]|
 | [`time [with time zone]`][psql-time-ref]        | Not yet supported.|
-| [`timestamp [without time zone]`][psql-time-ref]|[`LocalDateTime`][java-ldt-ref]|
-| [`timestamp [with time zone]`][psql-time-ref]   |[`ZonedDateTime`][java-zdt-ref]|
+| [`timestamp [without time zone]`][psql-time-ref]|[**`LocalDateTime`**][java-ldt-ref], [`LocalTime`][java-lt-ref], [`LocalDate`][java-ld-ref]|
+| [`timestamp [with time zone]`][psql-time-ref]   | [**`OffsetDatetime`**][java-odt-ref], [`ZonedDateTime`][java-zdt-ref]|
 | [`tsquery`][psql-tsquery-ref]                   | Not yet supported.|
 | [`tsvector`][psql-tsvector-ref]                 | Not yet supported.|
 | [`txid_snapshot`][psql-txid_snapshot-ref]       | Not yet supported.|

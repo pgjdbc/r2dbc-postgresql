@@ -138,6 +138,7 @@ abstract class AbstractCodecIntegrationTest {
     @Test
     void localDate() {
         testCodec(LocalDate.class, LocalDate.now(), "DATE");
+        testCodec(LocalDate.class, LocalDate.now(), "TIMESTAMP");
     }
 
     @Test
@@ -219,7 +220,9 @@ abstract class AbstractCodecIntegrationTest {
 
     @Test
     void zonedDateTime() {
-        testCodec(ZonedDateTime.class, ZonedDateTime.now(), (actual, expected) -> assertThat(actual.isEqual(expected)).isTrue(), "TIMESTAMP WITH TIME ZONE");
+        testCodec(ZonedDateTime.class, ZonedDateTime.now(), (actual, expected) -> {
+            assertThat(actual.toLocalDateTime()).isEqualTo(expected.toLocalDateTime());
+        }, "TIMESTAMP WITH TIME ZONE");
     }
 
     private static <T> Mono<T> close(Connection connection) {
@@ -245,6 +248,7 @@ abstract class AbstractCodecIntegrationTest {
     }
 
     private <T> void testCodec(Class<T> javaType, T value, BiConsumer<T, T> equality, String sqlType) {
+        SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS test");
         SERVER.getJdbcOperations().execute(String.format("CREATE TABLE test ( value %s )", sqlType));
 
         try {
