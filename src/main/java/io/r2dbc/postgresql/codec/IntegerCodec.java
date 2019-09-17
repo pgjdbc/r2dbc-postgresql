@@ -22,14 +22,13 @@ import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
-import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.core.publisher.Flux;
 import reactor.util.annotation.Nullable;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 
-final class IntegerCodec extends AbstractCodec<Integer> {
+final class IntegerCodec extends AbstractNumericCodec<Integer> {
 
     private final ByteBufAllocator byteBufAllocator;
 
@@ -44,22 +43,11 @@ final class IntegerCodec extends AbstractCodec<Integer> {
     }
 
     @Override
-    boolean doCanDecode(PostgresqlObjectId type, @Nullable Format format) {
-        Assert.requireNonNull(type, "type must not be null");
-
-        return INT4 == type;
-    }
-
-    @Override
     Integer doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends Integer> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
         Assert.requireNonNull(format, "format must not be null");
 
-        if (FORMAT_BINARY == format) {
-            return buffer.readInt();
-        } else {
-            return Integer.parseInt(ByteBufUtils.decode(buffer));
-        }
+        return decodeNumber(buffer, dataType, format, Integer.class, Number::intValue);
     }
 
     @Override
@@ -68,6 +56,11 @@ final class IntegerCodec extends AbstractCodec<Integer> {
 
         ByteBuf encoded = this.byteBufAllocator.buffer(4).writeInt(value);
         return create(INT4, FORMAT_BINARY, Flux.just(encoded));
+    }
+
+    @Override
+    PostgresqlObjectId getDefaultType() {
+        return INT4;
     }
 
 }

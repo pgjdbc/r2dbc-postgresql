@@ -29,7 +29,7 @@ import reactor.util.annotation.Nullable;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT8;
 
-final class LongCodec extends AbstractCodec<Long> {
+final class LongCodec extends AbstractNumericCodec<Long> {
 
     private final ByteBufAllocator byteBufAllocator;
 
@@ -44,22 +44,11 @@ final class LongCodec extends AbstractCodec<Long> {
     }
 
     @Override
-    boolean doCanDecode(PostgresqlObjectId type, @Nullable Format format) {
-        Assert.requireNonNull(type, "type must not be null");
-
-        return INT8 == type;
-    }
-
-    @Override
     Long doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, @Nullable Class<? extends Long> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
         Assert.requireNonNull(format, "format must not be null");
 
-        if (FORMAT_BINARY == format) {
-            return buffer.readLong();
-        } else {
-            return Long.parseLong(ByteBufUtils.decode(buffer));
-        }
+        return decodeNumber(buffer, dataType, format, Long.class, Number::longValue);
     }
 
     @Override
@@ -68,6 +57,11 @@ final class LongCodec extends AbstractCodec<Long> {
 
         ByteBuf encoded = this.byteBufAllocator.buffer(8).writeLong(value);
         return create(INT8, FORMAT_BINARY, Flux.just(encoded));
+    }
+
+    @Override
+    PostgresqlObjectId getDefaultType() {
+        return INT8;
     }
 
 }

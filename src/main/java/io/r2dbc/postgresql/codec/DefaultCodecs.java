@@ -44,7 +44,6 @@ public final class DefaultCodecs implements Codecs {
         this.codecs = Arrays.asList(
 
             // Prioritized Codecs
-            new ShortCodec(byteBufAllocator),
             new StringCodec(byteBufAllocator),
             new InstantCodec(byteBufAllocator),
             new ZonedDateTimeCodec(byteBufAllocator),
@@ -52,7 +51,6 @@ public final class DefaultCodecs implements Codecs {
             new BigDecimalCodec(byteBufAllocator),
             new BlobCodec(byteBufAllocator),
             new BooleanCodec(byteBufAllocator),
-            new ByteCodec(byteBufAllocator),
             new CharacterCodec(byteBufAllocator),
             new ClobCodec(byteBufAllocator),
             new DateCodec(byteBufAllocator),
@@ -65,10 +63,14 @@ public final class DefaultCodecs implements Codecs {
             new LocalTimeCodec(byteBufAllocator),
             new LongCodec(byteBufAllocator),
             new OffsetDateTimeCodec(byteBufAllocator),
+            new ShortCodec(byteBufAllocator),
             new UriCodec(byteBufAllocator),
             new UrlCodec(byteBufAllocator),
             new UuidCodec(byteBufAllocator),
             new ZoneIdCodec(byteBufAllocator),
+
+            // Fallback for Object.class
+            new ByteCodec(byteBufAllocator),
 
             new ShortArrayCodec(byteBufAllocator),
             new StringArrayCodec(byteBufAllocator),

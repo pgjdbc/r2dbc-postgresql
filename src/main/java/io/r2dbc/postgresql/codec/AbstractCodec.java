@@ -46,7 +46,7 @@ abstract class AbstractCodec<T> implements Codec<T> {
     }
 
     @Override
-    public final boolean canDecode(int dataType, Format format, Class<?> type) {
+    public boolean canDecode(int dataType, Format format, Class<?> type) {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 

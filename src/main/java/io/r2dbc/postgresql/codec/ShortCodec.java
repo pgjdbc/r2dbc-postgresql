@@ -22,14 +22,13 @@ import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
-import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.core.publisher.Flux;
 import reactor.util.annotation.Nullable;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT2;
 
-final class ShortCodec extends AbstractCodec<Short> {
+final class ShortCodec extends AbstractNumericCodec<Short> {
 
     private final ByteBufAllocator byteBufAllocator;
 
@@ -44,22 +43,11 @@ final class ShortCodec extends AbstractCodec<Short> {
     }
 
     @Override
-    boolean doCanDecode(PostgresqlObjectId type, @Nullable Format format) {
-        Assert.requireNonNull(type, "type must not be null");
-
-        return INT2 == type;
-    }
-
-    @Override
     Short doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, @Nullable Class<? extends Short> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
         Assert.requireNonNull(format, "format must not be null");
 
-        if (FORMAT_BINARY == format) {
-            return buffer.readShort();
-        } else {
-            return Short.parseShort(ByteBufUtils.decode(buffer));
-        }
+        return decodeNumber(buffer, dataType, format, Short.class, Number::shortValue);
     }
 
     @Override
@@ -68,6 +56,11 @@ final class ShortCodec extends AbstractCodec<Short> {
 
         ByteBuf encoded = this.byteBufAllocator.buffer(2).writeShort(value);
         return create(INT2, FORMAT_BINARY, Flux.just(encoded));
+    }
+
+    @Override
+    PostgresqlObjectId getDefaultType() {
+        return INT2;
     }
 
 }

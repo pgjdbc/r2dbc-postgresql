@@ -18,6 +18,7 @@ package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
 import io.r2dbc.spi.Connection;
+import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import reactor.core.publisher.Mono;
@@ -60,6 +61,11 @@ abstract class AbstractCodecIntegrationTest {
         testCodec(BigDecimal.class, new BigDecimal("10010.1200023"), "NUMERIC");
         testCodec(BigDecimal.class, new BigDecimal("2000010010.1200023"), "NUMERIC");
         testCodec(BigDecimal.class, new BigDecimal("0"), "NUMERIC");
+        testCodec(BigDecimal.class, new BigDecimal("100"), "INT2");
+        testCodec(BigDecimal.class, new BigDecimal("100"), "INT4");
+        testCodec(BigDecimal.class, new BigDecimal("100"), "INT8");
+        testCodec(BigDecimal.class, new BigDecimal("100"), "FLOAT4");
+        testCodec(BigDecimal.class, new BigDecimal("100"), "FLOAT8");
     }
 
     @Test
@@ -85,12 +91,22 @@ abstract class AbstractCodecIntegrationTest {
 
     @Test
     void doublePrimitive() {
-        testCodec(Double.class, 100.0, "FLOAT8");
+        testCodec(Double.class, 100.0, "INT2");
+        testCodec(Double.class, 100.0, "INT4");
+        testCodec(Double.class, 100.0, "INT8");
+        testCodec(Double.class, 100.1, "DECIMAL");
+        testCodec(Double.class, 100.1, "FLOAT4");
+        testCodec(Double.class, 100.1, "FLOAT8");
     }
 
     @Test
     void floatPrimitive() {
-        testCodec(Float.class, 100.0F, "FLOAT4");
+        testCodec(Float.class, 100.0f, "INT2");
+        testCodec(Float.class, 100.0f, "INT4");
+        testCodec(Float.class, 100.0f, "INT8");
+        testCodec(Float.class, 100.1f, "DECIMAL");
+        testCodec(Float.class, 100.1f, "FLOAT4");
+        testCodec(Float.class, 100.1f, "FLOAT8");
     }
 
     @Test
@@ -111,7 +127,12 @@ abstract class AbstractCodecIntegrationTest {
 
     @Test
     void intPrimitive() {
+        testCodec(Integer.class, 100, "INT2");
         testCodec(Integer.class, 100, "INT4");
+        testCodec(Integer.class, 100, "INT8");
+        testCodec(Integer.class, 100, "NUMERIC");
+        testCodec(Integer.class, 100, "FLOAT4");
+        testCodec(Integer.class, 100, "FLOAT8");
     }
 
     @Test
@@ -136,7 +157,12 @@ abstract class AbstractCodecIntegrationTest {
 
     @Test
     void longPrimitive() {
+        testCodec(Long.class, 100L, "INT2");
+        testCodec(Long.class, 100L, "INT4");
         testCodec(Long.class, 100L, "INT8");
+        testCodec(Long.class, 100L, "NUMERIC");
+        testCodec(Long.class, 100L, "FLOAT4");
+        testCodec(Long.class, 100L, "FLOAT8");
     }
 
     @Test
@@ -203,7 +229,19 @@ abstract class AbstractCodecIntegrationTest {
     }
 
     private <T> void testCodec(Class<T> javaType, T value, String sqlType) {
-        testCodec(javaType, value, (actual, expected) -> assertThat(actual).isEqualTo(expected), sqlType);
+        testCodec(javaType, value, (actual, expected) -> {
+
+            if (value instanceof Float) {
+                assertThat((Float) actual).isCloseTo((Float) value, Offset.offset(0.01f));
+                return;
+            }
+
+            if (value instanceof Double) {
+                assertThat((Double) actual).isCloseTo((Double) value, Offset.offset(0.01));
+                return;
+            }
+            assertThat(actual).isEqualTo(expected);
+        }, sqlType);
     }
 
     private <T> void testCodec(Class<T> javaType, T value, BiConsumer<T, T> equality, String sqlType) {

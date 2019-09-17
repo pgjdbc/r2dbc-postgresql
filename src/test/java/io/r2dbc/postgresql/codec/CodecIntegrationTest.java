@@ -294,6 +294,7 @@ final class CodecIntegrationTest {
     }
 
     private <T> void testCodec(Class<T> javaType, T value, BiConsumer<T, T> equality, String sqlType) {
+        SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS test");
         SERVER.getJdbcOperations().execute(String.format("CREATE TABLE test ( value %s )", sqlType));
 
         try {
