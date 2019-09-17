@@ -47,6 +47,8 @@ public final class DefaultCodecs implements Codecs {
             new StringCodec(byteBufAllocator),
             new InstantCodec(byteBufAllocator),
             new ZonedDateTimeCodec(byteBufAllocator),
+            new BinaryByteBufferCodec(byteBufAllocator),
+            new BinaryByteArrayCodec(byteBufAllocator),
 
             new BigDecimalCodec(byteBufAllocator),
             new BlobCodec(byteBufAllocator),

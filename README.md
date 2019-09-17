@@ -157,7 +157,7 @@ This reference table shows the type mapping between [PostgreSQL][p] and Java dat
 | [`bit varying`][psql-bit-ref]                   | Not yet supported.|
 | [`boolean or bool`][psql-boolean-ref]           | [`Boolean`][java-boolean-ref]|
 | [`box`][psql-box-ref]                           | Not yet supported.|
-| [`bytea`][psql-bytea-ref]                       | Not yet supported.|
+| [`bytea`][psql-bytea-ref]                       | [**`ByteBuffer`**][java-ByteBuffer-ref], [`byte[]`][java-byte-ref], `Blob`|
 | [`character`][psql-character-ref]               | [`String`][java-string-ref]|
 | [`character varying`][psql-character-ref]       | [`String`][java-string-ref]|
 | [`cidr`][psql-cidr-ref]                         | Not yet supported.|
@@ -243,6 +243,7 @@ Support for the following single-dimensional arrays (read and write):
 [java-bigdecimal-ref]: https://docs.oracle.com/javase/8/docs/api/java/math/BigDecimal.html
 [java-boolean-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/Boolean.html
 [java-byte-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/Byte.html
+[java-ByteBuffer-ref]: https://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html
 [java-double-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/Double.html
 [java-float-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/Float.html
 [java-inet-ref]: https://docs.oracle.com/javase/7/docs/api/java/net/InetAddress.html
