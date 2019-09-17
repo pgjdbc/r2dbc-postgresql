@@ -18,7 +18,7 @@ package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
 
-final class CodecFormatIntegrationTest extends AbstractCodecIntegrationTest {
+final class CodecTextFormatIntegrationTest extends AbstractCodecIntegrationTest {
 
     @Override
     protected PostgresqlConnectionConfiguration getConfiguration(PostgresqlServerExtension server) {
