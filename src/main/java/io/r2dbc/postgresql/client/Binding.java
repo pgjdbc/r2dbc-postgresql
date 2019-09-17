@@ -17,7 +17,6 @@
 package io.r2dbc.postgresql.client;
 
 import io.netty.buffer.ByteBuf;
-import io.r2dbc.postgresql.PostgresqlBindingException;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
@@ -146,7 +145,7 @@ public final class Binding {
         for (int i = 0; i < this.parameters.size(); i++) {
             Parameter parameter = this.parameters.get(i);
             if (parameter == UNSPECIFIED) {
-                throw new PostgresqlBindingException(String.format("No parameter specified for index %d", i));
+                throw new IllegalStateException(String.format("No parameter specified for index %d", i));
             }
 
             transformed.add(transformer.apply(parameter));

@@ -117,9 +117,10 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
     }
 
     private Flux<PostgresqlResult> execute(String sql) {
+        ExceptionFactory factory = ExceptionFactory.withSql(sql);
         return SimpleQueryMessageFlow
             .exchange(this.client, sql)
-            .handle(PostgresqlExceptionFactory::handleErrorResponse)
+            .handle(factory::handleErrorResponse)
             .windowUntil(or(CommandComplete.class::isInstance, EmptyQueryResponse.class::isInstance, ErrorResponse.class::isInstance))
             .map(dataRow -> PostgresqlResult.toResult(this.codecs, dataRow));
     }

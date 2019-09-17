@@ -25,6 +25,7 @@ import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.frontend.Query;
 import io.r2dbc.postgresql.message.frontend.Terminate;
 import io.r2dbc.spi.IsolationLevel;
+import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.junit.jupiter.api.Test;
 import reactor.test.StepVerifier;
 
@@ -67,7 +68,7 @@ final class PostgresqlConnectionTest {
         createConnection(client, MockCodecs.empty(), this.statementCache)
             .beginTransaction()
             .as(StepVerifier::create)
-            .verifyErrorMatches(PostgresqlServerErrorException.class::isInstance);
+            .verifyErrorMatches(R2dbcNonTransientResourceException.class::isInstance);
     }
 
     @Test
@@ -120,7 +121,7 @@ final class PostgresqlConnectionTest {
         createConnection(client, MockCodecs.empty(), this.statementCache)
             .commitTransaction()
             .as(StepVerifier::create)
-            .verifyErrorMatches(PostgresqlServerErrorException.class::isInstance);
+            .verifyErrorMatches(R2dbcNonTransientResourceException.class::isInstance);
     }
 
     @Test
@@ -187,7 +188,7 @@ final class PostgresqlConnectionTest {
         createConnection(client, MockCodecs.empty(), this.statementCache)
             .createSavepoint("test-name")
             .as(StepVerifier::create)
-            .verifyErrorMatches(PostgresqlServerErrorException.class::isInstance);
+            .verifyErrorMatches(R2dbcNonTransientResourceException.class::isInstance);
     }
 
     @Test
@@ -248,7 +249,7 @@ final class PostgresqlConnectionTest {
         createConnection(client, MockCodecs.empty(), this.statementCache)
             .releaseSavepoint("test-name")
             .as(StepVerifier::create)
-            .verifyErrorMatches(PostgresqlServerErrorException.class::isInstance);
+            .verifyErrorMatches(R2dbcNonTransientResourceException.class::isInstance);
     }
 
     @Test
@@ -293,7 +294,7 @@ final class PostgresqlConnectionTest {
         createConnection(client, MockCodecs.empty(), this.statementCache)
             .rollbackTransaction()
             .as(StepVerifier::create)
-            .verifyErrorMatches(PostgresqlServerErrorException.class::isInstance);
+            .verifyErrorMatches(R2dbcNonTransientResourceException.class::isInstance);
     }
 
     @Test
@@ -344,7 +345,7 @@ final class PostgresqlConnectionTest {
         createConnection(client, MockCodecs.empty(), this.statementCache)
             .rollbackTransactionToSavepoint("test-name")
             .as(StepVerifier::create)
-            .verifyErrorMatches(PostgresqlServerErrorException.class::isInstance);
+            .verifyErrorMatches(R2dbcNonTransientResourceException.class::isInstance);
     }
 
     @Test
@@ -449,7 +450,7 @@ final class PostgresqlConnectionTest {
         createConnection(client, MockCodecs.empty(), this.statementCache)
             .setTransactionIsolationLevel(READ_COMMITTED)
             .as(StepVerifier::create)
-            .verifyErrorMatches(PostgresqlServerErrorException.class::isInstance);
+            .verifyErrorMatches(R2dbcNonTransientResourceException.class::isInstance);
     }
 
     @Test

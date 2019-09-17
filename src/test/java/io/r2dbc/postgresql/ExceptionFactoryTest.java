@@ -21,6 +21,8 @@ import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.Field;
 import io.r2dbc.postgresql.message.backend.Field.FieldType;
+import io.r2dbc.spi.R2dbcNonTransientResourceException;
+import io.r2dbc.spi.R2dbcPermissionDeniedException;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.SynchronousSink;
 
@@ -33,12 +35,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-final class PostgresqlExceptionFactoryTest {
+final class ExceptionFactoryTest {
 
     @Test
     void isCreatingAuthenticationException() {
         List<Field> fields = Arrays.asList(
-            new Field(FieldType.CODE, PostgresqlExceptionFactory.AUTH_EXCEPTION_CODE),
+            new Field(FieldType.CODE, "28000"),
             new Field(FieldType.MESSAGE, "error message desc")
         );
 
@@ -46,9 +48,9 @@ final class PostgresqlExceptionFactoryTest {
 
         SynchronousSink<BackendMessage> sink = createSinkMock();
 
-        PostgresqlExceptionFactory.handleErrorResponse(message, sink);
+        ExceptionFactory.INSTANCE.handleErrorResponse(message, sink);
 
-        verify(sink, times(1)).error(isA(PostgresqlAuthenticationFailure.class));
+        verify(sink, times(1)).error(isA(R2dbcPermissionDeniedException.class));
         verify(sink, times(0)).next(eq(message));
     }
 
@@ -63,9 +65,9 @@ final class PostgresqlExceptionFactoryTest {
 
         SynchronousSink<BackendMessage> sink = createSinkMock();
 
-        PostgresqlExceptionFactory.handleErrorResponse(message, sink);
+        ExceptionFactory.INSTANCE.handleErrorResponse(message, sink);
 
-        verify(sink, times(1)).error(isA(PostgresqlServerErrorException.class));
+        verify(sink, times(1)).error(isA(R2dbcNonTransientResourceException.class));
         verify(sink, times(0)).next(eq(message));
     }
 
@@ -75,11 +77,11 @@ final class PostgresqlExceptionFactoryTest {
 
         BackendMessage message = AuthenticationGSS.INSTANCE;
 
-        PostgresqlExceptionFactory.handleErrorResponse(message, sink);
+        ExceptionFactory.INSTANCE.handleErrorResponse(message, sink);
 
         verify(sink, times(1)).next(eq(message));
-        verify(sink, times(0)).error(isA(PostgresqlAuthenticationFailure.class));
-        verify(sink, times(0)).error(isA(PostgresqlServerErrorException.class));
+        verify(sink, times(0)).error(isA(R2dbcPermissionDeniedException.class));
+        verify(sink, times(0)).error(isA(R2dbcNonTransientResourceException.class));
     }
 
     @SuppressWarnings("unchecked")

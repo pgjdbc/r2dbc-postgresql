@@ -17,7 +17,6 @@
 package io.r2dbc.postgresql.client;
 
 import io.netty.buffer.ByteBuf;
-import io.r2dbc.postgresql.PostgresqlBindingException;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
@@ -68,7 +67,7 @@ final class BindingTest {
         Binding binding = new Binding(3);
         binding.add(2, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))));
 
-        assertThatExceptionOfType(PostgresqlBindingException.class).isThrownBy(binding::getParameterFormats).withMessage("No parameter specified for index 0");
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(binding::getParameterFormats).withMessage("No parameter specified for index 0");
     }
 
     @Test
@@ -86,7 +85,7 @@ final class BindingTest {
         Binding binding = new Binding(3);
         binding.add(2, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))));
 
-        assertThatExceptionOfType(PostgresqlBindingException.class).isThrownBy(binding::getParameterTypes).withMessage("No parameter specified for index 0");
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(binding::getParameterTypes).withMessage("No parameter specified for index 0");
     }
 
     @Test
@@ -117,7 +116,7 @@ final class BindingTest {
         Binding binding = new Binding(3);
         binding.add(2, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))));
 
-        assertThatExceptionOfType(PostgresqlBindingException.class).isThrownBy(binding::getParameterValues).withMessage("No parameter specified for index 0");
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(binding::getParameterValues).withMessage("No parameter specified for index 0");
     }
 
     @Test

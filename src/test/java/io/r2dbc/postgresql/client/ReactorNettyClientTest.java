@@ -19,7 +19,6 @@ package io.r2dbc.postgresql.client;
 import io.netty.channel.ConnectTimeoutException;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
-import io.r2dbc.postgresql.PostgresqlServerErrorException;
 import io.r2dbc.postgresql.authentication.PasswordAuthenticationHandler;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.DataRow;
@@ -27,6 +26,7 @@ import io.r2dbc.postgresql.message.backend.NotificationResponse;
 import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.postgresql.message.frontend.Query;
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
+import io.r2dbc.spi.R2dbcPermissionDeniedException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,10 +34,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import reactor.core.Disposable;
-import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.MonoProcessor;
 import reactor.core.publisher.UnicastProcessor;
 import reactor.test.StepVerifier;
 
@@ -226,7 +223,7 @@ final class ReactorNettyClientTest {
             createConnectionFactory("scram", "wrong").create()
                 .flatMapMany(c -> c.createStatement("SELECT 1 test").execute())
                 .as(StepVerifier::create)
-                .verifyError(PostgresqlServerErrorException.class);
+                .verifyError(R2dbcPermissionDeniedException.class);
         }
 
         @BeforeAll

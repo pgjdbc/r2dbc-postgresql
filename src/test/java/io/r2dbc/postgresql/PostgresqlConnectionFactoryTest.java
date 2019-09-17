@@ -27,6 +27,7 @@ import io.r2dbc.postgresql.message.frontend.PasswordMessage;
 import io.r2dbc.postgresql.message.frontend.SASLInitialResponse;
 import io.r2dbc.postgresql.message.frontend.StartupMessage;
 import io.r2dbc.postgresql.util.ByteBufferUtils;
+import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -129,7 +130,7 @@ final class PostgresqlConnectionFactoryTest {
 
         new PostgresqlConnectionFactory(Mono.just(client), configuration).create()
             .as(StepVerifier::create)
-            .verifyErrorMatches(PostgresqlServerErrorException.class::isInstance);
+            .verifyErrorMatches(R2dbcNonTransientResourceException.class::isInstance);
     }
 
     @Test

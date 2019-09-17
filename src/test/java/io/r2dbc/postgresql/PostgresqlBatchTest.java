@@ -23,6 +23,7 @@ import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.EmptyQueryResponse;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.frontend.Query;
+import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.junit.jupiter.api.Test;
 import reactor.test.StepVerifier;
 
@@ -111,7 +112,7 @@ final class PostgresqlBatchTest {
             .execute()
             .flatMap(result -> result.map((row, rowMetadata) -> row))
             .as(StepVerifier::create)
-            .verifyError(PostgresqlServerErrorException.class);
+            .verifyError(R2dbcNonTransientResourceException.class);
     }
 
 }

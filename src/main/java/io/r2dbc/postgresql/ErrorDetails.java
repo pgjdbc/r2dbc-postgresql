@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.Field;
 import io.r2dbc.postgresql.message.backend.Field.FieldType;
 import io.r2dbc.postgresql.util.Assert;
-import io.r2dbc.spi.R2dbcException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -48,9 +47,9 @@ import static io.r2dbc.postgresql.message.backend.Field.FieldType.TABLE_NAME;
 import static io.r2dbc.postgresql.message.backend.Field.FieldType.WHERE;
 
 /**
- * An exception that represents a server error.  This exception is a direct translation of the {@link ErrorResponse} message.
+ * Error details. This class is a direct translation of the {@link ErrorResponse} message.
  */
-public class PostgresqlServerErrorException extends R2dbcException {
+public final class ErrorDetails {
 
     private final String code;
 
@@ -95,14 +94,13 @@ public class PostgresqlServerErrorException extends R2dbcException {
      * @param fields the fields to be used to populate the exception
      * @throws IllegalArgumentException if {@code fields} is {@code null}
      */
-    public PostgresqlServerErrorException(List<Field> fields) {
+    ErrorDetails(List<Field> fields) {
         this(convertToMap(fields));
     }
 
-    private PostgresqlServerErrorException(Map<FieldType, String> fields) {
-        super(fields.get(MESSAGE), fields.get(CODE));
+    private ErrorDetails(Map<FieldType, String> fields) {
 
-        this.code = fields.get(CODE);
+        this.code = fields.getOrDefault(CODE, "99999");
         this.columnName = fields.get(COLUMN_NAME);
         this.constraintName = fields.get(CONSTRAINT_NAME);
         this.dataTypeName = fields.get(DATA_TYPE_NAME);
@@ -130,7 +128,7 @@ public class PostgresqlServerErrorException extends R2dbcException {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        PostgresqlServerErrorException that = (PostgresqlServerErrorException) o;
+        ErrorDetails that = (ErrorDetails) o;
         return Objects.equals(this.code, that.code) &&
             Objects.equals(this.columnName, that.columnName) &&
             Objects.equals(this.constraintName, that.constraintName) &&
@@ -152,7 +150,7 @@ public class PostgresqlServerErrorException extends R2dbcException {
     }
 
     /**
-     * Returns the value of the {@link FieldType#CODE} field.
+     * Returns the value of the {@link FieldType#CODE} field (SQLState).
      *
      * @return the value of the {@link FieldType#CODE} field
      */
@@ -246,7 +244,6 @@ public class PostgresqlServerErrorException extends R2dbcException {
      *
      * @return the value of the {@link FieldType#MESSAGE} field
      */
-    @Override
     public String getMessage() {
         return this.message;
     }
@@ -322,7 +319,7 @@ public class PostgresqlServerErrorException extends R2dbcException {
 
     @Override
     public String toString() {
-        return "PostgresqlServerErrorException{" +
+        return "ErrorDetails{" +
             "code='" + this.code + '\'' +
             ", columnName='" + this.columnName + '\'' +
             ", constraintName='" + this.constraintName + '\'' +
@@ -342,12 +339,6 @@ public class PostgresqlServerErrorException extends R2dbcException {
             ", tableName='" + this.tableName + '\'' +
             ", where='" + this.where + '\'' +
             "} " + super.toString();
-    }
-
-    static PostgresqlServerErrorException toException(ErrorResponse errorResponse) {
-        Assert.requireNonNull(errorResponse, "errorResponse must not be null");
-
-        return new PostgresqlServerErrorException(errorResponse.getFields());
     }
 
     private static Map<FieldType, String> convertToMap(List<Field> fields) {

@@ -16,16 +16,14 @@
 
 package io.r2dbc.postgresql;
 
-import io.r2dbc.postgresql.message.backend.Field;
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
 import io.r2dbc.spi.ConnectionFactories;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryOptions;
+import io.r2dbc.spi.R2dbcPermissionDeniedException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import reactor.core.publisher.Mono;
-
-import java.util.Collections;
 
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.POSTGRESQL_DRIVER;
 import static io.r2dbc.spi.ConnectionFactoryOptions.DATABASE;
@@ -34,7 +32,6 @@ import static io.r2dbc.spi.ConnectionFactoryOptions.HOST;
 import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
 import static io.r2dbc.spi.ConnectionFactoryOptions.PORT;
 import static io.r2dbc.spi.ConnectionFactoryOptions.USER;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 final class PostgresqlAuthenticationFailureTest {
@@ -53,30 +50,9 @@ final class PostgresqlAuthenticationFailureTest {
             .option(USER, SERVER.getUsername())
             .build());
 
-        assertThatExceptionOfType(PostgresqlAuthenticationFailure.class)
+        assertThatExceptionOfType(R2dbcPermissionDeniedException.class)
             .isThrownBy(() -> Mono.from(connectionFactory.create()).block())
             .withMessage("password authentication failed for user \"test\"");
     }
 
-    @Test
-    void initializesReason() {
-        PostgresqlAuthenticationFailure exception = new PostgresqlAuthenticationFailure(Collections.singletonList(new Field(Field.FieldType.MESSAGE, "Failed to Connect")));
-
-        assertThat(exception.getMessage()).isEqualTo("Failed to Connect");
-    }
-
-    @Test
-    void initializesSqlState() {
-        PostgresqlAuthenticationFailure exception = new PostgresqlAuthenticationFailure(Collections.singletonList(new Field(Field.FieldType.CODE, "7373")));
-
-        assertThat(exception.getSqlState()).isEqualTo("7373");
-    }
-
-    @Test
-    void skipsInitializationWithEmptyFields() {
-        PostgresqlAuthenticationFailure exception = new PostgresqlAuthenticationFailure(Collections.emptyList());
-
-        assertThat(exception.getSqlState()).isNull();
-        assertThat(exception.getMessage()).isNull();
-    }
 }

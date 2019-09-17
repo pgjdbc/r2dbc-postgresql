@@ -26,6 +26,7 @@ import io.r2dbc.postgresql.message.frontend.Describe;
 import io.r2dbc.postgresql.message.frontend.ExecutionType;
 import io.r2dbc.postgresql.message.frontend.Parse;
 import io.r2dbc.postgresql.message.frontend.Sync;
+import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
@@ -94,7 +95,7 @@ final class IndefiniteStatementCacheTest {
 
         statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200)))), "test-query")
             .as(StepVerifier::create)
-            .verifyError(PostgresqlServerErrorException.class);
+            .verifyError(R2dbcNonTransientResourceException.class);
     }
 
     @Test

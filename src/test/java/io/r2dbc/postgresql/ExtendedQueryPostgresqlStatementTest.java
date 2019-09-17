@@ -33,6 +33,7 @@ import io.r2dbc.postgresql.message.frontend.Describe;
 import io.r2dbc.postgresql.message.frontend.Execute;
 import io.r2dbc.postgresql.message.frontend.ExecutionType;
 import io.r2dbc.postgresql.message.frontend.Sync;
+import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -236,7 +237,7 @@ final class ExtendedQueryPostgresqlStatementTest {
             .execute()
             .flatMap(result -> result.map((row, rowMetadata) -> row))
             .as(StepVerifier::create)
-            .verifyError(PostgresqlServerErrorException.class);
+            .verifyError(R2dbcNonTransientResourceException.class);
     }
 
     @Test
@@ -264,7 +265,7 @@ final class ExtendedQueryPostgresqlStatementTest {
             .execute()
             .flatMap(PostgresqlResult::getRowsUpdated)
             .as(StepVerifier::create)
-            .verifyError(PostgresqlServerErrorException.class);
+            .verifyError(R2dbcNonTransientResourceException.class);
     }
 
     @Test
@@ -291,7 +292,7 @@ final class ExtendedQueryPostgresqlStatementTest {
             .bind("$1", 100)
             .execute()
             .as(StepVerifier::create)
-            .verifyError(PostgresqlServerErrorException.class);
+            .verifyError(R2dbcNonTransientResourceException.class);
     }
 
     @Test

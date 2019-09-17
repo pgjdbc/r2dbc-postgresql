@@ -62,12 +62,13 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
 
     @Override
     public Mono<PostgresqlConnection> create() {
+
         return this.clientFactory
             .delayUntil(client ->
                 StartupMessageFlow
                     .exchange(this.configuration.getApplicationName(), this::getAuthenticationHandler, client, this.configuration.getDatabase(), this.configuration.getUsername(),
                         this.configuration.getOptions())
-                    .handle(PostgresqlExceptionFactory::handleErrorResponse))
+                    .handle(ExceptionFactory.INSTANCE::handleErrorResponse))
             .flatMap(client -> {
 
                 DefaultCodecs codecs = new DefaultCodecs(client.getByteBufAllocator());

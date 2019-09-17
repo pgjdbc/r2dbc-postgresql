@@ -47,7 +47,7 @@ final class IndefiniteStatementCache implements StatementCache {
         Assert.requireNonNull(sql, "sql must not be null");
 
         return this.cache.computeIfAbsent(Tuples.of(sql, binding.getParameterTypes()),
-                tuple -> this.parse(tuple.getT1(), tuple.getT2()));
+            tuple -> this.parse(tuple.getT1(), tuple.getT2()));
     }
 
     @Override
@@ -62,9 +62,10 @@ final class IndefiniteStatementCache implements StatementCache {
     private Mono<String> parse(String sql, List<Integer> types) {
         String name = String.format("S_%d", this.counter.getAndIncrement());
 
+        ExceptionFactory factory = ExceptionFactory.withSql(name);
         return ExtendedQueryMessageFlow
             .parse(this.client, name, sql, types)
-            .handle(PostgresqlExceptionFactory::handleErrorResponse)
+            .handle(factory::handleErrorResponse)
             .then(Mono.just(name))
             .cache();
     }

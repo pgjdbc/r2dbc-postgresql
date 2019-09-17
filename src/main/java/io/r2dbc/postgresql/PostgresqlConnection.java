@@ -80,8 +80,7 @@ public final class PostgresqlConnection implements Connection {
     public Mono<Void> beginTransaction() {
         return useTransactionStatus(transactionStatus -> {
             if (IDLE == transactionStatus) {
-                return SimpleQueryMessageFlow.exchange(this.client, "BEGIN")
-                    .handle(PostgresqlExceptionFactory::handleErrorResponse);
+                return exchange("BEGIN");
             } else {
                 this.logger.debug("Skipping begin transaction because status is {}", transactionStatus);
                 return Mono.empty();
@@ -105,8 +104,7 @@ public final class PostgresqlConnection implements Connection {
     public Mono<Void> commitTransaction() {
         return useTransactionStatus(transactionStatus -> {
             if (OPEN == transactionStatus) {
-                return SimpleQueryMessageFlow.exchange(this.client, "COMMIT")
-                    .handle(PostgresqlExceptionFactory::handleErrorResponse);
+                return exchange("COMMIT");
             } else {
                 this.logger.debug("Skipping commit transaction because status is {}", transactionStatus);
                 return Mono.empty();
@@ -126,9 +124,7 @@ public final class PostgresqlConnection implements Connection {
         return beginTransaction()
             .then(useTransactionStatus(transactionStatus -> {
                 if (OPEN == transactionStatus) {
-
-                    return SimpleQueryMessageFlow.exchange(this.client, String.format("SAVEPOINT %s", name))
-                        .handle(PostgresqlExceptionFactory::handleErrorResponse);
+                    return exchange(String.format("SAVEPOINT %s", name));
                 } else {
                     this.logger.debug("Skipping create savepoint because status is {}", transactionStatus);
                     return Mono.empty();
@@ -199,8 +195,7 @@ public final class PostgresqlConnection implements Connection {
 
         return useTransactionStatus(transactionStatus -> {
             if (OPEN == transactionStatus) {
-                return SimpleQueryMessageFlow.exchange(this.client, String.format("RELEASE SAVEPOINT %s", name))
-                    .handle(PostgresqlExceptionFactory::handleErrorResponse);
+                return exchange(String.format("RELEASE SAVEPOINT %s", name));
             } else {
                 this.logger.debug("Skipping release savepoint because status is {}", transactionStatus);
                 return Mono.empty();
@@ -212,8 +207,7 @@ public final class PostgresqlConnection implements Connection {
     public Mono<Void> rollbackTransaction() {
         return useTransactionStatus(transactionStatus -> {
             if (IDLE != transactionStatus) {
-                return SimpleQueryMessageFlow.exchange(this.client, "ROLLBACK")
-                    .handle(PostgresqlExceptionFactory::handleErrorResponse);
+                return exchange("ROLLBACK");
             } else {
                 this.logger.debug("Skipping rollback transaction because status is {}", transactionStatus);
                 return Mono.empty();
@@ -227,8 +221,7 @@ public final class PostgresqlConnection implements Connection {
 
         return useTransactionStatus(transactionStatus -> {
             if (IDLE != transactionStatus) {
-                return SimpleQueryMessageFlow.exchange(this.client, String.format("ROLLBACK TO SAVEPOINT %s", name))
-                    .handle(PostgresqlExceptionFactory::handleErrorResponse);
+                return exchange(String.format("ROLLBACK TO SAVEPOINT %s", name));
             } else {
                 this.logger.debug("Skipping rollback transaction to savepoint because status is {}", transactionStatus);
                 return Mono.empty();
@@ -265,8 +258,7 @@ public final class PostgresqlConnection implements Connection {
         Assert.requireNonNull(isolationLevel, "isolationLevel must not be null");
 
         return withTransactionStatus(getTransactionIsolationLevelQuery(isolationLevel))
-            .flatMapMany(query -> SimpleQueryMessageFlow.exchange(this.client, query))
-            .handle(PostgresqlExceptionFactory::handleErrorResponse)
+            .flatMapMany(this::exchange)
             .then()
             .doOnSuccess(ignore -> this.isolationLevel = isolationLevel);
     }
@@ -341,6 +333,11 @@ public final class PostgresqlConnection implements Connection {
         return Mono.defer(() -> Mono.just(f.apply(this.client.getTransactionStatus())));
     }
 
+    private Publisher<?> exchange(String sql) {
+        ExceptionFactory exceptionFactory = ExceptionFactory.withSql("BEGIN");
+        return SimpleQueryMessageFlow.exchange(this.client, sql)
+            .handle(exceptionFactory::handleErrorResponse);
+    }
 
     /**
      * Adapter to publish {@link Notification}s.
