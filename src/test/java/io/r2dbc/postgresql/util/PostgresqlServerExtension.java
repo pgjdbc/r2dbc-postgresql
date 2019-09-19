@@ -20,7 +20,6 @@ import com.zaxxer.hikari.HikariDataSource;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.testcontainers.containers.JdbcDatabaseContainer;
@@ -31,6 +30,10 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.function.Supplier;
 
+/**
+ * JUnit Extension to establish a Postgres database context during integration tests.
+ * Uses either {@link TestContainer Testcontainers} or a {@link External locally available database}.
+ */
 public final class PostgresqlServerExtension implements BeforeAllCallback, AfterAllCallback {
 
     private volatile PostgreSQLContainer<?> containerInstance = null;
@@ -65,12 +68,12 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
             this.container.get().start();
         }
 
-        this.dataSource = DataSourceBuilder.create()
-            .type(HikariDataSource.class)
-            .url(String.format("jdbc:postgresql://%s:%d/%s", getHost(), getPort(), getDatabase()))
-            .username(getUsername())
-            .password(getPassword())
-            .build();
+        HikariDataSource hikariDataSource = new HikariDataSource();
+        hikariDataSource.setUsername(getUsername());
+        hikariDataSource.setPassword(getPassword());
+        hikariDataSource.setJdbcUrl(String.format("jdbc:postgresql://%s:%d/%s", getHost(), getPort(), getDatabase()));
+
+        this.dataSource = hikariDataSource;
 
         this.dataSource.setMaximumPoolSize(1);
 
