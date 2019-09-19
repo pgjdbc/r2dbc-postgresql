@@ -16,7 +16,9 @@
 
 package io.r2dbc.postgresql.codec;
 
+import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import org.junit.jupiter.api.Test;
 
@@ -126,6 +128,60 @@ final class DefaultCodecsTest {
     void encodeNullNoType() {
         assertThatIllegalArgumentException().isThrownBy(() -> new DefaultCodecs(TEST).encodeNull(null))
             .withMessage("type must not be null");
+    }
+
+    @Test
+    void addCodecFirst() {
+        DefaultCodecs codecs = new DefaultCodecs(TEST);
+        codecs.addFirst(DummyCodec.INSTANCE);
+        assertThat(codecs).startsWith(DummyCodec.INSTANCE);
+    }
+
+    @Test
+    void addCodecLast() {
+        DefaultCodecs codecs = new DefaultCodecs(TEST);
+        codecs.addLast(DummyCodec.INSTANCE);
+        assertThat(codecs).endsWith(DummyCodec.INSTANCE);
+    }
+
+    enum DummyCodec implements Codec<Object> {
+
+        INSTANCE;
+
+        @Override
+        public boolean canDecode(int dataType, Format format, Class<?> type) {
+            return false;
+        }
+
+        @Override
+        public boolean canEncode(Object value) {
+            return false;
+        }
+
+        @Override
+        public boolean canEncodeNull(Class<?> type) {
+            return false;
+        }
+
+        @Override
+        public Parameter encode(Object value) {
+            return null;
+        }
+
+        @Override
+        public Parameter encodeNull() {
+            return null;
+        }
+
+        @Override
+        public Class<?> type() {
+            return null;
+        }
+
+        @Override
+        public Object decode(ByteBuf buffer, int dataType, Format format, Class<?> type) {
+            return null;
+        }
     }
 
 }

@@ -4,15 +4,17 @@ This project contains the [PostgreSQL][p] implementation of the [R2DBC SPI][r]. 
 
 This driver provides the following features:
 
-* Login with username/password or implicit trust
+* Login with username/password (MD5, SASL/SCRAM) or implicit trust
+* SCRAM authentication
 * TLS
 * Explicit transactions
 * Notifications
-* SCRAM authentication
 * Binary data transfer
 * Execution of prepared statements with bindings
 * Execution of batch statements without bindings
+* Binary data transfer
 * Read and write support for all data types except LOB types (e.g. `BLOB`, `CLOB`)
+* Extension points to register `Codec`s to handle additional Postgres data types
 
 Next steps:
 
@@ -337,6 +339,11 @@ Support for the following single-dimensional arrays (read and write):
 [java-string-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/String.html
 [java-uuid-ref]: https://docs.oracle.com/javase/8/docs/api/java/util/UUID.html
 [java-zdt-ref]: https://docs.oracle.com/javase/8/docs/api/java/time/ZonedDateTime.html
+
+## Extension mechanism
+This driver accepts the following extensions:
+
+* `CodecRegistrar` to contribute `Codec`s for Postgres ObjectIDs. Extensions can be registered programmatically using `PostgresConnectionConfiguration` or discovered using Java's `ServiceLoader` mechanism (from `META-INF/services/io.r2dbc.postgresql.codec.CodecRegistrar`).                                                                                                                                                                                                
 
 ## License
 This project is released under version 2.0 of the [Apache License][l].

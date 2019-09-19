@@ -19,6 +19,7 @@ package io.r2dbc.postgresql.type;
 
 /**
  * Object IDs for well know PostgreSQL data types.
+ * <p>Extension Object IDs that are provided by Postgres extensions such as PostGIS are not constants of this enumeration and must be looked up from {@code pg_type}.
  */
 public enum PostgresqlObjectId {
 
@@ -357,6 +358,32 @@ public enum PostgresqlObjectId {
     public static boolean isValid(int i) {
         try {
             valueOf(i);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Returns if the {@code objectId} is a known and valid {@code objectId}.
+     *
+     * @param objectId the object id to match
+     * @return {@literal true} if the {@code objectId} is a valid and known (static) objectId;{@literal false} otherwise.
+     */
+    public static boolean isValid(int objectId) {
+
+        if (objectId >= 0 && objectId < OID_CACHE_SIZE) {
+            PostgresqlObjectId oid = CACHE[objectId];
+
+            if (oid == null) {
+                return false;
+            }
+
+            return true;
+        }
+
+        try {
+            valueOf(objectId);
             return true;
         } catch (Exception e) {
             return false;

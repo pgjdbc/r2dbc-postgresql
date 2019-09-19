@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql;
 
+import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.authentication.AuthenticationHandler;
 import io.r2dbc.postgresql.authentication.PasswordAuthenticationHandler;
 import io.r2dbc.postgresql.authentication.SASLAuthenticationHandler;
@@ -24,6 +25,7 @@ import io.r2dbc.postgresql.client.ReactorNettyClient;
 import io.r2dbc.postgresql.client.SSLConfig;
 import io.r2dbc.postgresql.client.SSLMode;
 import io.r2dbc.postgresql.client.StartupMessageFlow;
+import io.r2dbc.postgresql.codec.CodecRegistrar;
 import io.r2dbc.postgresql.codec.DefaultCodecs;
 import io.r2dbc.postgresql.message.backend.AuthenticationMessage;
 import io.r2dbc.postgresql.util.Assert;
@@ -31,9 +33,16 @@ import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.IsolationLevel;
 import io.r2dbc.spi.R2dbcException;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
+import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.ServiceLoader;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -45,6 +54,8 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
     private final Function<SSLConfig, Mono<? extends Client>> clientFactory;
 
     private final PostgresqlConnectionConfiguration configuration;
+
+    private final List<CodecRegistrar> codecRegistrars = new ArrayList<>();
 
     /**
      * Creates a new connection factory.
@@ -60,6 +71,17 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
     PostgresqlConnectionFactory(Function<SSLConfig, Mono<? extends Client>> clientFactory, PostgresqlConnectionConfiguration configuration) {
         this.clientFactory = Assert.requireNonNull(clientFactory, "clientFactory must not be null");
         this.configuration = Assert.requireNonNull(configuration, "configuration must not be null");
+
+        this.codecRegistrars.addAll(configuration.getCodecRegistrars());
+
+        if (configuration.isRegisterExtensions()) {
+            ServiceLoader<CodecRegistrar> codecRegistrars = AccessController.doPrivileged((PrivilegedAction<ServiceLoader<CodecRegistrar>>) () -> ServiceLoader.load(CodecRegistrar.class,
+                getClass().getClassLoader()));
+
+            for (CodecRegistrar codecRegistrar : codecRegistrars) {
+                this.codecRegistrars.add(codecRegistrar);
+            }
+        }
     }
 
     @Override
@@ -88,7 +110,9 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
 
                 return this.getIsolationLevel(client, codecs)
                     .map(it -> new PostgresqlConnection(client, codecs, DefaultPortalNameSupplier.INSTANCE, new IndefiniteStatementCache(client), it, configuration.isForceBinary()))
-                    .delayUntil(this::setSchema)
+                    .delayUntil(connection -> {
+                        return prepareConnection(connection, client.getByteBufAllocator(), codecs);
+                    })
                     .onErrorResume(throwable -> this.closeWithError(client, throwable));
             }).onErrorMap(this::cannotConnect);
     }
@@ -100,6 +124,17 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
                     this.configuration.getOptions())
                 .handle(ExceptionFactory.INSTANCE::handleErrorResponse))
             .cast(Client.class);
+    }
+
+    private Publisher<?> prepareConnection(PostgresqlConnection connection, ByteBufAllocator byteBufAllocator, DefaultCodecs codecs) {
+
+        List<Publisher<?>> publishers = new ArrayList<>();
+        publishers.add(setSchema(connection));
+        for (CodecRegistrar codecRegistrar : this.codecRegistrars) {
+            publishers.add(codecRegistrar.register(connection, byteBufAllocator, codecs));
+        }
+
+        return Flux.concat(publishers).then();
     }
 
     private Mono<PostgresqlConnection> closeWithError(Client client, Throwable throwable) {
@@ -130,6 +165,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
     public String toString() {
         return "PostgresqlConnectionFactory{" +
             "clientFactory=" + this.clientFactory +
+            "codecRegistrars=" + this.codecRegistrars +
             ", configuration=" + this.configuration +
             '}';
     }

@@ -32,7 +32,7 @@ import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 
 /**
  * Abstract codec class that provides a basis for all concrete
- * implementations of a {@link Codec}.
+ * implementations of a {@link Codec} for well-known {@link PostgresqlObjectId}.
  *
  * @param <T> the type that is handled by this {@link Codec}.
  */
@@ -54,7 +54,7 @@ abstract class AbstractCodec<T> implements Codec<T> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return (type == Object.class || isTypeAssignable(type)) &&
+        return PostgresqlObjectId.isValid(dataType) && (type == Object.class || isTypeAssignable(type)) &&
             doCanDecode(PostgresqlObjectId.valueOf(dataType), format);
     }
 

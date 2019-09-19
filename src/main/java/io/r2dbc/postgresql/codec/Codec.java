@@ -31,7 +31,7 @@ import reactor.util.annotation.Nullable;
  * @param <T> the type that is handled by this codec.
  * @see PostgresqlObjectId
  */
-interface Codec<T> {
+public interface Codec<T> {
 
     /**
      * Determine whether this {@link Codec} is capable of decoding a value for the given {@code dataType} and {@link Format} and whether it can represent the decoded value as the desired

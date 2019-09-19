@@ -22,6 +22,8 @@ import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.r2dbc.postgresql.client.DefaultHostnameVerifier;
 import io.r2dbc.postgresql.client.SSLConfig;
 import io.r2dbc.postgresql.client.SSLMode;
+import io.r2dbc.postgresql.codec.Codec;
+import io.r2dbc.postgresql.codec.CodecRegistrar;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.netty.tcp.SslProvider;
 import reactor.util.annotation.Nullable;
@@ -29,7 +31,10 @@ import reactor.util.annotation.Nullable;
 import javax.net.ssl.HostnameVerifier;
 import java.io.File;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 
 import static reactor.netty.tcp.SslProvider.DefaultConfigurationType.TCP;
 
@@ -47,6 +52,8 @@ public final class PostgresqlConnectionConfiguration {
 
     private final Duration connectTimeout;
 
+    private final List<CodecRegistrar> codecRegistrars;
+
     private final String database;
 
     private final boolean forceBinary;
@@ -57,6 +64,8 @@ public final class PostgresqlConnectionConfiguration {
 
     private final CharSequence password;
 
+    private final boolean registerExtensions;
+
     private final int port;
 
     private final String schema;
@@ -66,18 +75,12 @@ public final class PostgresqlConnectionConfiguration {
     private final SSLConfig sslConfig;
 
     private PostgresqlConnectionConfiguration(String applicationName,
-                                              @Nullable Duration connectTimeout,
-                                              @Nullable String database,
-                                              boolean forceBinary,
-                                              String host,
-                                              @Nullable Map<String, String> options,
-                                              @Nullable CharSequence password,
-                                              int port,
-                                              @Nullable String schema,
-                                              String username,
+                                              List<CodecRegistrar> codecRegistrars, @Nullable Duration connectTimeout, @Nullable String database, boolean forceBinary, String host,
+                                              @Nullable Map<String, String> options, @Nullable CharSequence password, int port, boolean registerExtensions, @Nullable String schema, String username,
                                               SSLConfig sslConfig) {
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
         this.connectTimeout = connectTimeout;
+        this.codecRegistrars = Assert.requireNonNull(codecRegistrars, "codecRegistrars must not be null");
         this.database = database;
         this.forceBinary = forceBinary;
         this.host = Assert.requireNonNull(host, "host must not be null");
@@ -85,6 +88,7 @@ public final class PostgresqlConnectionConfiguration {
         this.password = sslConfig.getSslMode() != SSLMode.DISABLE
             ? password
             : Assert.requireNonNull(password, "password must not be null");
+        this.registerExtensions = registerExtensions;
         this.port = port;
         this.schema = schema;
         this.username = Assert.requireNonNull(username, "username must not be null");
@@ -116,12 +120,14 @@ public final class PostgresqlConnectionConfiguration {
         return "PostgresqlConnectionConfiguration{" +
             "applicationName='" + this.applicationName + '\'' +
             ", connectTimeout=" + this.connectTimeout +
+            ", codecRegistrars=" + this.codecRegistrars +
             ", database='" + this.database + '\'' +
             ", forceBinary='" + this.forceBinary + '\'' +
             ", host='" + this.host + '\'' +
             ", options='" + this.options + '\'' +
-            ", password='" + repeat(this.password.length(), "*") + '\'' +
+            ", password='" + repeat(this.password != null ? this.password.length() : 0, "*") + '\'' +
             ", port=" + this.port +
+            ", registerExtensions='" + this.registerExtensions + '\'' +
             ", schema='" + this.schema + '\'' +
             ", username='" + this.username + '\'' +
             '}';
@@ -139,6 +145,10 @@ public final class PostgresqlConnectionConfiguration {
     @Nullable
     String getDatabase() {
         return this.database;
+    }
+
+    public List<CodecRegistrar> getCodecRegistrars() {
+        return this.codecRegistrars;
     }
 
     String getHost() {
@@ -170,6 +180,10 @@ public final class PostgresqlConnectionConfiguration {
 
     boolean isForceBinary() {
         return this.forceBinary;
+    }
+
+    boolean isRegisterExtensions() {
+        return this.registerExtensions;
     }
 
     SSLConfig getSslConfig() {
@@ -225,6 +239,10 @@ public final class PostgresqlConnectionConfiguration {
         @Nullable
         private String username;
 
+        private List<CodecRegistrar> codecRegistrars = new ArrayList<>();
+
+        private boolean registerExtensions = true;
+
         private Builder() {
         }
 
@@ -256,22 +274,29 @@ public final class PostgresqlConnectionConfiguration {
             }
 
             SSLConfig sslConfig = this.createSslConfig();
-            return new PostgresqlConnectionConfiguration(
-                this.applicationName,
-                this.connectTimeout,
-                this.database,
-                this.forceBinary,
-                this.host,
-                this.options,
-                this.password,
-                this.port,
-                this.schema,
-                this.username,
-                sslConfig);
+            return new PostgresqlConnectionConfiguration(this.applicationName, this.codecRegistrars, this.connectTimeout, this.database, this.forceBinary, this.host, this.options, this.password,
+                this.port, this.registerExtensions, this.schema, this.username, sslConfig);
         }
 
+        /**
+         * Configures the connection timeout. Default unconfigured.
+         *
+         * @param connectTimeout the connection timeout
+         * @return this {@link Builder}
+         */
         public Builder connectTimeout(@Nullable Duration connectTimeout) {
             this.connectTimeout = connectTimeout;
+            return this;
+        }
+
+        /**
+         * Registers a {@link CodecRegistrar} that can contribute extension {@link Codec}s.
+         *
+         * @param codecRegistrar registrar to contribute codecs
+         * @return this {@link Builder}
+         */
+        public Builder codecRegistrar(CodecRegistrar codecRegistrar) {
+            this.codecRegistrars.add(Assert.requireNonNull(codecRegistrar, "codecRegistrar must not be null"));
             return this;
         }
 
@@ -364,6 +389,17 @@ public final class PostgresqlConnectionConfiguration {
         }
 
         /**
+         * Configures whether to use {@link ServiceLoader} to discover and register extensions. Defaults to true.
+         *
+         * @param registerExtensions to discover and register extensions
+         * @return this {@link Builder}
+         */
+        public Builder registerExtensionsFromClassPath(boolean registerExtensions) {
+            this.registerExtensions = registerExtensions;
+            return this;
+        }
+
+        /**
          * Configure the schema.
          *
          * @param schema the schema
@@ -449,7 +485,8 @@ public final class PostgresqlConnectionConfiguration {
                 ", forceBinary='" + this.forceBinary + '\'' +
                 ", host='" + this.host + '\'' +
                 ", parameters='" + this.options + '\'' +
-                ", password='" + repeat(this.password.length(), "*") + '\'' +
+                ", password='" + repeat(this.password != null ? this.password.length() : 0, "*") + '\'' +
+                ", registerExtensions='" + this.registerExtensions + '\'' +
                 ", port=" + this.port +
                 ", schema='" + this.schema + '\'' +
                 ", username='" + this.username + '\'' +

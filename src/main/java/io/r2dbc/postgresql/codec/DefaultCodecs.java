@@ -23,13 +23,16 @@ import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 /**
  * The default {@link Codec} implementation.  Delegates to type-specific codec implementations.
  */
-public final class DefaultCodecs implements Codecs {
+public final class DefaultCodecs implements Codecs, CodecRegistry {
 
     private final List<Codec<?>> codecs;
 
@@ -41,7 +44,7 @@ public final class DefaultCodecs implements Codecs {
     public DefaultCodecs(ByteBufAllocator byteBufAllocator) {
         Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
 
-        this.codecs = Arrays.asList(
+        this.codecs = new ArrayList<>(Arrays.asList(
 
             // Prioritized Codecs
             new StringCodec(byteBufAllocator),
@@ -86,7 +89,23 @@ public final class DefaultCodecs implements Codecs {
             new StringArrayCodec(byteBufAllocator),
             new IntegerArrayCodec(byteBufAllocator),
             new LongArrayCodec(byteBufAllocator)
-        );
+        ));
+    }
+
+    @Override
+    public void addFirst(Codec<?> codec) {
+        Assert.requireNonNull(codec, "codec must not be null");
+        synchronized (this.codecs) {
+            this.codecs.add(0, codec);
+        }
+    }
+
+    @Override
+    public void addLast(Codec<?> codec) {
+        Assert.requireNonNull(codec, "codec must not be null");
+        synchronized (this.codecs) {
+            this.codecs.add(codec);
+        }
     }
 
     @Override
@@ -146,5 +165,12 @@ public final class DefaultCodecs implements Codecs {
         }
 
         return null;
+    }
+
+    @Override
+    public Iterator<Codec<?>> iterator() {
+        synchronized (this.codecs) {
+            return Collections.unmodifiableList(new ArrayList<>(this.codecs)).iterator();
+        }
     }
 }
