@@ -27,32 +27,22 @@ import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.utility.MountableFile;
+import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
 import reactor.util.annotation.Nullable;
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
+import static org.testcontainers.utility.MountableFile.forHostPath;
+
 public final class PostgresqlServerExtension implements BeforeAllCallback, AfterAllCallback {
-
-    private static final Path clientCrt;
-
-    private static final Path clientKey;
-
-    private static final Path initContainerConfig;
-
-    private static final Path pgHba;
-
-    private static final Path serverCrt;
-
-    private static final Path serverKey;
 
     private volatile PostgreSQLContainer<?> containerInstance = null;
 
@@ -75,64 +65,16 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
 
     private JdbcOperations jdbcOperations;
 
-    static {
-        try {
-            Path keysDir = Files.createTempDirectory("keys");
-            keysDir.toFile().deleteOnExit();
-            Tuple2<Path, Path> server = createPair(keysDir, "server", "r2dbc-postgresql-test-server");
-            Tuple2<Path, Path> client = createPair(keysDir, "client", "test-ssl-with-cert");
-            serverCrt = server.getT1();
-            serverKey = server.getT2();
-            clientCrt = client.getT1();
-            clientKey = client.getT2();
-            initContainerConfig = createTempFile("init-container-config.sh",
-                "touch /tmp/server.key\n",
-                "chown postgres:postgres /tmp/server.key\n",
-                "chmod 0600 /tmp/server.key\n",
-                "cp /var/server.key /tmp/server.key\n",
-                "echo \"/tmp/server.key initialized\"\n",
-                "touch /tmp/pg_hba.conf\n",
-                "chmod 0600 /tmp/pg_hba.conf\n",
-                "chown postgres:postgres /tmp/pg_hba.conf\n",
-                "cp /var/pg_hba.conf /tmp/pg_hba.conf\n",
-                "echo \"/tmp/pg_hba initialized\"\n"
-            );
-            pgHba = createTempFile("pg_hba.conf",
-                "hostnossl         all       test                    all     md5\n",
-                "hostnossl         all       test-scram              all     scram-sha-256\n",
-                "hostssl           all       test-ssl                all     password\n",
-                "hostssl           all       test-ssl-with-cert      all     cert\n"
-            );
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public PostgresqlServerExtension() {
-    }
-
-
-    public String getClientCrt() {
-        return PostgresqlServerExtension.clientCrt.toString();
-    }
-
-    public String getClientKey() {
-        return PostgresqlServerExtension.clientKey.toString();
-    }
-
-    public String getServerCrt() {
-        return PostgresqlServerExtension.serverCrt.toString();
-    }
-
-    public String getServerKey() {
-        return PostgresqlServerExtension.serverKey.toString();
     }
 
     @Override
     public void afterAll(ExtensionContext context) {
         int nesting = nestingCounter.decrementAndGet();
         if (nesting == 0) {
-            this.dataSource.close();
+            if (this.dataSource != null) {
+                this.dataSource.close();
+            }
             if (this.useTestContainer) {
                 this.container.get().stop();
             }
@@ -160,6 +102,14 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
         }
     }
 
+    public String getClientCrt() {
+        return Paths.get("client.crt").toAbsolutePath().toString();
+    }
+
+    public String getClientKey() {
+        return Paths.get("client.key").toAbsolutePath().toString();
+    }
+
     public String getDatabase() {
         return this.postgres.getDatabase();
     }
@@ -177,33 +127,20 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
         return this.postgres.getPort();
     }
 
+    public String getServerCrt() {
+        return Paths.get("server.crt").toAbsolutePath().toString();
+    }
+
+    public String getServerKey() {
+        return Paths.get("server.key").toAbsolutePath().toString();
+    }
+
     public String getUsername() {
         return this.postgres.getUsername();
     }
 
     public String getPassword() {
         return this.postgres.getPassword();
-    }
-
-    private static Tuple2<Path, Path> createPair(Path dir, String name, String cn) throws IOException, InterruptedException {
-        new ProcessBuilder("docker", "run",
-            "-v", dir.toAbsolutePath() + ":/out",
-            "--rm",
-            "--entrypoint", "openssl",
-            "frapsoft/openssl",
-            "req", "-newkey", "rsa:2048", "-nodes",
-            "-keyout", String.format("/out/%s.key", name),
-            "-out", String.format("/out/%s.crt", name),
-            "-x509",
-            "-days", "365",
-            "-subj", String.format("/CN=%s", cn))
-            .start()
-            .waitFor();
-        Path cert = dir.resolve(String.format("%s.crt", name));
-        Path key = dir.resolve(String.format("%s.key", name));
-        cert.toFile().deleteOnExit();
-        key.toFile().deleteOnExit();
-        return Tuples.of(cert, key);
     }
 
     private static Path createTempFile(String name, String... lines) throws IOException {
@@ -218,27 +155,30 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
     }
 
     private <T extends PostgreSQLContainer<T>> T container() {
-        return new PostgreSQLContainer<T>("postgres:11.1") {
+        T container = new PostgreSQLContainer<T>("postgres:11.1")
+            .withCopyFileToContainer(forHostPath("server.crt", 0600), "/var/server.crt")
+            .withCopyFileToContainer(forHostPath("server.key", 0600), "/var/server.key")
+            .withCopyFileToContainer(forHostPath("client.crt", 0600), "/var/client.crt")
+            .withCopyFileToContainer(forHostPath("pg_hba.conf", 0600), "/var/pg_hba.conf")
+            .withCopyFileToContainer(forHostPath("setup.sh", 0755), "/var/setup.sh")
+            .withCopyFileToContainer(forHostPath("test-db-init-script.sql", 0755), "/docker-entrypoint-initdb.d/test-db-init-script.sql")
+//            .withInitScript("test-db-init-script.sql")
+            .withCommand("postgres",
+                "-c", "ssl=on",
+                "-c", "ssl_key_file=/var/server.key",
+                "-c", "ssl_cert_file=/var/server.crt",
+                "-c", "ssl_ca_file=/var/client.crt",
+                "-c", "hba_file=/var/pg_hba.conf");
 
-            @Override
-            protected void configure() {
-                super.configure();
-                setCommand(
-                    "postgres",
-                    "-c", "ssl=on",
-                    "-c", "ssl_key_file=/tmp/server.key",
-                    "-c", "ssl_cert_file=/var/server.crt",
-                    "-c", "ssl_ca_file=/var/client.crt",
-                    "-c", "hba_file=/tmp/pg_hba.conf"
-                );
-            }
-        }
-            .withInitScript("test-db-init-script.sql")
-            .withCopyFileToContainer(MountableFile.forHostPath(serverCrt, 0755), "/var/server.crt")
-            .withCopyFileToContainer(MountableFile.forHostPath(serverKey, 0755), "/var/server.key")
-            .withCopyFileToContainer(MountableFile.forHostPath(clientCrt, 0755), "/var/client.crt")
-            .withCopyFileToContainer(MountableFile.forHostPath(pgHba, 0755), "/var/pg_hba.conf")
-            .withCopyFileToContainer(MountableFile.forHostPath(initContainerConfig, 0755), "/docker-entrypoint-initdb.d/init-container-config.sh");
+//        container.setWaitStrategy(new DockerHealthcheckWaitStrategy().withStartupTimeout(Duration.ofSeconds(15)));
+
+        container.setWaitStrategy(new LogMessageWaitStrategy()
+            .withRegEx(".*database system is ready to accept connections.*")
+            .withTimes(2)
+            .withStartupTimeout(Duration.ofSeconds(60)));
+
+        return container
+            ;
     }
 
     /**

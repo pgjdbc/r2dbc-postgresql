@@ -1,3 +1,5 @@
+
+
 SET password_encryption = 'scram-sha-256';
 
 CREATE ROLE "test-scram" LOGIN PASSWORD 'test-scram';
