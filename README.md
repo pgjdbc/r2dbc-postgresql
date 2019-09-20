@@ -69,6 +69,7 @@ Mono<Connection> connectionMono = Mono.from(connectionFactory.create());
 | `password`        | Login password _(Optional when using TLS Certificate authentication)_
 | `database`        | Database to select. _(Optional)_
 | `applicationName` | The name of the application connecting to the database.  Defaults to `r2dbc-postgresql`. _(Optional)_
+| `autodetectExtensions` | Whether to auto-detect and register `Extension`s from the class path.  Defaults to `true`. _(Optional)_
 | `schema`          | The schema to set. _(Optional)_
 | `sslMode`         | SSL mode to use, see `SSLMode` enum. Supported values: `DISABLE`, `ALLOW`, `PREFER`, `REQUIRE`, `VERIFY_CA`, `VERIFY_FULL`. _(Optional)_
 | `sslRootCert`     | Path to SSL CA certificate in PEM format. _(Optional)_
@@ -343,7 +344,9 @@ Support for the following single-dimensional arrays (read and write):
 ## Extension mechanism
 This driver accepts the following extensions:
 
-* `CodecRegistrar` to contribute `Codec`s for Postgres ObjectIDs. Extensions can be registered programmatically using `PostgresConnectionConfiguration` or discovered using Java's `ServiceLoader` mechanism (from `META-INF/services/io.r2dbc.postgresql.codec.CodecRegistrar`).                                                                                                                                                                                                
+* `CodecRegistrar` to contribute `Codec`s for Postgres ObjectIDs. 
+
+Extensions can be registered programmatically using `PostgresConnectionConfiguration` or discovered using Java's `ServiceLoader` mechanism (from `META-INF/services/io.r2dbc.postgresql.extension.Extension`).                                                                                                                                                                                                
 
 ## License
 This project is released under version 2.0 of the [Apache License][l].

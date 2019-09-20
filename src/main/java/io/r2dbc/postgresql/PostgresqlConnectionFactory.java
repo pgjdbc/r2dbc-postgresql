@@ -25,8 +25,8 @@ import io.r2dbc.postgresql.client.ReactorNettyClient;
 import io.r2dbc.postgresql.client.SSLConfig;
 import io.r2dbc.postgresql.client.SSLMode;
 import io.r2dbc.postgresql.client.StartupMessageFlow;
-import io.r2dbc.postgresql.codec.CodecRegistrar;
 import io.r2dbc.postgresql.codec.DefaultCodecs;
+import io.r2dbc.postgresql.extension.CodecRegistrar;
 import io.r2dbc.postgresql.message.backend.AuthenticationMessage;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ConnectionFactory;
@@ -37,12 +37,9 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.ServiceLoader;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -55,7 +52,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
 
     private final PostgresqlConnectionConfiguration configuration;
 
-    private final List<CodecRegistrar> codecRegistrars = new ArrayList<>();
+    private final Extensions extensions;
 
     /**
      * Creates a new connection factory.
@@ -66,22 +63,23 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
     public PostgresqlConnectionFactory(PostgresqlConnectionConfiguration configuration) {
         this.clientFactory = sslConfig -> ReactorNettyClient.connect(configuration.getHost(), configuration.getPort(), configuration.getConnectTimeout(), sslConfig).cast(Client.class);
         this.configuration = Assert.requireNonNull(configuration, "configuration must not be null");
+        this.extensions = getExtensions(configuration);
     }
 
     PostgresqlConnectionFactory(Function<SSLConfig, Mono<? extends Client>> clientFactory, PostgresqlConnectionConfiguration configuration) {
         this.clientFactory = Assert.requireNonNull(clientFactory, "clientFactory must not be null");
         this.configuration = Assert.requireNonNull(configuration, "configuration must not be null");
+        this.extensions = getExtensions(configuration);
+    }
 
-        this.codecRegistrars.addAll(configuration.getCodecRegistrars());
+    private static Extensions getExtensions(PostgresqlConnectionConfiguration configuration) {
+        Extensions extensions = Extensions.from(configuration.getExtensions());
 
-        if (configuration.isRegisterExtensions()) {
-            ServiceLoader<CodecRegistrar> codecRegistrars = AccessController.doPrivileged((PrivilegedAction<ServiceLoader<CodecRegistrar>>) () -> ServiceLoader.load(CodecRegistrar.class,
-                getClass().getClassLoader()));
-
-            for (CodecRegistrar codecRegistrar : codecRegistrars) {
-                this.codecRegistrars.add(codecRegistrar);
-            }
+        if (configuration.isAutodetectExtensions()) {
+            extensions = extensions.mergeWith(Extensions.autodetect());
         }
+
+        return extensions;
     }
 
     @Override
@@ -109,7 +107,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
                 DefaultCodecs codecs = new DefaultCodecs(client.getByteBufAllocator());
 
                 return this.getIsolationLevel(client, codecs)
-                    .map(it -> new PostgresqlConnection(client, codecs, DefaultPortalNameSupplier.INSTANCE, new IndefiniteStatementCache(client), it, configuration.isForceBinary()))
+                    .map(it -> new PostgresqlConnection(client, codecs, DefaultPortalNameSupplier.INSTANCE, new IndefiniteStatementCache(client), it, this.configuration.isForceBinary()))
                     .delayUntil(connection -> {
                         return prepareConnection(connection, client.getByteBufAllocator(), codecs);
                     })
@@ -130,9 +128,10 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
 
         List<Publisher<?>> publishers = new ArrayList<>();
         publishers.add(setSchema(connection));
-        for (CodecRegistrar codecRegistrar : this.codecRegistrars) {
-            publishers.add(codecRegistrar.register(connection, byteBufAllocator, codecs));
-        }
+
+        this.extensions.forEach(CodecRegistrar.class, it -> {
+            publishers.add(it.register(connection, byteBufAllocator, codecs));
+        });
 
         return Flux.concat(publishers).then();
     }
@@ -165,8 +164,8 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
     public String toString() {
         return "PostgresqlConnectionFactory{" +
             "clientFactory=" + this.clientFactory +
-            "codecRegistrars=" + this.codecRegistrars +
             ", configuration=" + this.configuration +
+            ", extensions=" + this.extensions +
             '}';
     }
 

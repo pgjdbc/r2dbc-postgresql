@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import java.util.HashMap;
 import java.util.Map;
 
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.AUTODETECT_EXTENSIONS;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.LEGACY_POSTGRESQL_DRIVER;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.OPTIONS;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.POSTGRESQL_DRIVER;
@@ -152,6 +153,29 @@ final class PostgresqlConnectionFactoryProviderTest {
 
         assertThat(actualOptions).isNotNull();
         assertThat(actualOptions).isEqualTo(expectedOptions);
+    }
+
+    @Test
+    void shouldConfigureAutodetectExtensions() {
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(AUTODETECT_EXTENSIONS, true)
+            .build());
+
+        assertThat(factory.getConfiguration().isAutodetectExtensions()).isTrue();
+
+        factory = this.provider.create(builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(AUTODETECT_EXTENSIONS, false)
+            .build());
+
+        assertThat(factory.getConfiguration().isAutodetectExtensions()).isFalse();
     }
 
 }

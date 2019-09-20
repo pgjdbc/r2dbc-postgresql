@@ -14,22 +14,28 @@
  * limitations under the License.
  */
 
-package io.r2dbc.postgresql.codec;
+package io.r2dbc.postgresql.extension;
 
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.PostgresqlConnection;
+import io.r2dbc.postgresql.codec.Codec;
+import io.r2dbc.spi.Connection;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 
-import java.util.ServiceLoader;
-
 /**
- * Registrar interface that is discovered and instantiated using Java Service Loader to register extensions as {@link Codec}s.
+ * Registrar interface that is used to register {@link Codec}s as extension to built-in codecs.
  * <p>Implementations may use {@link PostgresqlConnection} to query Postgres information schema to discover type details such as extension type OIDs.
  *
- * @see ServiceLoader
+ * <h3>Constructor Requirements</h3>
+ * <p>Extension implementations must have a <em>default constructor</em> if registered via the {@code ServiceLoader}.  When registered through
+ * {@link io.r2dbc.postgresql.PostgresqlConnectionConfiguration} the default constructor is not required to be {@code public}.
+ * When registered via the {@code ServiceLoader} the default constructor must be {@code public}.
+ *
+ * @see Extension
  */
-public interface CodecRegistrar {
+@FunctionalInterface
+public interface CodecRegistrar extends Extension {
 
     /**
      * Register {@link Codec} into {@link CodecRegistry}.
@@ -40,6 +46,6 @@ public interface CodecRegistrar {
      * @param registry   target codec registry that accepts codec registrations
      * @return a {@link Publisher} that activates codec registration upon subscription
      */
-    Publisher<Void> register(PostgresqlConnection connection, ByteBufAllocator allocator, CodecRegistry registry);
+    Publisher<Void> register(Connection connection, ByteBufAllocator allocator, CodecRegistry registry);
 
 }

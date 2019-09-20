@@ -355,15 +355,6 @@ public enum PostgresqlObjectId {
         this.objectId = objectId;
     }
 
-    public static boolean isValid(int i) {
-        try {
-            valueOf(i);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
     /**
      * Returns if the {@code objectId} is a known and valid {@code objectId}.
      *

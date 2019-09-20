@@ -23,7 +23,8 @@ import io.r2dbc.postgresql.client.DefaultHostnameVerifier;
 import io.r2dbc.postgresql.client.SSLConfig;
 import io.r2dbc.postgresql.client.SSLMode;
 import io.r2dbc.postgresql.codec.Codec;
-import io.r2dbc.postgresql.codec.CodecRegistrar;
+import io.r2dbc.postgresql.extension.CodecRegistrar;
+import io.r2dbc.postgresql.extension.Extension;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.netty.tcp.SslProvider;
 import reactor.util.annotation.Nullable;
@@ -50,11 +51,13 @@ public final class PostgresqlConnectionConfiguration {
 
     private final String applicationName;
 
+    private final boolean autodetectExtensions;
+
     private final Duration connectTimeout;
 
-    private final List<CodecRegistrar> codecRegistrars;
-
     private final String database;
+
+    private final List<Extension> extensions;
 
     private final boolean forceBinary;
 
@@ -64,8 +67,6 @@ public final class PostgresqlConnectionConfiguration {
 
     private final CharSequence password;
 
-    private final boolean registerExtensions;
-
     private final int port;
 
     private final String schema;
@@ -74,13 +75,14 @@ public final class PostgresqlConnectionConfiguration {
 
     private final SSLConfig sslConfig;
 
-    private PostgresqlConnectionConfiguration(String applicationName,
-                                              List<CodecRegistrar> codecRegistrars, @Nullable Duration connectTimeout, @Nullable String database, boolean forceBinary, String host,
-                                              @Nullable Map<String, String> options, @Nullable CharSequence password, int port, boolean registerExtensions, @Nullable String schema, String username,
+    private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions,
+                                              @Nullable Duration connectTimeout, @Nullable String database, List<Extension> extensions, boolean forceBinary, String host,
+                                              @Nullable Map<String, String> options, @Nullable CharSequence password, int port, @Nullable String schema, String username,
                                               SSLConfig sslConfig) {
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
+        this.autodetectExtensions = autodetectExtensions;
         this.connectTimeout = connectTimeout;
-        this.codecRegistrars = Assert.requireNonNull(codecRegistrars, "codecRegistrars must not be null");
+        this.extensions = Assert.requireNonNull(extensions, "extensions must not be null");
         this.database = database;
         this.forceBinary = forceBinary;
         this.host = Assert.requireNonNull(host, "host must not be null");
@@ -88,7 +90,6 @@ public final class PostgresqlConnectionConfiguration {
         this.password = sslConfig.getSslMode() != SSLMode.DISABLE
             ? password
             : Assert.requireNonNull(password, "password must not be null");
-        this.registerExtensions = registerExtensions;
         this.port = port;
         this.schema = schema;
         this.username = Assert.requireNonNull(username, "username must not be null");
@@ -119,15 +120,15 @@ public final class PostgresqlConnectionConfiguration {
     public String toString() {
         return "PostgresqlConnectionConfiguration{" +
             "applicationName='" + this.applicationName + '\'' +
+            ", autodetectExtensions='" + this.autodetectExtensions + '\'' +
             ", connectTimeout=" + this.connectTimeout +
-            ", codecRegistrars=" + this.codecRegistrars +
             ", database='" + this.database + '\'' +
+            ", extensions=" + this.extensions +
             ", forceBinary='" + this.forceBinary + '\'' +
             ", host='" + this.host + '\'' +
             ", options='" + this.options + '\'' +
             ", password='" + repeat(this.password != null ? this.password.length() : 0, "*") + '\'' +
             ", port=" + this.port +
-            ", registerExtensions='" + this.registerExtensions + '\'' +
             ", schema='" + this.schema + '\'' +
             ", username='" + this.username + '\'' +
             '}';
@@ -147,8 +148,8 @@ public final class PostgresqlConnectionConfiguration {
         return this.database;
     }
 
-    public List<CodecRegistrar> getCodecRegistrars() {
-        return this.codecRegistrars;
+    List<Extension> getExtensions() {
+        return this.extensions;
     }
 
     String getHost() {
@@ -178,12 +179,12 @@ public final class PostgresqlConnectionConfiguration {
         return this.username;
     }
 
-    boolean isForceBinary() {
-        return this.forceBinary;
+    boolean isAutodetectExtensions() {
+        return this.autodetectExtensions;
     }
 
-    boolean isRegisterExtensions() {
-        return this.registerExtensions;
+    boolean isForceBinary() {
+        return this.forceBinary;
     }
 
     SSLConfig getSslConfig() {
@@ -199,11 +200,15 @@ public final class PostgresqlConnectionConfiguration {
 
         private String applicationName = "r2dbc-postgresql";
 
+        private boolean autodetectExtensions = true;
+
         @Nullable
         private Duration connectTimeout;
 
         @Nullable
         private String database;
+
+        private List<Extension> extensions = new ArrayList<>();
 
         private boolean forceBinary = false;
 
@@ -239,10 +244,6 @@ public final class PostgresqlConnectionConfiguration {
         @Nullable
         private String username;
 
-        private List<CodecRegistrar> codecRegistrars = new ArrayList<>();
-
-        private boolean registerExtensions = true;
-
         private Builder() {
         }
 
@@ -255,6 +256,17 @@ public final class PostgresqlConnectionConfiguration {
          */
         public Builder applicationName(String applicationName) {
             this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
+            return this;
+        }
+
+        /**
+         * Configures whether to use {@link ServiceLoader} to discover and register extensions. Defaults to true.
+         *
+         * @param autodetectExtensions to discover and register extensions
+         * @return this {@link Builder}
+         */
+        public Builder autodetectExtensions(boolean autodetectExtensions) {
+            this.autodetectExtensions = autodetectExtensions;
             return this;
         }
 
@@ -273,9 +285,8 @@ public final class PostgresqlConnectionConfiguration {
                 throw new IllegalArgumentException("username must not be null");
             }
 
-            SSLConfig sslConfig = this.createSslConfig();
-            return new PostgresqlConnectionConfiguration(this.applicationName, this.codecRegistrars, this.connectTimeout, this.database, this.forceBinary, this.host, this.options, this.password,
-                this.port, this.registerExtensions, this.schema, this.username, sslConfig);
+            return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.connectTimeout, this.database, this.extensions, this.forceBinary, this.host,
+                this.options, this.password, this.port, this.schema, this.username, this.createSslConfig());
         }
 
         /**
@@ -296,8 +307,7 @@ public final class PostgresqlConnectionConfiguration {
          * @return this {@link Builder}
          */
         public Builder codecRegistrar(CodecRegistrar codecRegistrar) {
-            this.codecRegistrars.add(Assert.requireNonNull(codecRegistrar, "codecRegistrar must not be null"));
-            return this;
+            return extendWith(codecRegistrar);
         }
 
         /**
@@ -318,6 +328,17 @@ public final class PostgresqlConnectionConfiguration {
          */
         public Builder enableSsl() {
             return sslMode(SSLMode.VERIFY_FULL);
+        }
+
+        /**
+         * Registers a {@link Extension} to extend driver functionality.
+         *
+         * @param extension extension to extend driver functionality
+         * @return this {@link Builder}
+         */
+        public Builder extendWith(Extension extension) {
+            this.extensions.add(Assert.requireNonNull(extension, "extension must not be null"));
+            return this;
         }
 
         /**
@@ -389,17 +410,6 @@ public final class PostgresqlConnectionConfiguration {
         }
 
         /**
-         * Configures whether to use {@link ServiceLoader} to discover and register extensions. Defaults to true.
-         *
-         * @param registerExtensions to discover and register extensions
-         * @return this {@link Builder}
-         */
-        public Builder registerExtensionsFromClassPath(boolean registerExtensions) {
-            this.registerExtensions = registerExtensions;
-            return this;
-        }
-
-        /**
          * Configure the schema.
          *
          * @param schema the schema
@@ -465,28 +475,18 @@ public final class PostgresqlConnectionConfiguration {
             return this;
         }
 
-        /**
-         * Configure ssl root cert for server certificate validation.
-         *
-         * @param sslRootCert an X.509 certificate chain file in PEM format
-         * @return this {@link Builder}
-         */
-        public Builder sslRootCert(String sslRootCert) {
-            this.sslRootCert = Assert.requireFileExistsOrNull(sslRootCert, "sslRootCert must not be null and must exist");
-            return this;
-        }
-
         @Override
         public String toString() {
             return "Builder{" +
                 "applicationName='" + this.applicationName + '\'' +
+                ", autodetectExtensions='" + this.autodetectExtensions + '\'' +
                 ", connectTimeout='" + this.connectTimeout + '\'' +
                 ", database='" + this.database + '\'' +
+                ", extensions='" + this.extensions + '\'' +
                 ", forceBinary='" + this.forceBinary + '\'' +
                 ", host='" + this.host + '\'' +
                 ", parameters='" + this.options + '\'' +
                 ", password='" + repeat(this.password != null ? this.password.length() : 0, "*") + '\'' +
-                ", registerExtensions='" + this.registerExtensions + '\'' +
                 ", port=" + this.port +
                 ", schema='" + this.schema + '\'' +
                 ", username='" + this.username + '\'' +
@@ -496,6 +496,17 @@ public final class PostgresqlConnectionConfiguration {
                 ", sslKey='" + this.sslKey + '\'' +
                 ", sslHostnameVerifier='" + this.sslHostnameVerifier + '\'' +
                 '}';
+        }
+
+        /**
+         * Configure ssl root cert for server certificate validation.
+         *
+         * @param sslRootCert an X.509 certificate chain file in PEM format
+         * @return this {@link Builder}
+         */
+        public Builder sslRootCert(String sslRootCert) {
+            this.sslRootCert = Assert.requireFileExistsOrNull(sslRootCert, "sslRootCert must not be null and must exist");
+            return this;
         }
 
         /**

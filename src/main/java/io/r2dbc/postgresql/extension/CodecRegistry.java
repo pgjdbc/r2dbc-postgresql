@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package io.r2dbc.postgresql.codec;
+package io.r2dbc.postgresql.extension;
+
+import io.r2dbc.postgresql.codec.Codec;
 
 /**
  * Registry allowing to query and register {@link Codec}s.

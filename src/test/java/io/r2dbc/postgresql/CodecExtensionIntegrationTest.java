@@ -20,11 +20,12 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.codec.Codec;
-import io.r2dbc.postgresql.codec.CodecRegistrar;
-import io.r2dbc.postgresql.codec.CodecRegistry;
+import io.r2dbc.postgresql.extension.CodecRegistrar;
+import io.r2dbc.postgresql.extension.CodecRegistry;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
+import io.r2dbc.spi.Connection;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.reactivestreams.Publisher;
@@ -77,7 +78,7 @@ public class CodecExtensionIntegrationTest {
     public static class JsonCodecRegistrar implements CodecRegistrar {
 
         @Override
-        public Publisher<Void> register(PostgresqlConnection connection, ByteBufAllocator allocator, CodecRegistry registry) {
+        public Publisher<Void> register(Connection connection, ByteBufAllocator allocator, CodecRegistry registry) {
             return Mono.fromRunnable(() -> registry.addLast(JsonToTextCodec.INSTANCE));
         }
     }

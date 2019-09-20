@@ -45,6 +45,11 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<String> APPLICATION_NAME = Option.valueOf("applicationName");
 
     /**
+     * Auto-detect extensions.
+     */
+    public static final Option<Boolean> AUTODETECT_EXTENSIONS = Option.valueOf("autodetectExtensions");
+
+    /**
      * Driver option value.
      */
     public static final String POSTGRESQL_DRIVER = "postgresql";
@@ -96,6 +101,10 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
 
     @Override
     public PostgresqlConnectionFactory create(ConnectionFactoryOptions connectionFactoryOptions) {
+        return new PostgresqlConnectionFactory(createConfiguration(connectionFactoryOptions));
+    }
+
+    static PostgresqlConnectionConfiguration createConfiguration(ConnectionFactoryOptions connectionFactoryOptions) {
         Assert.requireNonNull(connectionFactoryOptions, "connectionFactoryOptions must not be null");
 
         PostgresqlConnectionConfiguration.Builder builder = PostgresqlConnectionConfiguration.builder();
@@ -103,6 +112,15 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         String applicationName = connectionFactoryOptions.getValue(APPLICATION_NAME);
         if (applicationName != null) {
             builder.applicationName(applicationName);
+        }
+
+        Object autodetectExtensions = connectionFactoryOptions.getValue(AUTODETECT_EXTENSIONS);
+        if (autodetectExtensions != null) {
+            if (autodetectExtensions instanceof Boolean) {
+                builder.autodetectExtensions((Boolean) autodetectExtensions);
+            } else {
+                builder.autodetectExtensions(Boolean.parseBoolean(autodetectExtensions.toString()));
+            }
         }
 
         builder.connectTimeout(connectionFactoryOptions.getValue(CONNECT_TIMEOUT));
@@ -174,7 +192,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
             }
         }
 
-        return new PostgresqlConnectionFactory(builder.build());
+        return builder.build();
     }
 
     @Override
