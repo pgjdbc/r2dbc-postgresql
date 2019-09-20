@@ -20,23 +20,19 @@ import com.zaxxer.hikari.HikariDataSource;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.springframework.boot.jdbc.DataSourceBuilder;
-import org.springframework.core.io.DefaultResourceLoader;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
+import org.testcontainers.utility.MountableFile;
 import reactor.util.annotation.Nullable;
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.net.Socket;
-import java.nio.file.Files;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -45,8 +41,6 @@ import static org.testcontainers.utility.MountableFile.forHostPath;
 public final class PostgresqlServerExtension implements BeforeAllCallback, AfterAllCallback {
 
     private volatile PostgreSQLContainer<?> containerInstance = null;
-
-    private final ResourceLoader resourceLoader = new DefaultResourceLoader();
 
     private final Supplier<PostgreSQLContainer<?>> container = () -> {
         if (this.containerInstance != null) {
@@ -89,13 +83,12 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
                 this.container.get().start();
             }
 
-            this.dataSource = DataSourceBuilder.create()
-                .type(HikariDataSource.class)
-                .url(String.format("jdbc:postgresql://%s:%d/%s", getHost(), getPort(), getDatabase()))
-                .username(getUsername())
-                .password(getPassword())
-                .build();
+            HikariDataSource dataSource = new HikariDataSource();
+            dataSource.setUsername(getUsername());
+            dataSource.setPassword(getPassword());
+            dataSource.setJdbcUrl(String.format("jdbc:postgresql://%s:%d/%s", getHost(), getPort(), getDatabase()));
 
+            this.dataSource = dataSource;
             this.dataSource.setMaximumPoolSize(1);
 
             this.jdbcOperations = new JdbcTemplate(this.dataSource);
@@ -103,11 +96,11 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
     }
 
     public String getClientCrt() {
-        return Paths.get("client.crt").toAbsolutePath().toString();
+        return getResourcePath("client.crt").toAbsolutePath().toString();
     }
 
     public String getClientKey() {
-        return Paths.get("client.key").toAbsolutePath().toString();
+        return getResourcePath("client.key").toAbsolutePath().toString();
     }
 
     public String getDatabase() {
@@ -128,11 +121,11 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
     }
 
     public String getServerCrt() {
-        return Paths.get("server.crt").toAbsolutePath().toString();
+        return getResourcePath("server.crt").toAbsolutePath().toString();
     }
 
     public String getServerKey() {
-        return Paths.get("server.key").toAbsolutePath().toString();
+        return getResourcePath("server.key").toAbsolutePath().toString();
     }
 
     public String getUsername() {
@@ -143,42 +136,36 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
         return this.postgres.getPassword();
     }
 
-    private static Path createTempFile(String name, String... lines) throws IOException {
-        Path tempFile = Files.createTempFile(null, name);
-        tempFile.toFile().deleteOnExit();
-        try (FileWriter w = new FileWriter(tempFile.toFile())) {
-            for (String line : lines) {
-                w.write(line);
-            }
-        }
-        return tempFile;
-    }
 
     private <T extends PostgreSQLContainer<T>> T container() {
-        T container = new PostgreSQLContainer<T>("postgres:11.1")
-            .withCopyFileToContainer(forHostPath("server.crt", 0600), "/var/server.crt")
-            .withCopyFileToContainer(forHostPath("server.key", 0600), "/var/server.key")
-            .withCopyFileToContainer(forHostPath("client.crt", 0600), "/var/client.crt")
-            .withCopyFileToContainer(forHostPath("pg_hba.conf", 0600), "/var/pg_hba.conf")
-            .withCopyFileToContainer(forHostPath("setup.sh", 0755), "/var/setup.sh")
-            .withCopyFileToContainer(forHostPath("test-db-init-script.sql", 0755), "/docker-entrypoint-initdb.d/test-db-init-script.sql")
-//            .withInitScript("test-db-init-script.sql")
-            .withCommand("postgres",
-                "-c", "ssl=on",
-                "-c", "ssl_key_file=/var/server.key",
-                "-c", "ssl_cert_file=/var/server.crt",
-                "-c", "ssl_ca_file=/var/client.crt",
-                "-c", "hba_file=/var/pg_hba.conf");
+        T container = new PostgreSQLContainer<T>("postgres:latest")
+            .withCopyFileToContainer(getHostPath("server.crt", 0600), "/var/server.crt")
+            .withCopyFileToContainer(getHostPath("server.key", 0600), "/var/server.key")
+            .withCopyFileToContainer(getHostPath("client.crt", 0600), "/var/client.crt")
+            .withCopyFileToContainer(getHostPath("pg_hba.conf", 0600), "/var/pg_hba.conf")
+            .withCopyFileToContainer(getHostPath("setup.sh", 0755), "/var/setup.sh")
+            .withCopyFileToContainer(getHostPath("test-db-init-script.sql", 0755), "/docker-entrypoint-initdb.d/test-db-init-script.sql")
+            .withCommand("/var/setup.sh");
 
-//        container.setWaitStrategy(new DockerHealthcheckWaitStrategy().withStartupTimeout(Duration.ofSeconds(15)));
+        return container;
+    }
 
-        container.setWaitStrategy(new LogMessageWaitStrategy()
-            .withRegEx(".*database system is ready to accept connections.*")
-            .withTimes(2)
-            .withStartupTimeout(Duration.ofSeconds(60)));
+    private Path getResourcePath(String name) {
 
-        return container
-            ;
+        URL resource = getClass().getClassLoader().getResource(name);
+        if (resource == null) {
+            throw new IllegalStateException("Resource not found: " + name);
+        }
+
+        try {
+            return Paths.get(resource.toURI());
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException("Cannot convert to path for: " + name, e);
+        }
+    }
+
+    private MountableFile getHostPath(String name, int mode) {
+        return forHostPath(getResourcePath(name), mode);
     }
 
     /**

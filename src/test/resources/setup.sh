@@ -1,26 +1,21 @@
 #!/bin/sh
 
-echo "Copying server.crt..."
+whoami
 
-chmod 0600 /var/server.crt
-chown postgres:postgres /var/server.crt
+mkdir -p /var/runtime
 
-echo "Copying server.key..."
+echo "Copying certificates and pg_hba..."
+cp /var/server.key /var/runtime
+cp /var/server.crt /var/runtime
+cp /var/client.crt /var/runtime
+cp /var/pg_hba.conf /var/runtime
 
-chmod 0600 /var/server.key
-chown postgres:postgres /var/server.key
+chown postgres:postgres /var/runtime/*
+ls -l /var/runtime
 
-echo "Copying client.crt..."
-
-chmod 0600 /var/client.crt
-chown postgres:postgres /var/client.crt
-
-ls -l /tmp
-
-postgres \
+./docker-entrypoint.sh postgres \
   -c 'ssl=on' \
-  -c 'ssl_key_file=/var/server.key' \
-  -c 'ssl_cert_file=/var/server.crt' \
-  -c 'ssl_ca_file=/var/client.crt' \
-  -c 'hba_file=/var/pg_hba.conf' \
-
+  -c 'ssl_key_file=/var/runtime/server.key' \
+  -c 'ssl_cert_file=/var/runtime/server.crt' \
+  -c 'ssl_ca_file=/var/runtime/client.crt' \
+  -c 'hba_file=/var/runtime/pg_hba.conf'
