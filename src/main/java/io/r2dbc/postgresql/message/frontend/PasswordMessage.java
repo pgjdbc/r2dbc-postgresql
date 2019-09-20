@@ -34,7 +34,7 @@ import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeSiz
  */
 public final class PasswordMessage implements FrontendMessage {
 
-    private final String password;
+    private final CharSequence password;
 
     /**
      * Creates a new message.
@@ -42,7 +42,7 @@ public final class PasswordMessage implements FrontendMessage {
      * @param password the password (encrypted, if requested)
      * @throws IllegalArgumentException if {@code password} is {@code null}
      */
-    public PasswordMessage(String password) {
+    public PasswordMessage(CharSequence password) {
         this.password = Assert.requireNonNull(password, "password must not be null");
     }
 
@@ -81,7 +81,7 @@ public final class PasswordMessage implements FrontendMessage {
     @Override
     public String toString() {
         return "PasswordMessage{" +
-            "password='" + this.password + '\'' +
+            "password='...\'" +
             '}';
     }
 

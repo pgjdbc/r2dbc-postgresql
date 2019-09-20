@@ -22,7 +22,7 @@ import static com.ongres.scram.common.stringprep.StringPreparations.NO_PREPARATI
 
 public class SASLAuthenticationHandler implements AuthenticationHandler {
 
-    private final String password;
+    private final CharSequence password;
 
     private final String username;
 
@@ -37,7 +37,7 @@ public class SASLAuthenticationHandler implements AuthenticationHandler {
      * @param username the username to use for authentication
      * @throws IllegalArgumentException if {@code password} or {@code user} is {@code null}
      */
-    public SASLAuthenticationHandler(String password, String username) {
+    public SASLAuthenticationHandler(CharSequence password, String username) {
         this.password = Assert.requireNonNull(password, "password must not be null");
         this.username = Assert.requireNonNull(username, "username must not be null");
     }
@@ -89,7 +89,7 @@ public class SASLAuthenticationHandler implements AuthenticationHandler {
         try {
             this.clientFinalProcessor = this.scramSession
                 .receiveServerFirstMessage(ByteBufferUtils.decode(message.getData()))
-                .clientFinalProcessor(this.password);
+                .clientFinalProcessor(this.password.toString());
 
             return new SASLResponse(ByteBufferUtils.encode(clientFinalProcessor.clientFinalMessage()));
         } catch (ScramParseException e) {

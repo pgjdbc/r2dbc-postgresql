@@ -16,11 +16,14 @@
 
 package io.r2dbc.postgresql;
 
+import io.r2dbc.postgresql.client.SSLMode;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.ConnectionFactoryProvider;
 import io.r2dbc.spi.Option;
 
+import javax.net.ssl.HostnameVerifier;
+import java.util.Locale;
 import java.util.Map;
 
 import static io.r2dbc.spi.ConnectionFactoryOptions.CONNECT_TIMEOUT;
@@ -57,6 +60,36 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<String> SCHEMA = Option.valueOf("schema");
 
     /**
+     * Full path for the certificate file.
+     */
+    public static final Option<String> SSL_CERT = Option.valueOf("sslCert");
+
+    /**
+     * Class name of hostname verifier. Defaults to using io.r2dbc.postgresql.client.PGHostnameVerifier
+     */
+    public static final Option<HostnameVerifier> SSL_HOSTNAME_VERIFIER = Option.valueOf("sslHostnameVerifier");
+
+    /**
+     * Full path for the key file.
+     */
+    public static final Option<String> SSL_KEY = Option.valueOf("sslKey");
+
+    /**
+     * Ssl mode. Default: disabled
+     */
+    public static final Option<SSLMode> SSL_MODE = Option.valueOf("sslMode");
+
+    /**
+     * SSL key password
+     */
+    public static final Option<String> SSL_PASSWORD = Option.valueOf("sslPassword");
+
+    /**
+     * File name of the SSL root certificate.
+     */
+    public static final Option<String> SSL_ROOT_CERT = Option.valueOf("sslRootCert");
+
+    /**
      * Connection options which are applied once after the connection has been created.
      */
     public static final Option<Map<String, String>> OPTIONS = Option.valueOf("options");
@@ -75,7 +108,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         builder.connectTimeout(connectionFactoryOptions.getValue(CONNECT_TIMEOUT));
         builder.database(connectionFactoryOptions.getValue(DATABASE));
         builder.host(connectionFactoryOptions.getRequiredValue(HOST));
-        builder.password(connectionFactoryOptions.getRequiredValue(PASSWORD).toString());
+        builder.password(connectionFactoryOptions.getValue(PASSWORD));
         builder.schema(connectionFactoryOptions.getValue(SCHEMA));
         builder.username(connectionFactoryOptions.getRequiredValue(USER));
 
@@ -87,6 +120,53 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         Map<String, String> options = connectionFactoryOptions.getValue(OPTIONS);
         if (options != null) {
             builder.options(options);
+        }
+
+        Object sslMode = connectionFactoryOptions.getValue(SSL_MODE);
+        if (sslMode != null) {
+            if (sslMode instanceof String) {
+                builder.sslMode(SSLMode.fromValue(sslMode.toString().toUpperCase(Locale.ENGLISH)));
+            } else {
+                builder.sslMode((SSLMode) sslMode);
+            }
+        }
+
+        String sslRootCert = connectionFactoryOptions.getValue(SSL_ROOT_CERT);
+        if (sslRootCert != null) {
+            builder.sslRootCert(sslRootCert);
+        }
+
+        String sslCert = connectionFactoryOptions.getValue(SSL_CERT);
+        if (sslCert != null) {
+            builder.sslCert(sslCert);
+        }
+
+        String sslKey = connectionFactoryOptions.getValue(SSL_KEY);
+        if (sslKey != null) {
+            builder.sslKey(sslKey);
+        }
+
+        String sslPassword = connectionFactoryOptions.getValue(SSL_PASSWORD);
+        if (sslPassword != null) {
+            builder.sslPassword(sslPassword);
+        }
+
+        Object sslHostnameVerifier = connectionFactoryOptions.getValue(SSL_HOSTNAME_VERIFIER);
+        if (sslHostnameVerifier != null) {
+
+            if (sslHostnameVerifier instanceof String) {
+
+                try {
+                    Class<?> verifierClass = Class.forName((String) sslHostnameVerifier);
+                    Object verifier = verifierClass.getConstructor().newInstance();
+
+                    builder.sslHostnameVerifier((HostnameVerifier) verifier);
+                } catch (ReflectiveOperationException e) {
+                    throw new IllegalStateException("Cannot instantiate " + sslHostnameVerifier, e);
+                }
+            } else {
+                builder.sslHostnameVerifier((HostnameVerifier) sslHostnameVerifier);
+            }
         }
 
         return new PostgresqlConnectionFactory(builder.build());

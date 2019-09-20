@@ -18,6 +18,8 @@ package io.r2dbc.postgresql.util;
 
 import reactor.util.annotation.Nullable;
 
+import java.io.File;
+
 /**
  * Assertion library for the implementation.
  */
@@ -94,6 +96,25 @@ public final class Assert {
         }
 
         return (T) value;
+    }
+
+    /**
+     * Checks that the provided file exists or null.
+     *
+     * @param file    file to check
+     * @param message the message to use in exception if type is not as required
+     * @return existing file or null
+     * @throws IllegalArgumentException if {@code value} is not of the required type
+     * @throws IllegalArgumentException if {@code value}, {@code type}, or {@code message} is {@code null}
+     */
+    public static String requireFileExistsOrNull(@Nullable String file, String message) {
+        if (file == null) {
+            throw new IllegalArgumentException(message);
+        }
+        if (!new File(file).exists()) {
+            throw new IllegalArgumentException(message);
+        }
+        return file;
     }
 
 }

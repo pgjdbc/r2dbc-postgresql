@@ -148,10 +148,21 @@ public final class ReactorNettyClient implements Client {
      * Creates a new frame processor connected to a given TCP connection.
      *
      * @param connection the TCP connection
+     * @param sslConfig  ssl configuration
      * @throws IllegalArgumentException if {@code connection} is {@code null}
      */
-    private ReactorNettyClient(Connection connection) {
+    private ReactorNettyClient(Connection connection, SSLConfig sslConfig) {
         Assert.requireNonNull(connection, "Connection must not be null");
+        Assert.requireNonNull(sslConfig, "SSLConfig must not be null");
+
+        Mono<Void> sslHandshake;
+        if (sslConfig.getSslMode().startSsl()) {
+            SSLSessionHandlerAdapter sslSessionHandlerAdapter = new SSLSessionHandlerAdapter(connection.outbound().alloc(), sslConfig);
+            connection.addHandlerFirst(sslSessionHandlerAdapter);
+            sslHandshake = sslSessionHandlerAdapter.getHandshake();
+        } else {
+            sslHandshake = Mono.empty();
+        }
 
         connection.addHandler(new EnsureSubscribersCompleteChannelHandler(this.requestProcessor, this.responseReceivers));
 
@@ -185,7 +196,8 @@ public final class ReactorNettyClient implements Client {
             })
             .then();
 
-        Mono<Void> request = this.requestProcessor
+        Mono<Void> request = sslHandshake
+            .thenMany(this.requestProcessor)
             .doOnNext(message -> this.logger.debug("Request:  {}", message))
             .concatMap(message -> connection.outbound().send(message.encode(connection.outbound().alloc())))
             .then();
@@ -196,6 +208,11 @@ public final class ReactorNettyClient implements Client {
 
         Flux.merge(receive, request)
             .onErrorResume(throwable -> {
+                MonoSink<Flux<BackendMessage>> receiver = this.responseReceivers.poll();
+                if (receiver != null) {
+                    receiver.error(throwable);
+                }
+                this.requestProcessor.onComplete();
                 this.logger.error("Connection Error", throwable);
                 return close();
             })
@@ -214,7 +231,7 @@ public final class ReactorNettyClient implements Client {
     public static Mono<ReactorNettyClient> connect(String host, int port) {
         Assert.requireNonNull(host, "host must not be null");
 
-        return connect(ConnectionProvider.newConnection(), host, port, null);
+        return connect(host, port, null, new SSLConfig(SSLMode.DISABLE, null, null));
     }
 
     /**
@@ -223,12 +240,11 @@ public final class ReactorNettyClient implements Client {
      * @param host           the host to connect to
      * @param port           the port to connect to
      * @param connectTimeout connect timeout
+     * @param sslConfig      SSL configuration
      * @throws IllegalArgumentException if {@code host} is {@code null}
      */
-    public static Mono<ReactorNettyClient> connect(String host, int port, @Nullable Duration connectTimeout) {
-        Assert.requireNonNull(host, "host must not be null");
-
-        return connect(ConnectionProvider.newConnection(), host, port, connectTimeout);
+    public static Mono<ReactorNettyClient> connect(String host, int port, @Nullable Duration connectTimeout, SSLConfig sslConfig) {
+        return connect(ConnectionProvider.newConnection(), host, port, connectTimeout, sslConfig);
     }
 
     /**
@@ -238,9 +254,10 @@ public final class ReactorNettyClient implements Client {
      * @param host               the host to connect to
      * @param port               the port to connect to
      * @param connectTimeout     connect timeout
+     * @param sslConfig          SSL configuration
      * @throws IllegalArgumentException if {@code host} is {@code null}
      */
-    public static Mono<ReactorNettyClient> connect(ConnectionProvider connectionProvider, String host, int port, @Nullable Duration connectTimeout) {
+    public static Mono<ReactorNettyClient> connect(ConnectionProvider connectionProvider, String host, int port, @Nullable Duration connectTimeout, SSLConfig sslConfig) {
         Assert.requireNonNull(connectionProvider, "connectionProvider must not be null");
         Assert.requireNonNull(host, "host must not be null");
 
@@ -253,7 +270,7 @@ public final class ReactorNettyClient implements Client {
 
         Mono<? extends Connection> connection = tcpClient.connect();
 
-        return connection.map(ReactorNettyClient::new);
+        return connection.map(c -> new ReactorNettyClient(c, sslConfig));
     }
 
     @Override
@@ -263,6 +280,11 @@ public final class ReactorNettyClient implements Client {
 
             if (connection == null) {
                 return Mono.empty();
+            }
+
+            if (!connection.channel().isOpen()) {
+                this.isClosed.set(true);
+                return connection.onDispose();
             }
 
             return Flux.just(Terminate.INSTANCE)

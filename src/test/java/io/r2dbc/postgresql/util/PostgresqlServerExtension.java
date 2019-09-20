@@ -24,11 +24,19 @@ import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.utility.MountableFile;
 import reactor.util.annotation.Nullable;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
+
+import static org.testcontainers.utility.MountableFile.forHostPath;
 
 /**
  * JUnit Extension to establish a Postgres database context during integration tests.
@@ -39,45 +47,67 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
     private volatile PostgreSQLContainer<?> containerInstance = null;
 
     private final Supplier<PostgreSQLContainer<?>> container = () -> {
-
         if (this.containerInstance != null) {
             return this.containerInstance;
         }
-        return this.containerInstance = new PostgreSQLContainer<>("postgres:latest");
+        return this.containerInstance = container();
     };
 
     private final DatabaseContainer postgres = new TestContainer(this.container.get());
 
     private final boolean useTestContainer = this.postgres instanceof TestContainer;
 
+    private final AtomicInteger nestingCounter = new AtomicInteger(0);
+
     private HikariDataSource dataSource;
 
     private JdbcOperations jdbcOperations;
 
+    public PostgresqlServerExtension() {
+    }
+
     @Override
     public void afterAll(ExtensionContext context) {
-        this.dataSource.close();
-        if (this.useTestContainer) {
-            this.container.get().stop();
+        int nesting = nestingCounter.decrementAndGet();
+        if (nesting == 0) {
+            if (this.dataSource != null) {
+                this.dataSource.close();
+            }
+            if (this.useTestContainer) {
+                this.container.get().stop();
+            }
         }
     }
 
     @Override
     public void beforeAll(ExtensionContext context) {
-        if (this.useTestContainer) {
-            this.container.get().start();
+        int nesting = nestingCounter.incrementAndGet();
+        if (nesting == 1) {
+            if (this.useTestContainer) {
+                this.container.get().start();
+            }
+
+            HikariDataSource dataSource = new HikariDataSource();
+            dataSource.setUsername(getUsername());
+            dataSource.setPassword(getPassword());
+            dataSource.setJdbcUrl(String.format("jdbc:postgresql://%s:%d/%s", getHost(), getPort(), getDatabase()));
+
+            HikariDataSource hikariDataSource = new HikariDataSource();
+            hikariDataSource.setUsername(getUsername());
+            hikariDataSource.setPassword(getPassword());
+            hikariDataSource.setJdbcUrl(String.format("jdbc:postgresql://%s:%d/%s", getHost(), getPort(), getDatabase()));
+
+            this.dataSource = hikariDataSource;
+            this.jdbcOperations = new JdbcTemplate(this.dataSource);
         }
+    }
 
-        HikariDataSource hikariDataSource = new HikariDataSource();
-        hikariDataSource.setUsername(getUsername());
-        hikariDataSource.setPassword(getPassword());
-        hikariDataSource.setJdbcUrl(String.format("jdbc:postgresql://%s:%d/%s", getHost(), getPort(), getDatabase()));
+    public String getClientCrt() {
+        return getResourcePath("client.crt").toAbsolutePath().toString();
+    }
 
-        this.dataSource = hikariDataSource;
-
-        this.dataSource.setMaximumPoolSize(1);
-
-        this.jdbcOperations = new JdbcTemplate(this.dataSource);
+    public String getClientKey() {
+        return getResourcePath("client.key").toAbsolutePath().toString();
     }
 
     public String getDatabase() {
@@ -97,12 +127,52 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
         return this.postgres.getPort();
     }
 
+    public String getServerCrt() {
+        return getResourcePath("server.crt").toAbsolutePath().toString();
+    }
+
+    public String getServerKey() {
+        return getResourcePath("server.key").toAbsolutePath().toString();
+    }
+
     public String getUsername() {
         return this.postgres.getUsername();
     }
 
     public String getPassword() {
         return this.postgres.getPassword();
+    }
+
+
+    private <T extends PostgreSQLContainer<T>> T container() {
+        T container = new PostgreSQLContainer<T>("postgres:latest")
+            .withCopyFileToContainer(getHostPath("server.crt", 0600), "/var/server.crt")
+            .withCopyFileToContainer(getHostPath("server.key", 0600), "/var/server.key")
+            .withCopyFileToContainer(getHostPath("client.crt", 0600), "/var/client.crt")
+            .withCopyFileToContainer(getHostPath("pg_hba.conf", 0600), "/var/pg_hba.conf")
+            .withCopyFileToContainer(getHostPath("setup.sh", 0755), "/var/setup.sh")
+            .withCopyFileToContainer(getHostPath("test-db-init-script.sql", 0755), "/docker-entrypoint-initdb.d/test-db-init-script.sql")
+            .withCommand("/var/setup.sh");
+
+        return container;
+    }
+
+    private Path getResourcePath(String name) {
+
+        URL resource = getClass().getClassLoader().getResource(name);
+        if (resource == null) {
+            throw new IllegalStateException("Resource not found: " + name);
+        }
+
+        try {
+            return Paths.get(resource.toURI());
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException("Cannot convert to path for: " + name, e);
+        }
+    }
+
+    private MountableFile getHostPath(String name, int mode) {
+        return forHostPath(getResourcePath(name), mode);
     }
 
     /**
