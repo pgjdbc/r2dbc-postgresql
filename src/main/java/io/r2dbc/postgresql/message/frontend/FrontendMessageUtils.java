@@ -69,7 +69,7 @@ final class FrontendMessageUtils {
         return out;
     }
 
-    static ByteBuf writeCStringUTF8(ByteBuf out, String s) {
+    static ByteBuf writeCStringUTF8(ByteBuf out, CharSequence s) {
         Assert.requireNonNull(out, "out must not be null");
         Assert.requireNonNull(s, "s must not be null");
 

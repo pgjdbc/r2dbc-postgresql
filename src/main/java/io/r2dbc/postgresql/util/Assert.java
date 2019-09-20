@@ -107,10 +107,9 @@ public final class Assert {
      * @throws IllegalArgumentException if {@code value} is not of the required type
      * @throws IllegalArgumentException if {@code value}, {@code type}, or {@code message} is {@code null}
      */
-    @Nullable
     public static String requireFileExistsOrNull(@Nullable String file, String message) {
         if (file == null) {
-            return null;
+            throw new IllegalArgumentException(message);
         }
         if (!new File(file).exists()) {
             throw new IllegalArgumentException(message);

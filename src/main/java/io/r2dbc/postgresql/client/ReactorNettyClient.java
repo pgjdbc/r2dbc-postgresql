@@ -153,14 +153,15 @@ public final class ReactorNettyClient implements Client {
      */
     private ReactorNettyClient(Connection connection, SSLConfig sslConfig) {
         Assert.requireNonNull(connection, "Connection must not be null");
+        Assert.requireNonNull(sslConfig, "SSLConfig must not be null");
 
-        final Mono<Void> sslHandshakeFuture;
+        Mono<Void> sslHandshake;
         if (sslConfig.getSslMode().startSsl()) {
             SSLSessionHandlerAdapter sslSessionHandlerAdapter = new SSLSessionHandlerAdapter(connection.outbound().alloc(), sslConfig);
             connection.addHandlerFirst(sslSessionHandlerAdapter);
-            sslHandshakeFuture = sslSessionHandlerAdapter.handshakeFuture();
+            sslHandshake = sslSessionHandlerAdapter.getHandshake();
         } else {
-            sslHandshakeFuture = Mono.empty();
+            sslHandshake = Mono.empty();
         }
 
         connection.addHandler(new EnsureSubscribersCompleteChannelHandler(this.requestProcessor, this.responseReceivers));
@@ -195,7 +196,7 @@ public final class ReactorNettyClient implements Client {
             })
             .then();
 
-        Mono<Void> request = sslHandshakeFuture
+        Mono<Void> request = sslHandshake
             .thenMany(this.requestProcessor)
             .doOnNext(message -> this.logger.debug("Request:  {}", message))
             .concatMap(message -> connection.outbound().send(message.encode(connection.outbound().alloc())))

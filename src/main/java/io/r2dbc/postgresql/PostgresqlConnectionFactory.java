@@ -52,12 +52,9 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
      * @throws IllegalArgumentException if {@code configuration} is {@code null}
      */
     public PostgresqlConnectionFactory(PostgresqlConnectionConfiguration configuration) {
-        this(sslConfig -> Mono.defer(() -> {
-            Assert.requireNonNull(configuration, "configuration must not be null");
-            return ReactorNettyClient.connect(configuration.getHost(), configuration.getPort(), configuration.getConnectTimeout(), sslConfig).cast(Client.class);
-        }), configuration);
+        this.clientFactory = sslConfig -> ReactorNettyClient.connect(configuration.getHost(), configuration.getPort(), configuration.getConnectTimeout(), sslConfig).cast(Client.class);
+        this.configuration = Assert.requireNonNull(configuration, "configuration must not be null");
     }
-
 
     PostgresqlConnectionFactory(Function<SSLConfig, Mono<? extends Client>> clientFactory, PostgresqlConnectionConfiguration configuration) {
         this.clientFactory = Assert.requireNonNull(clientFactory, "clientFactory must not be null");
@@ -130,10 +127,10 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
 
     private AuthenticationHandler getAuthenticationHandler(AuthenticationMessage message) {
         if (PasswordAuthenticationHandler.supports(message)) {
-            String password = Assert.requireNonNull(this.configuration.getPassword(), "Password must not be null");
+            CharSequence password = Assert.requireNonNull(this.configuration.getPassword(), "Password must not be null");
             return new PasswordAuthenticationHandler(password, this.configuration.getUsername());
         } else if (SASLAuthenticationHandler.supports(message)) {
-            String password = Assert.requireNonNull(this.configuration.getPassword(), "Password must not be null");
+            CharSequence password = Assert.requireNonNull(this.configuration.getPassword(), "Password must not be null");
             return new SASLAuthenticationHandler(password, this.configuration.getUsername());
         } else {
             throw new IllegalStateException(String.format("Unable to provide AuthenticationHandler capable of handling %s", message));

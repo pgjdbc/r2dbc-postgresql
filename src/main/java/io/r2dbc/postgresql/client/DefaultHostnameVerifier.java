@@ -18,6 +18,7 @@ package io.r2dbc.postgresql.client;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.util.annotation.Nullable;
 
 import javax.naming.InvalidNameException;
 import javax.naming.ldap.LdapName;
@@ -35,15 +36,23 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public final class PGHostnameVerifier implements HostnameVerifier {
+/**
+ * Default hostname verifier.
+ * <p>
+ * Considers wildcards and IPv6 addresses.
+ */
+public enum DefaultHostnameVerifier implements HostnameVerifier {
 
-    public static final PGHostnameVerifier INSTANCE = new PGHostnameVerifier();
+    /**
+     * Singleton instance.
+     */
+    INSTANCE;
 
     private static final int TYPE_DNS_NAME = 2;
 
     private static final int TYPE_IP_ADDRESS = 7;
 
-    public static Comparator<String> HOSTNAME_PATTERN_COMPARATOR = new Comparator<String>() {
+    static Comparator<String> HOSTNAME_PATTERN_COMPARATOR = new Comparator<String>() {
 
         @Override
         public int compare(String o1, String o2) {
@@ -93,11 +102,11 @@ public final class PGHostnameVerifier implements HostnameVerifier {
         try {
             peerCerts = (X509Certificate[]) session.getPeerCertificates();
         } catch (SSLPeerUnverifiedException e) {
-            logger.warn("Unable to parse X509Certificate for hostname {}", hostname, e);
+            this.logger.warn("Unable to parse X509Certificate for hostname {}", hostname, e);
             return false;
         }
         if (peerCerts == null || peerCerts.length == 0) {
-            logger.warn("No certificates found for hostname {}", hostname);
+            this.logger.warn("No certificates found for hostname {}", hostname);
             return false;
         }
 
@@ -109,10 +118,10 @@ public final class PGHostnameVerifier implements HostnameVerifier {
             // This converts unicode domain name to ASCII
             try {
                 canonicalHostname = IDN.toASCII(hostname);
-                logger.debug("Canonical host name for {} is {}", hostname, canonicalHostname);
+                this.logger.debug("Canonical host name for {} is {}", hostname, canonicalHostname);
             } catch (IllegalArgumentException e) {
                 // e.g. hostname is invalid
-                logger.warn("Hostname {} is invalid", hostname, e);
+                this.logger.warn("Hostname {} is invalid", hostname, e);
                 return false;
             }
         }
@@ -128,7 +137,7 @@ public final class PGHostnameVerifier implements HostnameVerifier {
                 subjectAltNames = Collections.emptyList();
             }
         } catch (CertificateParsingException e) {
-            logger.warn("Unable to parse certificates for hostname {}", hostname, e);
+            this.logger.warn("Unable to parse certificates for hostname {}", hostname, e);
             return false;
         }
 
@@ -157,7 +166,7 @@ public final class PGHostnameVerifier implements HostnameVerifier {
             }
             anyDnsSan |= sanType == TYPE_DNS_NAME;
             if (verifyHostName(canonicalHostname, san)) {
-                logger.debug("Server name validation pass for {}, subjectAltName {}", hostname, san);
+                this.logger.debug("Server name validation pass for {}, subjectAltName {}", hostname, san);
                 return true;
             }
         }
@@ -171,7 +180,7 @@ public final class PGHostnameVerifier implements HostnameVerifier {
              * the use of the Common Name is existing practice, it is deprecated and
              * Certification Authorities are encouraged to use the dNSName instead.
              */
-            logger.debug("Server name validation failed: certificate for host {} dNSName entries subjectAltName, but none of them match. Assuming server name validation failed", hostname);
+            this.logger.debug("Server name validation failed: certificate for host {} dNSName entries subjectAltName, but none of them match. Assuming server name validation failed", hostname);
             return false;
         }
 
@@ -180,7 +189,7 @@ public final class PGHostnameVerifier implements HostnameVerifier {
         try {
             DN = new LdapName(serverCert.getSubjectX500Principal().getName(X500Principal.RFC2253));
         } catch (InvalidNameException e) {
-            logger.warn("Server name validation failed: unable to extract common name from X509Certificate for hostname {}", hostname, e);
+            this.logger.warn("Server name validation failed: unable to extract common name from X509Certificate for hostname {}", hostname, e);
             return false;
         }
 
@@ -191,7 +200,7 @@ public final class PGHostnameVerifier implements HostnameVerifier {
             }
         }
         if (commonNames.isEmpty()) {
-            logger.warn("Server name validation failed: certificate for hostname {} has no DNS subjectAltNames, and it CommonName is missing as well", hostname);
+            this.logger.warn("Server name validation failed: certificate for hostname {} has no DNS subjectAltNames, and it CommonName is missing as well", hostname);
             return false;
         }
         if (commonNames.size() > 1) {
@@ -203,17 +212,17 @@ public final class PGHostnameVerifier implements HostnameVerifier {
              *
              * The sort is from less specific to most specific.
              */
-            Collections.sort(commonNames, HOSTNAME_PATTERN_COMPARATOR);
+            commonNames.sort(HOSTNAME_PATTERN_COMPARATOR);
         }
         String commonName = commonNames.get(commonNames.size() - 1);
         boolean result = verifyHostName(canonicalHostname, commonName);
         if (!result) {
-            logger.warn("Server name validation failed: hostname {} does not match common name {}", hostname, commonName);
+            this.logger.warn("Server name validation failed: hostname {} does not match common name {}", hostname, commonName);
         }
         return result;
     }
 
-    public boolean verifyHostName(String hostname, String pattern) {
+    public boolean verifyHostName(@Nullable String hostname, @Nullable String pattern) {
         if (hostname == null || pattern == null) {
             return false;
         }

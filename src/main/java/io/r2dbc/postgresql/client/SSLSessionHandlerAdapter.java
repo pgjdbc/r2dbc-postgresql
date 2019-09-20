@@ -32,7 +32,7 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.CompletableFuture;
 
 // https://www.postgresql.org/docs/current/protocol-flow.html#id-1.10.5.7.11
-public class SSLSessionHandlerAdapter extends ChannelInboundHandlerAdapter implements GenericFutureListener<Future<Channel>> {
+final class SSLSessionHandlerAdapter extends ChannelInboundHandlerAdapter implements GenericFutureListener<Future<Channel>> {
 
     private final ByteBufAllocator alloc;
 
@@ -44,14 +44,14 @@ public class SSLSessionHandlerAdapter extends ChannelInboundHandlerAdapter imple
 
     private final CompletableFuture<Void> handshakeFuture;
 
-    public SSLSessionHandlerAdapter(ByteBufAllocator alloc, SSLConfig sslConfig) {
+    SSLSessionHandlerAdapter(ByteBufAllocator alloc, SSLConfig sslConfig) {
         this.alloc = alloc;
         this.sslConfig = sslConfig;
         this.sslEngine = sslConfig.getSslProvider()
             .getSslContext()
             .newEngine(alloc);
         this.handshakeFuture = new CompletableFuture<>();
-        this.sslHandler = new SslHandler(sslEngine);
+        this.sslHandler = new SslHandler(this.sslEngine);
         this.sslHandler.handshakeFuture().addListener(this);
     }
 
@@ -87,7 +87,7 @@ public class SSLSessionHandlerAdapter extends ChannelInboundHandlerAdapter imple
         if (this.sslConfig.getHostnameVerifier().verify(hostName, this.sslEngine.getSession())) {
             this.handshakeFuture.complete(null);
         } else {
-            this.handshakeFuture.completeExceptionally(new IllegalStateException(String.format("The hostname '%s' could not be verified by hostnameverifier.", socketAddress.getAddress().toString())));
+            this.handshakeFuture.completeExceptionally(new IllegalStateException(String.format("The hostname '%s' could not be verified.", socketAddress.getAddress().toString())));
         }
     }
 
@@ -95,7 +95,7 @@ public class SSLSessionHandlerAdapter extends ChannelInboundHandlerAdapter imple
         if (this.sslConfig.getSslMode().requireSsl()) {
             throw new IllegalStateException("Server support for SSL connection is disabled, but client was configured with SSL mode " + this.sslConfig.getSslMode());
         } else {
-            handshakeFuture.complete(null);
+            this.handshakeFuture.complete(null);
         }
     }
 
@@ -114,7 +114,7 @@ public class SSLSessionHandlerAdapter extends ChannelInboundHandlerAdapter imple
         Mono.from(SSLRequest.INSTANCE.encode(this.alloc)).subscribe(ctx::writeAndFlush);
     }
 
-    public Mono<Void> handshakeFuture() {
+    Mono<Void> getHandshake() {
         return Mono.fromFuture(this.handshakeFuture);
     }
 }

@@ -28,7 +28,7 @@ import io.r2dbc.postgresql.util.Assert;
  */
 public final class PasswordAuthenticationHandler implements AuthenticationHandler {
 
-    private final String password;
+    private final CharSequence password;
 
     private final String username;
 
@@ -39,7 +39,7 @@ public final class PasswordAuthenticationHandler implements AuthenticationHandle
      * @param username the username to use for authentication
      * @throws IllegalArgumentException if {@code password} or {@code user} is {@code null}
      */
-    public PasswordAuthenticationHandler(String password, String username) {
+    public PasswordAuthenticationHandler(CharSequence password, String username) {
         this.password = Assert.requireNonNull(password, "password must not be null");
         this.username = Assert.requireNonNull(username, "username must not be null");
     }

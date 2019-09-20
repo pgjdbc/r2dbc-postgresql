@@ -19,7 +19,7 @@ package io.r2dbc.postgresql;
 
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
-import io.r2dbc.postgresql.client.PGHostnameVerifier;
+import io.r2dbc.postgresql.client.DefaultHostnameVerifier;
 import io.r2dbc.postgresql.client.SSLConfig;
 import io.r2dbc.postgresql.client.SSLMode;
 import io.r2dbc.postgresql.util.Assert;
@@ -55,7 +55,7 @@ public final class PostgresqlConnectionConfiguration {
 
     private final Map<String, String> options;
 
-    private final String password;
+    private final CharSequence password;
 
     private final int port;
 
@@ -71,7 +71,7 @@ public final class PostgresqlConnectionConfiguration {
                                               boolean forceBinary,
                                               String host,
                                               @Nullable Map<String, String> options,
-                                              @Nullable String password,
+                                              @Nullable CharSequence password,
                                               int port,
                                               @Nullable String schema,
                                               String username,
@@ -100,6 +100,17 @@ public final class PostgresqlConnectionConfiguration {
         return new Builder();
     }
 
+    private static String repeat(int length, String character) {
+
+        StringBuilder builder = new StringBuilder();
+
+        for (int i = 0; i < length; i++) {
+            builder.append(character);
+        }
+
+        return builder.toString();
+    }
+
     @Override
     public String toString() {
         return "PostgresqlConnectionConfiguration{" +
@@ -109,7 +120,7 @@ public final class PostgresqlConnectionConfiguration {
             ", forceBinary='" + this.forceBinary + '\'' +
             ", host='" + this.host + '\'' +
             ", options='" + this.options + '\'' +
-            ", password='" + this.password + '\'' +
+            ", password='" + repeat(this.password.length(), "*") + '\'' +
             ", port=" + this.port +
             ", schema='" + this.schema + '\'' +
             ", username='" + this.username + '\'' +
@@ -140,7 +151,7 @@ public final class PostgresqlConnectionConfiguration {
     }
 
     @Nullable
-    String getPassword() {
+    CharSequence getPassword() {
         return this.password;
     }
 
@@ -161,8 +172,8 @@ public final class PostgresqlConnectionConfiguration {
         return this.forceBinary;
     }
 
-    public SSLConfig getSslConfig() {
-        return sslConfig;
+    SSLConfig getSslConfig() {
+        return this.sslConfig;
     }
 
     /**
@@ -172,39 +183,46 @@ public final class PostgresqlConnectionConfiguration {
      */
     public static final class Builder {
 
-        // Note: defaultdir is ${user.home}/.postgresql/ in *nix systems and %appdata%/postgresql/ on windows
-        private static final String DEFAULT_DIR = "${user.home}/.postgresql/";
-
         private String applicationName = "r2dbc-postgresql";
 
+        @Nullable
         private Duration connectTimeout;
 
+        @Nullable
         private String database;
 
         private boolean forceBinary = false;
 
+        @Nullable
         private String host;
 
         private Map<String, String> options;
 
-        private String password;
+        @Nullable
+        private CharSequence password;
 
         private int port = DEFAULT_PORT;
 
+        @Nullable
         private String schema;
 
+        @Nullable
         private String sslCert = null;
 
-        private String sslHostnameVerifier = null;
+        private HostnameVerifier sslHostnameVerifier = DefaultHostnameVerifier.INSTANCE;
 
+        @Nullable
         private String sslKey = null;
 
         private SSLMode sslMode = SSLMode.DISABLE;
 
+        @Nullable
         private CharSequence sslPassword = null;
 
-        private String sslRootCert = DEFAULT_DIR + "root.crt";
+        @Nullable
+        private String sslRootCert = null;
 
+        @Nullable
         private String username;
 
         private Builder() {
@@ -228,6 +246,15 @@ public final class PostgresqlConnectionConfiguration {
          * @return a configured {@link PostgresqlConnectionConfiguration}
          */
         public PostgresqlConnectionConfiguration build() {
+
+            if (this.host == null) {
+                throw new IllegalArgumentException("host must not be null");
+            }
+
+            if (this.username == null) {
+                throw new IllegalArgumentException("username must not be null");
+            }
+
             SSLConfig sslConfig = this.createSslConfig();
             return new PostgresqlConnectionConfiguration(
                 this.applicationName,
@@ -257,6 +284,15 @@ public final class PostgresqlConnectionConfiguration {
         public Builder database(@Nullable String database) {
             this.database = database;
             return this;
+        }
+
+        /**
+         * Enable SSL usage. This flag is also known as Use Encryption in other drivers.
+         *
+         * @return this {@link Builder}
+         */
+        public Builder enableSsl() {
+            return sslMode(SSLMode.VERIFY_FULL);
         }
 
         /**
@@ -311,7 +347,7 @@ public final class PostgresqlConnectionConfiguration {
          * @param password the password
          * @return this {@link Builder}
          */
-        public Builder password(@Nullable String password) {
+        public Builder password(@Nullable CharSequence password) {
             this.password = password;
             return this;
         }
@@ -339,57 +375,46 @@ public final class PostgresqlConnectionConfiguration {
         }
 
         /**
-         * Configure ssl cert.
+         * Configure ssl cert for client certificate authentication.
          *
          * @param sslCert an X.509 certificate chain file in PEM format
          * @return this {@link Builder}
          */
-        public Builder sslCert(@Nullable String sslCert) {
-            this.sslCert = Assert.requireFileExistsOrNull(sslCert, "sslCert must be null or exist");
+        public Builder sslCert(String sslCert) {
+            this.sslCert = Assert.requireFileExistsOrNull(sslCert, "sslCert must not be null and must exist");
             return this;
         }
 
         /**
          * Configure ssl HostnameVerifier.
          *
-         * @param sslHostnameVerifier {@link javax.net.ssl.HostnameVerifier} implementation class name
+         * @param sslHostnameVerifier {@link javax.net.ssl.HostnameVerifier}
          * @return this {@link Builder}
          */
-        public Builder sslHostnameVerifier(@Nullable String sslHostnameVerifier) {
-            this.sslHostnameVerifier = sslHostnameVerifier;
+        public Builder sslHostnameVerifier(HostnameVerifier sslHostnameVerifier) {
+            this.sslHostnameVerifier = Assert.requireNonNull(sslHostnameVerifier, "sslHostnameVerifier must not be null");
             return this;
         }
 
         /**
-         * Configure ssl key.
+         * Configure ssl key for client certificate authentication.
          *
          * @param sslKey a PKCS#8 private key file in PEM format
          * @return this {@link Builder}
          */
-        public Builder sslKey(@Nullable String sslKey) {
-            this.sslKey = Assert.requireFileExistsOrNull(sslKey, "sslKey must be null or exist");
+        public Builder sslKey(String sslKey) {
+            this.sslKey = Assert.requireFileExistsOrNull(sslKey, "sslKey must not be null and must exist");
             return this;
         }
 
         /**
          * Configure ssl mode.
          *
-         * @param sslMode
+         * @param sslMode the SSL mode to use.
          * @return this {@link Builder}
          */
         public Builder sslMode(SSLMode sslMode) {
-            this.sslMode = sslMode;
-            return this;
-        }
-
-        /**
-         * Configure ssl mode.
-         *
-         * @param sslMode
-         * @return this {@link Builder}
-         */
-        public Builder sslMode(String sslMode) {
-            this.sslMode = SSLMode.fromValue(sslMode);
+            this.sslMode = Assert.requireNonNull(sslMode, "sslMode must be not be null");
             return this;
         }
 
@@ -405,13 +430,13 @@ public final class PostgresqlConnectionConfiguration {
         }
 
         /**
-         * Configure ssl root cert.
+         * Configure ssl root cert for server certificate validation.
          *
-         * @param sslRootCert
+         * @param sslRootCert an X.509 certificate chain file in PEM format
          * @return this {@link Builder}
          */
-        public Builder sslRootCert(@Nullable String sslRootCert) {
-            this.sslRootCert = Assert.requireFileExistsOrNull(sslRootCert, "sslKey must be null or exist");
+        public Builder sslRootCert(String sslRootCert) {
+            this.sslRootCert = Assert.requireFileExistsOrNull(sslRootCert, "sslRootCert must not be null and must exist");
             return this;
         }
 
@@ -424,7 +449,7 @@ public final class PostgresqlConnectionConfiguration {
                 ", forceBinary='" + this.forceBinary + '\'' +
                 ", host='" + this.host + '\'' +
                 ", parameters='" + this.options + '\'' +
-                ", password='" + this.password + '\'' +
+                ", password='" + repeat(this.password.length(), "*") + '\'' +
                 ", port=" + this.port +
                 ", schema='" + this.schema + '\'' +
                 ", username='" + this.username + '\'' +
@@ -452,34 +477,51 @@ public final class PostgresqlConnectionConfiguration {
             if (this.sslMode == SSLMode.DISABLE) {
                 return new SSLConfig(SSLMode.DISABLE, null, (hostname, session) -> true);
             }
-            HostnameVerifier hostnameVerifier = createSslHostVerifier();
+            HostnameVerifier hostnameVerifier = this.sslHostnameVerifier;
             SslProvider sslProvider = createSslProvider();
             return new SSLConfig(this.sslMode, sslProvider, hostnameVerifier);
-        }
-
-        private HostnameVerifier createSslHostVerifier() {
-            if (this.sslHostnameVerifier == null) {
-                return PGHostnameVerifier.INSTANCE;
-            }
-            try {
-                return (HostnameVerifier) Class.forName(this.sslHostnameVerifier).newInstance();
-            } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-                throw new IllegalArgumentException(e);
-            }
         }
 
         private SslProvider createSslProvider() {
             SslContextBuilder sslContextBuilder = SslContextBuilder.forClient();
             if (this.sslMode.verifyCertificate()) {
-                String sslRootCert = Assert.requireNonNull(this.sslRootCert, "SSL mode " + this.sslMode + " requires sslRootCert parameter");
-                sslContextBuilder.trustManager(new File(sslRootCert));
+                if (this.sslRootCert != null) {
+                    sslContextBuilder.trustManager(new File(this.sslRootCert));
+                }
             } else {
                 sslContextBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
             }
-            if (this.sslKey != null) {
-                String sslCert = Assert.requireNonNull(this.sslCert, "SSL key param requires sslCert param to be present");
+
+            String sslKey = this.sslKey;
+            String sslCert = this.sslCert;
+
+            // Emulate Libpq behavior
+            // Determining the default file location
+            String pathsep = System.getProperty("file.separator");
+            String defaultdir;
+            if (System.getProperty("os.name").toLowerCase().contains("windows")) { // It is Windows
+                defaultdir = System.getenv("APPDATA") + pathsep + "postgresql" + pathsep;
+            } else {
+                defaultdir = System.getProperty("user.home") + pathsep + ".postgresql" + pathsep;
+            }
+
+            if (sslCert == null) {
+                String pathname = defaultdir + "postgresql.crt";
+                if (new File(pathname).exists()) {
+                    sslCert = pathname;
+                }
+            }
+
+            if (sslKey == null) {
+                String pathname = defaultdir + "postgresql.pk8";
+                if (new File(pathname).exists()) {
+                    sslKey = pathname;
+                }
+            }
+
+            if (sslKey != null && sslCert != null) {
                 String sslPassword = this.sslPassword == null ? null : this.sslPassword.toString();
-                sslContextBuilder.keyManager(new File(sslCert), new File(this.sslKey), sslPassword);
+                sslContextBuilder.keyManager(new File(sslCert), new File(sslKey), sslPassword);
             }
             return SslProvider.builder()
                 .sslContext(sslContextBuilder)

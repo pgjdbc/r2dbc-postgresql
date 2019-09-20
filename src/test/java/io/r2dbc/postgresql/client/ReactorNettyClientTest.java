@@ -276,7 +276,7 @@ final class ReactorNettyClientTest {
         @Test
         void exchangeSslWithClientCertInvalidClientCert() {
             client(
-                c -> c
+                c -> c.sslRootCert(SERVER.getServerCrt())
                     .sslCert(SERVER.getServerCrt())
                     .sslKey(SERVER.getServerKey()),
                 c -> c
@@ -289,9 +289,7 @@ final class ReactorNettyClientTest {
         void exchangeSslWithClientCertNoCert() {
             client(
                 c -> c
-                    .password("test")
-                    .sslKey(null)
-                    .sslCert(null),
+                    .password("test"),
                 c -> c
                     .as(StepVerifier::create)
                     .expectError(R2dbcPermissionDeniedException.class));
@@ -301,8 +299,7 @@ final class ReactorNettyClientTest {
         void exchangeSslWithPassword() {
             client(
                 c -> c
-                    .sslCert(null)
-                    .sslKey(null)
+                    .sslRootCert(SERVER.getServerCrt())
                     .username("test-ssl")
                     .password("test-ssl"),
                 c -> c.map(client -> client.createStatement("SELECT 10")
@@ -327,11 +324,10 @@ final class ReactorNettyClientTest {
         @Test
         void userIsNotAllowedToLoginWithSsl() {
             client(
-                c -> c
+                c -> c.sslRootCert(SERVER.getServerCrt())
                     .username(SERVER.getUsername())
                     .password(SERVER.getPassword())
-                    .sslKey(null)
-                    .sslCert(null),
+                ,
                 c -> c
                     .as(StepVerifier::create)
                     .verifyError(R2dbcPermissionDeniedException.class));
@@ -357,10 +353,7 @@ final class ReactorNettyClientTest {
                 .username("test-ssl-with-cert")
                 .password(null)
                 .sslMode(SSLMode.VERIFY_FULL)
-                .sslRootCert(SERVER.getServerCrt())
-                .sslCert(SERVER.getClientCrt())
-                .sslKey(SERVER.getClientKey())
-                .sslHostnameVerifier("io.r2dbc.postgresql.client.ReactorNettyClientTest$NoVerification");
+                .sslHostnameVerifier(new NoVerification());
             new PostgresqlConnectionFactory(configurer.apply(defaultConfig).build()).create()
                 .onErrorResume(e -> Mono.fromRunnable(() -> connectionConsumer.accept(Mono.error(e))))
                 .delayUntil(connection -> Mono.fromRunnable(() -> connectionConsumer.accept(Mono.just(connection))))
@@ -377,7 +370,7 @@ final class ReactorNettyClientTest {
                     c -> c
                         .sslMode(SSLMode.ALLOW)
                         .username("test-ssl")
-                        .sslRootCert(null),
+                    ,
                     c -> c
                         .as(StepVerifier::create)
                         .verifyError(R2dbcPermissionDeniedException.class));
@@ -390,9 +383,7 @@ final class ReactorNettyClientTest {
                         .sslMode(SSLMode.ALLOW)
                         .username("test-ssl")
                         .password("test-ssl")
-                        .sslKey(null)
-                        .sslCert(null)
-                        .sslRootCert(null),
+                    ,
                     c -> c
                         .as(StepVerifier::create)
                         .expectNextCount(1)
@@ -406,9 +397,7 @@ final class ReactorNettyClientTest {
                         .sslMode(SSLMode.ALLOW)
                         .username("test-ssl-test")
                         .password("test-ssl")
-                        .sslKey(null)
-                        .sslCert(null)
-                        .sslRootCert(null),
+                    ,
                     c -> c
                         .as(StepVerifier::create)
                         .verifyError(R2dbcPermissionDeniedException.class));
@@ -421,9 +410,7 @@ final class ReactorNettyClientTest {
                         .sslMode(SSLMode.ALLOW)
                         .username(SERVER.getUsername())
                         .password(SERVER.getPassword())
-                        .sslKey(null)
-                        .sslCert(null)
-                        .sslRootCert(null),
+                    ,
                     c -> c
                         .as(StepVerifier::create)
                         .expectNextCount(1)
@@ -436,10 +423,7 @@ final class ReactorNettyClientTest {
                     c -> c
                         .sslMode(SSLMode.DISABLE)
                         .username(SERVER.getUsername())
-                        .password(SERVER.getPassword())
-                        .sslKey(null)
-                        .sslCert(null)
-                        .sslRootCert(null),
+                        .password(SERVER.getPassword()),
                     c -> c
                         .as(StepVerifier::create)
                         .expectNextCount(1)
@@ -453,9 +437,7 @@ final class ReactorNettyClientTest {
                         .sslMode(SSLMode.DISABLE)
                         .password("test-ssl")
                         .password("test-ssl")
-                        .sslKey(null)
-                        .sslCert(null)
-                        .sslRootCert(null),
+                    ,
                     c -> c
                         .as(StepVerifier::create)
                         .expectError(R2dbcPermissionDeniedException.class)
@@ -469,9 +451,7 @@ final class ReactorNettyClientTest {
                         .sslMode(SSLMode.PREFER)
                         .username(SERVER.getUsername())
                         .password(SERVER.getPassword())
-                        .sslKey(null)
-                        .sslCert(null)
-                        .sslRootCert(null),
+                    ,
                     c -> c
                         .as(StepVerifier::create)
                         .expectNextCount(1)
@@ -485,9 +465,7 @@ final class ReactorNettyClientTest {
                         .sslMode(SSLMode.PREFER)
                         .username("test-ssl-test")
                         .password(SERVER.getPassword())
-                        .sslKey(null)
-                        .sslCert(null)
-                        .sslRootCert(null),
+                    ,
                     c -> c
                         .as(StepVerifier::create)
                         .expectError(R2dbcPermissionDeniedException.class));
@@ -497,8 +475,9 @@ final class ReactorNettyClientTest {
             void preferWithSsl() {
                 client(
                     c -> c
-                        .sslRootCert(null)
-                        .sslMode(SSLMode.PREFER),
+                        .sslMode(SSLMode.PREFER)
+                        .sslKey(SERVER.getClientKey())
+                        .sslCert(SERVER.getClientCrt()),
                     c -> c
                         .as(StepVerifier::create)
                         .expectNextCount(1)
@@ -509,7 +488,10 @@ final class ReactorNettyClientTest {
             void require() {
                 client(
                     c -> c
-                        .sslMode(SSLMode.REQUIRE),
+                        .sslMode(SSLMode.REQUIRE)
+                        .sslRootCert(SERVER.getServerCrt())
+                        .sslKey(SERVER.getClientKey())
+                        .sslCert(SERVER.getClientCrt()),
                     c -> c
                         .as(StepVerifier::create)
                         .expectNextCount(1)
@@ -520,8 +502,9 @@ final class ReactorNettyClientTest {
             void requireConnectsWithoutCertificate() {
                 client(
                     c -> c
-                        .sslRootCert(null)
-                        .sslMode(SSLMode.REQUIRE),
+                        .sslMode(SSLMode.REQUIRE)
+                        .sslKey(SERVER.getClientKey())
+                        .sslCert(SERVER.getClientCrt()),
                     c -> c
                         .as(StepVerifier::create)
                         .expectNextCount(1)
@@ -535,9 +518,7 @@ final class ReactorNettyClientTest {
                         .sslMode(SSLMode.REQUIRE)
                         .username(SERVER.getUsername())
                         .password(SERVER.getPassword())
-                        .sslKey(null)
-                        .sslCert(null)
-                        .sslRootCert(null),
+                    ,
                     c -> c
                         .as(StepVerifier::create)
                         .verifyError(R2dbcPermissionDeniedException.class));
@@ -546,7 +527,9 @@ final class ReactorNettyClientTest {
             @Test
             void verifyCa() {
                 client(
-                    c -> c
+                    c -> c.sslRootCert(SERVER.getServerCrt())
+                        .sslKey(SERVER.getClientKey())
+                        .sslCert(SERVER.getClientCrt())
                         .sslMode(SSLMode.VERIFY_CA),
                     c -> c
                         .as(StepVerifier::create)
@@ -570,6 +553,9 @@ final class ReactorNettyClientTest {
                 client(
                     c -> c
                         .sslMode(SSLMode.VERIFY_CA)
+                        .sslRootCert(SERVER.getServerCrt())
+                        .sslKey(SERVER.getClientKey())
+                        .sslCert(SERVER.getClientCrt())
                         .username(SERVER.getUsername())
                         .password(SERVER.getPassword()),
                     c -> c
@@ -581,7 +567,10 @@ final class ReactorNettyClientTest {
             void verifyFull() {
                 client(
                     c -> c
-                        .sslMode(SSLMode.VERIFY_FULL),
+                        .sslMode(SSLMode.VERIFY_FULL)
+                        .sslRootCert(SERVER.getServerCrt())
+                        .sslKey(SERVER.getClientKey())
+                        .sslCert(SERVER.getClientCrt()),
                     c -> c
                         .as(StepVerifier::create)
                         .expectNextCount(1)
@@ -591,8 +580,8 @@ final class ReactorNettyClientTest {
             @Test
             void verifyFullFailedWithWrongHost() {
                 client(
-                    c -> c
-                        .sslHostnameVerifier("io.r2dbc.postgresql.client.ReactorNettyClientTest$FailedVerification")
+                    c -> c.sslRootCert(SERVER.getServerCrt())
+                        .sslHostnameVerifier(new FailedVerification())
                         .sslMode(SSLMode.VERIFY_FULL),
                     c -> c
                         .as(StepVerifier::create)
@@ -603,8 +592,10 @@ final class ReactorNettyClientTest {
             void verifyFullFailedWithWrongRootCert() {
                 client(
                     c -> c
+                        .sslMode(SSLMode.VERIFY_FULL)
                         .sslRootCert(SERVER.getClientCrt())
-                        .sslMode(SSLMode.VERIFY_FULL),
+                        .sslKey(SERVER.getClientKey())
+                        .sslCert(SERVER.getClientCrt()),
                     c -> c
                         .as(StepVerifier::create)
                         .verifyError());
@@ -615,6 +606,7 @@ final class ReactorNettyClientTest {
                 client(
                     c -> c
                         .sslMode(SSLMode.VERIFY_FULL)
+                        .sslRootCert(SERVER.getServerCrt())
                         .username(SERVER.getUsername())
                         .password(SERVER.getPassword()),
                     c -> c
