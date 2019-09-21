@@ -17,9 +17,9 @@
 package io.r2dbc.postgresql.client;
 
 import io.netty.util.ReferenceCountUtil;
-import io.r2dbc.postgresql.PostgresqlConnection;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
+import io.r2dbc.postgresql.api.PostgresqlConnection;
 import io.r2dbc.postgresql.authentication.PasswordAuthenticationHandler;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.CommandComplete;

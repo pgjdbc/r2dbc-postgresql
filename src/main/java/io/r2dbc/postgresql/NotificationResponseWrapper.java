@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql;
 
+import io.r2dbc.postgresql.api.Notification;
 import io.r2dbc.postgresql.message.backend.NotificationResponse;
 
 /**

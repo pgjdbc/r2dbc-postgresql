@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.r2dbc.postgresql;
+package io.r2dbc.postgresql.api;
 
 import reactor.util.annotation.Nullable;
 

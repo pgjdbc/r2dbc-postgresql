@@ -14,29 +14,13 @@
  * limitations under the License.
  */
 
-package io.r2dbc.postgresql;
+package io.r2dbc.postgresql.api;
 
-import io.r2dbc.postgresql.client.Version;
+import io.r2dbc.spi.Row;
 
 /**
- * Connection metadata for a connection connected to a PostgreSQL database.
+ * A {@link Row} for a PostgreSQL database.
  */
-final class PostgresqlConnectionMetadata implements io.r2dbc.postgresql.api.PostgresqlConnectionMetadata {
-
-    private final Version version;
-
-    PostgresqlConnectionMetadata(Version version) {
-        this.version = version;
-    }
-
-    @Override
-    public String getDatabaseProductName() {
-        return "PostgreSQL";
-    }
-
-    @Override
-    public String getDatabaseVersion() {
-        return this.version.getVersion();
-    }
+public interface PostgresqlRow extends Row {
 
 }

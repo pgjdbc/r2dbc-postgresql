@@ -27,7 +27,7 @@ import java.util.Objects;
 /**
  * An implementation of {@link ColumnMetadata} for a PostgreSQL database.
  */
-public final class PostgresqlColumnMetadata implements ColumnMetadata {
+final class PostgresqlColumnMetadata implements io.r2dbc.postgresql.api.PostgresqlColumnMetadata {
 
     private final Codecs codecs;
 

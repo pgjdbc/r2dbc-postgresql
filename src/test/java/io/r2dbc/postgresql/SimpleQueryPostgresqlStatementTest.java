@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql;
 
 import io.netty.buffer.ByteBuf;
+import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.TestClient;
 import io.r2dbc.postgresql.codec.MockCodecs;

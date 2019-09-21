@@ -31,7 +31,7 @@ import java.util.Objects;
 /**
  * An implementation of {@link Row} for a PostgreSQL database.
  */
-public final class PostgresqlRow implements Row {
+final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
 
     private final Codecs codecs;
 

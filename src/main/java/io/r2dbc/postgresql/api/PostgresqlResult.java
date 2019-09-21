@@ -14,29 +14,30 @@
  * limitations under the License.
  */
 
-package io.r2dbc.postgresql.extension;
+package io.r2dbc.postgresql.api;
 
-import io.r2dbc.postgresql.codec.Codec;
+import io.r2dbc.spi.Result;
+import io.r2dbc.spi.Row;
+import io.r2dbc.spi.RowMetadata;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import java.util.function.BiFunction;
 
 /**
- * Registry allowing to query and register {@link Codec}s.
+ * A {@link Result} representing the results of a query against a PostgreSQL database.
  */
-public interface CodecRegistry extends Iterable<Codec<?>> {
+public interface PostgresqlResult extends Result {
 
     /**
-     * Register codec before all other codecs.
-     *
-     * @param codec the codec to register
-     * @throws IllegalArgumentException if {@code codec} is {@code null}
+     * {@inheritDoc}
      */
-    void addFirst(Codec<?> codec);
+    @Override
+    Mono<Integer> getRowsUpdated();
 
     /**
-     * Register codec after all other codecs.
-     *
-     * @param codec the codec to register
-     * @throws IllegalArgumentException if {@code codec} is {@code null}
+     * {@inheritDoc}
      */
-    void addLast(Codec<?> codec);
-
+    @Override
+    <T> Flux<T> map(BiFunction<Row, RowMetadata, ? extends T> mappingFunction);
 }

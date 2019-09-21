@@ -16,6 +16,9 @@
 
 package io.r2dbc.postgresql;
 
+import io.r2dbc.postgresql.api.Notification;
+import io.r2dbc.postgresql.api.PostgresqlResult;
+import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.PortalNameSupplier;
 import io.r2dbc.postgresql.client.SimpleQueryMessageFlow;
@@ -46,7 +49,7 @@ import static io.r2dbc.postgresql.client.TransactionStatus.OPEN;
 /**
  * An implementation of {@link Connection} for connecting to a PostgreSQL database.
  */
-public final class PostgresqlConnection implements Connection {
+final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlConnection {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -151,6 +154,7 @@ public final class PostgresqlConnection implements Connection {
      *
      * @return a hot {@link Flux} of {@link Notification Notifications}.
      */
+    @Override
     public Flux<Notification> getNotifications() {
 
         NotificationAdapter notifications = this.notificationAdapter.get();

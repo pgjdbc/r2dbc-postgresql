@@ -38,7 +38,7 @@ import static io.r2dbc.postgresql.util.PredicateUtils.or;
 /**
  * An implementation of {@link Result} representing the results of a query against a PostgreSQL database.
  */
-public final class PostgresqlResult implements Result {
+final class PostgresqlResult implements io.r2dbc.postgresql.api.PostgresqlResult {
 
     private static final Predicate<BackendMessage> TAKE_UNTIL = or(CommandComplete.class::isInstance, EmptyQueryResponse.class::isInstance, PortalSuspended.class::isInstance);
 

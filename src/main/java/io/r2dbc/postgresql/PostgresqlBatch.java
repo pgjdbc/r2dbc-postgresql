@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * An implementation of {@link Batch} for executing a collection of statements in a batch against a PostgreSQL database.
  */
-public final class PostgresqlBatch implements Batch {
+final class PostgresqlBatch implements io.r2dbc.postgresql.api.PostgresqlBatch {
 
     private final Client client;
 
@@ -54,7 +54,7 @@ public final class PostgresqlBatch implements Batch {
     }
 
     @Override
-    public Flux<PostgresqlResult> execute() {
+    public Flux<io.r2dbc.postgresql.api.PostgresqlResult> execute() {
         return new SimpleQueryPostgresqlStatement(this.client, this.codecs, String.join("; ", this.statements))
             .execute();
     }

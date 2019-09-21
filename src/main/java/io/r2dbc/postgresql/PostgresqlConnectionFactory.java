@@ -30,6 +30,7 @@ import io.r2dbc.postgresql.extension.CodecRegistrar;
 import io.r2dbc.postgresql.message.backend.AuthenticationMessage;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.ConnectionFactoryMetadata;
 import io.r2dbc.spi.IsolationLevel;
 import io.r2dbc.spi.R2dbcException;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
@@ -83,7 +84,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
     }
 
     @Override
-    public Mono<PostgresqlConnection> create() {
+    public Mono<io.r2dbc.postgresql.api.PostgresqlConnection> create() {
         SSLConfig sslConfig = this.configuration.getSslConfig();
         Predicate<Throwable> isAuthSpecificationError = e -> e instanceof ExceptionFactory.PostgresqlAuthenticationFailure;
         return this.tryConnectWithConfig(sslConfig)
@@ -112,7 +113,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
                         return prepareConnection(connection, client.getByteBufAllocator(), codecs);
                     })
                     .onErrorResume(throwable -> this.closeWithError(client, throwable));
-            }).onErrorMap(this::cannotConnect);
+            }).onErrorMap(this::cannotConnect).cast(io.r2dbc.postgresql.api.PostgresqlConnection.class);
     }
 
     private Mono<Client> tryConnectWithConfig(SSLConfig sslConfig) {
@@ -152,7 +153,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
     }
 
     @Override
-    public PostgresqlConnectionFactoryMetadata getMetadata() {
+    public ConnectionFactoryMetadata getMetadata() {
         return PostgresqlConnectionFactoryMetadata.INSTANCE;
     }
 

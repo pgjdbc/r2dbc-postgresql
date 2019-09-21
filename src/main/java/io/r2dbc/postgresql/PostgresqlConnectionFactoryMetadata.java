@@ -21,7 +21,7 @@ import io.r2dbc.spi.ConnectionFactoryMetadata;
 /**
  * An implementation of {@link ConnectionFactoryMetadata} for a PostgreSQL database.
  */
-public final class PostgresqlConnectionFactoryMetadata implements ConnectionFactoryMetadata {
+final class PostgresqlConnectionFactoryMetadata implements ConnectionFactoryMetadata {
 
     /**
      * The name of the PostgreSQL database product.

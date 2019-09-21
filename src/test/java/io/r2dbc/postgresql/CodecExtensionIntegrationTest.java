@@ -18,14 +18,17 @@ package io.r2dbc.postgresql;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.codec.Codec;
+import io.r2dbc.postgresql.codec.CodecRegistry;
 import io.r2dbc.postgresql.extension.CodecRegistrar;
-import io.r2dbc.postgresql.extension.CodecRegistry;
 import io.r2dbc.postgresql.message.Format;
+import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
-import io.r2dbc.spi.Connection;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.reactivestreams.Publisher;
@@ -47,10 +50,20 @@ public class CodecExtensionIntegrationTest {
         .username(SERVER.getUsername())
         .build());
 
+    @BeforeEach
+    void setUp() {
+        JsonCodecRegistrar.REGISTER = true;
+    }
+
+    @AfterEach
+    void tearDown() {
+        JsonCodecRegistrar.REGISTER = false;
+    }
+
     @Test
     void shouldRegisterCodec() {
 
-        PostgresqlConnection connection = this.connectionFactory.create().block();
+        PostgresqlConnection connection = (PostgresqlConnection) this.connectionFactory.create().block();
 
         connection.createStatement("DROP TABLE IF EXISTS codec_json_test;CREATE TABLE codec_json_test (my_value json);")
             .execute().flatMap(PostgresqlResult::getRowsUpdated).then()
@@ -77,20 +90,28 @@ public class CodecExtensionIntegrationTest {
 
     public static class JsonCodecRegistrar implements CodecRegistrar {
 
+        /**
+         * Prevent other tests from catching this extension.
+         */
+        static boolean REGISTER = false;
+
         @Override
-        public Publisher<Void> register(Connection connection, ByteBufAllocator allocator, CodecRegistry registry) {
-            return Mono.fromRunnable(() -> registry.addLast(JsonToTextCodec.INSTANCE));
+        public Publisher<Void> register(io.r2dbc.postgresql.api.PostgresqlConnection connection, ByteBufAllocator allocator, CodecRegistry registry) {
+
+            if (!REGISTER) {
+                return Mono.empty();
+            }
+
+            return Mono.fromRunnable(() -> registry.addFirst(JsonToTextCodec.INSTANCE));
         }
     }
 
     enum JsonToTextCodec implements Codec<Json> {
         INSTANCE;
 
-        public static final int JSON = 114;
-
         @Override
         public boolean canDecode(int dataType, Format format, Class<?> type) {
-            return dataType == JSON;
+            return dataType == PostgresqlObjectId.JSON.getObjectId();
         }
 
         @Override

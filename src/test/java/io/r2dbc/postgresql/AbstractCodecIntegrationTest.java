@@ -19,6 +19,8 @@ package io.r2dbc.postgresql;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
+import io.r2dbc.postgresql.api.PostgresqlResult;
+import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.postgresql.codec.Json;
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
 import io.r2dbc.spi.Connection;

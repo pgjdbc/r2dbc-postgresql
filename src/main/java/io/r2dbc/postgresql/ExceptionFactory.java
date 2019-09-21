@@ -16,6 +16,8 @@
 
 package io.r2dbc.postgresql;
 
+import io.r2dbc.postgresql.api.ErrorDetails;
+import io.r2dbc.postgresql.api.PostgresqlException;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.spi.R2dbcBadGrammarException;

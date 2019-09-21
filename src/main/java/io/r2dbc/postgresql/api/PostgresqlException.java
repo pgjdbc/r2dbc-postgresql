@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.r2dbc.postgresql;
+package io.r2dbc.postgresql.api;
 
 import io.r2dbc.spi.R2dbcException;
 

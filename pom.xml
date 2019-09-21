@@ -235,7 +235,7 @@
                 <version>3.0.1</version>
                 <configuration>
                     <excludePackageNames>
-                        io.r2dbc.postgresql.authentication,io.r2dbc.postgresql.client,io.r2dbc.postgresql.codec,io.r2dbc.postgresql.message,io.r2dbc.postgresql.util
+                        io.r2dbc.postgresql.authentication,io.r2dbc.postgresql.client,io.r2dbc.postgresql.message,io.r2dbc.postgresql.util
                     </excludePackageNames>
                     <links>
                         <link>https://projectreactor.io/docs/core/release/api/</link>

@@ -16,6 +16,8 @@
 
 package io.r2dbc.postgresql;
 
+import io.r2dbc.postgresql.api.PostgresqlConnection;
+import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.codec.Json;
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
 import org.junit.jupiter.api.Test;

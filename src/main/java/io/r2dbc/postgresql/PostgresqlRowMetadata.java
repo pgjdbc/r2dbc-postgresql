@@ -24,6 +24,7 @@ import io.r2dbc.spi.RowMetadata;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -32,7 +33,9 @@ import java.util.TreeSet;
 /**
  * An implementation of {@link RowMetadata} for a PostgreSQL database.
  */
-public final class PostgresqlRowMetadata implements RowMetadata {
+final class PostgresqlRowMetadata implements io.r2dbc.postgresql.api.PostgresqlRowMetadata {
+
+    private static final Comparator<String> IGNORE_CASE_COMPARATOR = (o1, o2) -> o2.compareToIgnoreCase(o1);
 
     private final List<PostgresqlColumnMetadata> columnMetadatas;
 
@@ -123,7 +126,7 @@ public final class PostgresqlRowMetadata implements RowMetadata {
     }
 
     private Collection<String> getColumnNames(List<PostgresqlColumnMetadata> columnMetadatas) {
-        Set<String> columnNames = new TreeSet<>(Collator.IGNORE_CASE_COMPARATOR);
+        Set<String> columnNames = new TreeSet<>(IGNORE_CASE_COMPARATOR);
 
         for (PostgresqlColumnMetadata columnMetadata : columnMetadatas) {
             columnNames.add(columnMetadata.getName());

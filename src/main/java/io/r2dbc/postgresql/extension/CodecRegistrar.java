@@ -17,9 +17,9 @@
 package io.r2dbc.postgresql.extension;
 
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.PostgresqlConnection;
+import io.r2dbc.postgresql.api.PostgresqlConnection;
 import io.r2dbc.postgresql.codec.Codec;
-import io.r2dbc.spi.Connection;
+import io.r2dbc.postgresql.codec.CodecRegistry;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 
@@ -46,6 +46,6 @@ public interface CodecRegistrar extends Extension {
      * @param registry   target codec registry that accepts codec registrations
      * @return a {@link Publisher} that activates codec registration upon subscription
      */
-    Publisher<Void> register(Connection connection, ByteBufAllocator allocator, CodecRegistry registry);
+    Publisher<Void> register(PostgresqlConnection connection, ByteBufAllocator allocator, CodecRegistry registry);
 
 }

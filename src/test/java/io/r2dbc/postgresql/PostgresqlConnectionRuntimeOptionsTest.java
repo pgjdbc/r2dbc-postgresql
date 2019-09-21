@@ -34,7 +34,7 @@ final class PostgresqlConnectionRuntimeOptionsTest {
 
     @Test
     void connectionFactoryShouldApplyParameters() {
-        PostgresqlConnection connection = connectionFactory.create().block();
+        PostgresqlConnection connection = (PostgresqlConnection) connectionFactory.create().block();
 
         connection
             .createStatement("SHOW lock_timeout").execute()

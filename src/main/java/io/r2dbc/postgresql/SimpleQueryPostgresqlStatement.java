@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql;
 
+import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.SimpleQueryMessageFlow;
 import io.r2dbc.postgresql.codec.Codecs;
@@ -76,7 +77,7 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
     }
 
     @Override
-    public Flux<PostgresqlResult> execute() {
+    public Flux<io.r2dbc.postgresql.api.PostgresqlResult> execute() {
         if (this.generatedColumns == null) {
             return execute(this.sql);
         }
@@ -120,7 +121,7 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
         return sql.trim().isEmpty() || !sql.contains("$1");
     }
 
-    private Flux<PostgresqlResult> execute(String sql) {
+    private Flux<io.r2dbc.postgresql.api.PostgresqlResult> execute(String sql) {
         ExceptionFactory factory = ExceptionFactory.withSql(sql);
         return SimpleQueryMessageFlow
             .exchange(this.client, sql)

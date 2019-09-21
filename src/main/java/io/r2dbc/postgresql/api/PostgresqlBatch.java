@@ -14,29 +14,26 @@
  * limitations under the License.
  */
 
-package io.r2dbc.postgresql;
+package io.r2dbc.postgresql.api;
 
-import io.r2dbc.postgresql.client.Version;
+import io.r2dbc.spi.Batch;
+import reactor.core.publisher.Flux;
 
 /**
- * Connection metadata for a connection connected to a PostgreSQL database.
+ * {@link Batch} for executing a collection of statements in a batch against a PostgreSQL database.
  */
-final class PostgresqlConnectionMetadata implements io.r2dbc.postgresql.api.PostgresqlConnectionMetadata {
+public interface PostgresqlBatch extends Batch {
 
-    private final Version version;
-
-    PostgresqlConnectionMetadata(Version version) {
-        this.version = version;
-    }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public String getDatabaseProductName() {
-        return "PostgreSQL";
-    }
+    PostgresqlBatch add(String sql);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public String getDatabaseVersion() {
-        return this.version.getVersion();
-    }
+    Flux<PostgresqlResult> execute();
 
 }

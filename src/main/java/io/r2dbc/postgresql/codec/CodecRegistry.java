@@ -14,29 +14,27 @@
  * limitations under the License.
  */
 
-package io.r2dbc.postgresql;
-
-import io.r2dbc.postgresql.client.Version;
+package io.r2dbc.postgresql.codec;
 
 /**
- * Connection metadata for a connection connected to a PostgreSQL database.
+ * Registry allowing to query and register {@link Codec}s.
  */
-final class PostgresqlConnectionMetadata implements io.r2dbc.postgresql.api.PostgresqlConnectionMetadata {
+public interface CodecRegistry extends Iterable<Codec<?>> {
 
-    private final Version version;
+    /**
+     * Register codec before all other codecs.
+     *
+     * @param codec the codec to register
+     * @throws IllegalArgumentException if {@code codec} is {@code null}
+     */
+    void addFirst(Codec<?> codec);
 
-    PostgresqlConnectionMetadata(Version version) {
-        this.version = version;
-    }
-
-    @Override
-    public String getDatabaseProductName() {
-        return "PostgreSQL";
-    }
-
-    @Override
-    public String getDatabaseVersion() {
-        return this.version.getVersion();
-    }
+    /**
+     * Register codec after all other codecs.
+     *
+     * @param codec the codec to register
+     * @throws IllegalArgumentException if {@code codec} is {@code null}
+     */
+    void addLast(Codec<?> codec);
 
 }

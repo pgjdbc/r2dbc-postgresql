@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.r2dbc.postgresql;
+package io.r2dbc.postgresql.api;
 
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.Field;
@@ -94,7 +94,7 @@ public final class ErrorDetails {
      * @param fields the fields to be used to populate the exception
      * @throws IllegalArgumentException if {@code fields} is {@code null}
      */
-    ErrorDetails(List<Field> fields) {
+    public ErrorDetails(List<Field> fields) {
         this(convertToMap(fields));
     }
 

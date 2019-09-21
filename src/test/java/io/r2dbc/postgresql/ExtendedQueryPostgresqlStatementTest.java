@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql;
 
+import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.client.Binding;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.Parameter;

@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql;
 
+import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.postgresql.client.Binding;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.ExtendedQueryMessageFlow;
@@ -27,7 +28,6 @@ import io.r2dbc.postgresql.message.backend.CloseComplete;
 import io.r2dbc.postgresql.message.backend.NoData;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.GeneratedValuesUtils;
-import io.r2dbc.spi.Statement;
 import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
@@ -115,17 +115,12 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
     }
 
     @Override
-    public Flux<PostgresqlResult> execute() {
+    public Flux<io.r2dbc.postgresql.api.PostgresqlResult> execute() {
         if (this.generatedColumns == null) {
             return execute(this.sql);
         }
 
         return execute(GeneratedValuesUtils.augment(this.sql, this.generatedColumns));
-    }
-
-    @Override
-    public Statement fetchSize(int rows) {
-        return this;
     }
 
     @Override
@@ -182,7 +177,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
         return count;
     }
 
-    private Flux<PostgresqlResult> execute(String sql) {
+    private Flux<io.r2dbc.postgresql.api.PostgresqlResult> execute(String sql) {
         this.bindings.finish();
 
         ExceptionFactory factory = ExceptionFactory.withSql(sql);

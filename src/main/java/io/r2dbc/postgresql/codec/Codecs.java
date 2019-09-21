@@ -29,7 +29,7 @@ public interface Codecs {
     /**
      * Decode a data to a value.
      *
-     * @param byteBuf  the {@link ByteBuf} to decode
+     * @param buffer   the {@link ByteBuf} to decode
      * @param dataType the data type of the data
      * @param format   the format of the data
      * @param type     the type to decode to

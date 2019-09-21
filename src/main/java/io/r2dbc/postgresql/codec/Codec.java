@@ -23,10 +23,9 @@ import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import reactor.util.annotation.Nullable;
 
 /**
- * Codec to encode and decode values based on Postgres OIDs and {@link Format}.<p/>
- * Codecs can decode one or more server-specific data types and represent them as a specific Java {@link Class type}. The type parameter of {@link Codec}
+ * Codec to encode and decode values based on Postgres OIDs and {@link Format}.
+ * <p>Codecs can decode one or more server-specific data types and represent them as a specific Java {@link Class type}. The type parameter of {@link Codec}
  * indicates the interchange type that is handled by this codec.
- * <p/>
  *
  * @param <T> the type that is handled by this codec.
  * @see PostgresqlObjectId

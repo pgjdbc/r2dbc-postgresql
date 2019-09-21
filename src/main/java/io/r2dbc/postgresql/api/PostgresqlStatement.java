@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.r2dbc.postgresql;
+package io.r2dbc.postgresql.api;
 
 import io.r2dbc.spi.Statement;
 import reactor.core.publisher.Flux;
@@ -26,6 +26,12 @@ public interface PostgresqlStatement extends Statement {
 
     /**
      * {@inheritDoc}
+     */
+    @Override
+    PostgresqlStatement add();
+
+    /**
+     * {@inheritDoc}
      *
      * @throws IllegalArgumentException if {@code identifier} is not a {@link String} like {@code $1}, {@code $2}, etc.
      */
@@ -34,11 +40,73 @@ public interface PostgresqlStatement extends Statement {
 
     /**
      * {@inheritDoc}
-     *
-     * @throws IndexOutOfBoundsException if the parameter {@code index} is out of range
      */
     @Override
     PostgresqlStatement bind(int index, Object value);
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    default PostgresqlStatement bind(int index, boolean value) {
+        return bind(index, (Object) value);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    default PostgresqlStatement bind(int index, byte value) {
+        return bind(index, (Object) value);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    default PostgresqlStatement bind(int index, char value) {
+        return bind(index, (Object) value);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    default PostgresqlStatement bind(int index, double value) {
+        return bind(index, (Object) value);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    default PostgresqlStatement bind(int index, float value) {
+        return bind(index, (Object) value);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    default PostgresqlStatement bind(int index, int value) {
+        return bind(index, (Object) value);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    default PostgresqlStatement bind(int index, long value) {
+        return bind(index, (Object) value);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    default PostgresqlStatement bind(int index, short value) {
+        return bind(index, (Object) value);
+    }
 
     /**
      * {@inheritDoc}
@@ -50,14 +118,23 @@ public interface PostgresqlStatement extends Statement {
 
     /**
      * {@inheritDoc}
-     *
-     * @throws IndexOutOfBoundsException if the parameter {@code index} is out of range
      */
     @Override
     PostgresqlStatement bindNull(int index, Class<?> type);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     Flux<PostgresqlResult> execute();
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    default PostgresqlStatement fetchSize(int rows) {
+        return this;
+    }
 
     /**
      * {@inheritDoc}

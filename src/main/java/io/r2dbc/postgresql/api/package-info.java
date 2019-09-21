@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-package io.r2dbc.postgresql;
+/**
+ * R2DBC driver API with Postgres-specific extensions.
+ */
 
-import java.util.Comparator;
+@NonNullApi
+package io.r2dbc.postgresql.api;
 
-final class Collator {
-
-    static final Comparator<String> IGNORE_CASE_COMPARATOR = (o1, o2) -> o2.compareToIgnoreCase(o1);
-
-
-
-}
+import reactor.util.annotation.NonNullApi;

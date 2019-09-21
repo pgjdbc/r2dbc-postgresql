@@ -19,7 +19,7 @@ package io.r2dbc.postgresql.codec;
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
-import io.r2dbc.postgresql.PostgresqlResult;
+import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
 import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.Clob;

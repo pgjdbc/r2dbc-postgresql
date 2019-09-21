@@ -29,7 +29,6 @@ package io.r2dbc.postgresql.extension;
  * <p>
  * Specifically, a custom extension can be registered by supplying its fully qualified class name in a file named {@code io.r2dbc.postgresql.extension.Extension} within the
  * {@code /META-INF/services} directory in its enclosing JAR file.
- * <p>
  *
  * <h3>Configuring Automatic Extension Detection</h3>
  * Auto-detection is enabled by default. To disable it, simply set the {@link io.r2dbc.postgresql.PostgresqlConnectionConfiguration.Builder#autodetectExtensions(boolean)} parameter to
