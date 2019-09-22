@@ -59,6 +59,11 @@ public final class PostgresqlResult implements Result {
     public Mono<Integer> getRowsUpdated() {
 
         return this.messages
+            .doOnNext(message -> {
+                if (message instanceof DataRow) {
+                    ((DataRow) message).release();
+                }
+            })
             .ofType(CommandComplete.class)
             .singleOrEmpty()
             .handle((commandComplete, sink) -> {
