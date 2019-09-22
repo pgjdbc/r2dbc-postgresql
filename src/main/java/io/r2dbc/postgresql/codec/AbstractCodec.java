@@ -22,7 +22,10 @@ import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
+
+import java.util.function.Supplier;
 
 import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 
@@ -91,11 +94,15 @@ abstract class AbstractCodec<T> implements Codec<T> {
         return this.type;
     }
 
-    static Parameter create(PostgresqlObjectId type, Format format, @Nullable Publisher<? extends ByteBuf> value) {
+    static Parameter create(PostgresqlObjectId type, Format format, Publisher<? extends ByteBuf> value) {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
         return new Parameter(format, type.getObjectId(), value);
+    }
+
+    static Parameter create(PostgresqlObjectId type, Format format, Supplier<? extends ByteBuf> value) {
+        return new Parameter(format, type.getObjectId(), Mono.fromSupplier(value));
     }
 
     /**
