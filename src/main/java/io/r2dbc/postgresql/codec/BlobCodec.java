@@ -92,6 +92,7 @@ final class BlobCodec extends AbstractCodec<Blob> {
             buf.writeCharSequence(ByteBufUtil.hexDump(b, b.readerIndex(), chunkSize), StandardCharsets.US_ASCII);
             b.skipBytes(chunkSize);
         }
+        b.release();
 
         return buf;
     }

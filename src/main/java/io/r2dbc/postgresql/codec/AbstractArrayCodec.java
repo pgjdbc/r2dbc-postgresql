@@ -343,7 +343,7 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
                     continue;
 
                 }
-                array[i] = decodeItem(buffer.readBytes(len));
+                array[i] = decodeItem(buffer.readSlice(len));
             }
         } else {
             for (int i = 0; i < dims[thisDimension]; ++i) {
