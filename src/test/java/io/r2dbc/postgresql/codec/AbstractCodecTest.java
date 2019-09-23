@@ -102,12 +102,6 @@ final class AbstractCodecTest {
     }
 
     @Test
-    void createNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> AbstractCodec.create(null, FORMAT_TEXT, Mono.empty()))
-            .withMessage("type must not be null");
-    }
-
-    @Test
     void createNull() {
         Parameter parameter = AbstractCodec.createNull(INT4, FORMAT_TEXT);
 
@@ -118,12 +112,6 @@ final class AbstractCodecTest {
     void createNullNoFormat() {
         assertThatIllegalArgumentException().isThrownBy(() -> AbstractCodec.createNull(INT4, null))
             .withMessage("format must not be null");
-    }
-
-    @Test
-    void createNullNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> AbstractCodec.createNull(null, FORMAT_TEXT))
-            .withMessage("type must not be null");
     }
 
     @Test
