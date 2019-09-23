@@ -76,7 +76,7 @@ public enum SSLMode {
 
     public static SSLMode fromValue(String sslModeString) {
         for (SSLMode sslMode : values()) {
-            if (sslMode.value.equalsIgnoreCase(sslModeString)) {
+            if (sslMode.value.equalsIgnoreCase(sslModeString) || sslMode.name().equalsIgnoreCase(sslModeString)) {
                 return sslMode;
             }
         }

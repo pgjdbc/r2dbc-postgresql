@@ -5,62 +5,40 @@ This project contains the [PostgreSQL][p] implementation of the [R2DBC SPI][r]. 
 This driver provides the following features:
 
 * Login with username/password or implicit trust
-* Explict transactions
+* TLS
+* Explicit transactions
+* Notifications
+* SCRAM authentication
+* Binary data transfer
 * Execution of prepared statements with bindings
 * Execution of batch statements without bindings
 * Read and write support for all data types except LOB types (e.g. `BLOB`, `CLOB`)
 
 Next steps:
 
-* TLS
 * Multi-dimensional arrays
-* Notifications
-* SCRAM authentication
-* Binary data transfer
 
 [p]: https://www.postgresql.org
 [r]: https://github.com/r2dbc/r2dbc-spi
 
-## Maven
-Both milestone and snapshot artifacts (library, source, and javadoc) can be found in Maven repositories.
+## Code of Conduct
 
-```xml
-<dependency>
-  <groupId>io.r2dbc</groupId>
-  <artifactId>r2dbc-postgresql</artifactId>
-  <version>0.8.0.M8</version>
-</dependency>
+This project is governed by the [Spring Code of Conduct](CODE_OF_CONDUCT.adoc). By participating, you are expected to uphold this code of conduct. Please report unacceptable behavior to [spring-code-of-conduct@pivotal.io](mailto:spring-code-of-conduct@pivotal.io).
+
+## Getting Started
+
+Here is a quick teaser of how to use R2DBC PostgreSQL in Java:
+
+**URL Connection Factory Discovery**
+
+```java
+ConnectionFactory connectionFactory = ConnectionFactories.get("r2dbc:postgres://<host>:5432/<database>");
+
+Publisher<? extends Connection> connectionPublisher = connectionFactory.create();
 ```
 
-Artifacts can be found at the following repositories.
+**Programmatic Connection Factory Discovery**
 
-### Repositories
-```xml
-<repository>
-    <id>spring-snapshots</id>
-    <name>Spring Snapshots</name>
-    <url>https://repo.spring.io/snapshot</url>
-    <snapshots>
-        <enabled>true</enabled>
-    </snapshots>
-</repository>
-```
-
-```xml
-<repository>
-    <id>spring-milestones</id>
-    <name>Spring Milestones</name>
-    <url>https://repo.spring.io/milestone</url>
-    <snapshots>
-        <enabled>false</enabled>
-    </snapshots>
-</repository>
-```
-
-## Usage
-Configuration of the `ConnectionFactory` can be accomplished in two ways:
-
-### Connection Factory Discovery
 ```java
 ConnectionFactory connectionFactory = ConnectionFactories.get(ConnectionFactoryOptions.builder()
    .option(DRIVER, "postgresql")
@@ -77,20 +55,28 @@ Publisher<? extends Connection> connectionPublisher = connectionFactory.create()
 Mono<Connection> connectionMono = Mono.from(connectionFactory.create());
 ```
 
-Supported Connection Factory Discovery options:
+**Supported ConnectionFactory Discovery Options**
 
-| Option | Description
-| ------ | -----------
-| `driver` | Must be `postgresql`
-| `host` | Server hostname to connect to
-| `port` | Server port to connect to.  Defaults to 5432. _(Optional)_
-| `username` | Login username
-| `password` | Login password
-| `database` | Database to select. _(Optional)_
+| Option            | Description
+| ----------------- | -----------
+| `ssl`             | Enables SSL usage (`SSLMode.VERIFY_FULL`)
+| `driver`          | Must be `postgresql`.
+| `host`            | Server hostname to connect to
+| `port`            | Server port to connect to.  Defaults to `5432`. _(Optional)_
+| `username`        | Login username
+| `password`        | Login password _(Optional when using TLS Certificate authentication)_
+| `database`        | Database to select. _(Optional)_
 | `applicationName` | The name of the application connecting to the database.  Defaults to `r2dbc-postgresql`. _(Optional)_
-| `schema` | The schema to set. _(Optional)_
+| `schema`          | The schema to set. _(Optional)_
+| `sslMode`         | SSL mode to use, see `SSLMode` enum. Supported values: `DISABLE`, `ALLOW`, `PREFER`, `REQUIRE`, `VERIFY_CA`, `VERIFY_FULL`. _(Optional)_
+| `sslRootCert`     | Path to SSL CA certificate in PEM format. _(Optional)_
+| `sslKey`          | Path to SSL key for TLS authentication in PEM format. _(Optional)_
+| `sslCert`         | Path to SSL certificate for TLS authentication in PEM format. _(Optional)_
+| `sslPassword`     | Key password to decrypt SSL key. _(Optional)_
+| `sslHostnameVerifier` | `javax.net.ssl.HostnameVerifier` implementation. _(Optional)_
 
-### Programmatic
+**Programmatic Configuration**
+
 ```java
 ConnectionFactory connectionFactory = new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
     .host("...")
@@ -108,6 +94,7 @@ PostgreSQL uses index parameters that are prefixed with `$`.  The following SQL 
 ```sql
 INSERT INTO person (id, first_name, last_name) VALUES ($1, $2, $3)
 ```
+
 Parameters are referenced using the same identifiers when binding these:
 
 ```java
@@ -121,6 +108,39 @@ mono.flatMapMany(connection -> connection
 
 Binding also allowed positional index (zero-based) references.  The parameter index is derived from the parameter discovery order when parsing the query.
 
+### Maven configuration
+
+Add the Maven dependency and use our Maven milestone repository:
+
+```xml
+<dependency>
+  <groupId>io.r2dbc</groupId>
+  <artifactId>r2dbc-postgresql</artifactId>
+  <version>0.8.0.M8</version>
+</dependency>
+
+<repository>
+    <id>spring-milestones</id>
+    <name>Spring Milestones</name>
+    <url>https://repo.spring.io/milestone</url>
+</repository>
+```
+
+If you'd rather like the latest snapshots of the upcoming major version, use our Maven snapshot repository and declare the appropriate dependency version.
+
+```xml
+<dependency>
+  <groupId>io.r2dbc</groupId>
+  <artifactId>r2dbc-postgresql</artifactId>
+  <version>${version}.BUILD-SNAPSHOT</version>
+</dependency>
+
+<repository>
+  <id>spring-libs-snapshot</id>
+  <name>Spring Snapshot Repository</name>
+  <url>https://repo.spring.io/libs-snapshot</url>
+</repository>
+```
 
 ## Listen/Notify
 
