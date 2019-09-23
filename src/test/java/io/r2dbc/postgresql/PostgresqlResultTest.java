@@ -83,17 +83,23 @@ final class PostgresqlResultTest {
     }
 
     @Test
-    void toResultRowDescription() {
+    void toResultRowDescriptionRowsUpdated() {
+        PostgresqlResult result = PostgresqlResult.toResult(MockCodecs.empty(), Flux.just(new RowDescription(Collections.emptyList()), new DataRow(), new CommandComplete
+            ("test", null, null)), ExceptionFactory.INSTANCE);
+
+        result.getRowsUpdated()
+            .as(StepVerifier::create)
+            .verifyComplete();
+    }
+
+    @Test
+    void toResultRowDescriptionMap() {
         PostgresqlResult result = PostgresqlResult.toResult(MockCodecs.empty(), Flux.just(new RowDescription(Collections.emptyList()), new DataRow(), new CommandComplete
             ("test", null, null)), ExceptionFactory.INSTANCE);
 
         result.map((row, rowMetadata) -> row)
             .as(StepVerifier::create)
             .expectNextCount(1)
-            .verifyComplete();
-
-        result.getRowsUpdated()
-            .as(StepVerifier::create)
             .verifyComplete();
     }
 

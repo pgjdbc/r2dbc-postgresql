@@ -18,11 +18,11 @@ package io.r2dbc.postgresql.message.frontend;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.util.AbstractReferenceCounted;
 import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
-import java.nio.ByteBuffer;
 import java.util.Objects;
 
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.MESSAGE_OVERHEAD;
@@ -34,9 +34,9 @@ import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeSiz
 /**
  * The CopyData message.
  */
-public final class CopyData implements FrontendMessage {
+public final class CopyData extends AbstractReferenceCounted implements FrontendMessage {
 
-    private final ByteBuffer data;
+    private final ByteBuf data;
 
     /**
      * Creates a new message.
@@ -44,10 +44,10 @@ public final class CopyData implements FrontendMessage {
      * @param data data that forms part of a {@code COPY} data stream
      * @throws IllegalArgumentException if {@code data} is {@code null}
      */
-    public CopyData(ByteBuffer data) {
+    public CopyData(ByteBuf data) {
         Assert.requireNonNull(data, "data must not be null");
 
-        this.data = (ByteBuffer) data.flip();
+        this.data = data;
     }
 
     @Override
@@ -55,11 +55,12 @@ public final class CopyData implements FrontendMessage {
         Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
 
         return Mono.fromSupplier(() -> {
-            ByteBuf out = byteBufAllocator.ioBuffer(MESSAGE_OVERHEAD + (this.data.remaining()));
+            ByteBuf out = byteBufAllocator.ioBuffer(MESSAGE_OVERHEAD + (this.data.readableBytes()));
 
             writeByte(out, 'd');
             writeLengthPlaceholder(out);
             writeBytes(out, this.data);
+            this.release();
 
             return writeSize(out);
         });
@@ -75,6 +76,16 @@ public final class CopyData implements FrontendMessage {
         }
         CopyData copyData = (CopyData) o;
         return Objects.equals(this.data, copyData.data);
+    }
+
+    @Override
+    protected void deallocate() {
+        this.data.release();
+    }
+
+    @Override
+    public CopyData touch(Object hint) {
+        return this;
     }
 
     @Override

@@ -34,6 +34,12 @@ final class FrontendMessageUtils {
     private FrontendMessageUtils() {
     }
 
+    static ByteBuf writeByte(ByteBuf out, int value) {
+        Assert.requireNonNull(out, "out must not be null");
+
+        return out.writeByte(value);
+    }
+
     static ByteBuf writeByte(ByteBuf out, int... values) {
         Assert.requireNonNull(out, "out must not be null");
         Assert.requireNonNull(values, "values must not be null");
@@ -78,6 +84,12 @@ final class FrontendMessageUtils {
         return out;
     }
 
+    static ByteBuf writeInt(ByteBuf out, int value) {
+        Assert.requireNonNull(out, "out must not be null");
+
+        return out.writeInt(value);
+    }
+
     static ByteBuf writeInt(ByteBuf out, int... values) {
         Assert.requireNonNull(out, "out must not be null");
         Assert.requireNonNull(values, "values must not be null");
@@ -91,8 +103,13 @@ final class FrontendMessageUtils {
     static ByteBuf writeLengthPlaceholder(ByteBuf out) {
         Assert.requireNonNull(out, "out must not be null");
 
-        out.writeInt(LENGTH_PLACEHOLDER);
-        return out;
+        return out.writeInt(LENGTH_PLACEHOLDER);
+    }
+
+    static ByteBuf writeShort(ByteBuf out, int value) {
+        Assert.requireNonNull(out, "out must not be null");
+
+        return out.writeShort(value);
     }
 
     static ByteBuf writeShort(ByteBuf out, int... values) {

@@ -17,18 +17,17 @@
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.util.AbstractReferenceCounted;
 import io.r2dbc.postgresql.util.Assert;
-import io.r2dbc.postgresql.util.ByteBufferUtils;
 
-import java.nio.ByteBuffer;
 import java.util.Objects;
 
 /**
  * The CopyData message.
  */
-public final class CopyData implements BackendMessage {
+public final class CopyData extends AbstractReferenceCounted implements BackendMessage {
 
-    private final ByteBuffer data;
+    private final ByteBuf data;
 
     /**
      * Creates a new message.
@@ -39,7 +38,7 @@ public final class CopyData implements BackendMessage {
     public CopyData(ByteBuf data) {
         Assert.requireNonNull(data, "data must not be null");
 
-        this.data = ByteBufferUtils.toByteBuffer(data);
+        this.data = data;
     }
 
     @Override
@@ -59,7 +58,7 @@ public final class CopyData implements BackendMessage {
      *
      * @return data that forms part of a {@code COPY} data stream.
      */
-    public ByteBuffer getData() {
+    public ByteBuf getData() {
         return this.data;
     }
 
@@ -73,6 +72,16 @@ public final class CopyData implements BackendMessage {
         return "CopyData{" +
             "data=" + this.data +
             '}';
+    }
+
+    @Override
+    protected void deallocate() {
+        this.data.release();
+    }
+
+    @Override
+    public CopyData touch(Object hint) {
+        return this;
     }
 
     static CopyData decode(ByteBuf in) {

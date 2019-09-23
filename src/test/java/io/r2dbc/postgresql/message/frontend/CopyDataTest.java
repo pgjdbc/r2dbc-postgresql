@@ -18,9 +18,8 @@ package io.r2dbc.postgresql.message.frontend;
 
 import org.junit.jupiter.api.Test;
 
-import java.nio.ByteBuffer;
-
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageAssert.assertThat;
+import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 final class CopyDataTest {
@@ -33,7 +32,8 @@ final class CopyDataTest {
 
     @Test
     void encode() {
-        assertThat(new CopyData(ByteBuffer.allocate(4).putInt(100))).encoded()
+        CopyData data = new CopyData(TEST.buffer(4).writeInt(100));
+        assertThat(data).encoded()
             .isDeferred()
             .isEncodedAs(buffer -> buffer
                 .writeByte('d')

@@ -10,12 +10,13 @@ This driver provides the following features:
 * TLS
 * Explicit transactions
 * Notifications
+* Logical Decode
 * Binary data transfer
 * Execution of prepared statements with bindings
 * Execution of batch statements without bindings
 * Binary data transfer
 * Read and write support for all data types except LOB types (e.g. `BLOB`, `CLOB`)
-* Extension points to register `Codec`s to handle additional Postgres data types
+* Extension points to register `Codec`s to handle additional PostgreSQL data types
 
 Next steps:
 
@@ -160,7 +161,7 @@ If you'd rather like the latest snapshots of the upcoming major version, use our
 
 ## Listen/Notify
 
-Listen and Notify provide a simple form of signal or inter-process communication mechanism for processes accessing the same Postgres database.
+Listen and Notify provide a simple form of signal or inter-process communication mechanism for processes accessing the same PostgreSQL database.
 For Listen/Notify, two actors are involved: The sender (notify) and the receiver (listen). The following example uses two connections
 to illustrate how they work together:
 
@@ -184,7 +185,7 @@ The second connection broadcasts a notification to the `mymessage` channel upon 
 
 ## JSON/JSONB support
 
-Postgres supports JSON by storing values in `JSON`/`JSONB` columns. These values can be consumed and written using the regular R2DBC SPI and by using driver-specific extensions with the `io.r2dbc.postgresql.codec.Json` type.
+PostgreSQL supports JSON by storing values in `JSON`/`JSONB` columns. These values can be consumed and written using the regular R2DBC SPI and by using driver-specific extensions with the `io.r2dbc.postgresql.codec.Json` type.
 
 You can choose from two approaches:
 
@@ -237,6 +238,47 @@ The following types are supported for JSON exchange:
 * `byte[]`
 * `String`
 * `InputStream` (must be closed after usage to avoid memory leaks)
+
+## Logical Decode
+
+PostgreSQL allows replication streaming and decoding persistent changes to a database's tables into useful chunks of data.
+In PostgreSQL, logical decoding is implemented by decoding the contents of the write-ahead log, which describe changes on a storage level, into an application-specific form such as a stream of tuples or SQL statements.
+
+Consuming the replication stream is a four-step process:
+
+1. Obtain a replication connection via `PostgresqlConnectionFactory.replication()`.
+2. Create a replication slot (physical/logical).
+3. Initiate replication using the replication slot.
+4. Once the replication stream is set up, you can consume and map the binary data using `ReplicationStream.map(…)`.
+
+On application shutdown, `close()` the `ReplicationStream`.
+
+Note that a connection is busy once the replication is active and a connection can have at most one active replication stream.  
+
+```java
+
+Mono<PostgresqlReplicationConnection> replicationMono = connectionFactory.replication();
+
+// later:
+ReplicationSlotRequest request = ReplicationSlotRequest.logical()
+                                        .slotName("my_slot")
+                                        .outputPlugin("test_decoding")
+                                        .temporary()
+                                        .build();
+Mono<ReplicationSlot> createSlot = replicationConnection.createSlot(request);
+
+ReplicationRequest replicationRequest = ReplicationRequest.logical()
+                                        .slotName("my_slot")
+                                        .startPosition(LogSequenceNumber.valueOf(0))
+                                        .slotOption("skip-empty-xacts", true)
+                                        .slotOption("include-xids", false)
+                                        .build();
+
+Flux<T> replicationStream = replicationConnection.startReplication(replicationRequest).flatMapMany(it -> {
+    return it.map(byteBuf -> {…})
+        .doOnError(t -> it.close().subscribe());
+});
+```
 
 ## Data Type Mapping
 
@@ -360,7 +402,7 @@ Support for the following single-dimensional arrays (read and write):
 ## Extension mechanism
 This driver accepts the following extensions:
 
-* `CodecRegistrar` to contribute `Codec`s for Postgres ObjectIDs. 
+* `CodecRegistrar` to contribute `Codec`s for PostgreSQL ObjectIDs. 
 
 Extensions can be registered programmatically using `PostgresConnectionConfiguration` or discovered using Java's `ServiceLoader` mechanism (from `META-INF/services/io.r2dbc.postgresql.extension.Extension`).
 
