@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql;
 
+import io.netty.util.ReferenceCountUtil;
 import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
@@ -63,11 +64,7 @@ final class PostgresqlResult implements io.r2dbc.postgresql.api.PostgresqlResult
 
         return this.messages
             .handle(this.factory::handleErrorResponse)
-            .doOnNext(message -> {
-                if (message instanceof DataRow) {
-                    ((DataRow) message).release();
-                }
-            })
+            .doOnNext(ReferenceCountUtil::release)
             .ofType(CommandComplete.class)
             .singleOrEmpty()
             .handle((commandComplete, sink) -> {
@@ -88,20 +85,22 @@ final class PostgresqlResult implements io.r2dbc.postgresql.api.PostgresqlResult
             .handle(this.factory::handleErrorResponse)
             .handle((message, sink) -> {
 
-                if (message instanceof RowDescription) {
-                    this.rowDescription = (RowDescription) message;
-                    this.metadata = PostgresqlRowMetadata.toRowMetadata(this.codecs, (RowDescription) message);
-                    return;
-                }
-
-                if (message instanceof DataRow) {
-                    PostgresqlRow row = PostgresqlRow.toRow(this.codecs, (DataRow) message, this.rowDescription);
-
-                    try {
-                        sink.next(f.apply(row, this.metadata));
-                    } finally {
-                        row.release();
+                try {
+                    if (message instanceof RowDescription) {
+                        this.rowDescription = (RowDescription) message;
+                        this.metadata = PostgresqlRowMetadata.toRowMetadata(this.codecs, (RowDescription) message);
+                        return;
                     }
+
+                    if (message instanceof DataRow) {
+                        PostgresqlRow row = PostgresqlRow.toRow(this.codecs, (DataRow) message, this.rowDescription);
+
+
+                        sink.next(f.apply(row, this.metadata));
+                    }
+
+                } finally {
+                    ReferenceCountUtil.release(message);
                 }
             });
     }

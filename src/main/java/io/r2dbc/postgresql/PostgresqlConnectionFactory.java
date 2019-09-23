@@ -44,8 +44,10 @@ import reactor.util.annotation.Nullable;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -54,11 +56,15 @@ import java.util.function.Predicate;
  */
 public final class PostgresqlConnectionFactory implements ConnectionFactory {
 
+    private static final String REPLICATION_OPTION = "replication";
+
+    private static final String REPLICATION_DATABASE = "database";
+
+    private final Function<SSLConfig, Mono<? extends Client>> clientFactory;
+
     private final PostgresqlConnectionConfiguration configuration;
 
     private final SocketAddress endpoint;
-
-    private final Function<SSLConfig, Mono<? extends Client>> clientFactory;
 
     private final Extensions extensions;
 
@@ -107,12 +113,41 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
 
     @Override
     public Mono<io.r2dbc.postgresql.api.PostgresqlConnection> create() {
+
+        if (isReplicationConnection()) {
+            throw new UnsupportedOperationException("Cannot create replication connection through create(). Use replication() method instead.");
+        }
+
+        return doCreateConnection(false, this.configuration.getOptions()).cast(io.r2dbc.postgresql.api.PostgresqlConnection.class);
+    }
+
+    /**
+     * Creates a new {@link io.r2dbc.postgresql.api.PostgresqlReplicationConnection} for interaction with replication streams.
+     *
+     * @return a new {@link io.r2dbc.postgresql.api.PostgresqlReplicationConnection} for interaction with replication streams.
+     */
+    public Mono<io.r2dbc.postgresql.api.PostgresqlReplicationConnection> replication() {
+
+        Map<String, String> options = this.configuration.getOptions();
+        if (options == null) {
+            options = new HashMap<>();
+        } else {
+            options = new HashMap<>(options);
+        }
+
+        options.put(REPLICATION_OPTION, REPLICATION_DATABASE);
+
+        return doCreateConnection(true, options).map(DefaultPostgresqlReplicationConnection::new);
+    }
+
+    private Mono<PostgresqlConnection> doCreateConnection(boolean forReplication, @Nullable Map<String, String> options) {
+
         SSLConfig sslConfig = this.configuration.getSslConfig();
         Predicate<Throwable> isAuthSpecificationError = e -> e instanceof ExceptionFactory.PostgresqlAuthenticationFailure;
-        return this.tryConnectWithConfig(sslConfig)
+        return this.tryConnectWithConfig(sslConfig, options)
             .onErrorResume(
                 isAuthSpecificationError.and(e -> sslConfig.getSslMode() == SSLMode.ALLOW),
-                e -> this.tryConnectWithConfig(sslConfig.mutateMode(SSLMode.REQUIRE))
+                e -> this.tryConnectWithConfig(sslConfig.mutateMode(SSLMode.REQUIRE), options)
                     .onErrorResume(sslAuthError -> {
                         e.addSuppressed(sslAuthError);
                         return Mono.error(e);
@@ -120,7 +155,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
             )
             .onErrorResume(
                 isAuthSpecificationError.and(e -> sslConfig.getSslMode() == SSLMode.PREFER),
-                e -> this.tryConnectWithConfig(sslConfig.mutateMode(SSLMode.DISABLE))
+                e -> this.tryConnectWithConfig(sslConfig.mutateMode(SSLMode.DISABLE), options)
                     .onErrorResume(sslAuthError -> {
                         e.addSuppressed(sslAuthError);
                         return Mono.error(e);
@@ -129,20 +164,30 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
             .flatMap(client -> {
                 DefaultCodecs codecs = new DefaultCodecs(client.getByteBufAllocator());
 
-                return this.getIsolationLevel(client, codecs)
+                Mono<IsolationLevel> isolationLevelMono = Mono.just(IsolationLevel.READ_COMMITTED);
+                if (!forReplication) {
+                    isolationLevelMono = getIsolationLevel(client, codecs);
+                }
+
+                return isolationLevelMono
                     .map(it -> new PostgresqlConnection(client, codecs, DefaultPortalNameSupplier.INSTANCE, new IndefiniteStatementCache(client), it, this.configuration.isForceBinary()))
                     .delayUntil(connection -> {
                         return prepareConnection(connection, client.getByteBufAllocator(), codecs);
                     })
                     .onErrorResume(throwable -> this.closeWithError(client, throwable));
-            }).onErrorMap(this::cannotConnect).cast(io.r2dbc.postgresql.api.PostgresqlConnection.class);
+            }).onErrorMap(this::cannotConnect);
     }
 
-    private Mono<Client> tryConnectWithConfig(SSLConfig sslConfig) {
+    private boolean isReplicationConnection() {
+        Map<String, String> options = this.configuration.getOptions();
+        return options != null && REPLICATION_DATABASE.equalsIgnoreCase(options.get(REPLICATION_OPTION));
+    }
+
+    private Mono<Client> tryConnectWithConfig(SSLConfig sslConfig, @Nullable Map<String, String> options) {
         return this.clientFactory.apply(sslConfig)
             .delayUntil(client -> StartupMessageFlow
                 .exchange(this.configuration.getApplicationName(), this::getAuthenticationHandler, client, this.configuration.getDatabase(), this.configuration.getUsername(),
-                    this.configuration.getOptions())
+                    options)
                 .handle(ExceptionFactory.INSTANCE::handleErrorResponse))
             .cast(Client.class);
     }

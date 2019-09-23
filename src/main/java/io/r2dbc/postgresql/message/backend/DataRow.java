@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.util.AbstractReferenceCounted;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
@@ -25,7 +26,7 @@ import java.util.Arrays;
 /**
  * The DataRow message.
  */
-public final class DataRow implements BackendMessage {
+public final class DataRow extends AbstractReferenceCounted implements BackendMessage {
 
     private static final int NULL = -1;
 
@@ -67,10 +68,16 @@ public final class DataRow implements BackendMessage {
         return Arrays.hashCode(this.columns);
     }
 
-    /**
-     * Release the data encapsulated by the message.
-     */
-    public void release() {
+    @Override
+    public String toString() {
+        return "DataRow{" +
+            "columns=" + Arrays.toString(this.columns) +
+            '}';
+    }
+
+    @Override
+    protected void deallocate() {
+
         for (ByteBuf column : this.columns) {
             if (column != null) {
                 column.release();
@@ -79,10 +86,8 @@ public final class DataRow implements BackendMessage {
     }
 
     @Override
-    public String toString() {
-        return "DataRow{" +
-            "columns=" + Arrays.toString(this.columns) +
-            '}';
+    public DataRow touch(Object hint) {
+        return this;
     }
 
     static DataRow decode(ByteBuf in) {
