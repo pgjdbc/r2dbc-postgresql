@@ -751,9 +751,6 @@ final class ReactorNettyClientTest {
     private Flux<BackendMessage> datarowCleanup(Flux<BackendMessage> in) {
         return Flux.create(sink -> Flux.from(in).subscribe(message -> {
             sink.next(message);
-            if (message instanceof DataRow) {
-                ((DataRow) message).release();
-            }
             ReferenceCountUtil.release(message);
         }, sink::error, sink::complete));
     }

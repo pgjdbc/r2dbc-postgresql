@@ -75,6 +75,22 @@ public final class Assert {
     }
 
     /**
+     * Checks that a specified {@link String} is not {@code null} and not {@link String#isEmpty() empty} and throws a customized {@link IllegalArgumentException} if it is.
+     *
+     * @param t       the  {@link String} reference to check for nullity and emptiness
+     * @param message the detail message to be used in the event that an {@link IllegalArgumentException} is thrown
+     * @return {@code t} if not {@code null} or {@link String#isEmpty() empty}
+     * @throws IllegalArgumentException if {@code t} is {code null}
+     */
+    public static String requireNotEmpty(@Nullable String t, String message) {
+        if (t == null || t.isEmpty()) {
+            throw new IllegalArgumentException(message);
+        }
+
+        return t;
+    }
+
+    /**
      * Checks that the specified value is of a specific type.
      *
      * @param value   the value to check

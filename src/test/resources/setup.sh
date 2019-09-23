@@ -14,6 +14,9 @@ chown postgres:postgres /var/runtime/*
 ls -l /var/runtime
 
 ./docker-entrypoint.sh postgres \
+  -c 'wal_level=logical' \
+  -c 'wal_keep_segments=4' \
+  -c 'max_replication_slots=4' \
   -c 'ssl=on' \
   -c 'ssl_key_file=/var/runtime/server.key' \
   -c 'ssl_cert_file=/var/runtime/server.crt' \

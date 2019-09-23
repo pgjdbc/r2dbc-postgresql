@@ -23,7 +23,6 @@ import io.r2dbc.postgresql.message.backend.EmptyQueryResponse;
 import io.r2dbc.postgresql.message.backend.RowDescription;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.Collections;
@@ -84,17 +83,23 @@ final class PostgresqlResultTest {
     }
 
     @Test
-    void toResultRowDescription() {
+    void toResultRowDescriptionRowsUpdated() {
+        PostgresqlResult result = PostgresqlResult.toResult(MockCodecs.empty(), Flux.just(new RowDescription(Collections.emptyList()), new DataRow(), new CommandComplete
+            ("test", null, null)));
+
+        result.getRowsUpdated()
+            .as(StepVerifier::create)
+            .verifyComplete();
+    }
+
+    @Test
+    void toResultRowDescriptionMap() {
         PostgresqlResult result = PostgresqlResult.toResult(MockCodecs.empty(), Flux.just(new RowDescription(Collections.emptyList()), new DataRow(), new CommandComplete
             ("test", null, null)));
 
         result.map((row, rowMetadata) -> row)
             .as(StepVerifier::create)
             .expectNextCount(1)
-            .verifyComplete();
-
-        result.getRowsUpdated()
-            .as(StepVerifier::create)
             .verifyComplete();
     }
 

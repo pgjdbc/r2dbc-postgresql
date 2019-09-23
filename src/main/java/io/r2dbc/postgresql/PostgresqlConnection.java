@@ -79,6 +79,10 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
         this.validationQuery = new SimpleQueryPostgresqlStatement(this.client, this.codecs, "SELECT 1").fetchSize(0).execute().flatMap(PostgresqlResult::getRowsUpdated);
     }
 
+    Client getClient() {
+        return this.client;
+    }
+
     @Override
     public Mono<Void> beginTransaction() {
         return useTransactionStatus(transactionStatus -> {
