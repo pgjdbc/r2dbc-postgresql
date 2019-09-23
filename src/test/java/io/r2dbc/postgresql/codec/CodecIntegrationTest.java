@@ -131,8 +131,8 @@ final class CodecIntegrationTest {
                 }
             },
             (actual, expected) -> Flux.zip(
-                Flux.from(actual.stream()).reduce(TEST.heapBuffer(), ByteBuf::writeBytes),
-                Flux.from(expected.stream()).reduce(TEST.heapBuffer(), ByteBuf::writeBytes)
+                Flux.from(actual.stream()).reduce(TEST.heapBuffer(), ByteBuf::writeBytes).concatWith(Mono.from(actual.discard()).then(Mono.empty())),
+                Flux.from(expected.stream()).reduce(TEST.heapBuffer(), ByteBuf::writeBytes).concatWith(Mono.from(expected.discard()).then(Mono.empty()))
             )
                 .as(StepVerifier::create)
                 .assertNext(t -> assertThat(t.getT1()).isEqualTo(t.getT2()))

@@ -269,6 +269,9 @@
                         <include>**/*TestKit.java</include>
                         <include>**/*Test.java</include>
                     </includes>
+                    <systemPropertyVariables>
+                        <io.netty.leakDetectionLevel>paranoid</io.netty.leakDetectionLevel>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
             <plugin>

@@ -23,7 +23,6 @@ import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
-import reactor.core.publisher.Flux;
 import reactor.util.annotation.Nullable;
 
 import java.time.Instant;
@@ -64,8 +63,7 @@ final class LocalDateCodec extends AbstractTemporalCodec<LocalDate> {
     Parameter doEncode(LocalDate value) {
         Assert.requireNonNull(value, "value must not be null");
 
-        ByteBuf encoded = ByteBufUtils.encode(this.byteBufAllocator, value.toString());
-        return create(DATE, FORMAT_TEXT, Flux.just(encoded));
+        return create(DATE, FORMAT_TEXT, () -> ByteBufUtils.encode(this.byteBufAllocator, value.toString()));
     }
 
     @Override

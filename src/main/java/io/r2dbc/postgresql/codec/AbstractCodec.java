@@ -22,7 +22,11 @@ import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
+
+import java.util.function.Supplier;
 
 import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 
@@ -91,11 +95,29 @@ abstract class AbstractCodec<T> implements Codec<T> {
         return this.type;
     }
 
-    static Parameter create(PostgresqlObjectId type, Format format, @Nullable Publisher<? extends ByteBuf> value) {
-        Assert.requireNonNull(format, "format must not be null");
-        Assert.requireNonNull(type, "type must not be null");
-
+    /**
+     * Create a {@link Parameter}.
+     *
+     * @param type   the type OID
+     * @param format the format to use
+     * @param value  {@link Publisher} emitting {@link ByteBuf buffers}. Make sure to use deferred buffer creation instead of {@link Mono#just(Object)} and {@link Flux#just(Object)} to avoid memory
+     *               leaks
+     * @return the encoded  {@link Parameter}
+     */
+    static Parameter create(PostgresqlObjectId type, Format format, Publisher<? extends ByteBuf> value) {
         return new Parameter(format, type.getObjectId(), value);
+    }
+
+    /**
+     * Create a {@link Parameter}.
+     *
+     * @param type           the type OID
+     * @param format         the format to use
+     * @param bufferSupplier {@link Supplier} supplying the encoded {@link ByteBuf buffer}
+     * @return the encoded  {@link Parameter}
+     */
+    static Parameter create(PostgresqlObjectId type, Format format, Supplier<? extends ByteBuf> bufferSupplier) {
+        return new Parameter(format, type.getObjectId(), Mono.fromSupplier(bufferSupplier));
     }
 
     /**

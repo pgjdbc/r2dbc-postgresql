@@ -22,7 +22,6 @@ import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
-import reactor.core.publisher.Flux;
 import reactor.util.annotation.Nullable;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
@@ -54,8 +53,7 @@ final class FloatCodec extends AbstractNumericCodec<Float> {
     Parameter doEncode(Float value) {
         Assert.requireNonNull(value, "value must not be null");
 
-        ByteBuf encoded = this.byteBufAllocator.buffer(4).writeFloat(value);
-        return create(FLOAT4, FORMAT_BINARY, Flux.just(encoded));
+        return create(FLOAT4, FORMAT_BINARY, () -> this.byteBufAllocator.buffer(4).writeFloat(value));
     }
 
     @Override

@@ -23,7 +23,8 @@ import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
-import reactor.core.publisher.Flux;
+
+import java.util.function.Supplier;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR_ARRAY;
@@ -61,10 +62,8 @@ final class StringArrayCodec extends AbstractArrayCodec<String> {
     }
 
     @Override
-    Parameter encodeArray(ByteBuf byteBuf) {
-        Assert.requireNonNull(byteBuf, "byteBuf must not be null");
-
-        return create(TEXT_ARRAY, FORMAT_TEXT, Flux.just(byteBuf));
+    Parameter encodeArray(Supplier<ByteBuf> encodedSupplier) {
+        return create(TEXT_ARRAY, FORMAT_TEXT, encodedSupplier);
     }
 
     @Override

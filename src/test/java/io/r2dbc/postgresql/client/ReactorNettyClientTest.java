@@ -17,10 +17,12 @@
 package io.r2dbc.postgresql.client;
 
 import io.netty.channel.ConnectTimeoutException;
+import io.netty.util.ReferenceCountUtil;
 import io.r2dbc.postgresql.PostgresqlConnection;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.postgresql.authentication.PasswordAuthenticationHandler;
+import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.DataRow;
 import io.r2dbc.postgresql.message.backend.NotificationResponse;
@@ -34,6 +36,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.UnicastProcessor;
 import reactor.test.StepVerifier;
@@ -95,8 +98,8 @@ final class ReactorNettyClientTest {
     void exchange() {
         SERVER.getJdbcOperations().execute("INSERT INTO test VALUES (100)");
 
-        this.client
-            .exchange(Mono.just(new Query("SELECT value FROM test")))
+        this.datarowCleanup(this.client
+            .exchange(Mono.just(new Query("SELECT value FROM test"))))
             .as(StepVerifier::create)
             .assertNext(message -> assertThat(message).isInstanceOf(RowDescription.class))
             .assertNext(message -> assertThat(message).isInstanceOf(DataRow.class))
@@ -138,8 +141,8 @@ final class ReactorNettyClientTest {
     void handleTransactionStatusAfterCommand() {
         assertThat(this.client.getTransactionStatus()).isEqualTo(TransactionStatus.IDLE);
 
-        this.client
-            .exchange(Mono.just(new Query("SELECT value FROM test")))
+        this.datarowCleanup(this.client
+            .exchange(Mono.just(new Query("SELECT value FROM test"))))
             .blockLast();
 
         assertThat(this.client.getTransactionStatus()).isEqualTo(TransactionStatus.IDLE);
@@ -165,8 +168,8 @@ final class ReactorNettyClientTest {
         IntStream.range(0, 1_000)
             .forEach(i -> SERVER.getJdbcOperations().update("INSERT INTO test VALUES(?)", i));
 
-        this.client
-            .exchange(Mono.just(new Query("SELECT value FROM test")))
+        this.datarowCleanup(this.client
+            .exchange(Mono.just(new Query("SELECT value FROM test"))))
             .as(StepVerifier::create)
             .expectNextCount(1 + 1_000 + 1)
             .verifyComplete();
@@ -177,9 +180,9 @@ final class ReactorNettyClientTest {
         SERVER.getJdbcOperations().execute("INSERT INTO test VALUES (100)");
         SERVER.getJdbcOperations().execute("INSERT INTO test VALUES (1000)");
 
-        this.client
-            .exchange(Mono.just(new Query("SELECT value FROM test LIMIT 1")))
-            .zipWith(this.client.exchange(Mono.just(new Query("SELECT value FROM test LIMIT 1 OFFSET 1"))))
+        this.datarowCleanup(this.client
+            .exchange(Mono.just(new Query("SELECT value FROM test LIMIT 1"))))
+            .zipWith(this.datarowCleanup(this.client.exchange(Mono.just(new Query("SELECT value FROM test LIMIT 1 OFFSET 1")))))
             .flatMapIterable(t -> Arrays.asList(t.getT1(), t.getT2()))
             .as(StepVerifier::create)
             .assertNext(message -> assertThat(message).isInstanceOf(RowDescription.class))
@@ -233,6 +236,7 @@ final class ReactorNettyClientTest {
         void scramAuthentication() {
             createConnectionFactory("test-scram", "test-scram").create()
                 .flatMapMany(c -> c.createStatement("SELECT 1 test").execute())
+                .flatMap(r -> r.map((row, meta) -> row.get(0)))
                 .as(StepVerifier::create)
                 .expectNextCount(1)
                 .verifyComplete();
@@ -668,5 +672,15 @@ final class ReactorNettyClientTest {
             .assertNext(message -> assertThat(message.getPayload()).isEqualTo("{\"value\":1000}"))
             .thenCancel()
             .verify();
+    }
+
+    private Flux<BackendMessage> datarowCleanup(Flux<BackendMessage> in) {
+        return Flux.create(sink -> Flux.from(in).subscribe(message -> {
+            sink.next(message);
+            if (message instanceof DataRow) {
+                ((DataRow) message).release();
+            }
+            ReferenceCountUtil.release(message);
+        }, sink::error, sink::complete));
     }
 }

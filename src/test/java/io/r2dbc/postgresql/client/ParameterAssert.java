@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.client;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.util.ReferenceCountUtil;
 import io.r2dbc.postgresql.message.Format;
 import org.assertj.core.api.AbstractAssert;
 import reactor.core.publisher.Flux;
@@ -57,10 +58,19 @@ public final class ParameterAssert extends AbstractAssert<ParameterAssert, Param
     public ParameterAssert hasValue(ByteBuf... expected) {
         isNotNull();
 
-        Flux.<ByteBuf>from(this.actual.getValue())
+        Flux<ByteBuf> byteBufFlux = Flux.create(sink -> Flux.<ByteBuf>from(this.actual.getValue()).subscribe(buf -> {
+            sink.next(buf);
+            ReferenceCountUtil.release(buf);
+        }, sink::error, sink::complete));
+
+        Flux.from(byteBufFlux)
             .as(StepVerifier::create)
             .expectNext(expected)
             .verifyComplete();
+
+        for (ByteBuf byteBuf : expected) {
+            ReferenceCountUtil.release(byteBuf);
+        }
 
         return this;
     }

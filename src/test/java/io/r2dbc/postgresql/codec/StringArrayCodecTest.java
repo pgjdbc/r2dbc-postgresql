@@ -28,7 +28,6 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR_ARRAY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.CHAR;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.CHAR_ARRAY;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TEXT_ARRAY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
@@ -99,16 +98,10 @@ final class StringArrayCodecTest {
 
     @Test
     void encodeArray() {
-        assertThat(new StringArrayCodec(TEST).encodeArray(encode(TEST, "{alpha,bravo}")))
+        assertThat(new StringArrayCodec(TEST).encodeArray(() -> encode(TEST, "{alpha,bravo}")))
             .hasFormat(FORMAT_TEXT)
             .hasType(TEXT_ARRAY.getObjectId())
             .hasValue(encode(TEST, "{alpha,bravo}"));
-    }
-
-    @Test
-    void encodeArrayNoByteBuf() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new StringArrayCodec(TEST).encodeArray(null))
-            .withMessage("byteBuf must not be null");
     }
 
     @Test

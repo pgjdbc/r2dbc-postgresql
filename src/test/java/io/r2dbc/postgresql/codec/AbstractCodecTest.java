@@ -19,6 +19,7 @@ package io.r2dbc.postgresql.codec;
 import io.r2dbc.postgresql.client.Parameter;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
@@ -96,13 +97,13 @@ final class AbstractCodecTest {
 
     @Test
     void createNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> AbstractCodec.create(INT4, null, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> AbstractCodec.create(INT4, null, Mono.empty()))
             .withMessage("format must not be null");
     }
 
     @Test
     void createNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> AbstractCodec.create(null, FORMAT_TEXT, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> AbstractCodec.create(null, FORMAT_TEXT, Mono.empty()))
             .withMessage("type must not be null");
     }
 
