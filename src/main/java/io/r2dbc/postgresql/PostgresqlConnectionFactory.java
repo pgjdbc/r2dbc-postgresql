@@ -29,6 +29,7 @@ import io.r2dbc.postgresql.message.backend.AuthenticationMessage;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.IsolationLevel;
+import io.r2dbc.spi.R2dbcException;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import reactor.core.publisher.Mono;
 
@@ -89,7 +90,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
                     .map(it -> new PostgresqlConnection(client, codecs, DefaultPortalNameSupplier.INSTANCE, new IndefiniteStatementCache(client), it, configuration.isForceBinary()))
                     .delayUntil(this::setSchema)
                     .onErrorResume(throwable -> this.closeWithError(client, throwable));
-            });
+            }).onErrorMap(this::cannotConnect);
     }
 
     private Mono<Client> tryConnectWithConfig(SSLConfig sslConfig) {
@@ -102,10 +103,18 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
     }
 
     private Mono<PostgresqlConnection> closeWithError(Client client, Throwable throwable) {
-        return client.close()
-            .then(Mono.error(new R2dbcNonTransientResourceException(
-                String.format("Cannot connect to %s:%d", this.configuration.getHost(), this.configuration.getPort()), throwable
-            )));
+        return client.close().then(Mono.error(throwable));
+    }
+
+    private Throwable cannotConnect(Throwable throwable) {
+
+        if (throwable instanceof R2dbcException) {
+            return throwable;
+        }
+
+        return new R2dbcNonTransientResourceException(
+            String.format("Cannot connect to %s:%d", this.configuration.getHost(), this.configuration.getPort()), throwable
+        );
     }
 
     @Override

@@ -16,7 +16,6 @@
 
 package io.r2dbc.postgresql.client;
 
-import io.netty.channel.ConnectTimeoutException;
 import io.netty.util.ReferenceCountUtil;
 import io.r2dbc.postgresql.PostgresqlConnection;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
@@ -29,6 +28,7 @@ import io.r2dbc.postgresql.message.backend.NotificationResponse;
 import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.postgresql.message.frontend.Query;
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
+import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import io.r2dbc.spi.R2dbcPermissionDeniedException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -208,7 +208,7 @@ final class ReactorNettyClientTest {
 
         postgresqlConnectionFactory.create()
             .as(StepVerifier::create)
-            .expectError(ConnectTimeoutException.class)
+            .expectError(R2dbcNonTransientResourceException.class)
             .verify(Duration.ofMillis(500));
     }
 
@@ -549,7 +549,7 @@ final class ReactorNettyClientTest {
                         .sslMode(SSLMode.VERIFY_CA),
                     c -> c
                         .as(StepVerifier::create)
-                        .verifyError());
+                        .verifyError(R2dbcNonTransientResourceException.class));
             }
 
             @Test
@@ -589,7 +589,7 @@ final class ReactorNettyClientTest {
                         .sslMode(SSLMode.VERIFY_FULL),
                     c -> c
                         .as(StepVerifier::create)
-                        .verifyError());
+                        .verifyError(R2dbcNonTransientResourceException.class));
             }
 
             @Test
@@ -602,7 +602,7 @@ final class ReactorNettyClientTest {
                         .sslCert(SERVER.getClientCrt()),
                     c -> c
                         .as(StepVerifier::create)
-                        .verifyError());
+                        .verifyError(R2dbcNonTransientResourceException.class));
             }
 
             @Test

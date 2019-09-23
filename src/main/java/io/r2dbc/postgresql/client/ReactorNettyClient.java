@@ -51,6 +51,7 @@ import reactor.netty.tcp.TcpClient;
 import reactor.util.annotation.Nullable;
 import reactor.util.concurrent.Queues;
 
+import javax.net.ssl.SSLException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
@@ -100,21 +101,10 @@ public final class ReactorNettyClient implements Client {
      * Creates a new frame processor connected to a given TCP connection.
      *
      * @param connection the TCP connection
-     * @param sslConfig  ssl configuration
      * @throws IllegalArgumentException if {@code connection} is {@code null}
      */
-    private ReactorNettyClient(Connection connection, SSLConfig sslConfig) {
+    private ReactorNettyClient(Connection connection) {
         Assert.requireNonNull(connection, "Connection must not be null");
-        Assert.requireNonNull(sslConfig, "SSLConfig must not be null");
-
-        Mono<Void> sslHandshake;
-        if (sslConfig.getSslMode().startSsl()) {
-            SSLSessionHandlerAdapter sslSessionHandlerAdapter = new SSLSessionHandlerAdapter(connection.outbound().alloc(), sslConfig);
-            connection.addHandlerFirst(sslSessionHandlerAdapter);
-            sslHandshake = sslSessionHandlerAdapter.getHandshake();
-        } else {
-            sslHandshake = Mono.empty();
-        }
 
         connection.addHandler(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE - 5, 1, 4, -4, 0));
         connection.addHandler(new EnsureSubscribersCompleteChannelHandler(this.requestProcessor, this.responseReceivers));
@@ -139,35 +129,49 @@ public final class ReactorNettyClient implements Client {
             })
             .then();
 
-        Mono<Void> request = sslHandshake
-            .thenMany(this.requestProcessor)
+        Mono<Void> request = this.requestProcessor
             .flatMap(message -> {
                 if (DEBUG_ENABLED) {
                     logger.debug("Request:  {}", message);
                 }
-
                 return connection.outbound().send(message.encode(this.byteBufAllocator));
             }, 1)
             .then();
 
         receive
             .onErrorResume(throwable -> {
+
                 MonoSink<Flux<BackendMessage>> receiver = this.responseReceivers.poll();
                 if (receiver != null) {
                     receiver.error(throwable);
                 }
                 this.requestProcessor.onComplete();
-                logger.error("Connection Error", throwable);
+
+                if (isSslException(throwable)) {
+                    logger.debug("Connection Error", throwable);
+                } else {
+
+                    logger.error("Connection Error", throwable);
+                }
                 return close();
             })
             .subscribe();
 
         request
             .onErrorResume(throwable -> {
+
+                if (isSslException(throwable)) {
+                    logger.debug("Connection Error", throwable);
+                }
+
                 logger.error("Connection Error", throwable);
                 return close();
             })
             .subscribe();
+    }
+
+    private static boolean isSslException(Throwable throwable) {
+        return throwable instanceof SSLException || throwable.getCause() instanceof SSLException;
     }
 
     private void handleResponse(BackendMessage message, SynchronousSink<BackendMessage> sink) {
@@ -279,9 +283,18 @@ public final class ReactorNettyClient implements Client {
             tcpClient = tcpClient.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Math.toIntExact(connectTimeout.toMillis()));
         }
 
-        Mono<? extends Connection> connection = tcpClient.connect();
+        return tcpClient.connect().flatMap(it -> registerSslHandler(sslConfig, it).thenReturn(new ReactorNettyClient(it)));
+    }
 
-        return connection.map(c -> new ReactorNettyClient(c, sslConfig));
+    private static Mono<? extends Void> registerSslHandler(SSLConfig sslConfig, Connection it) {
+
+        if (sslConfig.getSslMode().startSsl()) {
+            SSLSessionHandlerAdapter sslSessionHandlerAdapter = new SSLSessionHandlerAdapter(it.outbound().alloc(), sslConfig);
+            it.addHandlerFirst(sslSessionHandlerAdapter);
+            return sslSessionHandlerAdapter.getHandshake();
+        }
+
+        return Mono.empty();
     }
 
     @Override
@@ -290,17 +303,17 @@ public final class ReactorNettyClient implements Client {
 
             if (this.isClosed.compareAndSet(false, true)) {
 
-                if (!connection.channel().isOpen()) {
-                    this.isClosed.set(true);
-                    return connection.onDispose();
+                if (!this.connection.channel().isOpen() || this.processId == null) {
+                    this.connection.dispose();
+                    return this.connection.onDispose();
                 }
+
                 return Flux.just(Terminate.INSTANCE)
                     .doOnNext(message -> logger.debug("Request:  {}", message))
                     .concatMap(message -> this.connection.outbound().send(message.encode(this.connection.outbound().alloc())))
                     .then()
                     .doOnSuccess(v -> this.connection.dispose())
-                    .then(this.connection.onDispose())
-                    .doOnSuccess(v -> this.isClosed.set(true));
+                    .then(this.connection.onDispose());
             }
 
             return Mono.empty();
