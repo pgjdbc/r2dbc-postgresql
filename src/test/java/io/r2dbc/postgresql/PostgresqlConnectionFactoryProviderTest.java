@@ -16,6 +16,8 @@
 
 package io.r2dbc.postgresql;
 
+import io.r2dbc.postgresql.client.SSLConfig;
+import io.r2dbc.postgresql.client.SSLMode;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import org.junit.jupiter.api.Test;
 
@@ -28,6 +30,7 @@ import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.POSTGRESQL
 import static io.r2dbc.spi.ConnectionFactoryOptions.DRIVER;
 import static io.r2dbc.spi.ConnectionFactoryOptions.HOST;
 import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
+import static io.r2dbc.spi.ConnectionFactoryOptions.SSL;
 import static io.r2dbc.spi.ConnectionFactoryOptions.USER;
 import static io.r2dbc.spi.ConnectionFactoryOptions.builder;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -115,6 +118,21 @@ final class PostgresqlConnectionFactoryProviderTest {
             .option(HOST, "test-host")
             .option(PASSWORD, "test-password")
             .build())).isTrue();
+    }
+
+    @Test
+    void supportsSsl() {
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(SSL, true)
+            .build());
+
+        SSLConfig sslConfig = factory.getConfiguration().getSslConfig();
+
+        assertThat(sslConfig.getSslMode()).isEqualTo(SSLMode.VERIFY_FULL);
     }
 
     @Test

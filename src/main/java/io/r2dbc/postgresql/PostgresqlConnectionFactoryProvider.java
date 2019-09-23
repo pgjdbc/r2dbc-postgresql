@@ -23,7 +23,6 @@ import io.r2dbc.spi.ConnectionFactoryProvider;
 import io.r2dbc.spi.Option;
 
 import javax.net.ssl.HostnameVerifier;
-import java.util.Locale;
 import java.util.Map;
 
 import static io.r2dbc.spi.ConnectionFactoryOptions.CONNECT_TIMEOUT;
@@ -32,6 +31,7 @@ import static io.r2dbc.spi.ConnectionFactoryOptions.DRIVER;
 import static io.r2dbc.spi.ConnectionFactoryOptions.HOST;
 import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
 import static io.r2dbc.spi.ConnectionFactoryOptions.PORT;
+import static io.r2dbc.spi.ConnectionFactoryOptions.SSL;
 import static io.r2dbc.spi.ConnectionFactoryOptions.USER;
 
 /**
@@ -117,6 +117,11 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
             builder.port(port);
         }
 
+        Boolean ssl = connectionFactoryOptions.getValue(SSL);
+        if (ssl != null && ssl) {
+            builder.enableSsl();
+        }
+
         Map<String, String> options = connectionFactoryOptions.getValue(OPTIONS);
         if (options != null) {
             builder.options(options);
@@ -125,7 +130,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         Object sslMode = connectionFactoryOptions.getValue(SSL_MODE);
         if (sslMode != null) {
             if (sslMode instanceof String) {
-                builder.sslMode(SSLMode.fromValue(sslMode.toString().toUpperCase(Locale.ENGLISH)));
+                builder.sslMode(SSLMode.fromValue(sslMode.toString()));
             } else {
                 builder.sslMode((SSLMode) sslMode);
             }
