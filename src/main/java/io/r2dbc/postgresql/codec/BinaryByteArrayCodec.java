@@ -23,7 +23,6 @@ import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
-import reactor.core.publisher.Mono;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.BYTEA;
@@ -43,9 +42,7 @@ final class BinaryByteArrayCodec extends AbstractBinaryCodec<byte[]> {
     Parameter doEncode(byte[] value) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return create(BYTEA, FORMAT_TEXT,
-            Mono.fromSupplier(() -> toHexFormat(Unpooled.wrappedBuffer(value)))
-        );
+        return create(BYTEA, FORMAT_TEXT, () -> toHexFormat(Unpooled.wrappedBuffer(value)));
     }
 
 }

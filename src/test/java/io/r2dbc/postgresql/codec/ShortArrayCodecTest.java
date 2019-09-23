@@ -26,7 +26,6 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT2;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT2_ARRAY;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -76,16 +75,10 @@ final class ShortArrayCodecTest {
 
     @Test
     void encodeArray() {
-        assertThat(new ShortArrayCodec(TEST).encodeArray(encode(TEST, "{100,200}")))
+        assertThat(new ShortArrayCodec(TEST).encodeArray(() -> encode(TEST, "{100,200}")))
             .hasFormat(FORMAT_TEXT)
             .hasType(INT2_ARRAY.getObjectId())
             .hasValue(encode(TEST, "{100,200}"));
-    }
-
-    @Test
-    void encodeArrayNoByteBuf() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new ShortArrayCodec(TEST).encodeArray(null))
-            .withMessage("byteBuf must not be null");
     }
 
     @Test

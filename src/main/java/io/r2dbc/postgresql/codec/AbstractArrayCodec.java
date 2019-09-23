@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 
@@ -107,13 +108,14 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
     final Parameter doEncode(Object[] value) {
         Assert.requireNonNull(value, "value must not be null");
 
-        ByteBuf byteBuf = this.byteBufAllocator.buffer();
-        encodeAsText(byteBuf, value, this::encodeItem);
-
-        return encodeArray(byteBuf);
+        return encodeArray(() -> {
+            ByteBuf byteBuf = this.byteBufAllocator.buffer();
+            encodeAsText(byteBuf, value, this::encodeItem);
+            return byteBuf;
+        });
     }
 
-    abstract Parameter encodeArray(ByteBuf byteBuf);
+    abstract Parameter encodeArray(Supplier<ByteBuf> encodedSupplier);
 
     abstract String encodeItem(T value);
 

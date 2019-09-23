@@ -34,12 +34,6 @@ final class ParameterTest {
     }
 
     @Test
-    void constructorNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new Parameter(FORMAT_TEXT, null, NULL_VALUE))
-            .withMessage("type must not be null");
-    }
-
-    @Test
     void constructorNoValue() {
         assertThatIllegalArgumentException().isThrownBy(() -> new Parameter(FORMAT_TEXT, 100, null))
             .withMessage("value must not be null");

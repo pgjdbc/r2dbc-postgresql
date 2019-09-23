@@ -24,7 +24,6 @@ import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT8;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT8_ARRAY;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
@@ -78,16 +77,10 @@ final class LongArrayCodecTest {
 
     @Test
     void encodeArray() {
-        assertThat(new LongArrayCodec(TEST).encodeArray(encode(TEST, "{100,200}")))
+        assertThat(new LongArrayCodec(TEST).encodeArray(() -> encode(TEST, "{100,200}")))
             .hasFormat(FORMAT_TEXT)
             .hasType(INT8_ARRAY.getObjectId())
             .hasValue(encode(TEST, "{100,200}"));
-    }
-
-    @Test
-    void encodeArrayNoByteBuf() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new LongArrayCodec(TEST).encodeArray(null))
-            .withMessage("byteBuf must not be null");
     }
 
     @Test

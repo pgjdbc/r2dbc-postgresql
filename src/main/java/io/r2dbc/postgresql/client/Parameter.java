@@ -33,7 +33,7 @@ public final class Parameter {
 
     private final Format format;
 
-    private final Integer type;
+    private final int type;
 
     private final Publisher<? extends ByteBuf> value;
 
@@ -45,9 +45,9 @@ public final class Parameter {
      * @param value  the value of the parameter
      * @throws IllegalArgumentException if {@code format}, or {@code type} is {@code null}
      */
-    public Parameter(Format format, Integer type, Publisher<? extends ByteBuf> value) {
+    public Parameter(Format format, int type, Publisher<? extends ByteBuf> value) {
         this.format = Assert.requireNonNull(format, "format must not be null");
-        this.type = Assert.requireNonNull(type, "type must not be null");
+        this.type = type;
         this.value = Assert.requireNonNull(value, "value must not be null");
     }
 
@@ -93,7 +93,7 @@ public final class Parameter {
      *
      * @return the type of the parameter
      */
-    Integer getType() {
+    int getType() {
         return this.type;
     }
 

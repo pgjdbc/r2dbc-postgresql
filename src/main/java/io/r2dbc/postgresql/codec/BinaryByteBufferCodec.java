@@ -23,7 +23,6 @@ import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
-import reactor.core.publisher.Mono;
 
 import java.nio.ByteBuffer;
 
@@ -45,9 +44,7 @@ final class BinaryByteBufferCodec extends AbstractBinaryCodec<ByteBuffer> {
     Parameter doEncode(ByteBuffer value) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return create(BYTEA, FORMAT_TEXT,
-            Mono.fromSupplier(() -> toHexFormat(Unpooled.wrappedBuffer(value)))
-        );
+        return create(BYTEA, FORMAT_TEXT, () -> toHexFormat(Unpooled.wrappedBuffer(value)));
     }
 
 }

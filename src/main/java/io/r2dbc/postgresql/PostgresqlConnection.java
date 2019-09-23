@@ -122,14 +122,14 @@ public final class PostgresqlConnection implements Connection {
         Assert.requireNonNull(name, "name must not be null");
 
         return beginTransaction()
-                .then(useTransactionStatus(transactionStatus -> {
-                    if (OPEN == transactionStatus) {
-                        return exchange(String.format("SAVEPOINT %s", name));
-                    } else {
-                        this.logger.debug("Skipping create savepoint because status is {}", transactionStatus);
-                        return Mono.empty();
-                    }
-                }));
+            .then(useTransactionStatus(transactionStatus -> {
+                if (OPEN == transactionStatus) {
+                    return exchange(String.format("SAVEPOINT %s", name));
+                } else {
+                    this.logger.debug("Skipping create savepoint because status is {}", transactionStatus);
+                    return Mono.empty();
+                }
+            }));
     }
 
     @Override
@@ -258,20 +258,20 @@ public final class PostgresqlConnection implements Connection {
         Assert.requireNonNull(isolationLevel, "isolationLevel must not be null");
 
         return withTransactionStatus(getTransactionIsolationLevelQuery(isolationLevel))
-                .flatMapMany(this::exchange)
-                .then()
-                .doOnSuccess(ignore -> this.isolationLevel = isolationLevel);
+            .flatMapMany(this::exchange)
+            .then()
+            .doOnSuccess(ignore -> this.isolationLevel = isolationLevel);
     }
 
     @Override
     public String toString() {
         return "PostgresqlConnection{" +
-                "client=" + this.client +
-                ", codecs=" + this.codecs +
-                ", forceBinary=" + this.forceBinary +
-                ", portalNameSupplier=" + this.portalNameSupplier +
-                ", statementCache=" + this.statementCache +
-                '}';
+            "client=" + this.client +
+            ", codecs=" + this.codecs +
+            ", forceBinary=" + this.forceBinary +
+            ", portalNameSupplier=" + this.portalNameSupplier +
+            ", statementCache=" + this.statementCache +
+            '}';
     }
 
     @Override
@@ -326,7 +326,7 @@ public final class PostgresqlConnection implements Connection {
 
     private Mono<Void> useTransactionStatus(Function<TransactionStatus, Publisher<?>> f) {
         return Flux.defer(() -> f.apply(this.client.getTransactionStatus()))
-                .then();
+            .then();
     }
 
     private <T> Mono<T> withTransactionStatus(Function<TransactionStatus, T> f) {
@@ -336,7 +336,7 @@ public final class PostgresqlConnection implements Connection {
     private Publisher<?> exchange(String sql) {
         ExceptionFactory exceptionFactory = ExceptionFactory.withSql("BEGIN");
         return SimpleQueryMessageFlow.exchange(this.client, sql)
-                .handle(exceptionFactory::handleErrorResponse);
+            .handle(exceptionFactory::handleErrorResponse);
     }
 
     /**
