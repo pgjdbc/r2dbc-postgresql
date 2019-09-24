@@ -47,8 +47,6 @@ public final class DefaultCodecs implements Codecs {
             new StringCodec(byteBufAllocator),
             new InstantCodec(byteBufAllocator),
             new ZonedDateTimeCodec(byteBufAllocator),
-            new JsonCodec(byteBufAllocator),
-            new JsonbCodec(byteBufAllocator),
             new BinaryByteBufferCodec(byteBufAllocator),
             new BinaryByteArrayCodec(byteBufAllocator),
 
@@ -71,6 +69,14 @@ public final class DefaultCodecs implements Codecs {
             new UrlCodec(byteBufAllocator),
             new UuidCodec(byteBufAllocator),
             new ZoneIdCodec(byteBufAllocator),
+
+            // JSON
+            new JsonCodec(byteBufAllocator),
+            new JsonByteArrayCodec(byteBufAllocator),
+            new JsonByteBufCodec(byteBufAllocator),
+            new JsonByteBufferCodec(byteBufAllocator),
+            new JsonInputStreamCodec(byteBufAllocator),
+            new JsonStringCodec(byteBufAllocator),
 
             // Fallback for Object.class
             new ByteCodec(byteBufAllocator),

@@ -16,20 +16,28 @@
 
 package io.r2dbc.postgresql;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.buffer.Unpooled;
+import io.r2dbc.postgresql.codec.Json;
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
 import io.r2dbc.spi.Connection;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.springframework.util.StreamUtils;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -41,6 +49,7 @@ import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.UUID;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -83,7 +92,6 @@ abstract class AbstractCodecIntegrationTest {
     void bytePrimitive() {
         testCodec(Byte.class, (byte) 10, "INT2");
     }
-
 
     @Test
     void charPrimitive() {
@@ -140,6 +148,66 @@ abstract class AbstractCodecIntegrationTest {
         testCodec(Integer.class, 100, "NUMERIC");
         testCodec(Integer.class, 100, "FLOAT4");
         testCodec(Integer.class, 100, "FLOAT8");
+    }
+
+    @Test
+    void json() {
+        testCodec(String.class, "{\"hello\": \"world\"}", "JSON", "$1::json");
+
+        testCodec(Json.class, Json.of("{\"hello\": \"world\"}"), (actual, expected) -> assertThat(actual.asString()).isEqualTo(("{\"hello\": \"world\"}")), "JSON");
+        testCodec(Json.class, Json.of("{\"hello\": \"world\"}".getBytes()), (actual, expected) -> assertThat(actual.asString()).isEqualTo(("{\"hello\": \"world\"}")), "JSON");
+        testCodec(Json.class, Json.of(ByteBuffer.wrap("{\"hello\": \"world\"}".getBytes())), (actual, expected) -> assertThat(actual.asString()).isEqualTo(("{\"hello\": \"world\"}")), "JSON");
+        testCodec(Json.class, Json.of(Unpooled.wrappedBuffer("{\"hello\": \"world\"}".getBytes())), (actual, expected) -> assertThat(actual.asString()).isEqualTo(("{\"hello\": \"world\"}")), "JSON");
+        testCodec(Json.class, Json.of(new ByteBufInputStream(Unpooled.wrappedBuffer("{\"hello\": \"world\"}".getBytes()), true)), (actual, expected) -> assertThat(actual.asString()).isEqualTo((
+            "{\"hello\": \"world\"}")), "JSON");
+
+        testCodecReadAs(Json.of("{\"hello\": \"world\"}"), String.class, "{\"hello\": \"world\"}", "JSON");
+        testCodecReadAs(Json.of("{\"hello\": \"world\"}"), byte[].class, "{\"hello\": \"world\"}".getBytes(), "JSON");
+        testCodecReadAs(Json.of("{\"hello\": \"world\"}"), ByteBuffer.class, ByteBuffer.wrap("{\"hello\": \"world\"}".getBytes()), "JSON");
+        testCodecReadAs(Json.of("{\"hello\": \"world\"}"), ByteBuf.class, (Consumer<ByteBuf>) actual -> {
+
+            assertThat(actual).isEqualTo(Unpooled.wrappedBuffer("{\"hello\": \"world\"}".getBytes()));
+            actual.release();
+
+        }, "JSON");
+        testCodecReadAs(Json.of("{\"hello\": \"world\"}"), InputStream.class, (Consumer<InputStream>) actual -> {
+            try {
+                assertThat(StreamUtils.copyToByteArray(actual)).isEqualTo("{\"hello\": \"world\"}".getBytes());
+                actual.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }, "JSON");
+    }
+
+    @Test
+    void jsonb() {
+        testCodec(String.class, "{\"hello\": \"world\"}", "JSONB", "$1::json");
+
+        testCodec(Json.class, Json.of("{\"hello\": \"world\"}"), (actual, expected) -> assertThat(actual.asString()).isEqualTo(("{\"hello\": \"world\"}")), "JSONB");
+        testCodec(Json.class, Json.of("{\"hello\": \"world\"}".getBytes()), (actual, expected) -> assertThat(actual.asString()).isEqualTo(("{\"hello\": \"world\"}")), "JSONB");
+        testCodec(Json.class, Json.of(ByteBuffer.wrap("{\"hello\": \"world\"}".getBytes())), (actual, expected) -> assertThat(actual.asString()).isEqualTo(("{\"hello\": \"world\"}")), "JSONB");
+        testCodec(Json.class, Json.of(Unpooled.wrappedBuffer("{\"hello\": \"world\"}".getBytes())), (actual, expected) -> assertThat(actual.asString()).isEqualTo(("{\"hello\": \"world\"}")), "JSONB");
+        testCodec(Json.class, Json.of(new ByteBufInputStream(Unpooled.wrappedBuffer("{\"hello\": \"world\"}".getBytes()), true)), (actual, expected) -> assertThat(actual.asString()).isEqualTo((
+            "{\"hello\": \"world\"}")), "JSONB");
+
+        testCodecReadAs(Json.of("{\"hello\": \"world\"}"), String.class, "{\"hello\": \"world\"}", "JSONB");
+        testCodecReadAs(Json.of("{\"hello\": \"world\"}"), byte[].class, "{\"hello\": \"world\"}".getBytes(), "JSONB");
+        testCodecReadAs(Json.of("{\"hello\": \"world\"}"), ByteBuffer.class, ByteBuffer.wrap("{\"hello\": \"world\"}".getBytes()), "JSONB");
+        testCodecReadAs(Json.of("{\"hello\": \"world\"}"), ByteBuf.class, (Consumer<ByteBuf>) actual -> {
+
+            assertThat(actual).isEqualTo(Unpooled.wrappedBuffer("{\"hello\": \"world\"}".getBytes()));
+            actual.release();
+
+        }, "JSONB");
+        testCodecReadAs(Json.of("{\"hello\": \"world\"}"), InputStream.class, (Consumer<InputStream>) actual -> {
+            try {
+                assertThat(StreamUtils.copyToByteArray(actual)).isEqualTo("{\"hello\": \"world\"}".getBytes());
+                actual.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }, "JSONB");
     }
 
     @Test
@@ -239,6 +307,10 @@ abstract class AbstractCodecIntegrationTest {
     }
 
     private <T> void testCodec(Class<T> javaType, T value, String sqlType) {
+        testCodec(javaType, value, sqlType, "$1");
+    }
+
+    private <T> void testCodec(Class<T> javaType, T value, String sqlType, String insertPlaceholder) {
         testCodec(javaType, value, (actual, expected) -> {
 
             if (value instanceof Float) {
@@ -251,10 +323,14 @@ abstract class AbstractCodecIntegrationTest {
                 return;
             }
             assertThat(actual).isEqualTo(expected);
-        }, sqlType);
+        }, sqlType, insertPlaceholder);
     }
 
     private <T> void testCodec(Class<T> javaType, T value, BiConsumer<T, T> equality, String sqlType) {
+        testCodec(javaType, value, equality, sqlType, "$1");
+    }
+
+    private <T> void testCodec(Class<T> javaType, T value, BiConsumer<T, T> equality, String sqlType, String insertPlaceholder) {
         SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS test");
         SERVER.getJdbcOperations().execute(String.format("CREATE TABLE test ( value %s )", sqlType));
 
@@ -262,7 +338,7 @@ abstract class AbstractCodecIntegrationTest {
             this.connectionFactory.create()
                 .flatMapMany(connection -> connection
 
-                    .createStatement("INSERT INTO test VALUES ($1)")
+                    .createStatement("INSERT INTO test VALUES (" + insertPlaceholder + ")")
                     .bindNull("$1", javaType)
                     .execute()
 
@@ -278,7 +354,7 @@ abstract class AbstractCodecIntegrationTest {
             this.connectionFactory.create()
                 .flatMapMany(connection -> connection
 
-                    .createStatement("INSERT INTO test VALUES ($1)")
+                    .createStatement("INSERT INTO test VALUES (" + insertPlaceholder + ")")
                     .bind("$1", value)
                     .execute()
 
@@ -289,19 +365,89 @@ abstract class AbstractCodecIntegrationTest {
                 .expectNext(1)
                 .verifyComplete();
 
+
+            if (value instanceof Buffer) {
+                ((Buffer) value).rewind();
+            }
+
+            this.connectionFactory.create()
+                .flatMapMany(connection -> {
+
+                    PostgresqlStatement statement;
+                    if (insertPlaceholder.equals("$1")) {
+                        statement = connection
+                            // where clause added to force using extended query instead of simple query
+                            .createStatement("SELECT value FROM test WHERE " + insertPlaceholder + " <> 1")
+                            .bind("$1", 2);
+                    } else {
+                        statement = connection.createStatement("SELECT value FROM test");
+                    }
+                    return statement.execute()
+
+                        .map(result -> result.map((row, metadata) -> row.get("value", javaType)))
+                        .flatMap(Function.identity())
+
+                        .concatWith(close(connection));
+                })
+                .as(StepVerifier::create)
+                .assertNext(r2dbc -> equality.accept(r2dbc, value))
+                .verifyComplete();
+        } finally {
+            SERVER.getJdbcOperations().execute("DROP TABLE test");
+        }
+    }
+
+
+    private <T> void testRead(Class<T> javaType, T value, String sqlType, String insertPlaceholder) {
+        testCodec(javaType, value, (actual, expected) -> {
+
+            if (value instanceof Float) {
+                assertThat((Float) actual).isCloseTo((Float) value, Offset.offset(0.01f));
+                return;
+            }
+
+            if (value instanceof Double) {
+                assertThat((Double) actual).isCloseTo((Double) value, Offset.offset(0.01));
+                return;
+            }
+            assertThat(actual).isEqualTo(expected);
+        }, sqlType, insertPlaceholder);
+    }
+
+    private <W, R> void testCodecReadAs(W toWrite, Class<R> javaTypeToRead, R expected, String sqlType) {
+        testCodecReadAs(toWrite, javaTypeToRead, (Consumer<R>) (actual) -> assertThat(actual).isEqualTo(expected), sqlType);
+    }
+
+    private <W, R> void testCodecReadAs(W toWrite, Class<R> javaTypeToRead, Consumer<R> equality, String sqlType) {
+        SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS test");
+        SERVER.getJdbcOperations().execute(String.format("CREATE TABLE test ( value %s )", sqlType));
+
+        try {
             this.connectionFactory.create()
                 .flatMapMany(connection -> connection
-                    // where clause added to force using extended query instead of simple query
-                    .createStatement("SELECT value FROM test WHERE $1 <> 1")
-                    .bind("$1", 2)
+
+                    .createStatement("INSERT INTO test VALUES ($1)")
+                    .bind("$1", toWrite)
                     .execute()
 
-                    .map(result -> result.map((row, metadata) -> row.get("value", javaType)))
-                    .flatMap(Function.identity())
+                    .flatMap(PostgresqlResult::getRowsUpdated)
 
                     .concatWith(close(connection)))
                 .as(StepVerifier::create)
-                .assertNext(r2dbc -> equality.accept(r2dbc, value))
+                .expectNext(1)
+                .verifyComplete();
+
+            this.connectionFactory.create()
+                .flatMapMany(connection -> {
+                    return connection.createStatement("SELECT value FROM test").execute()
+
+                        .map(result -> result.map((row, metadata) -> row.get("value", javaTypeToRead)))
+                        .flatMap(Function.identity())
+
+                        .concatWith(close(connection));
+                })
+                .as(StepVerifier::create)
+                .assertNext(equality)
                 .verifyComplete();
         } finally {
             SERVER.getJdbcOperations().execute("DROP TABLE test");

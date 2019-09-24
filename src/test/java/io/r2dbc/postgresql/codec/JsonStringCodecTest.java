@@ -16,13 +16,9 @@
 
 package io.r2dbc.postgresql.codec;
 
-import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import org.junit.jupiter.api.Test;
-
-import java.io.ByteArrayInputStream;
-import java.nio.ByteBuffer;
 
 import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
@@ -35,31 +31,31 @@ import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
-final class JsonCodecTest {
+final class JsonStringCodecTest {
 
     @Test
     void constructorNoByteBufAllocator() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new JsonCodec(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new JsonStringCodec(null))
             .withMessage("byteBufAllocator must not be null");
     }
 
     @Test
     void decode() {
         String json = "{\"name\": \"John Doe\"}";
-        JsonCodec jsonCodec = new JsonCodec(TEST);
-        Json decodedBytes = jsonCodec.decode(ByteBufUtils.encode(TEST, json), JSON.getObjectId(), FORMAT_TEXT, Json.class);
+        JsonStringCodec jsonCodec = new JsonStringCodec(TEST);
+        String decodedBytes = jsonCodec.decode(ByteBufUtils.encode(TEST, json), JSON.getObjectId(), FORMAT_TEXT, String.class);
 
-        assertThat(decodedBytes.asString()).isEqualTo(json);
+        assertThat(decodedBytes).isEqualTo(json);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new JsonCodec(TEST).decode(null, JSON.getObjectId(), FORMAT_TEXT, Json.class)).isNull();
+        assertThat(new JsonStringCodec(TEST).decode(null, JSON.getObjectId(), FORMAT_TEXT, String.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
-        JsonCodec jsonCodec = new JsonCodec(TEST);
+        JsonStringCodec jsonCodec = new JsonStringCodec(TEST);
 
         assertThat(jsonCodec.doCanDecode(JSON, FORMAT_TEXT)).isTrue();
         assertThat(jsonCodec.doCanDecode(JSON, FORMAT_BINARY)).isTrue();
@@ -71,51 +67,36 @@ final class JsonCodecTest {
 
     @Test
     void doCanDecodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new JsonCodec(TEST).doCanDecode(JSON, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new JsonStringCodec(TEST).doCanDecode(JSON, null))
             .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new JsonCodec(TEST).doCanDecode(null, FORMAT_TEXT))
+        assertThatIllegalArgumentException().isThrownBy(() -> new JsonStringCodec(TEST).doCanDecode(null, FORMAT_TEXT))
             .withMessage("type must not be null");
     }
 
     @Test
     void doEncode() {
         String json = "{\"name\":\"John Doe\"}";
-        JsonCodec jsonCodec = new JsonCodec(TEST);
+        JsonStringCodec jsonCodec = new JsonStringCodec(TEST);
 
-        assertThat(jsonCodec.doEncode(Json.of(json)))
-            .hasFormat(FORMAT_BINARY)
-            .hasType(JSONB.getObjectId())
-            .hasValue(Unpooled.wrappedBuffer(Unpooled.wrappedBuffer(new byte[]{1}), ByteBufUtils.encode(TEST, json)));
-
-        assertThat(jsonCodec.doEncode(Json.of(json.getBytes())))
-            .hasFormat(FORMAT_BINARY)
-            .hasType(JSONB.getObjectId())
-            .hasValue(Unpooled.wrappedBuffer(Unpooled.wrappedBuffer(new byte[]{1}), ByteBufUtils.encode(TEST, json)));
-
-        assertThat(jsonCodec.doEncode(Json.of(ByteBuffer.wrap(json.getBytes()))))
-            .hasFormat(FORMAT_BINARY)
-            .hasType(JSONB.getObjectId())
-            .hasValue(Unpooled.wrappedBuffer(Unpooled.wrappedBuffer(new byte[]{1}), ByteBufUtils.encode(TEST, json)));
-
-        assertThat(jsonCodec.doEncode(Json.of(new ByteArrayInputStream(json.getBytes()))))
-            .hasFormat(FORMAT_BINARY)
-            .hasType(JSONB.getObjectId())
-            .hasValue(Unpooled.wrappedBuffer(Unpooled.wrappedBuffer(new byte[]{1}), ByteBufUtils.encode(TEST, json)));
+        assertThat(jsonCodec.doEncode(json))
+            .hasFormat(FORMAT_TEXT)
+            .hasType(JSON.getObjectId())
+            .hasValue(ByteBufUtils.encode(TEST, json));
     }
 
     @Test
     void doEncodeNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new JsonCodec(TEST).doEncode(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new JsonStringCodec(TEST).doEncode(null))
             .withMessage("value must not be null");
     }
 
     @Test
     void encodeNull() {
-        assertThat(new JsonCodec(TEST).encodeNull())
+        assertThat(new JsonStringCodec(TEST).encodeNull())
             .isEqualTo(new Parameter(FORMAT_BINARY, JSONB.getObjectId(), NULL_VALUE));
     }
 
