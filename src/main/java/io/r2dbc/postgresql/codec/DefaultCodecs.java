@@ -70,6 +70,14 @@ public final class DefaultCodecs implements Codecs {
             new UuidCodec(byteBufAllocator),
             new ZoneIdCodec(byteBufAllocator),
 
+            // JSON
+            new JsonCodec(byteBufAllocator),
+            new JsonByteArrayCodec(byteBufAllocator),
+            new JsonByteBufCodec(byteBufAllocator),
+            new JsonByteBufferCodec(byteBufAllocator),
+            new JsonInputStreamCodec(byteBufAllocator),
+            new JsonStringCodec(byteBufAllocator),
+
             // Fallback for Object.class
             new ByteCodec(byteBufAllocator),
             new DateCodec(byteBufAllocator),

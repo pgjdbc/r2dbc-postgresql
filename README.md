@@ -166,6 +166,62 @@ Mono<Void> notify = sender.createStatement("NOTIFY mymessage, 'Hello World'")
 Upon subscription, the first connection enters listen mode and publishes incoming `Notification`s as `Flux`.
 The second connection broadcasts a notification to the `mymessage` channel upon subscription.
 
+## JSON/JSONB support
+
+Postgres supports JSON by storing values in `JSON`/`JSONB` columns. These values can be consumed and written using the regular R2DBC SPI and by using driver-specific extensions with the `io.r2dbc.postgresql.codec.Json` type.
+
+You can choose from two approaches:
+
+* Native JSONB encoding using the `Json` wrapper type.
+* Using scalar types.
+
+The difference between the `Json` type and scalar types is that `Json` values are written encoded as `JSONB` to the database.
+`byte[]` and `String` types are represented as `BYTEA` respective `VARCHAR` and require casting (`$1::JSON`) when used with parameterized statements.
+
+The following code shows `INSERT` and `SELECT` cases for JSON interaction:
+
+```sql
+CREATE TABLE my_table (my_json JSON);
+```
+
+**Write JSON**
+
+```java
+connection.createStatement("INSERT INTO my_table (my_json) VALUES($1)")
+            .bind("$1", Json.of("{\"hello\": \"world\"}")).execute();
+```		
+**Consume JSON**
+
+```java
+connection.createStatement("SELECT my_json FROM my_table")
+            .execute()
+            .flatMap(it -> it.map((row, rowMetadata) -> row.get("my_json", Json.class)))
+            .map(Json::asString);
+```
+**Write JSON using casting**
+
+```java
+connection.createStatement("INSERT INTO my_table (my_json) VALUES($1::JSON)")
+    .bind("$1", "{\"hello\": \"world\"}").execute();
+```		
+
+**Consume JSON as scalar type**
+
+```java
+connection.createStatement("SELECT my_json FROM my_table")
+    .execute()
+    .flatMap(it -> it.map((row, rowMetadata) -> row.get("my_json", String.class)));
+```
+
+The following types are supported for JSON exchange:
+
+* `io.r2dbc.postgresql.codec.Json`
+* `ByteBuf` (must be released after usage to avoid memory leaks)
+* `ByteBuffer`
+* `byte[]`
+* `String`
+* `InputStream` (must be released after usage to avoid memory leaks)
+
 ## Data Type Mapping
 
 This reference table shows the type mapping between [PostgreSQL][p] and Java data types:
@@ -187,7 +243,8 @@ This reference table shows the type mapping between [PostgreSQL][p] and Java dat
 | [`inet`][psql-inet-ref]                         | [**`InetAddress`**][java-inet-ref]|
 | [`integer`][psql-integer-ref]                   | [**`Integer`**][java-integer-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref]|
 | [`interval`][psql-interval-ref]                 | Not yet supported.|
-| [`json`][psql-json-ref]                         | Not yet supported.|
+| [`json`][psql-json-ref]                         | **`Json`**, [`String`][java-string-ref]. Reading: [`ByteBuf`][`byte[]`][java-primitive-ref][`ByteBuffer`][java-ByteBuffer-ref][`String`][java-string-ref][`InputStream`][java-inputstream-ref]|
+| [`jsonb`][psql-json-ref]                        | **`Json`**, [`String`][java-string-ref]. Reading: [`ByteBuf`][`byte[]`][java-primitive-ref][`ByteBuffer`][java-ByteBuffer-ref][`String`][java-string-ref][`InputStream`][java-inputstream-ref]|
 | [`line`][psql-line-ref]                         | Not yet supported.|
 | [`lseg`][psql-lseq-ref]                         | Not yet supported.|
 | [`macaddr`][psql-macaddr-ref]                   | Not yet supported.|
@@ -266,7 +323,8 @@ Support for the following single-dimensional arrays (read and write):
 [java-ByteBuffer-ref]: https://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html
 [java-double-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/Double.html
 [java-float-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/Float.html
-[java-inet-ref]: https://docs.oracle.com/javase/7/docs/api/java/net/InetAddress.html
+[java-inet-ref]: https://docs.oracle.com/javase/8/docs/api/java/net/InetAddress.html
+[java-inputstream-ref]: https://docs.oracle.com/javase/8/docs/api/java/io/InputStream.html
 [java-instant-ref]: https://docs.oracle.com/javase/8/docs/api/java/time/Instant.html
 [java-integer-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/Integer.html
 [java-long-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/Long.html
@@ -274,6 +332,7 @@ Support for the following single-dimensional arrays (read and write):
 [java-ld-ref]: https://docs.oracle.com/javase/8/docs/api/java/time/LocalDate.html
 [java-lt-ref]: https://docs.oracle.com/javase/8/docs/api/java/time/LocalTime.html
 [java-odt-ref]: https://docs.oracle.com/javase/8/docs/api/java/time/OffsetDateTime.html
+[java-primitive-ref]: https://docs.oracle.com/javase/tutorial/java/nutsandbolts/datatypes.html
 [java-short-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/Short.html
 [java-string-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/String.html
 [java-uuid-ref]: https://docs.oracle.com/javase/8/docs/api/java/util/UUID.html
