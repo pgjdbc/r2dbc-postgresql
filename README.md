@@ -220,7 +220,7 @@ The following types are supported for JSON exchange:
 * `ByteBuffer`
 * `byte[]`
 * `String`
-* `InputStream` (must be released after usage to avoid memory leaks)
+* `InputStream` (must be closed after usage to avoid memory leaks)
 
 ## Data Type Mapping
 
