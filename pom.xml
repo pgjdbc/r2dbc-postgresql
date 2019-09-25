@@ -35,7 +35,7 @@
         <hikari-cp.version>3.4.0</hikari-cp.version>
         <java.version>1.8</java.version>
         <jsr305.version>3.0.2</jsr305.version>
-        <junit.version>5.4.2</junit.version>
+        <junit.version>5.5.2</junit.version>
         <jmh.version>1.21</jmh.version>
         <mbr.version>0.1.0.RELEASE</mbr.version>
         <logback.version>1.2.3</logback.version>
@@ -43,9 +43,9 @@
         <postgresql.version>42.2.6</postgresql.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <r2dbc-spi.version>0.8.0.BUILD-SNAPSHOT</r2dbc-spi.version>
-        <reactor.version>Dysprosium-RC1</reactor.version>
-        <scram-client.version>1.0.0-beta.2</scram-client.version>
+        <r2dbc-spi.version>${project.version}</r2dbc-spi.version>
+        <reactor.version>Dysprosium-RELEASE</reactor.version>
+        <scram-client.version>2.1</scram-client.version>
         <slf4j.version>1.7.26</slf4j.version>
         <spring-framework.version>5.1.8.RELEASE</spring-framework.version>
         <testcontainers.version>1.12.1</testcontainers.version>
@@ -214,32 +214,36 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.1.0</version>
+                <version>3.1.2</version>
                 <configuration>
                     <archive>
                         <manifest>
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                             <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
                         </manifest>
+                        <manifestEntries>
+                            <R2DBC-Specification-Version>${r2dbc-spi.version}</R2DBC-Specification-Version>
+                            <Automatic-Module-Name>r2dbc.postgresql</Automatic-Module-Name>
+                        </manifestEntries>
                     </archive>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
-                <version>2.8.2</version>
+                <version>3.0.0-M1</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.0.1</version>
+                <version>3.1.1</version>
                 <configuration>
                     <excludePackageNames>
                         io.r2dbc.postgresql.authentication,io.r2dbc.postgresql.client,io.r2dbc.postgresql.message,io.r2dbc.postgresql.util
                     </excludePackageNames>
                     <links>
                         <link>https://projectreactor.io/docs/core/release/api/</link>
-                        <link>https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/</link>
+                        <link>https://www.reactive-streams.org/reactive-streams-1.0.3-javadoc/</link>
                     </links>
                 </configuration>
                 <executions>
