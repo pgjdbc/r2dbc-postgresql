@@ -45,7 +45,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <r2dbc-spi.version>${project.version}</r2dbc-spi.version>
         <reactor.version>Dysprosium-RELEASE</reactor.version>
-        <scram-client.version>1.0.0-beta.2</scram-client.version>
+        <scram-client.version>2.1</scram-client.version>
         <slf4j.version>1.7.26</slf4j.version>
         <spring-framework.version>5.1.8.RELEASE</spring-framework.version>
         <testcontainers.version>1.12.1</testcontainers.version>
