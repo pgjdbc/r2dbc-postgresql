@@ -1,6 +1,58 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+0.8.0.RC1
+------------------
+* Upgrade to SCRAM Client 2.1 #171
+* Add automatic module name #170
+* Upgrade to Reactor Dysprosium GA #169
+* Edit documentation #166
+* Memory leak fixes #165
+* Remove dependencies to Spring Boot #163
+* Exclude not-required dependencies #162
+* Implement JSON and JSONB codecs #161
+* Allow type conversion across codecs #159
+* Add JMH benchmarks and apply optimizations #158
+* Fix memory leaks in BackendMessageEnvelopeDecoder #157
+* Adapt to Row.get(int)/get(String) in PostgresqlRow #156
+* Add binary codecs for BYTEA. #155
+* Remove repositories declaration from published pom #154
+* Fix of IllegalReferenceCountException on discardReadComponents call #153
+* BackendMessageEnvelopeDecoder. fails with IllegalReferenceCountException: refCnt: 0 #151
+* Expose Connection metadata #150
+* Adapt to Statement.bind and Row.get by name #149
+* ExtendedQueryPostgresqlStatement emits Result before processing execution errors #148
+* Adapt to SPI changes for IsolationLevel and AutoCommit #147
+* Upgrade to Reactor Dysprosium RC1 #146
+* Rename …Example to …TestKit. #143
+* Add support for setting runtime parameters for new connections #142
+* PostgresqlConnection does not rollback if transaction status is FAILED #139
+* Enable StringArrayCodec for binary usage #135
+* Implement validate() SPI #133
+* RuleBasedCollector is blocking #131
+* Upgrade to Postgres JDBC 42.2.6 #130
+* Upgrade to testcontainers-java 1.12.0 #129
+* Upgrade to maven-compiler-plugin 3.8.1 #128
+* Upgrade to Mockito 3.0.0 #127
+* PostgresConnectionFactoryProvider.supports(…) is too restrictive #125
+* Deprecate LEGACY_POSTGRESQL_DRIVER #124
+* No exception without calling getRowsUpdated/map on PostgresqlResult fix #119
+* Sql exceptions handling #118
+* Support "postgres" driver #117
+* Fix canDecode for arrays #115
+* Avoid array index out of bounds on missing result size in tag #114
+* Array codecs missing during `canDecode(..)` implementation #113
+* Fix for multiple usage of same parameter in extended query #111
+* Blob encoding fix #110
+* DateCodec delegation to InstantCodec cannot read columns with date type  #109
+* Weird codec issue when running concurrent queries #107
+* Update connection example in README #106
+* Use R2DBC Exception hierarchy for driver exceptions #98
+* Add CodecRegistrar extension point to register codecs provided by 3rd-party libraries #95
+* Row.get seems to mix up columns #86
+* TLS connectivity #59
+* Added support for listening to notifications #52
+
 0.8.0.M8
 ------------------
 * Remove Enum Codec #103
