@@ -42,6 +42,10 @@ Publisher<? extends Connection> connectionPublisher = connectionFactory.create()
 **Programmatic Connection Factory Discovery**
 
 ```java
+Map<String, String> options = new HashMap<>();
+options.put("lock_timeout", "10s");
+options.put("statement_timeout", "5m");
+
 ConnectionFactory connectionFactory = ConnectionFactories.get(ConnectionFactoryOptions.builder()
    .option(DRIVER, "postgresql")
    .option(HOST, "...")
@@ -49,7 +53,7 @@ ConnectionFactory connectionFactory = ConnectionFactories.get(ConnectionFactoryO
    .option(USER, "...")
    .option(PASSWORD, "...")
    .option(DATABASE, "...")  // optional
-   .option(OPTIONS, Map.of("lock_timeout", "30s", "statement_timeout", "5m")) // optional
+   .option(OPTIONS, options) // optional
    .build());
 
 Publisher<? extends Connection> connectionPublisher = connectionFactory.create();
@@ -83,13 +87,16 @@ Mono<Connection> connectionMono = Mono.from(connectionFactory.create());
 **Programmatic Configuration**
 
 ```java
+Map<String, String> options = new HashMap<>();
+options.put("lock_timeout", "10s");
+
 ConnectionFactory connectionFactory = new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
     .host("...")
     .port(5432)  // optional, defaults to 5432
     .username("...")
     .password("...")
     .database("...")  // optional
-    .options(Map.of("lock_timeout", "10s", "search_path", "public, myschema")) // optional
+    .options(options) // optional
     .build());
 
 Mono<Connection> mono = connectionFactory.create();
