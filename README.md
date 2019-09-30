@@ -42,13 +42,18 @@ Publisher<? extends Connection> connectionPublisher = connectionFactory.create()
 **Programmatic Connection Factory Discovery**
 
 ```java
+Map<String, String> options = new HashMap<>();
+options.put("lock_timeout", "10s");
+options.put("statement_timeout", "5m");
+
 ConnectionFactory connectionFactory = ConnectionFactories.get(ConnectionFactoryOptions.builder()
    .option(DRIVER, "postgresql")
    .option(HOST, "...")
-   .option(PORT, "...")  // optional, defaults to 5432
+   .option(PORT, 5432)  // optional, defaults to 5432
    .option(USER, "...")
    .option(PASSWORD, "...")
    .option(DATABASE, "...")  // optional
+   .option(OPTIONS, options) // optional
    .build());
 
 Publisher<? extends Connection> connectionPublisher = connectionFactory.create();
@@ -70,6 +75,7 @@ Mono<Connection> connectionMono = Mono.from(connectionFactory.create());
 | `database`        | Database to select. _(Optional)_
 | `applicationName` | The name of the application connecting to the database.  Defaults to `r2dbc-postgresql`. _(Optional)_
 | `autodetectExtensions` | Whether to auto-detect and register `Extension`s from the class path.  Defaults to `true`. _(Optional)_
+| `options`         | A `Map<String, String>` of connection parameters. These are applied to each database connection created by the `ConnectionFactory`. Useful for setting generic [PostgreSQL connection parameters][psql-runtime-config]. _(Optional)_
 | `schema`          | The schema to set. _(Optional)_
 | `sslMode`         | SSL mode to use, see `SSLMode` enum. Supported values: `DISABLE`, `ALLOW`, `PREFER`, `REQUIRE`, `VERIFY_CA`, `VERIFY_FULL`. _(Optional)_
 | `sslRootCert`     | Path to SSL CA certificate in PEM format. _(Optional)_
@@ -81,12 +87,16 @@ Mono<Connection> connectionMono = Mono.from(connectionFactory.create());
 **Programmatic Configuration**
 
 ```java
+Map<String, String> options = new HashMap<>();
+options.put("lock_timeout", "10s");
+
 ConnectionFactory connectionFactory = new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
     .host("...")
-    .port("...").  // optional, defaults to 5432
+    .port(5432)  // optional, defaults to 5432
     .username("...")
     .password("...")
     .database("...")  // optional
+    .options(options) // optional
     .build());
 
 Mono<Connection> mono = connectionFactory.create();
@@ -318,6 +328,8 @@ Support for the following single-dimensional arrays (read and write):
 [psql-txid_snapshot-ref]: https://www.postgresql.org/docs/11/datatype.html
 [psql-uuid-ref]: https://www.postgresql.org/docs/11/datatype-uuid.html
 [psql-xml-ref]: https://www.postgresql.org/docs/11/datatype-xml.html
+[psql-runtime-config]: https://www.postgresql.org/docs/current/runtime-config-client.html
+
 
 
 [java-bigdecimal-ref]: https://docs.oracle.com/javase/8/docs/api/java/math/BigDecimal.html
