@@ -1,6 +1,11 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+0.8.0.RC2
+------------------
+* Revert reactor-netty exclusions #175
+* Added documentation for options parameter in ConnectionConfiguration #174
+
 0.8.0.RC1
 ------------------
 * Upgrade to SCRAM Client 2.1 #171
