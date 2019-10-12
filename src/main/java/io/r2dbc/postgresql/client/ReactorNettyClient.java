@@ -22,6 +22,7 @@ import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.util.ReferenceCountUtil;
 import io.r2dbc.postgresql.message.backend.BackendKeyData;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.BackendMessageDecoder;
@@ -34,6 +35,7 @@ import io.r2dbc.postgresql.message.backend.ReadyForQuery;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.message.frontend.Terminate;
 import io.r2dbc.postgresql.util.Assert;
+import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,8 +61,10 @@ import java.util.Queue;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static io.r2dbc.postgresql.client.TransactionStatus.IDLE;
 
@@ -74,6 +78,10 @@ public final class ReactorNettyClient implements Client {
     private static final Logger logger = LoggerFactory.getLogger(ReactorNettyClient.class);
 
     private static final boolean DEBUG_ENABLED = logger.isDebugEnabled();
+
+    private static final Supplier<PostgresConnectionClosedException> UNEXPECTED = () -> new PostgresConnectionClosedException("Connection unexpectedly closed");
+
+    private static final Supplier<PostgresConnectionClosedException> EXPECTED = () -> new PostgresConnectionClosedException("Connection closed");
 
     private final ByteBufAllocator byteBufAllocator;
 
@@ -107,26 +115,36 @@ public final class ReactorNettyClient implements Client {
         Assert.requireNonNull(connection, "Connection must not be null");
 
         connection.addHandler(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE - 5, 1, 4, -4, 0));
-        connection.addHandler(new EnsureSubscribersCompleteChannelHandler(this.requestProcessor, this.responseReceivers));
+        connection.addHandler(new EnsureSubscribersCompleteChannelHandler(this.requestProcessor));
         this.connection = connection;
         this.byteBufAllocator = connection.outbound().alloc();
 
+        AtomicReference<Throwable> receiveError = new AtomicReference<>();
         Mono<Void> receive = connection.inbound().receive()
             .map(BackendMessageDecoder::decode)
             .handle(this::handleResponse)
+            .doOnError(throwable -> {
+                receiveError.set(throwable);
+                handleConnectionError(throwable);
+            })
             .windowWhile(it -> it.getClass() != ReadyForQuery.class)
             .doOnNext(fluxOfMessages -> {
                 MonoSink<Flux<BackendMessage>> receiver = this.responseReceivers.poll();
                 if (receiver != null) {
-                    receiver.success(fluxOfMessages);
+                    receiver.success(fluxOfMessages.doOnComplete(() -> {
+
+                        Throwable throwable = receiveError.get();
+                        if (throwable != null) {
+                            throw new PostgresConnectionException(throwable);
+                        }
+
+                        if (!isConnected()) {
+                            throw EXPECTED.get();
+                        }
+                    }));
                 }
             })
-            .doOnComplete(() -> {
-                MonoSink<Flux<BackendMessage>> receiver = this.responseReceivers.poll();
-                if (receiver != null) {
-                    receiver.success(Flux.empty());
-                }
-            })
+            .doOnComplete(this::handleClose)
             .then();
 
         Mono<Void> request = this.requestProcessor
@@ -139,35 +157,27 @@ public final class ReactorNettyClient implements Client {
             .then();
 
         receive
-            .onErrorResume(throwable -> {
-
-                MonoSink<Flux<BackendMessage>> receiver = this.responseReceivers.poll();
-                if (receiver != null) {
-                    receiver.error(throwable);
-                }
-                this.requestProcessor.onComplete();
-
-                if (isSslException(throwable)) {
-                    logger.debug("Connection Error", throwable);
-                } else {
-
-                    logger.error("Connection Error", throwable);
-                }
-                return close();
-            })
+            .onErrorResume(this::resumeError)
             .subscribe();
 
         request
-            .onErrorResume(throwable -> {
-
-                if (isSslException(throwable)) {
-                    logger.debug("Connection Error", throwable);
-                }
-
-                logger.error("Connection Error", throwable);
-                return close();
-            })
+            .onErrorResume(this::resumeError)
+            .doAfterTerminate(this::handleClose)
             .subscribe();
+    }
+
+    private Mono<Void> resumeError(Throwable throwable) {
+
+        handleConnectionError(throwable);
+        this.requestProcessor.onComplete();
+
+        if (isSslException(throwable)) {
+            logger.debug("Connection Error", throwable);
+        } else {
+            logger.error("Connection Error", throwable);
+        }
+
+        return close();
     }
 
     private static boolean isSslException(Throwable throwable) {
@@ -301,9 +311,10 @@ public final class ReactorNettyClient implements Client {
     public Mono<Void> close() {
         return Mono.defer(() -> {
 
+            drainError(EXPECTED);
             if (this.isClosed.compareAndSet(false, true)) {
 
-                if (!this.connection.channel().isOpen() || this.processId == null) {
+                if (!isConnected() || this.processId == null) {
                     this.connection.dispose();
                     return this.connection.onDispose();
                 }
@@ -326,24 +337,33 @@ public final class ReactorNettyClient implements Client {
 
         return Mono
             .<Flux<BackendMessage>>create(sink -> {
-                if (this.isClosed.get()) {
-                    sink.error(new IllegalStateException("Cannot exchange messages because the connection is closed"));
-                }
 
                 final AtomicInteger once = new AtomicInteger();
 
                 Flux.from(requests)
                     .subscribe(message -> {
+
+                        if (!isConnected()) {
+                            ReferenceCountUtil.safeRelease(message);
+                            sink.error(new PostgresConnectionClosedException("Cannot exchange messages because the connection is closed"));
+                            return;
+                        }
+
                         if (once.get() == 0 && once.compareAndSet(0, 1)) {
                             synchronized (this) {
                                 this.responseReceivers.add(sink);
                                 this.requests.next(message);
                             }
-                            return;
+                        } else {
+                            this.requests.next(message);
                         }
 
-                        this.requests.next(message);
-                    }, this.requests::error);
+                    }, this.requests::error, () -> {
+
+                        if (!isConnected()) {
+                            sink.error(new PostgresConnectionClosedException("Cannot exchange messages because the connection is closed"));
+                        }
+                    });
 
             })
             .flatMapMany(Function.identity());
@@ -380,6 +400,10 @@ public final class ReactorNettyClient implements Client {
             return false;
         }
 
+        if (this.requestProcessor.isDisposed()) {
+            return false;
+        }
+
         Channel channel = this.connection.channel();
         return channel.isOpen();
     }
@@ -399,15 +423,37 @@ public final class ReactorNettyClient implements Client {
         return joiner.toString();
     }
 
-    private static final class EnsureSubscribersCompleteChannelHandler extends ChannelDuplexHandler {
+    private void handleClose() {
+        if (this.isClosed.compareAndSet(false, true)) {
+            drainError(UNEXPECTED);
+        } else {
+            drainError(EXPECTED);
+        }
+    }
+
+    private void handleConnectionError(Throwable error) {
+        drainError(() -> new PostgresConnectionException(error));
+    }
+
+    private void drainError(Supplier<? extends Throwable> supplier) {
+        MonoSink<Flux<BackendMessage>> receiver;
+
+        while ((receiver = this.responseReceivers.poll()) != null) {
+            receiver.error(supplier.get());
+        }
+    }
+
+    private final class EnsureSubscribersCompleteChannelHandler extends ChannelDuplexHandler {
 
         private final EmitterProcessor<FrontendMessage> requestProcessor;
 
-        private final Queue<MonoSink<Flux<BackendMessage>>> responseReceivers;
-
-        private EnsureSubscribersCompleteChannelHandler(EmitterProcessor<FrontendMessage> requestProcessor, Queue<MonoSink<Flux<BackendMessage>>> responseReceivers) {
+        private EnsureSubscribersCompleteChannelHandler(EmitterProcessor<FrontendMessage> requestProcessor) {
             this.requestProcessor = requestProcessor;
-            this.responseReceivers = responseReceivers;
+        }
+
+        @Override
+        public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+            super.channelInactive(ctx);
         }
 
         @Override
@@ -415,10 +461,21 @@ public final class ReactorNettyClient implements Client {
             super.channelUnregistered(ctx);
 
             this.requestProcessor.onComplete();
+            handleClose();
+        }
+    }
 
-            for (MonoSink<Flux<BackendMessage>> responseReceiver = this.responseReceivers.poll(); responseReceiver != null; responseReceiver = this.responseReceivers.poll()) {
-                responseReceiver.success(Flux.empty());
-            }
+    static class PostgresConnectionClosedException extends R2dbcNonTransientResourceException {
+
+        public PostgresConnectionClosedException(String reason) {
+            super(reason);
+        }
+    }
+
+    static class PostgresConnectionException extends R2dbcNonTransientResourceException {
+
+        public PostgresConnectionException(Throwable cause) {
+            super(cause);
         }
     }
 

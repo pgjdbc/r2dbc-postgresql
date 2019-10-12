@@ -26,6 +26,7 @@ import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.DataRow;
 import io.r2dbc.postgresql.message.backend.NotificationResponse;
 import io.r2dbc.postgresql.message.backend.RowDescription;
+import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.message.frontend.Query;
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
@@ -36,27 +37,42 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.springframework.util.ReflectionUtils;
+import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.UnicastProcessor;
+import reactor.netty.Connection;
 import reactor.test.StepVerifier;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
+import java.lang.reflect.Field;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.fail;
 
 final class ReactorNettyClientTest {
 
     @RegisterExtension
     static final PostgresqlServerExtension SERVER = new PostgresqlServerExtension();
+
+    static final Field CONNECTION = ReflectionUtils.findField(ReactorNettyClient.class, "connection");
+
+    static {
+        ReflectionUtils.makeAccessible(CONNECTION);
+    }
 
     private final ReactorNettyClient client = ReactorNettyClient.connect(SERVER.getHost(), SERVER.getPort())
         .delayUntil(client -> StartupMessageFlow
@@ -69,7 +85,65 @@ final class ReactorNettyClientTest {
         this.client.close()
             .thenMany(this.client.exchange(Mono.empty()))
             .as(StepVerifier::create)
-            .verifyErrorSatisfies(t -> assertThat(t).isInstanceOf(IllegalStateException.class).hasMessage("Cannot exchange messages because the connection is closed"));
+            .verifyErrorSatisfies(t -> assertThat(t).isInstanceOf(R2dbcNonTransientResourceException.class).hasMessage("Cannot exchange messages because the connection is closed"));
+    }
+
+    @Test
+    void disconnectedShouldRejectExchange() {
+
+        Connection connection = (Connection) ReflectionUtils.getField(CONNECTION, this.client);
+        connection.channel().close().awaitUninterruptibly();
+
+        this.client.close()
+            .thenMany(this.client.exchange(Mono.empty()))
+            .as(StepVerifier::create)
+            .verifyErrorSatisfies(t -> assertThat(t).isInstanceOf(R2dbcNonTransientResourceException.class).hasMessage("Cannot exchange messages because the connection is closed"));
+    }
+
+    @Test
+    void shouldCancelExchangeOnCloseFirstMessage() throws Exception {
+
+        Connection connection = (Connection) ReflectionUtils.getField(CONNECTION, this.client);
+
+        EmitterProcessor<FrontendMessage> messages = EmitterProcessor.create();
+        Flux<BackendMessage> query = this.client.exchange(messages);
+        CompletableFuture<List<BackendMessage>> future = query.collectList().toFuture();
+
+        connection.channel().eventLoop().execute(() -> {
+
+            connection.channel().close();
+            messages.onNext(new Query("SELECT value FROM test"));
+        });
+
+        try {
+            future.get(5, TimeUnit.SECONDS);
+            fail("Expected PostgresConnectionClosedException");
+        } catch (ExecutionException e) {
+            assertThat(e).hasCauseInstanceOf(ReactorNettyClient.PostgresConnectionClosedException.class).hasMessageContaining("Cannot exchange messages");
+        }
+    }
+
+    @Test
+    void shouldCancelExchangeOnCloseInFlight() throws Exception {
+
+        Connection connection = (Connection) ReflectionUtils.getField(CONNECTION, this.client);
+
+        EmitterProcessor<FrontendMessage> messages = EmitterProcessor.create();
+        Flux<BackendMessage> query = this.client.exchange(messages);
+        CompletableFuture<List<BackendMessage>> future = query.doOnNext(ignore -> {
+            connection.channel().close();
+            messages.onNext(new Query("SELECT value FROM test"));
+
+        }).collectList().toFuture();
+
+        messages.onNext(new Query("SELECT value FROM test;SELECT value FROM test;"));
+
+        try {
+            future.get(5, TimeUnit.SECONDS);
+            fail("Expected PostgresConnectionClosedException");
+        } catch (ExecutionException e) {
+            assertThat(e).hasCauseInstanceOf(ReactorNettyClient.PostgresConnectionClosedException.class).hasMessageContaining("Connection closed");
+        }
     }
 
     @AfterEach
