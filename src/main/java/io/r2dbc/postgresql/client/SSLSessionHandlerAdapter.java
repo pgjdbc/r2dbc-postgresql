@@ -25,6 +25,7 @@ import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.r2dbc.postgresql.message.frontend.SSLRequest;
+import io.r2dbc.spi.R2dbcPermissionDeniedException;
 import reactor.core.publisher.Mono;
 
 import javax.net.ssl.SSLEngine;
@@ -87,13 +88,15 @@ final class SSLSessionHandlerAdapter extends ChannelInboundHandlerAdapter implem
         if (this.sslConfig.getHostnameVerifier().verify(hostName, this.sslEngine.getSession())) {
             this.handshakeFuture.complete(null);
         } else {
-            this.handshakeFuture.completeExceptionally(new IllegalStateException(String.format("The hostname '%s' could not be verified.", socketAddress.getAddress().toString())));
+            this.handshakeFuture.completeExceptionally(new PostgresqlSslException(String.format("The hostname '%s' could not be verified.", socketAddress.getAddress().toString())));
         }
     }
 
     private void processSslDisabled(ChannelHandlerContext ctx, Object msg) {
         if (this.sslConfig.getSslMode().requireSsl()) {
-            throw new IllegalStateException("Server support for SSL connection is disabled, but client was configured with SSL mode " + this.sslConfig.getSslMode());
+            PostgresqlSslException e =
+                new PostgresqlSslException("Server support for SSL connection is disabled, but client was configured with SSL mode " + this.sslConfig.getSslMode());
+            this.handshakeFuture.completeExceptionally(e);
         } else {
             this.handshakeFuture.complete(null);
         }
@@ -101,7 +104,10 @@ final class SSLSessionHandlerAdapter extends ChannelInboundHandlerAdapter implem
 
     private void processSslEnabled(ChannelHandlerContext ctx, Object msg) {
         if (this.sslConfig.getSslMode() == SSLMode.DISABLE) {
-            throw new IllegalStateException("Server requires SSL handshake, but client was configured with SSL mode DISABLE");
+
+            PostgresqlSslException e = new PostgresqlSslException("Server requires SSL handshake, but client was configured with SSL mode DISABLE");
+            this.handshakeFuture.completeExceptionally(e);
+            return;
         }
         ctx.channel().pipeline()
             .addFirst(this.sslHandler)
@@ -116,5 +122,16 @@ final class SSLSessionHandlerAdapter extends ChannelInboundHandlerAdapter implem
 
     Mono<Void> getHandshake() {
         return Mono.fromFuture(this.handshakeFuture);
+    }
+
+    /**
+     * Postgres-specific {@link R2dbcPermissionDeniedException}.
+     */
+    static final class PostgresqlSslException extends R2dbcPermissionDeniedException {
+
+
+        PostgresqlSslException(String msg) {
+            super(msg);
+        }
     }
 }

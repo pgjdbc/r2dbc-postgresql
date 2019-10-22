@@ -161,12 +161,13 @@ final class ReactorNettyClientIntegrationTests {
 
     @BeforeEach
     void createTable() {
+        dropTable();
         SERVER.getJdbcOperations().execute("CREATE TABLE test ( value INTEGER )");
     }
 
     @AfterEach
     void dropTable() {
-        SERVER.getJdbcOperations().execute("DROP TABLE test");
+        SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS test");
     }
 
     @Test
@@ -396,7 +397,7 @@ final class ReactorNettyClientIntegrationTests {
                     .sslRootCert(SERVER.getClientCrt()),
                 c -> c
                     .as(StepVerifier::create)
-                    .expectError()
+                    .expectError(R2dbcNonTransientResourceException.class)
                     .verify());
         }
 
@@ -664,7 +665,7 @@ final class ReactorNettyClientIntegrationTests {
                         .sslMode(SSLMode.VERIFY_FULL),
                     c -> c
                         .as(StepVerifier::create)
-                        .verifyError(R2dbcNonTransientResourceException.class));
+                        .verifyError(R2dbcPermissionDeniedException.class));
             }
 
             @Test
