@@ -6,6 +6,7 @@ This driver provides the following features:
 
 * Login with username/password (MD5, SASL/SCRAM) or implicit trust
 * SCRAM authentication
+* Unix Domain Socket transport
 * TLS
 * Explicit transactions
 * Notifications
@@ -70,6 +71,7 @@ Mono<Connection> connectionMono = Mono.from(connectionFactory.create());
 | `driver`          | Must be `postgresql`.
 | `host`            | Server hostname to connect to
 | `port`            | Server port to connect to.  Defaults to `5432`. _(Optional)_
+| `socket`          | Unix Domain Socket path to connect to as alternative to TCP. _(Optional)_
 | `username`        | Login username
 | `password`        | Login password _(Optional when using TLS Certificate authentication)_
 | `database`        | Database to select. _(Optional)_

@@ -70,6 +70,11 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<String> SCHEMA = Option.valueOf("schema");
 
     /**
+     * Unix domain socket.
+     */
+    public static final Option<String> SOCKET = Option.valueOf("socket");
+
+    /**
      * Full path for the certificate file.
      */
     public static final Option<String> SSL_CERT = Option.valueOf("sslCert");
@@ -112,6 +117,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     static PostgresqlConnectionConfiguration createConfiguration(ConnectionFactoryOptions connectionFactoryOptions) {
         Assert.requireNonNull(connectionFactoryOptions, "connectionFactoryOptions must not be null");
 
+        boolean tcp;
         PostgresqlConnectionConfiguration.Builder builder = PostgresqlConnectionConfiguration.builder();
 
         String applicationName = connectionFactoryOptions.getValue(APPLICATION_NAME);
@@ -130,7 +136,14 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
 
         builder.connectTimeout(connectionFactoryOptions.getValue(CONNECT_TIMEOUT));
         builder.database(connectionFactoryOptions.getValue(DATABASE));
-        builder.host(connectionFactoryOptions.getRequiredValue(HOST));
+
+        if (connectionFactoryOptions.hasOption(SOCKET)) {
+            tcp = false;
+            builder.socket(connectionFactoryOptions.getRequiredValue(SOCKET));
+        } else {
+            tcp = true;
+            builder.host(connectionFactoryOptions.getRequiredValue(HOST));
+        }
         builder.password(connectionFactoryOptions.getValue(PASSWORD));
         builder.schema(connectionFactoryOptions.getValue(SCHEMA));
         builder.username(connectionFactoryOptions.getRequiredValue(USER));
@@ -146,60 +159,62 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
             builder.forceBinary(forceBinary);
         }
 
-        Boolean ssl = connectionFactoryOptions.getValue(SSL);
-        if (ssl != null && ssl) {
-            builder.enableSsl();
-        }
-
         Map<String, String> options = connectionFactoryOptions.getValue(OPTIONS);
         if (options != null) {
             builder.options(options);
         }
 
-        Object sslMode = connectionFactoryOptions.getValue(SSL_MODE);
-        if (sslMode != null) {
-            if (sslMode instanceof String) {
-                builder.sslMode(SSLMode.fromValue(sslMode.toString()));
-            } else {
-                builder.sslMode((SSLMode) sslMode);
+        if (tcp) {
+            Boolean ssl = connectionFactoryOptions.getValue(SSL);
+            if (ssl != null && ssl) {
+                builder.enableSsl();
             }
-        }
 
-        String sslRootCert = connectionFactoryOptions.getValue(SSL_ROOT_CERT);
-        if (sslRootCert != null) {
-            builder.sslRootCert(sslRootCert);
-        }
-
-        String sslCert = connectionFactoryOptions.getValue(SSL_CERT);
-        if (sslCert != null) {
-            builder.sslCert(sslCert);
-        }
-
-        String sslKey = connectionFactoryOptions.getValue(SSL_KEY);
-        if (sslKey != null) {
-            builder.sslKey(sslKey);
-        }
-
-        String sslPassword = connectionFactoryOptions.getValue(SSL_PASSWORD);
-        if (sslPassword != null) {
-            builder.sslPassword(sslPassword);
-        }
-
-        Object sslHostnameVerifier = connectionFactoryOptions.getValue(SSL_HOSTNAME_VERIFIER);
-        if (sslHostnameVerifier != null) {
-
-            if (sslHostnameVerifier instanceof String) {
-
-                try {
-                    Class<?> verifierClass = Class.forName((String) sslHostnameVerifier);
-                    Object verifier = verifierClass.getConstructor().newInstance();
-
-                    builder.sslHostnameVerifier((HostnameVerifier) verifier);
-                } catch (ReflectiveOperationException e) {
-                    throw new IllegalStateException("Cannot instantiate " + sslHostnameVerifier, e);
+            Object sslMode = connectionFactoryOptions.getValue(SSL_MODE);
+            if (sslMode != null) {
+                if (sslMode instanceof String) {
+                    builder.sslMode(SSLMode.fromValue(sslMode.toString()));
+                } else {
+                    builder.sslMode((SSLMode) sslMode);
                 }
-            } else {
-                builder.sslHostnameVerifier((HostnameVerifier) sslHostnameVerifier);
+            }
+
+            String sslRootCert = connectionFactoryOptions.getValue(SSL_ROOT_CERT);
+            if (sslRootCert != null) {
+                builder.sslRootCert(sslRootCert);
+            }
+
+            String sslCert = connectionFactoryOptions.getValue(SSL_CERT);
+            if (sslCert != null) {
+                builder.sslCert(sslCert);
+            }
+
+            String sslKey = connectionFactoryOptions.getValue(SSL_KEY);
+            if (sslKey != null) {
+                builder.sslKey(sslKey);
+            }
+
+            String sslPassword = connectionFactoryOptions.getValue(SSL_PASSWORD);
+            if (sslPassword != null) {
+                builder.sslPassword(sslPassword);
+            }
+
+            Object sslHostnameVerifier = connectionFactoryOptions.getValue(SSL_HOSTNAME_VERIFIER);
+            if (sslHostnameVerifier != null) {
+
+                if (sslHostnameVerifier instanceof String) {
+
+                    try {
+                        Class<?> verifierClass = Class.forName((String) sslHostnameVerifier);
+                        Object verifier = verifierClass.getConstructor().newInstance();
+
+                        builder.sslHostnameVerifier((HostnameVerifier) verifier);
+                    } catch (ReflectiveOperationException e) {
+                        throw new IllegalStateException("Cannot instantiate " + sslHostnameVerifier, e);
+                    }
+                } else {
+                    builder.sslHostnameVerifier((HostnameVerifier) sslHostnameVerifier);
+                }
             }
         }
 

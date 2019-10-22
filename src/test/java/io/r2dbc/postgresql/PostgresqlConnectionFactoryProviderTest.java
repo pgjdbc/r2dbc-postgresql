@@ -29,6 +29,7 @@ import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.FORCE_BINA
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.LEGACY_POSTGRESQL_DRIVER;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.OPTIONS;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.POSTGRESQL_DRIVER;
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SOCKET;
 import static io.r2dbc.spi.ConnectionFactoryOptions.DRIVER;
 import static io.r2dbc.spi.ConnectionFactoryOptions.HOST;
 import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
@@ -199,6 +200,19 @@ final class PostgresqlConnectionFactoryProviderTest {
             .build());
 
         assertThat(factory.getConfiguration().isAutodetectExtensions()).isFalse();
+    }
+
+    @Test
+    void shouldConnectUsingUnixDomainSocket() {
+
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(SOCKET, "/tmp/.s.PGSQL.5432")
+            .option(USER, "postgres")
+            .build());
+
+        assertThat(factory.getConfiguration().isUseSocket()).isTrue();
+        assertThat(factory.getConfiguration().getRequiredSocket()).isEqualTo("/tmp/.s.PGSQL.5432");
     }
 
 }

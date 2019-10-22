@@ -16,6 +16,8 @@
 
 package io.r2dbc.postgresql.client;
 
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.kqueue.KQueue;
 import io.netty.util.ReferenceCountUtil;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
@@ -47,6 +49,7 @@ import reactor.test.StepVerifier;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
+import java.io.File;
 import java.lang.reflect.Field;
 import java.time.Duration;
 import java.util.Arrays;
@@ -62,6 +65,7 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
 final class ReactorNettyClientIntegrationTests {
 
@@ -286,6 +290,30 @@ final class ReactorNettyClientIntegrationTests {
             .as(StepVerifier::create)
             .expectError(R2dbcNonTransientResourceException.class)
             .verify(Duration.ofMillis(500));
+    }
+
+    @Test
+    void unixDomainSocketTest() {
+
+        String socket = "/tmp/.s.PGSQL.5432";
+
+        assumeThat(KQueue.isAvailable() || Epoll.isAvailable()).describedAs("EPoll or KQueue must be available").isTrue();
+        assumeThat(new File(socket)).exists();
+
+        PostgresqlConnectionFactory postgresqlConnectionFactory = new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
+            .socket(socket)
+            .username("postgres")
+            .database(SERVER.getDatabase())
+            .applicationName(ReactorNettyClientIntegrationTests.class.getName())
+            .build());
+
+        postgresqlConnectionFactory.create()
+            .flatMapMany(it -> {
+                return it.createStatement("SELECT 1").execute().flatMap(r -> r.map((row, rowMetadata) -> row.get(0))).concatWith(it.close());
+            })
+            .as(StepVerifier::create)
+            .expectNext(1)
+            .verifyComplete();
     }
 
     public static class FailedVerification implements HostnameVerifier {

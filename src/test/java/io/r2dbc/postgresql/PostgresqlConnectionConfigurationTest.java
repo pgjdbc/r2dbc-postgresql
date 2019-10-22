@@ -35,9 +35,15 @@ final class PostgresqlConnectionConfigurationTest {
     }
 
     @Test
-    void builderNoHost() {
-        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().host(null))
-            .withMessage("host must not be null");
+    void builderNoHostAndSocket() {
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().build())
+            .withMessage("host or socket must not be null");
+    }
+
+    @Test
+    void builderHostAndSocket() {
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().host("host").socket("socket").build())
+            .withMessageContaining("either host/port or socket");
     }
 
     @Test
@@ -96,15 +102,6 @@ final class PostgresqlConnectionConfigurationTest {
             .hasFieldOrPropertyWithValue("schema", "test-schema")
             .hasFieldOrPropertyWithValue("username", "test-username")
             .hasFieldOrProperty("sslConfig");
-    }
-
-    @Test
-    void constructorNoNoHost() {
-        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder()
-            .password("test-password")
-            .username("test-username")
-            .build())
-            .withMessage("host must not be null");
     }
 
     @Test

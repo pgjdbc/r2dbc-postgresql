@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql;
 
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.unix.DomainSocketAddress;
 import io.r2dbc.postgresql.authentication.AuthenticationHandler;
 import io.r2dbc.postgresql.authentication.PasswordAuthenticationHandler;
 import io.r2dbc.postgresql.authentication.SASLAuthenticationHandler;
@@ -37,8 +38,11 @@ import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.netty.resources.ConnectionProvider;
 import reactor.util.annotation.Nullable;
 
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -50,9 +54,11 @@ import java.util.function.Predicate;
  */
 public final class PostgresqlConnectionFactory implements ConnectionFactory {
 
-    private final Function<SSLConfig, Mono<? extends Client>> clientFactory;
-
     private final PostgresqlConnectionConfiguration configuration;
+
+    private final SocketAddress endpoint;
+
+    private final Function<SSLConfig, Mono<? extends Client>> clientFactory;
 
     private final Extensions extensions;
 
@@ -63,15 +69,30 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
      * @throws IllegalArgumentException if {@code configuration} is {@code null}
      */
     public PostgresqlConnectionFactory(PostgresqlConnectionConfiguration configuration) {
-        this.clientFactory = sslConfig -> ReactorNettyClient.connect(configuration.getHost(), configuration.getPort(), configuration.getConnectTimeout(), sslConfig).cast(Client.class);
         this.configuration = Assert.requireNonNull(configuration, "configuration must not be null");
+        this.endpoint = createSocketAddress(configuration);
+        this.clientFactory = sslConfig -> ReactorNettyClient.connect(ConnectionProvider.newConnection(), this.endpoint, configuration.getConnectTimeout(), sslConfig).cast(Client.class);
         this.extensions = getExtensions(configuration);
     }
 
     PostgresqlConnectionFactory(Function<SSLConfig, Mono<? extends Client>> clientFactory, PostgresqlConnectionConfiguration configuration) {
-        this.clientFactory = Assert.requireNonNull(clientFactory, "clientFactory must not be null");
         this.configuration = Assert.requireNonNull(configuration, "configuration must not be null");
+        this.endpoint = createSocketAddress(configuration);
+        this.clientFactory = Assert.requireNonNull(clientFactory, "clientFactory must not be null");
         this.extensions = getExtensions(configuration);
+    }
+
+    private static SocketAddress createSocketAddress(PostgresqlConnectionConfiguration configuration) {
+
+        if (!configuration.isUseSocket()) {
+            return InetSocketAddress.createUnresolved(configuration.getRequiredHost(), configuration.getPort());
+        }
+
+        if (configuration.isUseSocket()) {
+            return new DomainSocketAddress(configuration.getRequiredSocket());
+        }
+
+        throw new IllegalArgumentException("Cannot create SocketAddress for " + configuration);
     }
 
     private static Extensions getExtensions(PostgresqlConnectionConfiguration configuration) {
@@ -149,7 +170,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
         }
 
         return new PostgresConnectionException(
-            String.format("Cannot connect to %s:%d", this.configuration.getHost(), this.configuration.getPort()), throwable
+            String.format("Cannot connect to %s", this.endpoint), throwable
         );
     }
 

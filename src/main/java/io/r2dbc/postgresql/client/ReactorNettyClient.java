@@ -21,6 +21,10 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.ServerChannel;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.socket.DatagramChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.util.ReferenceCountUtil;
 import io.r2dbc.postgresql.message.backend.BackendKeyData;
@@ -49,11 +53,15 @@ import reactor.core.publisher.MonoSink;
 import reactor.core.publisher.SynchronousSink;
 import reactor.netty.Connection;
 import reactor.netty.resources.ConnectionProvider;
+import reactor.netty.resources.LoopResources;
 import reactor.netty.tcp.TcpClient;
+import reactor.netty.tcp.TcpResources;
 import reactor.util.annotation.Nullable;
 import reactor.util.concurrent.Queues;
 
 import javax.net.ssl.SSLException;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
@@ -269,25 +277,27 @@ public final class ReactorNettyClient implements Client {
      * @throws IllegalArgumentException if {@code host} is {@code null}
      */
     public static Mono<ReactorNettyClient> connect(String host, int port, @Nullable Duration connectTimeout, SSLConfig sslConfig) {
-        return connect(ConnectionProvider.newConnection(), host, port, connectTimeout, sslConfig);
+        return connect(ConnectionProvider.newConnection(), InetSocketAddress.createUnresolved(host, port), connectTimeout, sslConfig);
     }
 
     /**
      * Creates a new frame processor connected to a given host.
      *
      * @param connectionProvider the connection provider resources
-     * @param host               the host to connect to
-     * @param port               the port to connect to
+     * @param socketAddress      the socketAddress to connect to
      * @param connectTimeout     connect timeout
      * @param sslConfig          SSL configuration
      * @throws IllegalArgumentException if {@code host} is {@code null}
      */
-    public static Mono<ReactorNettyClient> connect(ConnectionProvider connectionProvider, String host, int port, @Nullable Duration connectTimeout, SSLConfig sslConfig) {
+    public static Mono<ReactorNettyClient> connect(ConnectionProvider connectionProvider, SocketAddress socketAddress, @Nullable Duration connectTimeout, SSLConfig sslConfig) {
         Assert.requireNonNull(connectionProvider, "connectionProvider must not be null");
-        Assert.requireNonNull(host, "host must not be null");
+        Assert.requireNonNull(socketAddress, "socketAddress must not be null");
 
-        TcpClient tcpClient = TcpClient.create(connectionProvider)
-            .host(host).port(port);
+        TcpClient tcpClient = TcpClient.create(connectionProvider).addressSupplier(() -> socketAddress);
+
+        if (!(socketAddress instanceof InetSocketAddress)) {
+            tcpClient = tcpClient.runOn(new SocketLoopResources(), true);
+        }
 
         if (connectTimeout != null) {
             tcpClient = tcpClient.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Math.toIntExact(connectTimeout.toMillis()));
@@ -476,6 +486,109 @@ public final class ReactorNettyClient implements Client {
 
         public PostgresConnectionException(Throwable cause) {
             super(cause);
+        }
+    }
+
+    static class SocketLoopResources implements LoopResources {
+
+        @Nullable
+        private static final Class<? extends Channel> EPOLL_SOCKET = findClass("io.netty.channel.epoll.EpollDomainSocketChannel");
+
+        @Nullable
+        private static final Class<? extends Channel> KQUEUE_SOCKET = findClass("io.netty.channel.kqueue.KQueueDomainSocketChannel");
+
+        private static final boolean kqueue;
+
+        static {
+            boolean kqueueCheck = false;
+            try {
+                Class.forName("io.netty.channel.kqueue.KQueue");
+                kqueueCheck = io.netty.channel.kqueue.KQueue.isAvailable();
+            } catch (ClassNotFoundException cnfe) {
+            }
+            kqueue = kqueueCheck;
+        }
+
+        private static final boolean epoll;
+
+        static {
+            boolean epollCheck = false;
+            try {
+                Class.forName("io.netty.channel.epoll.Epoll");
+                epollCheck = Epoll.isAvailable();
+            } catch (ClassNotFoundException cnfe) {
+            }
+            epoll = epollCheck;
+        }
+
+        private final LoopResources delegate = TcpResources.get();
+
+        @SuppressWarnings("unchecked")
+        private static Class<? extends Channel> findClass(String className) {
+            try {
+                return (Class<? extends Channel>) SocketLoopResources.class.getClassLoader().loadClass(className);
+            } catch (ClassNotFoundException e) {
+                return null;
+            }
+        }
+
+        @Override
+        public Class<? extends Channel> onChannel(EventLoopGroup group) {
+
+            if (epoll && EPOLL_SOCKET != null) {
+                return EPOLL_SOCKET;
+            }
+
+            if (kqueue && KQUEUE_SOCKET != null) {
+                return KQUEUE_SOCKET;
+            }
+
+            return this.delegate.onChannel(group);
+        }
+
+        @Override
+        public EventLoopGroup onClient(boolean useNative) {
+            return this.delegate.onClient(useNative);
+        }
+
+        @Override
+        public Class<? extends DatagramChannel> onDatagramChannel(EventLoopGroup group) {
+            return this.delegate.onDatagramChannel(group);
+        }
+
+        @Override
+        public EventLoopGroup onServer(boolean useNative) {
+            return this.delegate.onServer(useNative);
+        }
+
+        @Override
+        public Class<? extends ServerChannel> onServerChannel(EventLoopGroup group) {
+            return this.delegate.onServerChannel(group);
+        }
+
+        @Override
+        public EventLoopGroup onServerSelect(boolean useNative) {
+            return this.delegate.onServerSelect(useNative);
+        }
+
+        @Override
+        public boolean preferNative() {
+            return this.delegate.preferNative();
+        }
+
+        @Override
+        public boolean daemon() {
+            return this.delegate.daemon();
+        }
+
+        @Override
+        public void dispose() {
+            this.delegate.dispose();
+        }
+
+        @Override
+        public Mono<Void> disposeLater() {
+            return this.delegate.disposeLater();
         }
     }
 

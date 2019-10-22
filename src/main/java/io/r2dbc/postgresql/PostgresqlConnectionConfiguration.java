@@ -71,13 +71,15 @@ public final class PostgresqlConnectionConfiguration {
 
     private final String schema;
 
+    private final String socket;
+
     private final String username;
 
     private final SSLConfig sslConfig;
 
     private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions,
-                                              @Nullable Duration connectTimeout, @Nullable String database, List<Extension> extensions, boolean forceBinary, String host,
-                                              @Nullable Map<String, String> options, @Nullable CharSequence password, int port, @Nullable String schema, String username,
+                                              @Nullable Duration connectTimeout, @Nullable String database, List<Extension> extensions, boolean forceBinary, @Nullable String host,
+                                              @Nullable Map<String, String> options, @Nullable CharSequence password, int port, @Nullable String schema, @Nullable String socket, String username,
                                               SSLConfig sslConfig) {
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
         this.autodetectExtensions = autodetectExtensions;
@@ -85,11 +87,12 @@ public final class PostgresqlConnectionConfiguration {
         this.extensions = Assert.requireNonNull(extensions, "extensions must not be null");
         this.database = database;
         this.forceBinary = forceBinary;
-        this.host = Assert.requireNonNull(host, "host must not be null");
+        this.host = host;
         this.options = options;
         this.password = password;
         this.port = port;
         this.schema = schema;
+        this.socket = socket;
         this.username = Assert.requireNonNull(username, "username must not be null");
         this.sslConfig = sslConfig;
     }
@@ -150,8 +153,20 @@ public final class PostgresqlConnectionConfiguration {
         return this.extensions;
     }
 
+    @Nullable
     String getHost() {
         return this.host;
+    }
+
+    String getRequiredHost() {
+
+        String host = getHost();
+
+        if (host == null || host.isEmpty()) {
+            throw new IllegalStateException("Connection is configured for socket connections and not for host usage");
+        }
+
+        return host;
     }
 
     @Nullable
@@ -173,6 +188,22 @@ public final class PostgresqlConnectionConfiguration {
         return this.schema;
     }
 
+    @Nullable
+    String getSocket() {
+        return this.socket;
+    }
+
+    String getRequiredSocket() {
+
+        String socket = getSocket();
+
+        if (socket == null || socket.isEmpty()) {
+            throw new IllegalStateException("Connection is configured to use host and port connections and not for socket usage");
+        }
+
+        return socket;
+    }
+
     String getUsername() {
         return this.username;
     }
@@ -183,6 +214,10 @@ public final class PostgresqlConnectionConfiguration {
 
     boolean isForceBinary() {
         return this.forceBinary;
+    }
+
+    boolean isUseSocket() {
+        return getSocket() != null;
     }
 
     SSLConfig getSslConfig() {
@@ -222,6 +257,9 @@ public final class PostgresqlConnectionConfiguration {
 
         @Nullable
         private String schema;
+
+        @Nullable
+        private String socket;
 
         @Nullable
         private String sslCert = null;
@@ -275,8 +313,12 @@ public final class PostgresqlConnectionConfiguration {
          */
         public PostgresqlConnectionConfiguration build() {
 
-            if (this.host == null) {
-                throw new IllegalArgumentException("host must not be null");
+            if (this.host == null && this.socket == null) {
+                throw new IllegalArgumentException("host or socket must not be null");
+            }
+
+            if (this.host != null && this.socket != null) {
+                throw new IllegalArgumentException("Connection must be configured for either host/port or socket usage but not both");
             }
 
             if (this.username == null) {
@@ -284,7 +326,7 @@ public final class PostgresqlConnectionConfiguration {
             }
 
             return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.connectTimeout, this.database, this.extensions, this.forceBinary, this.host,
-                this.options, this.password, this.port, this.schema, this.username, this.createSslConfig());
+                this.options, this.password, this.port, this.schema, this.socket, this.username, this.createSslConfig());
         }
 
         /**
@@ -419,6 +461,19 @@ public final class PostgresqlConnectionConfiguration {
         }
 
         /**
+         * Configure the unix domain socket to connect to.
+         *
+         * @param socket the socket path
+         * @return this {@link Builder}
+         * @throws IllegalArgumentException if {@code socket} is {@code null}
+         */
+        public Builder socket(String socket) {
+            this.socket = Assert.requireNonNull(socket, "host must not be null");
+            sslMode(SSLMode.DISABLE);
+            return this;
+        }
+
+        /**
          * Configure ssl cert for client certificate authentication.
          *
          * @param sslCert an X.509 certificate chain file in PEM format
@@ -488,6 +543,7 @@ public final class PostgresqlConnectionConfiguration {
                 ", port=" + this.port +
                 ", schema='" + this.schema + '\'' +
                 ", username='" + this.username + '\'' +
+                ", socket='" + this.socket + '\'' +
                 ", sslMode='" + this.sslMode + '\'' +
                 ", sslRootCert='" + this.sslRootCert + '\'' +
                 ", sslCert='" + this.sslCert + '\'' +
@@ -520,7 +576,7 @@ public final class PostgresqlConnectionConfiguration {
         }
 
         private SSLConfig createSslConfig() {
-            if (this.sslMode == SSLMode.DISABLE) {
+            if (this.socket != null || this.sslMode == SSLMode.DISABLE) {
                 return new SSLConfig(SSLMode.DISABLE, null, (hostname, session) -> true);
             }
             HostnameVerifier hostnameVerifier = this.sslHostnameVerifier;
