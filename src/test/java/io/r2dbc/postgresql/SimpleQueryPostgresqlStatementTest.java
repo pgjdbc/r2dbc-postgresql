@@ -174,6 +174,7 @@ final class SimpleQueryPostgresqlStatementTest {
 
         new SimpleQueryPostgresqlStatement(client, MockCodecs.empty(), "test-query")
             .execute()
+            .flatMap(PostgresqlResult::getRowsUpdated)
             .as(StepVerifier::create)
             .verifyError(R2dbcNonTransientResourceException.class);
     }

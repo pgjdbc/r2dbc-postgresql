@@ -46,19 +46,23 @@ final class PostgresqlResult implements io.r2dbc.postgresql.api.PostgresqlResult
 
     private final Flux<BackendMessage> messages;
 
+    private final ExceptionFactory factory;
+
     private volatile PostgresqlRowMetadata metadata;
 
     private volatile RowDescription rowDescription;
 
-    PostgresqlResult(Codecs codecs, Flux<BackendMessage> messages) {
+    PostgresqlResult(Codecs codecs, Flux<BackendMessage> messages, ExceptionFactory factory) {
         this.codecs = Assert.requireNonNull(codecs, "codecs must not be null");
         this.messages = Assert.requireNonNull(messages, "messages must not be null");
+        this.factory = Assert.requireNonNull(factory, "factory must not be null");
     }
 
     @Override
     public Mono<Integer> getRowsUpdated() {
 
         return this.messages
+            .handle(this.factory::handleErrorResponse)
             .doOnNext(message -> {
                 if (message instanceof DataRow) {
                     ((DataRow) message).release();
@@ -81,6 +85,7 @@ final class PostgresqlResult implements io.r2dbc.postgresql.api.PostgresqlResult
         Assert.requireNonNull(f, "f must not be null");
 
         return this.messages.takeUntil(TAKE_UNTIL)
+            .handle(this.factory::handleErrorResponse)
             .handle((message, sink) -> {
 
                 if (message instanceof RowDescription) {
@@ -109,11 +114,12 @@ final class PostgresqlResult implements io.r2dbc.postgresql.api.PostgresqlResult
             '}';
     }
 
-    static PostgresqlResult toResult(Codecs codecs, Flux<BackendMessage> messages) {
+    static PostgresqlResult toResult(Codecs codecs, Flux<BackendMessage> messages, ExceptionFactory factory) {
         Assert.requireNonNull(codecs, "codecs must not be null");
         Assert.requireNonNull(messages, "messages must not be null");
+        Assert.requireNonNull(factory, "factory must not be null");
 
-        return new PostgresqlResult(codecs, messages);
+        return new PostgresqlResult(codecs, messages, factory);
     }
 
 }

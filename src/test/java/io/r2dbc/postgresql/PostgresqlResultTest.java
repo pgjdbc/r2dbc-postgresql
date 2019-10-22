@@ -23,7 +23,6 @@ import io.r2dbc.postgresql.message.backend.EmptyQueryResponse;
 import io.r2dbc.postgresql.message.backend.RowDescription;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.Collections;
@@ -34,19 +33,19 @@ final class PostgresqlResultTest {
 
     @Test
     void constructorNoCodec() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlResult(null, Flux.empty()))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlResult(null, Flux.empty(), ExceptionFactory.INSTANCE))
             .withMessage("codecs must not be null");
     }
 
     @Test
     void constructorNoRowMetadata() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlResult(MockCodecs.empty(), null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlResult(MockCodecs.empty(), null, ExceptionFactory.INSTANCE))
             .withMessage("messages must not be null");
     }
 
     @Test
     void toResultCommandComplete() {
-        PostgresqlResult result = PostgresqlResult.toResult(MockCodecs.empty(), Flux.just(new CommandComplete("test", null, 1)));
+        PostgresqlResult result = PostgresqlResult.toResult(MockCodecs.empty(), Flux.just(new CommandComplete("test", null, 1)), ExceptionFactory.INSTANCE);
 
         result.map((row, rowMetadata) -> row)
             .as(StepVerifier::create)
@@ -60,7 +59,7 @@ final class PostgresqlResultTest {
 
     @Test
     void toResultEmptyQueryResponse() {
-        PostgresqlResult result = PostgresqlResult.toResult(MockCodecs.empty(), Flux.just(EmptyQueryResponse.INSTANCE));
+        PostgresqlResult result = PostgresqlResult.toResult(MockCodecs.empty(), Flux.just(EmptyQueryResponse.INSTANCE), ExceptionFactory.INSTANCE);
 
         result.map((row, rowMetadata) -> row)
             .as(StepVerifier::create)
@@ -73,20 +72,20 @@ final class PostgresqlResultTest {
 
     @Test
     void toResultNoCodecs() {
-        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlResult.toResult(null, Flux.empty()))
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlResult.toResult(null, Flux.empty(), ExceptionFactory.INSTANCE))
             .withMessage("codecs must not be null");
     }
 
     @Test
     void toResultNoMessages() {
-        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlResult.toResult(MockCodecs.empty(), null))
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlResult.toResult(MockCodecs.empty(), null, ExceptionFactory.INSTANCE))
             .withMessage("messages must not be null");
     }
 
     @Test
     void toResultRowDescription() {
         PostgresqlResult result = PostgresqlResult.toResult(MockCodecs.empty(), Flux.just(new RowDescription(Collections.emptyList()), new DataRow(), new CommandComplete
-            ("test", null, null)));
+            ("test", null, null)), ExceptionFactory.INSTANCE);
 
         result.map((row, rowMetadata) -> row)
             .as(StepVerifier::create)

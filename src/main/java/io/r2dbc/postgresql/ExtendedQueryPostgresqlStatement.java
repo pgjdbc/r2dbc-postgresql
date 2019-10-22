@@ -185,9 +185,8 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
             .flatMapMany(name -> ExtendedQueryMessageFlow
                 .execute(Flux.fromIterable(this.bindings.bindings), this.client, this.portalNameSupplier, name, this.forceBinary))
             .filter(RESULT_FRAME_FILTER)
-            .handle(factory::handleErrorResponse)
             .windowUntil(CloseComplete.class::isInstance)
-            .map(messages -> PostgresqlResult.toResult(this.codecs, messages));
+            .map(messages -> PostgresqlResult.toResult(this.codecs, messages, factory));
     }
 
     private int getIndex(String identifier) {

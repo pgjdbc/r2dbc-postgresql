@@ -125,9 +125,8 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
         ExceptionFactory factory = ExceptionFactory.withSql(sql);
         return SimpleQueryMessageFlow
             .exchange(this.client, sql)
-            .handle(factory::handleErrorResponse)
             .windowUntil(WINDOW_UNTIL)
-            .map(dataRow -> PostgresqlResult.toResult(this.codecs, dataRow));
+            .map(dataRow -> PostgresqlResult.toResult(this.codecs, dataRow, factory));
     }
 
 }

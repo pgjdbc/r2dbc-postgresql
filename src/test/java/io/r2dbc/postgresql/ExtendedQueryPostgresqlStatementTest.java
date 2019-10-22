@@ -28,6 +28,7 @@ import io.r2dbc.postgresql.message.backend.CloseComplete;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.NoData;
+import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.postgresql.message.frontend.Bind;
 import io.r2dbc.postgresql.message.frontend.Close;
 import io.r2dbc.postgresql.message.frontend.Describe;
@@ -42,6 +43,7 @@ import reactor.test.StepVerifier;
 
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 
@@ -214,6 +216,34 @@ final class ExtendedQueryPostgresqlStatementTest {
     }
 
     @Test
+    void executeErrorAfterBind() {
+        Client client = TestClient.builder()
+            .expectRequest(
+                new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
+                new Describe("B_0", ExecutionType.PORTAL),
+                new Execute("B_0", 0),
+                new Close("B_0", ExecutionType.PORTAL),
+                Sync.INSTANCE)
+            .thenRespond(BindComplete.INSTANCE, new RowDescription(Collections.emptyList()), new ErrorResponse(Collections.emptyList()))
+            .build();
+
+        MockCodecs codecs = MockCodecs.builder()
+            .encoding(100, new Parameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100))))
+            .build();
+
+        PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
+
+        when(this.statementCache.getName(any(), any())).thenReturn(Mono.just("test-name"));
+
+        new ExtendedQueryPostgresqlStatement(client, codecs, portalNameSupplier, "test-query-$1", this.statementCache, false)
+            .bind("$1", 100)
+            .execute()
+            .flatMap(PostgresqlResult::getRowsUpdated)
+            .as(StepVerifier::create)
+            .verifyError(R2dbcNonTransientResourceException.class);
+    }
+
+    @Test
     void executeErrorResponseRows() {
         Client client = TestClient.builder()
             .expectRequest(
@@ -292,6 +322,7 @@ final class ExtendedQueryPostgresqlStatementTest {
         new ExtendedQueryPostgresqlStatement(client, codecs, portalNameSupplier, "test-query-$1", this.statementCache, false)
             .bind("$1", 100)
             .execute()
+            .flatMap(PostgresqlResult::getRowsUpdated)
             .as(StepVerifier::create)
             .verifyError(R2dbcNonTransientResourceException.class);
     }
