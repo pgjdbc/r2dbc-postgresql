@@ -37,6 +37,7 @@ import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -147,7 +148,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
             return throwable;
         }
 
-        return new R2dbcNonTransientResourceException(
+        return new PostgresConnectionException(
             String.format("Cannot connect to %s:%d", this.configuration.getHost(), this.configuration.getPort()), throwable
         );
     }
@@ -204,6 +205,13 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
         return connection.createStatement(String.format("SET SCHEMA '%s'", this.configuration.getSchema()))
             .execute()
             .then();
+    }
+
+    static class PostgresConnectionException extends R2dbcNonTransientResourceException {
+
+        public PostgresConnectionException(String msg, @Nullable Throwable cause) {
+            super(msg, cause);
+        }
     }
 
 }
