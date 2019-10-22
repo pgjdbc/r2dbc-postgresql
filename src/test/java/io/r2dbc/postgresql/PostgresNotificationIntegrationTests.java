@@ -17,9 +17,7 @@
 package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.api.Notification;
-import io.r2dbc.postgresql.util.PostgresqlServerExtension;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import reactor.core.Disposable;
 import reactor.test.StepVerifier;
 
@@ -30,21 +28,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-final class PostgresNotificationIntegrationTests {
-
-    @RegisterExtension
-    static final PostgresqlServerExtension SERVER = new PostgresqlServerExtension();
-
-    private final PostgresqlConnectionConfiguration configuration = PostgresqlConnectionConfiguration.builder()
-        .database(SERVER.getDatabase())
-        .host(SERVER.getHost())
-        .port(SERVER.getPort())
-        .password(SERVER.getPassword())
-        .username(SERVER.getUsername())
-        .forceBinary(true)
-        .build();
-
-    private final PostgresqlConnectionFactory connectionFactory = new PostgresqlConnectionFactory(this.configuration);
+final class PostgresNotificationIntegrationTests extends AbstractIntegrationTests {
 
     @Test
     void shouldReceivePubSubNotifications() throws Exception {
@@ -52,14 +36,14 @@ final class PostgresNotificationIntegrationTests {
         BlockingQueue<Notification> notifications = new LinkedBlockingQueue<>();
 
         CountDownLatch await = new CountDownLatch(1);
-        Disposable listener = connectionFactory.create().flatMapMany(it -> {
+        Disposable listener = this.connectionFactory.create().flatMapMany(it -> {
             return it.createStatement("LISTEN mymessage").execute().doOnComplete(await::countDown)
                 .thenMany(it.getNotifications()).doOnCancel(() -> it.close().subscribe());
         }).doOnNext(notifications::add).subscribe();
 
         await.await(10, TimeUnit.SECONDS);
 
-        connectionFactory.create().flatMapMany(it -> it.createStatement("NOTIFY mymessage, 'Mötorhead'").execute().thenMany(it.close()))
+        this.connectionFactory.create().flatMapMany(it -> it.createStatement("NOTIFY mymessage, 'Mötorhead'").execute().thenMany(it.close()))
             .as(StepVerifier::create).verifyComplete();
 
         Notification notification = notifications.poll(10, TimeUnit.SECONDS);

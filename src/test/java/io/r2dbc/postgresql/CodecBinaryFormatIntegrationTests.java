@@ -16,19 +16,11 @@
 
 package io.r2dbc.postgresql;
 
-import io.r2dbc.postgresql.util.PostgresqlServerExtension;
-
 final class CodecBinaryFormatIntegrationTests extends AbstractCodecIntegrationTests {
 
     @Override
-    protected PostgresqlConnectionConfiguration getConfiguration(PostgresqlServerExtension server) {
-        return PostgresqlConnectionConfiguration.builder()
-            .database(SERVER.getDatabase())
-            .host(SERVER.getHost())
-            .port(SERVER.getPort())
-            .password(SERVER.getPassword())
-            .username(SERVER.getUsername())
-            .forceBinary(true)
-            .build();
+    protected void customize(PostgresqlConnectionConfiguration.Builder builder) {
+        builder.forceBinary(true);
     }
+
 }

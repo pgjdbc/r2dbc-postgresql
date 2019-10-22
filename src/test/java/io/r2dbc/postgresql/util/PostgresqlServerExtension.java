@@ -29,12 +29,14 @@ import org.testcontainers.utility.MountableFile;
 import reactor.util.annotation.Nullable;
 
 import javax.sql.DataSource;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
-import java.net.Socket;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Properties;
 import java.util.function.Supplier;
 
 import static org.testcontainers.utility.MountableFile.forHostPath;
@@ -63,7 +65,7 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
         return PostgresqlServerExtension.containerInstance;
     };
 
-    private final DatabaseContainer postgres = new TestContainer(this.container.get());
+    private final DatabaseContainer postgres = getContainer();
 
     private final boolean useTestContainer = this.postgres instanceof TestContainer;
 
@@ -72,6 +74,28 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
     private JdbcOperations jdbcOperations;
 
     public PostgresqlServerExtension() {
+    }
+
+    private DatabaseContainer getContainer() {
+
+        File testrc = new File(".testrc");
+        String preference = "testcontainer";
+        if (testrc.exists()) {
+            Properties properties = new Properties();
+            try (FileReader reader = new FileReader(testrc)) {
+                properties.load(reader);
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
+
+            preference = properties.getProperty("preference", preference);
+        }
+
+        if (preference.equals(External.PREFERENCE)) {
+            return new External();
+        }
+
+        return new TestContainer(this.container.get());
     }
 
     @Override
@@ -219,6 +243,8 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
      */
     static class External implements DatabaseContainer {
 
+        public static final String PREFERENCE = "external";
+
         public static final External INSTANCE = new External();
 
         @Override
@@ -246,27 +272,14 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
             return "postgres";
         }
 
-        /**
-         * Returns whether this container is available.
-         *
-         * @return
-         */
-        @SuppressWarnings("try")
-        boolean isAvailable() {
-
-            try (Socket ignored = new Socket(getHost(), getPort())) {
-
-                return true;
-            } catch (IOException e) {
-                return false;
-            }
-        }
     }
 
     /**
      * {@link DatabaseContainer} provided by {@link JdbcDatabaseContainer}.
      */
     static class TestContainer implements DatabaseContainer {
+
+        public static final String PREFERENCE = "testcontainer";
 
         private final JdbcDatabaseContainer<?> container;
 

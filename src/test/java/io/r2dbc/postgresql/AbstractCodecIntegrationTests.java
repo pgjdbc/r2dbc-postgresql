@@ -22,11 +22,9 @@ import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.postgresql.codec.Json;
-import io.r2dbc.postgresql.util.PostgresqlServerExtension;
 import io.r2dbc.spi.Connection;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.util.StreamUtils;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -56,14 +54,7 @@ import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-abstract class AbstractCodecIntegrationTests {
-
-    @RegisterExtension
-    static final PostgresqlServerExtension SERVER = new PostgresqlServerExtension();
-
-    private final PostgresqlConnectionFactory connectionFactory = new PostgresqlConnectionFactory(getConfiguration(SERVER));
-
-    protected abstract PostgresqlConnectionConfiguration getConfiguration(PostgresqlServerExtension server);
+abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
 
     @Test
     void bigDecimal() {

@@ -16,56 +16,27 @@
 
 package io.r2dbc.postgresql;
 
-import io.r2dbc.postgresql.util.PostgresqlServerExtension;
-import io.r2dbc.spi.Connection;
-import io.r2dbc.spi.ConnectionFactories;
-import io.r2dbc.spi.ConnectionFactory;
-import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.R2dbcDataIntegrityViolationException;
 import io.r2dbc.spi.Result;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.POSTGRESQL_DRIVER;
-import static io.r2dbc.spi.ConnectionFactoryOptions.DATABASE;
-import static io.r2dbc.spi.ConnectionFactoryOptions.DRIVER;
-import static io.r2dbc.spi.ConnectionFactoryOptions.HOST;
-import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
-import static io.r2dbc.spi.ConnectionFactoryOptions.PORT;
-import static io.r2dbc.spi.ConnectionFactoryOptions.USER;
-
-final class PostgresqlStatementErrorsIntegrationTests {
-
-    @RegisterExtension
-    static final PostgresqlServerExtension SERVER = new PostgresqlServerExtension();
-
-    ConnectionFactory connectionFactory = ConnectionFactories.get(ConnectionFactoryOptions.builder()
-        .option(DRIVER, POSTGRESQL_DRIVER)
-        .option(DATABASE, SERVER.getDatabase())
-        .option(HOST, SERVER.getHost())
-        .option(PORT, SERVER.getPort())
-        .option(PASSWORD, SERVER.getPassword())
-        .option(USER, SERVER.getUsername())
-        .build());
-
-    Connection connection;
+final class PostgresqlStatementErrorsIntegrationTests extends AbstractIntegrationTests {
 
     @BeforeEach
     void setUp() {
+        super.setUp();
         SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS test");
-        connection = Mono.from(connectionFactory.create()).block();
     }
 
 
     @AfterEach
     void tearDown() {
+        super.tearDown();
         SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS test");
-        Mono.from(connection.close()).block();
     }
 
     @Test
@@ -73,7 +44,7 @@ final class PostgresqlStatementErrorsIntegrationTests {
 
         SERVER.getJdbcOperations().execute("CREATE TABLE test (id SERIAL PRIMARY KEY)");
 
-        Flux<Integer> insert = Flux.from(connection.createStatement("INSERT INTO test (id) VALUES (1) RETURNING *").execute()).flatMap(Result::getRowsUpdated);
+        Flux<Integer> insert = Flux.from(this.connection.createStatement("INSERT INTO test (id) VALUES (1) RETURNING *").execute()).flatMap(Result::getRowsUpdated);
 
         insert.thenMany(insert).as(StepVerifier::create).verifyError(R2dbcDataIntegrityViolationException.class);
     }
@@ -83,7 +54,7 @@ final class PostgresqlStatementErrorsIntegrationTests {
 
         SERVER.getJdbcOperations().execute("CREATE TABLE test (id SERIAL PRIMARY KEY)");
 
-        Flux<Integer> insert = Flux.from(connection.createStatement("INSERT INTO test (id) VALUES ($1) RETURNING *").bind("$1", 1).execute()).flatMap(Result::getRowsUpdated);
+        Flux<Integer> insert = Flux.from(this.connection.createStatement("INSERT INTO test (id) VALUES ($1) RETURNING *").bind("$1", 1).execute()).flatMap(Result::getRowsUpdated);
 
         insert.thenMany(insert).as(StepVerifier::create).verifyError(R2dbcDataIntegrityViolationException.class);
     }
