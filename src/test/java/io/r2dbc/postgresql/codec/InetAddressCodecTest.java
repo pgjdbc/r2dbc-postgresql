@@ -26,8 +26,7 @@ import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.FLOAT4;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.INET;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
@@ -37,7 +36,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 
 final class InetAddressCodecTest {
 
-    private static final int dataType = VARCHAR.getObjectId();
+    private static final int dataType = INET.getObjectId();
 
     @Test
     void constructorNoByteBufAllocator() {
@@ -62,10 +61,8 @@ final class InetAddressCodecTest {
     void doCanDecode() {
         InetAddressCodec codec = new InetAddressCodec(TEST);
 
-        assertThat(codec.doCanDecode(VARCHAR, FORMAT_BINARY)).isTrue();
+        assertThat(codec.doCanDecode(INET, FORMAT_BINARY)).isTrue();
         assertThat(codec.doCanDecode(MONEY, FORMAT_TEXT)).isFalse();
-        assertThat(codec.doCanDecode(BPCHAR, FORMAT_TEXT)).isTrue();
-        assertThat(codec.doCanDecode(VARCHAR, FORMAT_TEXT)).isTrue();
     }
 
     @Test
@@ -86,7 +83,7 @@ final class InetAddressCodecTest {
 
         assertThat(new InetAddressCodec(TEST).doEncode(inetAddress))
             .hasFormat(FORMAT_TEXT)
-            .hasType(VARCHAR.getObjectId())
+            .hasType(INET.getObjectId())
             .hasValue(encode(TEST, inetAddress.getHostAddress()));
     }
 
@@ -99,7 +96,7 @@ final class InetAddressCodecTest {
     @Test
     void encodeNull() {
         assertThat(new InetAddressCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), NULL_VALUE));
+            .isEqualTo(new Parameter(FORMAT_TEXT, INET.getObjectId(), NULL_VALUE));
     }
 
 }

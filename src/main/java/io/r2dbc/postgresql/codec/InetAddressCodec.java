@@ -29,8 +29,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.INET;
 
 final class InetAddressCodec extends AbstractCodec<InetAddress> {
 
@@ -43,7 +42,7 @@ final class InetAddressCodec extends AbstractCodec<InetAddress> {
 
     @Override
     public Parameter encodeNull() {
-        return createNull(VARCHAR, FORMAT_TEXT);
+        return createNull(INET, FORMAT_TEXT);
     }
 
     @Override
@@ -51,7 +50,7 @@ final class InetAddressCodec extends AbstractCodec<InetAddress> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return BPCHAR == type || VARCHAR == type;
+        return INET == type;
     }
 
     @Override
@@ -59,7 +58,21 @@ final class InetAddressCodec extends AbstractCodec<InetAddress> {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         try {
-            return InetAddress.getByName(ByteBufUtils.decode(buffer).trim());
+            if (format == Format.FORMAT_BINARY) {
+
+                int readableBytes = buffer.readableBytes();
+                if (readableBytes == 8) {
+                    // addr + cidr
+                    buffer.skipBytes(4);
+                    byte[] addr = new byte[4];
+                    buffer.readBytes(addr);
+                    return InetAddress.getByAddress(addr);
+                }
+
+                throw new IllegalArgumentException("Cannot decode InetAddress. Available bytes: " + readableBytes);
+            }
+
+            return InetAddress.getByName(ByteBufUtils.decode(buffer));
         } catch (UnknownHostException e) {
             throw new IllegalArgumentException(e);
         }
@@ -69,7 +82,7 @@ final class InetAddressCodec extends AbstractCodec<InetAddress> {
     Parameter doEncode(InetAddress value) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return create(VARCHAR, FORMAT_TEXT, () -> ByteBufUtils.encode(this.byteBufAllocator, value.getHostAddress()));
+        return create(INET, FORMAT_TEXT, () -> ByteBufUtils.encode(this.byteBufAllocator, value.getHostAddress()));
     }
 
 }

@@ -157,8 +157,7 @@ final class CodecIntegrationTests {
 
     @Test
     void inetAddress() throws UnknownHostException {
-        testCodec(InetAddress.class, InetAddress.getLocalHost(), "BPCHAR(128)");
-        testCodec(InetAddress.class, InetAddress.getLocalHost(), "VARCHAR(128)");
+        testCodec(InetAddress.class, InetAddress.getLocalHost(), "INET");
     }
 
     @Test

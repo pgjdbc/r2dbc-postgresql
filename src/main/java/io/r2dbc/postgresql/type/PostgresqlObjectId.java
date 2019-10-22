@@ -109,6 +109,16 @@ public enum PostgresqlObjectId {
     FLOAT8_ARRAY(1022),
 
     /**
+     * The inet object id.
+     */
+    INET(869),
+
+    /**
+     * The inet array object id.
+     */
+    INET_ARRAY(1041),
+
+    /**
      * The int2 object id.
      */
     INT2(21),
@@ -157,7 +167,7 @@ public enum PostgresqlObjectId {
      * The JSON array object id.
      */
     JSON_ARRAY(199),
-    
+
     /**
      * The JSONB array object id.
      */
