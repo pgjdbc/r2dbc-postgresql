@@ -22,10 +22,14 @@ import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.postgresql.codec.Json;
+import io.r2dbc.spi.Blob;
+import io.r2dbc.spi.Clob;
 import io.r2dbc.spi.Connection;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
+import org.reactivestreams.Publisher;
 import org.springframework.util.StreamUtils;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -52,6 +56,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
@@ -90,6 +95,57 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     void charPrimitive() {
         testCodec(Character.class, 'a', "BPCHAR(1)");
         testCodec(Character.class, 'a', "VARCHAR(1)");
+    }
+
+    @Test
+    void blob() {
+        byte[] bytes = {1, 2, 3, 4};
+        testCodec(Blob.class,
+            new Blob() {
+
+                @Override
+                public Publisher<Void> discard() {
+                    return Mono.empty();
+                }
+
+                @Override
+                public Publisher<ByteBuffer> stream() {
+                    return Mono.just(ByteBuffer.wrap(bytes));
+                }
+            },
+            (actual, expected) -> Flux.zip(
+                Flux.from(actual.stream()).reduce(TEST.heapBuffer(), ByteBuf::writeBytes),
+                Flux.from(expected.stream()).reduce(TEST.heapBuffer(), ByteBuf::writeBytes)
+            )
+                .as(StepVerifier::create)
+                .assertNext(t -> assertThat(t.getT1()).isEqualTo(t.getT2()))
+                .verifyComplete()
+            , "BYTEA");
+    }
+
+    @Test
+    void clob() {
+        testCodec(Clob.class,
+            new Clob() {
+
+                @Override
+                public Publisher<Void> discard() {
+                    return Mono.empty();
+                }
+
+                @Override
+                public Publisher<CharSequence> stream() {
+                    return Mono.just("test-value");
+                }
+            },
+            (actual, expected) -> Flux.zip(
+                Flux.from(actual.stream()).reduce(new StringBuilder(), StringBuilder::append).map(StringBuilder::toString),
+                Flux.from(expected.stream()).reduce(new StringBuilder(), StringBuilder::append).map(StringBuilder::toString)
+            )
+                .as(StepVerifier::create)
+                .assertNext(t -> assertThat(t.getT1()).isEqualToIgnoringWhitespace(t.getT2()))
+                .verifyComplete()
+            , "TEXT");
     }
 
     @Test

@@ -51,7 +51,7 @@ final class ClobCodec extends AbstractCodec<Clob> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return FORMAT_TEXT == format && TEXT == type;
+        return TEXT == type;
     }
 
     @Override

@@ -57,14 +57,14 @@ final class BlobCodec extends AbstractCodec<Blob> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return FORMAT_TEXT == format && BYTEA == type;
+        return BYTEA == type;
     }
 
     @Override
     Blob doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends Blob> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
-        return new ByteABlob(buffer);
+        return new ByteABlob(buffer, format);
     }
 
     @Override
@@ -103,29 +103,37 @@ final class BlobCodec extends AbstractCodec<Blob> {
 
         private final ByteBuf byteBuf;
 
-        private ByteABlob(ByteBuf byteBuf) {
+        private final Format format;
+
+        private ByteABlob(ByteBuf byteBuf, Format format) {
             this.byteBuf = byteBuf.retain();
+            this.format = format;
         }
 
         @Override
         public Mono<Void> discard() {
-            return Mono.defer(() -> {
-                this.byteBuf.release();
-                return Mono.empty();
+            return Mono.fromRunnable(() -> {
+                if (this.byteBuf.refCnt() > 0) {
+                    this.byteBuf.release();
+                }
             });
         }
 
         @Override
         public Mono<ByteBuffer> stream() {
-            return Mono.defer(() -> {
+            return Mono.fromSupplier(() -> {
+                if (this.format == Format.FORMAT_BINARY) {
+                    return this.byteBuf.nioBuffer();
+                }
+
                 Matcher matcher = BLOB_PATTERN.matcher(ByteBufUtils.decode(this.byteBuf));
 
                 if (!matcher.find()) {
-                    return Mono.error(new IllegalStateException("ByteBuf does not contain BYTEA hex format"));
+                    throw new IllegalStateException("ByteBuf does not contain BYTEA hex format");
                 }
 
-                return Mono.just(ByteBuffer.wrap(ByteBufUtil.decodeHexDump(matcher.group(1))));
-            });
+                return ByteBuffer.wrap(ByteBufUtil.decodeHexDump(matcher.group(1)));
+            }).doAfterTerminate(this.byteBuf::release);
         }
     }
 
