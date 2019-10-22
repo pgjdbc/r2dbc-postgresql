@@ -58,7 +58,6 @@ final class PostgresqlConnectionConfigurationTest {
             .database("test-database")
             .host("test-host")
             .options(options)
-            .password("test-password")
             .port(100)
             .schema("test-schema")
             .username("test-username")
@@ -71,7 +70,7 @@ final class PostgresqlConnectionConfigurationTest {
             .hasFieldOrPropertyWithValue("database", "test-database")
             .hasFieldOrPropertyWithValue("host", "test-host")
             .hasFieldOrPropertyWithValue("options", options)
-            .hasFieldOrPropertyWithValue("password", "test-password")
+            .hasFieldOrPropertyWithValue("password", null)
             .hasFieldOrPropertyWithValue("port", 100)
             .hasFieldOrPropertyWithValue("schema", "test-schema")
             .hasFieldOrPropertyWithValue("username", "test-username")
@@ -106,15 +105,6 @@ final class PostgresqlConnectionConfigurationTest {
             .username("test-username")
             .build())
             .withMessage("host must not be null");
-    }
-
-    @Test
-    void constructorNoPassword() {
-        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder()
-            .host("test-host")
-            .username("test-username")
-            .build())
-            .withMessage("password must not be null");
     }
 
     @Test

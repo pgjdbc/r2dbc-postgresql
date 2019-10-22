@@ -87,9 +87,7 @@ public final class PostgresqlConnectionConfiguration {
         this.forceBinary = forceBinary;
         this.host = Assert.requireNonNull(host, "host must not be null");
         this.options = options;
-        this.password = sslConfig.getSslMode() != SSLMode.DISABLE
-            ? password
-            : Assert.requireNonNull(password, "password must not be null");
+        this.password = password;
         this.port = port;
         this.schema = schema;
         this.username = Assert.requireNonNull(username, "username must not be null");

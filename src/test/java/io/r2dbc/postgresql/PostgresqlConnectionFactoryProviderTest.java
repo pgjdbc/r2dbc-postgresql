@@ -137,7 +137,16 @@ final class PostgresqlConnectionFactoryProviderTest {
     }
 
     @Test
-    void providerShouldparseAndHandleConnectionParameters() {
+    void shouldCreateConnectionFactoryWithoutPassword() {
+        assertThat(this.provider.create(ConnectionFactoryOptions.builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(USER, "test-user")
+            .build())).isNotNull();
+    }
+
+    @Test
+    void providerShouldParseAndHandleConnectionParameters() {
         Map<String, String> expectedOptions = new HashMap<>();
         expectedOptions.put("lock_timeout", "5s");
         expectedOptions.put("statement_timeout", "6000");
