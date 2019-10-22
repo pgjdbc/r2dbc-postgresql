@@ -56,7 +56,7 @@ import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-abstract class AbstractCodecIntegrationTest {
+abstract class AbstractCodecIntegrationTests {
 
     @RegisterExtension
     static final PostgresqlServerExtension SERVER = new PostgresqlServerExtension();

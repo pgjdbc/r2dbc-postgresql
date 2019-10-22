@@ -1,1 +1,1 @@
-io.r2dbc.postgresql.CodecExtensionIntegrationTest$JsonCodecRegistrar
+io.r2dbc.postgresql.CodecExtensionIntegrationTests$JsonCodecRegistrar

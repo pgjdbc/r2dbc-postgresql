@@ -37,7 +37,7 @@ import reactor.test.StepVerifier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class CodecExtensionIntegrationTest {
+public class CodecExtensionIntegrationTests {
 
     @RegisterExtension
     static final PostgresqlServerExtension SERVER = new PostgresqlServerExtension();

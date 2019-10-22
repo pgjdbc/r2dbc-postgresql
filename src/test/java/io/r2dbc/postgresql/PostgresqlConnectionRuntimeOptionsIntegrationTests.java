@@ -8,7 +8,7 @@ import reactor.test.StepVerifier;
 import java.util.HashMap;
 import java.util.Map;
 
-final class PostgresqlConnectionRuntimeOptionsTest {
+final class PostgresqlConnectionRuntimeOptionsIntegrationTests {
 
     @RegisterExtension
     static final PostgresqlServerExtension SERVER = new PostgresqlServerExtension();

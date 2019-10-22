@@ -63,7 +63,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.fail;
 
-final class ReactorNettyClientTest {
+final class ReactorNettyClientIntegrationTests {
 
     @RegisterExtension
     static final PostgresqlServerExtension SERVER = new PostgresqlServerExtension();
@@ -148,6 +148,7 @@ final class ReactorNettyClientTest {
 
     @AfterEach
     void closeClient() {
+        SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS test");
         this.client.close()
             .block();
     }
@@ -276,7 +277,7 @@ final class ReactorNettyClientTest {
             .username("test")
             .password("test")
             .database(SERVER.getDatabase())
-            .applicationName(ReactorNettyClientTest.class.getName())
+            .applicationName(ReactorNettyClientIntegrationTests.class.getName())
             .connectTimeout(Duration.ofMillis(200))
             .build());
 
@@ -304,7 +305,7 @@ final class ReactorNettyClientTest {
 
     @Nested
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-    final class ScramTest {
+    final class ScramIntegrationTests {
 
         @Test
         void scramAuthentication() {
@@ -330,14 +331,14 @@ final class ReactorNettyClientTest {
                 .username(username)
                 .password(password)
                 .database(SERVER.getDatabase())
-                .applicationName(ReactorNettyClientTest.class.getName())
+                .applicationName(ReactorNettyClientIntegrationTests.class.getName())
                 .build());
         }
     }
 
     @Nested
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-    final class SslTest {
+    final class SslIntegrationTests {
 
         @Test
         void exchangeSslWithClientCert() {

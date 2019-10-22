@@ -53,7 +53,7 @@ import java.util.function.Function;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
-final class CodecIntegrationTest {
+final class CodecIntegrationTests {
 
     @RegisterExtension
     static final PostgresqlServerExtension SERVER = new PostgresqlServerExtension();
@@ -326,7 +326,7 @@ final class CodecIntegrationTest {
                 .assertNext(r2dbc -> equality.accept(r2dbc, value))
                 .verifyComplete();
         } finally {
-            //SERVER.getJdbcOperations().execute("DROP TABLE test");
+            SERVER.getJdbcOperations().execute("DROP TABLE test");
         }
     }
 

@@ -35,7 +35,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import static org.testcontainers.utility.MountableFile.forHostPath;
@@ -46,20 +45,27 @@ import static org.testcontainers.utility.MountableFile.forHostPath;
  */
 public final class PostgresqlServerExtension implements BeforeAllCallback, AfterAllCallback {
 
-    private volatile PostgreSQLContainer<?> containerInstance = null;
+    private static PostgreSQLContainer<?> containerInstance = null;
 
     private final Supplier<PostgreSQLContainer<?>> container = () -> {
-        if (this.containerInstance != null) {
-            return this.containerInstance;
+
+        if (PostgresqlServerExtension.containerInstance != null) {
+            return PostgresqlServerExtension.containerInstance;
         }
-        return this.containerInstance = container();
+
+        PostgresqlServerExtension.containerInstance = container();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            containerInstance.stop();
+            containerInstance = null;
+        }, "PostgresqlServerExtension-Shutdown"));
+
+        return PostgresqlServerExtension.containerInstance;
     };
 
     private final DatabaseContainer postgres = new TestContainer(this.container.get());
 
     private final boolean useTestContainer = this.postgres instanceof TestContainer;
-
-    private final AtomicInteger nestingCounter = new AtomicInteger(0);
 
     private HikariDataSource dataSource;
 
@@ -69,43 +75,42 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
     }
 
     @Override
+    @SuppressWarnings("rawtypes")
     public void afterAll(ExtensionContext context) {
-        int nesting = this.nestingCounter.decrementAndGet();
-        if (nesting == 0) {
-            if (this.dataSource != null) {
-                this.dataSource.close();
-            }
-            if (this.useTestContainer) {
-                this.container.get().stop();
-            }
+
+        if (this.dataSource != null) {
+            this.dataSource.close();
         }
     }
 
     @Override
+    @SuppressWarnings("rawtypes")
     public void beforeAll(ExtensionContext context) {
         initialize();
     }
 
     public void initialize() {
-        int nesting = this.nestingCounter.incrementAndGet();
-        if (nesting == 1) {
-            if (this.useTestContainer) {
-                this.container.get().start();
-            }
 
-            HikariDataSource dataSource = new HikariDataSource();
-            dataSource.setUsername(getUsername());
-            dataSource.setPassword(getPassword());
-            dataSource.setJdbcUrl(String.format("jdbc:postgresql://%s:%d/%s", getHost(), getPort(), getDatabase()));
-
-            HikariDataSource hikariDataSource = new HikariDataSource();
-            hikariDataSource.setUsername(getUsername());
-            hikariDataSource.setPassword(getPassword());
-            hikariDataSource.setJdbcUrl(String.format("jdbc:postgresql://%s:%d/%s", getHost(), getPort(), getDatabase()));
-
-            this.dataSource = hikariDataSource;
-            this.jdbcOperations = new JdbcTemplate(this.dataSource);
+        if (this.useTestContainer) {
+            this.container.get().start();
         }
+
+        initializeConnectors();
+    }
+
+    private void initializeConnectors() {
+        HikariDataSource dataSource = new HikariDataSource();
+        dataSource.setUsername(getUsername());
+        dataSource.setPassword(getPassword());
+        dataSource.setJdbcUrl(String.format("jdbc:postgresql://%s:%d/%s", getHost(), getPort(), getDatabase()));
+
+        HikariDataSource hikariDataSource = new HikariDataSource();
+        hikariDataSource.setUsername(getUsername());
+        hikariDataSource.setPassword(getPassword());
+        hikariDataSource.setJdbcUrl(String.format("jdbc:postgresql://%s:%d/%s", getHost(), getPort(), getDatabase()));
+
+        this.dataSource = hikariDataSource;
+        this.jdbcOperations = new JdbcTemplate(this.dataSource);
     }
 
     public String getClientCrt() {
@@ -129,7 +134,7 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
     }
 
     public DataSource getDataSource() {
-        return dataSource;
+        return this.dataSource;
     }
 
     @Nullable
