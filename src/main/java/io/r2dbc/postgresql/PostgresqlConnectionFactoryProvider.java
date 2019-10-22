@@ -50,6 +50,11 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<Boolean> AUTODETECT_EXTENSIONS = Option.valueOf("autodetectExtensions");
 
     /**
+     * Force binary transfer.
+     */
+    public static final Option<Boolean> FORCE_BINARY = Option.valueOf("forceBinary");
+
+    /**
      * Driver option value.
      */
     public static final String POSTGRESQL_DRIVER = "postgresql";
@@ -133,6 +138,12 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         Integer port = connectionFactoryOptions.getValue(PORT);
         if (port != null) {
             builder.port(port);
+        }
+
+        Boolean forceBinary = connectionFactoryOptions.getValue(FORCE_BINARY);
+
+        if (forceBinary != null) {
+            builder.forceBinary(forceBinary);
         }
 
         Boolean ssl = connectionFactoryOptions.getValue(SSL);

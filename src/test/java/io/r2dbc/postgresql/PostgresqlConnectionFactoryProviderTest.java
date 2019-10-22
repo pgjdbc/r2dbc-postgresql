@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.AUTODETECT_EXTENSIONS;
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.FORCE_BINARY;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.LEGACY_POSTGRESQL_DRIVER;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.OPTIONS;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.POSTGRESQL_DRIVER;
@@ -143,6 +144,19 @@ final class PostgresqlConnectionFactoryProviderTest {
             .option(HOST, "test-host")
             .option(USER, "test-user")
             .build())).isNotNull();
+    }
+
+    @Test
+    void providerShouldConsiderBinaryTransfer() {
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, LEGACY_POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(FORCE_BINARY, true)
+            .build());
+
+        assertThat(factory.getConfiguration().isForceBinary()).isTrue();
     }
 
     @Test
