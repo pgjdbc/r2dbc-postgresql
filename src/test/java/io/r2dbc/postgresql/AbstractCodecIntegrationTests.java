@@ -199,6 +199,11 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     }
 
     @Test
+    void intTwoDimensionalArray() {
+        testCodec(Integer[][].class, new Integer[][]{{100, 200}, {300, null}}, "INT4[][]");
+    }
+
+    @Test
     void json() {
         testCodec(String.class, "{\"hello\": \"world\"}", "JSON", "$1::json");
 
@@ -290,6 +295,11 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     }
 
     @Test
+    void longTwoDimensionalArray() {
+        testCodec(Long[][].class, new Long[][]{{100L, 200L}, {300L, null}}, "INT8[][]");
+    }
+
+    @Test
     void offsetDateTime() {
         testCodec(OffsetDateTime.class, OffsetDateTime.now(), (actual, expected) -> assertThat(actual.isEqual(expected)).isTrue(), "TIMESTAMP WITH TIME ZONE");
     }
@@ -305,6 +315,11 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     }
 
     @Test
+    void shortTwoDimensionalArray() {
+        testCodec(Short[][].class, new Short[][]{{100, 200}, {300, null}}, "INT2[][]");
+    }
+
+    @Test
     void string() {
         testCodec(String.class, "test-value", (actual, expected) -> assertThat(actual).isEqualToIgnoringWhitespace(expected), "BPCHAR(32)");
         testCodec(String.class, "test-value", "VARCHAR(32)");
@@ -316,6 +331,18 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(String[].class, new String[]{"test-value1", "test-value2", "test-value3"}, "VARCHAR[]");
         testCodec(String[].class, new String[]{"NULL", "", "test value3", "hello\\world"}, "VARCHAR[]");
         testCodec(String[].class, new String[]{"NULL", "", "test value3", "hello\\world"}, "TEXT[]");
+    }
+
+    @Test
+    void stringArrayValueEscaping() {
+        testCodec(String[].class, new String[]{"NULL", null, "R \"2\" DBC", "АБ"}, "BPCHAR[]");
+        testCodec(String[].class, new String[]{"NULL", null, "R \"2\" DBC", "АБ"}, "VARCHAR[]");
+    }
+
+    @Test
+    void stringTwoDimensionalArray() {
+        testCodec(String[][].class, new String[][]{{"test-value1"}, {"test-value2"}}, "BPCHAR[]");
+        testCodec(String[][].class, new String[][]{{"test-value1"}, {"test-value2"}}, "VARCHAR[]");
     }
 
     @Test
