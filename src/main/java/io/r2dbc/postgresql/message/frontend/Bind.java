@@ -116,15 +116,17 @@ public final class Bind implements FrontendMessage, FrontendMessage.DirectEncode
         this.parameterFormats.forEach(format -> writeShort(byteBuf, format.getDiscriminator()));
 
         writeShort(byteBuf, this.parameters.size());
-        this.parameters.forEach(parameters -> {
-            if (parameters == NULL_VALUE) {
+
+        for (ByteBuf parameter : this.parameters) {
+
+            if (parameter == NULL_VALUE) {
                 writeInt(byteBuf, NULL);
             } else {
-                writeInt(byteBuf, parameters.readableBytes());
-                writeBytes(byteBuf, parameters);
-                parameters.release();
+                writeInt(byteBuf, parameter.readableBytes());
+                writeBytes(byteBuf, parameter);
+                parameter.release();
             }
-        });
+        }
 
         writeShort(byteBuf, this.resultFormats.size());
         this.resultFormats.forEach(format -> writeShort(byteBuf, format.getDiscriminator()));

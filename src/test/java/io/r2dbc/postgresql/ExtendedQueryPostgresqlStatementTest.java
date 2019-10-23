@@ -19,6 +19,8 @@ package io.r2dbc.postgresql;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.client.Binding;
 import io.r2dbc.postgresql.client.Client;
+import io.r2dbc.postgresql.client.ExtendedQueryMessageFlow.BindDescribeExecuteClose;
+import io.r2dbc.postgresql.client.ExtendedQueryMessageFlow.BindDescribeExecuteSyncClose;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.client.PortalNameSupplier;
 import io.r2dbc.postgresql.client.TestClient;
@@ -30,10 +32,6 @@ import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.NoData;
 import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.postgresql.message.frontend.Bind;
-import io.r2dbc.postgresql.message.frontend.Close;
-import io.r2dbc.postgresql.message.frontend.Describe;
-import io.r2dbc.postgresql.message.frontend.Execute;
-import io.r2dbc.postgresql.message.frontend.ExecutionType;
 import io.r2dbc.postgresql.message.frontend.Sync;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.junit.jupiter.api.Test;
@@ -43,7 +41,6 @@ import reactor.test.StepVerifier;
 
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 
@@ -174,14 +171,10 @@ final class ExtendedQueryPostgresqlStatementTest {
     void execute() {
         Client client = TestClient.builder()
             .expectRequest(
-                new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
-                new Describe("B_0", ExecutionType.PORTAL),
-                new Execute("B_0", 0),
-                new Close("B_0", ExecutionType.PORTAL),
-                new Bind("B_1", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(200)), Collections.emptyList(), "test-name"),
-                new Describe("B_1", ExecutionType.PORTAL),
-                new Execute("B_1", 0),
-                new Close("B_1", ExecutionType.PORTAL),
+                new BindDescribeExecuteClose(new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name")
+                    , "B_0"),
+                new BindDescribeExecuteClose(new Bind("B_1", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(200)), Collections.emptyList(), "test-name")
+                    , "B_1"),
                 Sync.INSTANCE)
             .thenRespond(
                 BindComplete.INSTANCE, NoData.INSTANCE, new CommandComplete("test", null, null), CloseComplete.INSTANCE,
@@ -219,11 +212,8 @@ final class ExtendedQueryPostgresqlStatementTest {
     void executeErrorAfterBind() {
         Client client = TestClient.builder()
             .expectRequest(
-                new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
-                new Describe("B_0", ExecutionType.PORTAL),
-                new Execute("B_0", 0),
-                new Close("B_0", ExecutionType.PORTAL),
-                Sync.INSTANCE)
+                new BindDescribeExecuteSyncClose(new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test" +
+                    "-name"), "B_0"))
             .thenRespond(BindComplete.INSTANCE, new RowDescription(Collections.emptyList()), new ErrorResponse(Collections.emptyList()))
             .build();
 
@@ -247,11 +237,8 @@ final class ExtendedQueryPostgresqlStatementTest {
     void executeErrorResponseRows() {
         Client client = TestClient.builder()
             .expectRequest(
-                new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
-                new Describe("B_0", ExecutionType.PORTAL),
-                new Execute("B_0", 0),
-                new Close("B_0", ExecutionType.PORTAL),
-                Sync.INSTANCE)
+                new BindDescribeExecuteSyncClose(new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test" +
+                    "-name"), "B_0"))
             .thenRespond(BindComplete.INSTANCE, NoData.INSTANCE, new ErrorResponse(Collections.emptyList()))
             .build();
 
@@ -275,11 +262,8 @@ final class ExtendedQueryPostgresqlStatementTest {
     void executeErrorResponseRowsUpdated() {
         Client client = TestClient.builder()
             .expectRequest(
-                new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
-                new Describe("B_0", ExecutionType.PORTAL),
-                new Execute("B_0", 0),
-                new Close("B_0", ExecutionType.PORTAL),
-                Sync.INSTANCE)
+                new BindDescribeExecuteSyncClose(new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test" +
+                    "-name"), "B_0"))
             .thenRespond(new ErrorResponse(Collections.emptyList()))
             .build();
 
@@ -303,11 +287,8 @@ final class ExtendedQueryPostgresqlStatementTest {
     void executeErrorResponse() {
         Client client = TestClient.builder()
             .expectRequest(
-                new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
-                new Describe("B_0", ExecutionType.PORTAL),
-                new Execute("B_0", 0),
-                new Close("B_0", ExecutionType.PORTAL),
-                Sync.INSTANCE)
+                new BindDescribeExecuteSyncClose(new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test" +
+                    "-name"), "B_0"))
             .thenRespond(new ErrorResponse(Collections.emptyList()))
             .build();
 
@@ -331,11 +312,8 @@ final class ExtendedQueryPostgresqlStatementTest {
     void executeWithoutAdd() {
         Client client = TestClient.builder()
             .expectRequest(
-                new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
-                new Describe("B_0", ExecutionType.PORTAL),
-                new Execute("B_0", 0),
-                new Close("B_0", ExecutionType.PORTAL),
-                Sync.INSTANCE)
+                new BindDescribeExecuteSyncClose(new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test" +
+                    "-name"), "B_0"))
             .thenRespond(
                 BindComplete.INSTANCE, NoData.INSTANCE, new CommandComplete("test", null, null), CloseComplete.INSTANCE)
             .build();
@@ -360,11 +338,8 @@ final class ExtendedQueryPostgresqlStatementTest {
     void executeWithoutResultWithMap() {
         Client client = TestClient.builder()
             .expectRequest(
-                new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
-                new Describe("B_0", ExecutionType.PORTAL),
-                new Execute("B_0", 0),
-                new Close("B_0", ExecutionType.PORTAL),
-                Sync.INSTANCE)
+                new BindDescribeExecuteSyncClose(new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test" +
+                    "-name"), "B_0"))
             .thenRespond(
                 BindComplete.INSTANCE, NoData.INSTANCE, new CommandComplete("test", null, null), CloseComplete.INSTANCE)
             .build();
@@ -391,11 +366,8 @@ final class ExtendedQueryPostgresqlStatementTest {
     void returnGeneratedValues() {
         Client client = TestClient.builder()
             .expectRequest(
-                new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
-                new Describe("B_0", ExecutionType.PORTAL),
-                new Execute("B_0", 0),
-                new Close("B_0", ExecutionType.PORTAL),
-                Sync.INSTANCE)
+                new BindDescribeExecuteSyncClose(new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test" +
+                    "-name"), "B_0"))
             .thenRespond(
                 BindComplete.INSTANCE, NoData.INSTANCE, new CommandComplete("test", null, null), CloseComplete.INSTANCE)
             .build();
@@ -415,7 +387,6 @@ final class ExtendedQueryPostgresqlStatementTest {
             .as(StepVerifier::create)
             .expectNextCount(1)
             .verifyComplete();
-
     }
 
     @Test

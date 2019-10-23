@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit;
 @BenchmarkMode(Mode.Throughput)
 @OutputTimeUnit(TimeUnit.SECONDS)
 @Testable
-public class StatementBenchmarks {
+public class StatementBenchmarks extends BenchmarkSettings {
 
     private static PostgresqlServerExtension extension = new PostgresqlServerExtension();
 

@@ -76,14 +76,17 @@ public final class Execute implements FrontendMessage, FrontendMessage.DirectEnc
 
     @Override
     public void encode(ByteBuf byteBuf) {
+        encode(byteBuf, this.name, this.rows);
+    }
 
+    public static void encode(ByteBuf byteBuf, String name, int rows) {
         writeByte(byteBuf, 'E');
 
         int writerIndex = byteBuf.writerIndex();
 
         writeLengthPlaceholder(byteBuf);
-        writeCStringUTF8(byteBuf, this.name);
-        writeInt(byteBuf, this.rows);
+        writeCStringUTF8(byteBuf, name);
+        writeInt(byteBuf, rows);
         writeSize(byteBuf, writerIndex);
     }
 
@@ -103,7 +106,7 @@ public final class Execute implements FrontendMessage, FrontendMessage.DirectEnc
     @Override
     public int hashCode() {
 
-        return Objects.hash(name, rows);
+        return Objects.hash(this.name, this.rows);
     }
 
     @Override

@@ -71,13 +71,17 @@ public final class Describe implements FrontendMessage, FrontendMessage.DirectEn
     @Override
     public void encode(ByteBuf byteBuf) {
 
+        encode(byteBuf, name, type);
+    }
+
+    public static void encode(ByteBuf byteBuf, String name, ExecutionType type) {
         writeByte(byteBuf, 'D');
 
         int writerIndex = byteBuf.writerIndex();
 
         writeLengthPlaceholder(byteBuf);
-        writeByte(byteBuf, this.type.getDiscriminator());
-        writeCStringUTF8(byteBuf, this.name);
+        writeByte(byteBuf, type.getDiscriminator());
+        writeCStringUTF8(byteBuf, name);
         writeSize(byteBuf, writerIndex);
     }
 

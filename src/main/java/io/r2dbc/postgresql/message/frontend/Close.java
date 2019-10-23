@@ -71,14 +71,17 @@ public final class Close implements FrontendMessage, FrontendMessage.DirectEncod
 
     @Override
     public void encode(ByteBuf byteBuf) {
+        encode(byteBuf, this.name, this.type);
+    }
 
+    public static void encode(ByteBuf byteBuf, String name, ExecutionType type) {
         writeByte(byteBuf, 'C');
 
         int writerIndex = byteBuf.writerIndex();
 
         writeLengthPlaceholder(byteBuf);
-        writeByte(byteBuf, this.type.getDiscriminator());
-        writeCStringUTF8(byteBuf, this.name);
+        writeByte(byteBuf, type.getDiscriminator());
+        writeCStringUTF8(byteBuf, name);
         writeSize(byteBuf, writerIndex);
     }
 

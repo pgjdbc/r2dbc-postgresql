@@ -16,6 +16,8 @@
 
 package io.r2dbc.postgresql.client;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
@@ -35,7 +37,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
@@ -71,15 +73,22 @@ public final class ExtendedQueryMessageFlow {
      * @return the messages received in response to the exchange
      * @throws IllegalArgumentException if {@code bindings}, {@code client}, {@code portalNameSupplier}, or {@code statementName} is {@code null}
      */
-    public static Flux<BackendMessage> execute(Publisher<Binding> bindings, Client client, PortalNameSupplier portalNameSupplier, String statementName, String query, boolean forceBinary) {
+    public static Flux<BackendMessage> execute(Collection<Binding> bindings, Client client, PortalNameSupplier portalNameSupplier, String statementName, String query, boolean forceBinary) {
         Assert.requireNonNull(bindings, "bindings must not be null");
         Assert.requireNonNull(client, "client must not be null");
         Assert.requireNonNull(portalNameSupplier, "portalNameSupplier must not be null");
         Assert.requireNonNull(statementName, "statementName must not be null");
 
-        return client.exchange(Flux.from(bindings)
-            .flatMap(binding -> toBindFlow(binding, portalNameSupplier, statementName, query, forceBinary))
-            .concatWith(Mono.just(Sync.INSTANCE)));
+        if (bindings.size() == 1) {
+
+            Binding binding = bindings.iterator().next();
+            return client.exchange(toBindFlow(binding, portalNameSupplier, statementName, query, forceBinary, true));
+        } else {
+
+            return client.exchange(Flux.fromIterable(bindings)
+                .flatMap(binding -> toBindFlow(binding, portalNameSupplier, statementName, query, forceBinary, false))
+                .concatWith(Mono.just(Sync.INSTANCE)));
+        }
     }
 
     /**
@@ -92,7 +101,7 @@ public final class ExtendedQueryMessageFlow {
      * @return the messages received in response to this exchange
      * @throws IllegalArgumentException if {@code client}, {@code name}, {@code query}, or {@code types} is {@code null}
      */
-    public static Flux<BackendMessage> parse(Client client, String name, String query, List<Integer> types) {
+    public static Flux<BackendMessage> parse(Client client, String name, String query, int[] types) {
         Assert.requireNonNull(client, "client must not be null");
         Assert.requireNonNull(name, "name must not be null");
         Assert.requireNonNull(query, "query must not be null");
@@ -110,24 +119,138 @@ public final class ExtendedQueryMessageFlow {
         }
     }
 
-    private static Flux<FrontendMessage> toBindFlow(Binding binding, PortalNameSupplier portalNameSupplier, String statementName, String query, boolean forceBinary) {
+    private static Publisher<FrontendMessage> toBindFlow(Binding binding, PortalNameSupplier portalNameSupplier, String statementName, String query, boolean forceBinary, boolean inlineSync) {
         String portal = portalNameSupplier.get();
-
-        return Flux.fromIterable(binding.getParameterValues())
+        return binding.parameterValues()
             .flatMap(f -> {
                 if (f == Parameter.NULL_VALUE) {
                     return Flux.just(Bind.NULL_VALUE);
+                } else if (f instanceof Mono) {
+                    return f;
                 } else {
                     return Flux.from(f)
                         .reduce(Unpooled.compositeBuffer(), (c, b) -> c.addComponent(true, b));
                 }
             })
             .collectList()
-            .flatMapMany(values -> {
+            .map(values -> {
                 Bind bind = new Bind(portal, binding.getParameterFormats(), values, resultFormat(forceBinary), statementName);
 
-                return Flux.just(bind, new Describe(portal, PORTAL), new Execute(portal, NO_LIMIT), new Close(portal, PORTAL));
+                if (inlineSync) {
+                    return new BindDescribeExecuteSyncClose(bind, portal);
+                }
+
+                return new BindDescribeExecuteClose(bind, portal);
             }).doOnSubscribe(ignore -> QueryLogger.logQuery(query));
+    }
+
+    public static class BindDescribeExecuteSyncClose implements FrontendMessage {
+
+        private final Bind bind;
+
+        private final String portal;
+
+        public BindDescribeExecuteSyncClose(Bind bind, String portal) {
+
+            this.bind = bind;
+            this.portal = portal;
+        }
+
+        @Override
+        public Publisher<ByteBuf> encode(ByteBufAllocator byteBufAllocator) {
+
+            return Mono.fromSupplier(() -> {
+
+                ByteBuf buffer = byteBufAllocator.buffer(4 * 32);
+
+                this.bind.encode(buffer);
+                Describe.encode(buffer, this.portal, PORTAL);
+                Execute.encode(buffer, this.portal, NO_LIMIT);
+                Sync.INSTANCE.encode(buffer);
+                Close.encode(buffer, this.portal, PORTAL);
+                return buffer;
+            });
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof BindDescribeExecuteSyncClose)) {
+                return false;
+            }
+            BindDescribeExecuteSyncClose that = (BindDescribeExecuteSyncClose) o;
+            return Objects.equals(this.bind, that.bind) &&
+                Objects.equals(this.portal, that.portal);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.bind, this.portal);
+        }
+
+        @Override
+        public String toString() {
+            return "BindDescExecSyncClose{" +
+                "bind=" + this.bind +
+                ", portal='" + this.portal + '\'' +
+                '}';
+        }
+    }
+
+    public static class BindDescribeExecuteClose implements FrontendMessage {
+
+        private final Bind bind;
+
+        private final String portal;
+
+        public BindDescribeExecuteClose(Bind bind, String portal) {
+
+            this.bind = bind;
+            this.portal = portal;
+        }
+
+        @Override
+        public Publisher<ByteBuf> encode(ByteBufAllocator byteBufAllocator) {
+
+            return Mono.fromSupplier(() -> {
+
+                ByteBuf buffer = byteBufAllocator.buffer(4 * 32);
+
+                this.bind.encode(buffer);
+                Describe.encode(buffer, this.portal, PORTAL);
+                Execute.encode(buffer, this.portal, NO_LIMIT);
+                Close.encode(buffer, this.portal, PORTAL);
+                return buffer;
+            });
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof BindDescribeExecuteClose)) {
+                return false;
+            }
+            BindDescribeExecuteClose that = (BindDescribeExecuteClose) o;
+            return Objects.equals(this.bind, that.bind) &&
+                Objects.equals(this.portal, that.portal);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.bind, this.portal);
+        }
+
+        @Override
+        public String toString() {
+            return "BindDescExecClose{" +
+                "bind=" + this.bind +
+                ", portal='" + this.portal + '\'' +
+                '}';
+        }
     }
 
 }
