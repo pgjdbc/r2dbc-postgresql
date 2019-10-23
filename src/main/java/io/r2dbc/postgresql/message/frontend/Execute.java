@@ -33,7 +33,7 @@ import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeSiz
 /**
  * The Execute message.
  */
-public final class Execute implements FrontendMessage {
+public final class Execute implements FrontendMessage, FrontendMessage.DirectEncoder {
 
     /**
      * No limit on returned rows.
@@ -69,14 +69,22 @@ public final class Execute implements FrontendMessage {
 
         return Mono.fromSupplier(() -> {
             ByteBuf out = byteBufAllocator.ioBuffer();
-
-            writeByte(out, 'E');
-            writeLengthPlaceholder(out);
-            writeCStringUTF8(out, this.name);
-            writeInt(out, this.rows);
-
-            return writeSize(out);
+            encode(out);
+            return out;
         });
+    }
+
+    @Override
+    public void encode(ByteBuf byteBuf) {
+
+        writeByte(byteBuf, 'E');
+
+        int writerIndex = byteBuf.writerIndex();
+
+        writeLengthPlaceholder(byteBuf);
+        writeCStringUTF8(byteBuf, this.name);
+        writeInt(byteBuf, this.rows);
+        writeSize(byteBuf, writerIndex);
     }
 
     @Override

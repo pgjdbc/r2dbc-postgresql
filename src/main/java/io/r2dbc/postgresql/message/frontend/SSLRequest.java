@@ -22,6 +22,7 @@ import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
+import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeArray;
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeInt;
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeLengthPlaceholder;
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeSize;
@@ -29,7 +30,7 @@ import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeSiz
 /**
  * The SSLRequest message.
  */
-public final class SSLRequest implements FrontendMessage {
+public final class SSLRequest implements FrontendMessage, FrontendMessage.DirectEncoder {
 
     /**
      * A static singleton instance that should always be used.
@@ -37,6 +38,15 @@ public final class SSLRequest implements FrontendMessage {
     public static final SSLRequest INSTANCE = new SSLRequest();
 
     private static final int REQUEST_CODE = 80877103;
+
+    private final byte[] message = writeArray(buffer -> {
+
+        writeLengthPlaceholder(buffer);
+        writeInt(buffer, REQUEST_CODE);
+
+        return writeSize(buffer, 0);
+
+    });
 
     private SSLRequest() {
     }
@@ -46,13 +56,16 @@ public final class SSLRequest implements FrontendMessage {
         Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
 
         return Mono.fromSupplier(() -> {
-            ByteBuf out = byteBufAllocator.ioBuffer(8);
+            ByteBuf out = byteBufAllocator.ioBuffer();
 
-            writeLengthPlaceholder(out);
-            writeInt(out, REQUEST_CODE);
-
-            return writeSize(out, 0);
+            encode(out);
+            return out;
         });
+    }
+
+    @Override
+    public void encode(ByteBuf byteBuf) {
+        byteBuf.writeBytes(this.message);
     }
 
     @Override

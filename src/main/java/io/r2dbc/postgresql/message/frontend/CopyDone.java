@@ -23,6 +23,7 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.MESSAGE_OVERHEAD;
+import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeArray;
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeByte;
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeLengthPlaceholder;
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeSize;
@@ -30,12 +31,20 @@ import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeSiz
 /**
  * The CopyDone message.
  */
-public final class CopyDone implements FrontendMessage {
+public final class CopyDone implements FrontendMessage, FrontendMessage.DirectEncoder {
 
     /**
      * A static singleton instance that should always be used.
      */
     public static final CopyDone INSTANCE = new CopyDone();
+
+    private final byte[] message = writeArray(buffer -> {
+
+        writeByte(buffer, 'c');
+        writeLengthPlaceholder(buffer);
+
+        return writeSize(buffer);
+    });
 
     private CopyDone() {
     }
@@ -47,11 +56,14 @@ public final class CopyDone implements FrontendMessage {
         return Mono.fromSupplier(() -> {
             ByteBuf out = byteBufAllocator.ioBuffer(MESSAGE_OVERHEAD);
 
-            writeByte(out, 'c');
-            writeLengthPlaceholder(out);
-
-            return writeSize(out);
+            encode(out);
+            return out;
         });
+    }
+
+    @Override
+    public void encode(ByteBuf byteBuf) {
+        byteBuf.writeBytes(this.message);
     }
 
     @Override

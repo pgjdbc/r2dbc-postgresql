@@ -39,7 +39,7 @@ import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeSiz
 /**
  * The Bind message.
  */
-public final class Bind implements FrontendMessage {
+public final class Bind implements FrontendMessage, FrontendMessage.DirectEncoder {
 
     /**
      * A marker indicating a {@code NULL} value.
@@ -95,30 +95,41 @@ public final class Bind implements FrontendMessage {
         return Mono.fromSupplier(() -> {
             ByteBuf out = byteBufAllocator.ioBuffer();
 
-            writeByte(out, 'B');
-            writeLengthPlaceholder(out);
-            writeCStringUTF8(out, this.name);
-            writeCStringUTF8(out, this.source);
+            encode(out);
 
-            writeShort(out, this.parameterFormats.size());
-            this.parameterFormats.forEach(format -> writeShort(out, format.getDiscriminator()));
-
-            writeShort(out, this.parameters.size());
-            this.parameters.forEach(parameters -> {
-                if (parameters == NULL_VALUE) {
-                    writeInt(out, NULL);
-                } else {
-                    writeInt(out, parameters.readableBytes());
-                    writeBytes(out, parameters);
-                    parameters.release();
-                }
-            });
-
-            writeShort(out, this.resultFormats.size());
-            this.resultFormats.forEach(format -> writeShort(out, format.getDiscriminator()));
-
-            return writeSize(out);
+            return out;
         });
+    }
+
+    @Override
+    public void encode(ByteBuf byteBuf) {
+
+        writeByte(byteBuf, 'B');
+
+        int writerIndex = byteBuf.writerIndex();
+
+        writeLengthPlaceholder(byteBuf);
+        writeCStringUTF8(byteBuf, this.name);
+        writeCStringUTF8(byteBuf, this.source);
+
+        writeShort(byteBuf, this.parameterFormats.size());
+        this.parameterFormats.forEach(format -> writeShort(byteBuf, format.getDiscriminator()));
+
+        writeShort(byteBuf, this.parameters.size());
+        this.parameters.forEach(parameters -> {
+            if (parameters == NULL_VALUE) {
+                writeInt(byteBuf, NULL);
+            } else {
+                writeInt(byteBuf, parameters.readableBytes());
+                writeBytes(byteBuf, parameters);
+                parameters.release();
+            }
+        });
+
+        writeShort(byteBuf, this.resultFormats.size());
+        this.resultFormats.forEach(format -> writeShort(byteBuf, format.getDiscriminator()));
+
+        writeSize(byteBuf, writerIndex);
     }
 
     @Override
