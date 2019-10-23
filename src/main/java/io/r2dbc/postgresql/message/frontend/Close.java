@@ -32,7 +32,7 @@ import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeSiz
 /**
  * The Close message.
  */
-public final class Close implements FrontendMessage {
+public final class Close implements FrontendMessage, FrontendMessage.DirectEncoder {
 
     /**
      * The unnamed statement or portal.
@@ -63,13 +63,23 @@ public final class Close implements FrontendMessage {
         return Mono.fromSupplier(() -> {
             ByteBuf out = byteBufAllocator.ioBuffer();
 
-            writeByte(out, 'C');
-            writeLengthPlaceholder(out);
-            writeByte(out, this.type.getDiscriminator());
-            writeCStringUTF8(out, this.name);
+            encode(out);
 
-            return writeSize(out);
+            return out;
         });
+    }
+
+    @Override
+    public void encode(ByteBuf byteBuf) {
+
+        writeByte(byteBuf, 'C');
+
+        int writerIndex = byteBuf.writerIndex();
+
+        writeLengthPlaceholder(byteBuf);
+        writeByte(byteBuf, this.type.getDiscriminator());
+        writeCStringUTF8(byteBuf, this.name);
+        writeSize(byteBuf, writerIndex);
     }
 
     @Override

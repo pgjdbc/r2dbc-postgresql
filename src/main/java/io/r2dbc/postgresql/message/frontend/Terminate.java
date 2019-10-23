@@ -23,6 +23,7 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.MESSAGE_OVERHEAD;
+import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeArray;
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeByte;
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeLengthPlaceholder;
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeSize;
@@ -30,12 +31,20 @@ import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeSiz
 /**
  * The Termination message.
  */
-public final class Terminate implements FrontendMessage {
+public final class Terminate implements FrontendMessage, FrontendMessage.DirectEncoder {
 
     /**
      * A static singleton instance that should always be used.
      */
     public static final Terminate INSTANCE = new Terminate();
+
+    private final byte[] message = writeArray(buffer -> {
+
+        writeByte(buffer, 'X');
+        writeLengthPlaceholder(buffer);
+
+        return writeSize(buffer);
+    });
 
     private Terminate() {
     }
@@ -47,11 +56,14 @@ public final class Terminate implements FrontendMessage {
         return Mono.fromSupplier(() -> {
             ByteBuf out = byteBufAllocator.ioBuffer(MESSAGE_OVERHEAD);
 
-            writeByte(out, 'X');
-            writeLengthPlaceholder(out);
-
-            return writeSize(out);
+            encode(out);
+            return out;
         });
+    }
+
+    @Override
+    public void encode(ByteBuf byteBuf) {
+        byteBuf.writeBytes(this.message);
     }
 
     @Override

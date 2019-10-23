@@ -34,4 +34,18 @@ public interface FrontendMessage {
      */
     Publisher<ByteBuf> encode(ByteBufAllocator byteBufAllocator);
 
+
+    /**
+     * Interface for messages that can be directly encoded without producing a {@link Publisher} first.
+     */
+    interface DirectEncoder {
+
+        /**
+         * Encode a message directly by writing its content to  a {@link ByteBuf}.
+         *
+         * @param byteBuf the target {@link ByteBuf} to write into
+         */
+        void encode(ByteBuf byteBuf);
+    }
+
 }
