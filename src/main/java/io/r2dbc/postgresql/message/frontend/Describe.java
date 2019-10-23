@@ -32,7 +32,7 @@ import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeSiz
 /**
  * The Describe message.
  */
-public final class Describe implements FrontendMessage {
+public final class Describe implements FrontendMessage, FrontendMessage.DirectEncoder {
 
     /**
      * The unnamed statement or portal.
@@ -63,13 +63,22 @@ public final class Describe implements FrontendMessage {
         return Mono.fromSupplier(() -> {
             ByteBuf out = byteBufAllocator.ioBuffer();
 
-            writeByte(out, 'D');
-            writeLengthPlaceholder(out);
-            writeByte(out, this.type.getDiscriminator());
-            writeCStringUTF8(out, this.name);
-
-            return writeSize(out);
+            encode(out);
+            return out;
         });
+    }
+
+    @Override
+    public void encode(ByteBuf byteBuf) {
+
+        writeByte(byteBuf, 'D');
+
+        int writerIndex = byteBuf.writerIndex();
+
+        writeLengthPlaceholder(byteBuf);
+        writeByte(byteBuf, this.type.getDiscriminator());
+        writeCStringUTF8(byteBuf, this.name);
+        writeSize(byteBuf, writerIndex);
     }
 
     @Override

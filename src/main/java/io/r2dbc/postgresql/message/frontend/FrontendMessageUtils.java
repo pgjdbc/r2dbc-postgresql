@@ -17,9 +17,11 @@
 package io.r2dbc.postgresql.message.frontend;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.UnpooledByteBufAllocator;
 import io.r2dbc.postgresql.util.Assert;
 
 import java.nio.ByteBuffer;
+import java.util.function.Function;
 
 import static io.netty.util.CharsetUtil.UTF_8;
 
@@ -116,6 +118,18 @@ final class FrontendMessageUtils {
 
         out.setInt(startIndex, out.writerIndex() - startIndex);
         return out;
+    }
+
+    static byte[] writeArray(Function<ByteBuf, ByteBuf> writeFunction) {
+
+        ByteBuf buffer = UnpooledByteBufAllocator.DEFAULT.heapBuffer();
+        ByteBuf result = writeFunction.apply(buffer);
+
+        byte[] bytes = new byte[result.readableBytes()];
+        result.readBytes(bytes);
+        result.release();
+
+        return bytes;
     }
 
 }
