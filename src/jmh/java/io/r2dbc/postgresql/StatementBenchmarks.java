@@ -26,6 +26,7 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.infra.Blackhole;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -72,6 +73,7 @@ public class StatementBenchmarks extends BenchmarkSettings {
                 jdbc.setAutoCommit(false);
 
                 r2dbc = new PostgresqlConnectionFactory(extension.getConnectionConfiguration()).create().block();
+                Mono.from(r2dbc.setAutoCommit(false)).block();
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
