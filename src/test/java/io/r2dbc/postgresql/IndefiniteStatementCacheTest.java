@@ -48,11 +48,11 @@ final class IndefiniteStatementCacheTest {
     void getName() {
         // @formatter:off
         Client client = TestClient.builder()
-            .expectRequest(new Parse("S_0", Collections.singletonList(100), "test-query"), Flush.INSTANCE)
+            .expectRequest(new Parse("S_0", new int[]{100}, "test-query"), Flush.INSTANCE)
                 .thenRespond(ParseComplete.INSTANCE)
-            .expectRequest(new Parse("S_1", Collections.singletonList(200), "test-query"), Flush.INSTANCE)
+            .expectRequest(new Parse("S_1", new int[]{200}, "test-query"), Flush.INSTANCE)
                 .thenRespond(ParseComplete.INSTANCE)
-            .expectRequest(new Parse("S_2", Collections.singletonList(200), "test-query-2"), Flush.INSTANCE)
+            .expectRequest(new Parse("S_2", new int[]{200}, "test-query-2"), Flush.INSTANCE)
                 .thenRespond(ParseComplete.INSTANCE)
             .build();
         // @formatter:on
@@ -84,7 +84,7 @@ final class IndefiniteStatementCacheTest {
     void getNameErrorResponse() {
         // @formatter:off
         Client client = TestClient.builder()
-            .expectRequest(new Parse("S_0", Collections.singletonList(100), "test-query"), Flush.INSTANCE)
+            .expectRequest(new Parse("S_0", new int[]{100}, "test-query"), Flush.INSTANCE)
                 .thenRespond(new ErrorResponse(Collections.emptyList()))
             .build();
         // @formatter:on

@@ -48,13 +48,13 @@ class DisabledStatementCacheTest {
     void getName() {
         // @formatter:off
         Client client = TestClient.builder()
-            .expectRequest(new Parse("", Collections.singletonList(100), "test-query"),  Flush.INSTANCE)
+            .expectRequest(new Parse("", new int[]{100}, "test-query"),  Flush.INSTANCE)
             .thenRespond(ParseComplete.INSTANCE)
-            .expectRequest(new Parse("", Collections.singletonList(100), "test-query"),  Flush.INSTANCE)
+            .expectRequest(new Parse("", new int[]{100}, "test-query"),  Flush.INSTANCE)
             .thenRespond(ParseComplete.INSTANCE)
-            .expectRequest(new Parse("", Collections.singletonList(200), "test-query"),  Flush.INSTANCE)
+            .expectRequest(new Parse("", new int[]{200}, "test-query"),  Flush.INSTANCE)
             .thenRespond(ParseComplete.INSTANCE)
-            .expectRequest(new Parse("", Collections.singletonList(200), "test-query-2"), Flush.INSTANCE)
+            .expectRequest(new Parse("", new int[]{200}, "test-query-2"), Flush.INSTANCE)
             .thenRespond(ParseComplete.INSTANCE)
             .build();
         // @formatter:on
@@ -86,7 +86,7 @@ class DisabledStatementCacheTest {
     void getNameErrorResponse() {
         // @formatter:off
         Client client = TestClient.builder()
-            .expectRequest(new Parse("", Collections.singletonList(100), "test-query"), Flush.INSTANCE)
+            .expectRequest(new Parse("", new int[]{100}, "test-query"), Flush.INSTANCE)
             .thenRespond(new ErrorResponse(Collections.emptyList()))
             .build();
         // @formatter:on

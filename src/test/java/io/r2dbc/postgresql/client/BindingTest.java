@@ -21,7 +21,6 @@ import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
-import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
@@ -32,12 +31,6 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 
 final class BindingTest {
-
-    @Test
-    void addNoIndex() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new Binding(1).add(null, new Parameter(FORMAT_TEXT, 100, NULL_VALUE)))
-            .withMessage("index must not be null");
-    }
 
     @Test
     void addNoParameter() {

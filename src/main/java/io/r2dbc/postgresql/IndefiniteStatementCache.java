@@ -21,17 +21,16 @@ import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.ExtendedQueryMessageFlow;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
 
-import java.util.HashMap;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 final class IndefiniteStatementCache implements StatementCache {
 
-    private final Map<Tuple2<String, List<Integer>>, Mono<String>> cache = new HashMap<>();
+    private final Map<String, Map<int[], Mono<String>>> cache = new ConcurrentHashMap<>();
 
     private final Client client;
 
@@ -45,11 +44,35 @@ final class IndefiniteStatementCache implements StatementCache {
     public Mono<String> getName(Binding binding, String sql) {
         Assert.requireNonNull(binding, "binding must not be null");
         Assert.requireNonNull(sql, "sql must not be null");
+        Map<int[], Mono<String>> typedMap = this.cache.computeIfAbsent(sql, ignore -> new TreeMap<>((o1, o2) -> {
 
-        synchronized (this.cache) {
-            return this.cache.computeIfAbsent(Tuples.of(sql, binding.getParameterTypes()),
-                tuple -> this.parse(tuple.getT1(), tuple.getT2()));
+            if (Arrays.equals(o1, o2)) {
+                return 0;
+            }
+
+            if (o1.length != o2.length) {
+                return o1.length - o2.length;
+            }
+
+            for (int i = 0; i < o1.length; i++) {
+
+                int cmp = Integer.compare(o1[i], o2[i]);
+
+                if (cmp != 0) {
+                    return cmp;
+                }
+            }
+
+            return 0;
+        }));
+
+        Mono<String> mono = typedMap.get(binding.getParameterTypes());
+        if (mono == null) {
+            mono = parse(sql, binding.getParameterTypes());
+            typedMap.put(binding.getParameterTypes(), mono);
         }
+
+        return mono;
     }
 
     @Override
@@ -61,8 +84,8 @@ final class IndefiniteStatementCache implements StatementCache {
             '}';
     }
 
-    private Mono<String> parse(String sql, List<Integer> types) {
-        String name = String.format("S_%d", this.counter.getAndIncrement());
+    private Mono<String> parse(String sql, int[] types) {
+        String name = "S_" + this.counter.getAndIncrement();
 
         ExceptionFactory factory = ExceptionFactory.withSql(name);
         return ExtendedQueryMessageFlow
@@ -71,5 +94,4 @@ final class IndefiniteStatementCache implements StatementCache {
             .then(Mono.just(name))
             .cache();
     }
-
 }

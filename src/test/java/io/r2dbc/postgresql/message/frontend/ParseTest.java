@@ -18,8 +18,6 @@ package io.r2dbc.postgresql.message.frontend;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
-
 import static io.netty.util.CharsetUtil.UTF_8;
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageAssert.assertThat;
 import static io.r2dbc.postgresql.message.frontend.Parse.UNSPECIFIED;
@@ -29,7 +27,7 @@ final class ParseTest {
 
     @Test
     void constructorNoName() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new Parse(null, Collections.emptyList(), "test-query"))
+        assertThatIllegalArgumentException().isThrownBy(() -> new Parse(null, new int[0], "test-query"))
             .withMessage("name must not be null");
     }
 
@@ -41,13 +39,13 @@ final class ParseTest {
 
     @Test
     void constructorNoQuery() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new Parse("test-name", Collections.emptyList(), null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new Parse("test-name", new int[0], null))
             .withMessage("query must not be null");
     }
 
     @Test
     void encode() {
-        assertThat(new Parse("test-name", Collections.singletonList(UNSPECIFIED), "test-query")).encoded()
+        assertThat(new Parse("test-name", new int[]{UNSPECIFIED}, "test-query")).encoded()
             .isDeferred()
             .isEncodedAs(buffer -> {
                 buffer

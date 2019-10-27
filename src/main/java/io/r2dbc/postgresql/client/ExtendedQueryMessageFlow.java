@@ -39,7 +39,6 @@ import reactor.core.publisher.Mono;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.regex.Pattern;
 
 import static io.r2dbc.postgresql.message.frontend.Execute.NO_LIMIT;
@@ -91,7 +90,7 @@ public final class ExtendedQueryMessageFlow {
      * @return the messages received in response to this exchange
      * @throws IllegalArgumentException if {@code client}, {@code name}, {@code query}, or {@code types} is {@code null}
      */
-    public static Flux<BackendMessage> parse(Client client, String name, String query, List<Integer> types) {
+    public static Flux<BackendMessage> parse(Client client, String name, String query, int[] types) {
         Assert.requireNonNull(client, "client must not be null");
         Assert.requireNonNull(name, "name must not be null");
         Assert.requireNonNull(query, "query must not be null");
@@ -153,7 +152,7 @@ public final class ExtendedQueryMessageFlow {
             .flatMapMany(values -> {
                 Bind bind = new Bind(portal, binding.getParameterFormats(), values, resultFormat(forceBinary), statementName);
 
-                return Flux.just(bind, new Describe(portal, PORTAL), new Execute(portal, NO_LIMIT), new Close(portal, PORTAL));
+                return Flux.<FrontendMessage>just(bind, new Describe(portal, PORTAL), new Execute(portal, NO_LIMIT), new Close(portal, PORTAL));
             }).doOnSubscribe(ignore -> QueryLogger.logQuery(query));
     }
 

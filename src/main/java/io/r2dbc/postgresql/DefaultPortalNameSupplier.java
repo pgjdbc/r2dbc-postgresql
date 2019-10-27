@@ -31,7 +31,7 @@ final class DefaultPortalNameSupplier implements PortalNameSupplier {
 
     @Override
     public String get() {
-        return String.format("B_%d", COUNTER.getAndIncrement());
+        return "B_%d" + COUNTER.getAndIncrement();
     }
 
 }

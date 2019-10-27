@@ -26,15 +26,7 @@ import reactor.test.StepVerifier;
 
 import java.util.Collections;
 
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-
 final class PostgresqlResultTest {
-
-    @Test
-    void constructorNoRowMetadata() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlResult(MockContext.empty(), null, ExceptionFactory.INSTANCE))
-            .withMessage("messages must not be null");
-    }
 
     @Test
     void toResultCommandComplete() {
@@ -61,18 +53,6 @@ final class PostgresqlResultTest {
         result.getRowsUpdated()
             .as(StepVerifier::create)
             .verifyComplete();
-    }
-
-    @Test
-    void toResultNoContext() {
-        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlResult.toResult(null, Flux.empty(), ExceptionFactory.INSTANCE))
-            .withMessage("context must not be null");
-    }
-
-    @Test
-    void toResultNoMessages() {
-        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlResult.toResult(MockContext.empty(), null, ExceptionFactory.INSTANCE))
-            .withMessage("messages must not be null");
     }
 
     @Test

@@ -22,10 +22,9 @@ import io.r2dbc.postgresql.client.ExtendedQueryMessageFlow;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -38,7 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 final class BoundedStatementCache implements StatementCache {
 
-    private final Map<Tuple2<String, List<Integer>>, String> cache = new LinkedHashMap<>(16, 0.75f, true);
+    private final Map<CacheKey, String> cache = new LinkedHashMap<>(16, 0.75f, true);
 
     private final Client client;
 
@@ -58,7 +57,7 @@ final class BoundedStatementCache implements StatementCache {
     public Mono<String> getName(Binding binding, String sql) {
         Assert.requireNonNull(binding, "binding must not be null");
         Assert.requireNonNull(sql, "sql must not be null");
-        Tuple2<String, List<Integer>> key = Tuples.of(sql, binding.getParameterTypes());
+        CacheKey key = new CacheKey(sql, binding.getParameterTypes());
         String name = get(key);
         if (name != null) {
             return Mono.just(name);
@@ -76,7 +75,7 @@ final class BoundedStatementCache implements StatementCache {
                 .then();
         });
 
-        return closeLastStatement.then(this.parse(sql, binding.getParameterTypes()))
+        return closeLastStatement.then(parse(sql, binding.getParameterTypes()))
             .doOnNext(preparedName -> put(key, preparedName));
     }
 
@@ -101,7 +100,7 @@ final class BoundedStatementCache implements StatementCache {
      * @return statement name by key
      */
     @Nullable
-    private String get(Tuple2<String, List<Integer>> key) {
+    private String get(CacheKey key) {
         synchronized (this.cache) {
             return this.cache.get(key);
         }
@@ -114,7 +113,7 @@ final class BoundedStatementCache implements StatementCache {
      */
     private String getAndRemoveEldest() {
         synchronized (this.cache) {
-            Iterator<Map.Entry<Tuple2<String, List<Integer>>, String>> iterator = this.cache.entrySet().iterator();
+            Iterator<Map.Entry<CacheKey, String>> iterator = this.cache.entrySet().iterator();
             String entry = iterator.next().getValue();
             iterator.remove();
             return entry;
@@ -124,7 +123,7 @@ final class BoundedStatementCache implements StatementCache {
     /**
      * Synchronized cache access: Store prepared statement.
      */
-    private void put(Tuple2<String, List<Integer>> key, String preparedName) {
+    private void put(CacheKey key, String preparedName) {
         synchronized (this.cache) {
             this.cache.put(key, preparedName);
         }
@@ -151,8 +150,8 @@ final class BoundedStatementCache implements StatementCache {
             '}';
     }
 
-    private Mono<String> parse(String sql, List<Integer> types) {
-        String name = String.format("S_%d", this.counter.getAndIncrement());
+    private Mono<String> parse(String sql, int[] types) {
+        String name = "S_" + this.counter.getAndIncrement();
 
         ExceptionFactory factory = ExceptionFactory.withSql(name);
         return ExtendedQueryMessageFlow
@@ -160,5 +159,41 @@ final class BoundedStatementCache implements StatementCache {
             .handle(factory::handleErrorResponse)
             .then(Mono.just(name))
             .cache();
+    }
+
+    static class CacheKey {
+
+        String sql;
+
+        int[] parameterTypes;
+
+        public CacheKey(String sql, int[] parameterTypes) {
+            this.sql = sql;
+            this.parameterTypes = parameterTypes;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof CacheKey)) {
+                return false;
+            }
+
+            CacheKey cacheKey = (CacheKey) o;
+
+            if (this.sql != null ? !this.sql.equals(cacheKey.sql) : cacheKey.sql != null) {
+                return false;
+            }
+            return Arrays.equals(this.parameterTypes, cacheKey.parameterTypes);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = this.sql != null ? this.sql.hashCode() : 0;
+            result = 31 * result + Arrays.hashCode(this.parameterTypes);
+            return result;
+        }
     }
 }
