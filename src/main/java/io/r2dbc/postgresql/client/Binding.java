@@ -20,6 +20,7 @@ import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
@@ -39,6 +40,8 @@ public final class Binding {
 
     private final List<Parameter> parameters;
 
+    private final int[] types;
+
     /**
      * Create a new instance.
      *
@@ -47,6 +50,7 @@ public final class Binding {
     public Binding(int expectedSize) {
         this.expectedSize = expectedSize;
         this.parameters = new ArrayList<>(Collections.nCopies(expectedSize, UNSPECIFIED));
+        this.types = new int[expectedSize];
     }
 
     /**
@@ -57,8 +61,7 @@ public final class Binding {
      * @return this {@link Binding}
      * @throws IllegalArgumentException if {@code index} or {@code parameter} is {@code null}
      */
-    public Binding add(Integer index, Parameter parameter) {
-        Assert.requireNonNull(index, "index must not be null");
+    public Binding add(int index, Parameter parameter) {
         Assert.requireNonNull(parameter, "parameter must not be null");
 
         if (index >= this.expectedSize) {
@@ -66,6 +69,7 @@ public final class Binding {
         }
 
         this.parameters.set(index, parameter);
+        this.types[index] = parameter.getType();
 
         return this;
     }
@@ -97,8 +101,15 @@ public final class Binding {
      *
      * @return the types of the parameters in the binding
      */
-    public List<Integer> getParameterTypes() {
-        return getTransformedParameters(Parameter::getType);
+    public int[] getParameterTypes() {
+
+        for (int i = 0; i < this.parameters.size(); i++) {
+            Parameter parameter = this.parameters.get(i);
+            if (parameter == UNSPECIFIED) {
+                throw new IllegalStateException(String.format("No parameter specified for index %d", i));
+            }
+        }
+        return this.types;
     }
 
     /**
@@ -110,6 +121,10 @@ public final class Binding {
         return getTransformedParameters(Parameter::getValue);
     }
 
+    Flux<Publisher<? extends ByteBuf>> parameterValues() {
+        return Flux.fromIterable(this.parameters).map(Parameter::getValue);
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(this.parameters);
@@ -117,6 +132,10 @@ public final class Binding {
 
     public boolean isEmpty() {
         return this.parameters.isEmpty();
+    }
+
+    public int size() {
+        return this.parameters.size();
     }
 
     @Override
@@ -140,13 +159,27 @@ public final class Binding {
     }
 
     private <T> List<T> getTransformedParameters(Function<Parameter, T> transformer) {
-        List<T> transformed = new ArrayList<>(this.parameters.size());
+
+        if (this.parameters.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<T> transformed = null;
 
         for (int i = 0; i < this.parameters.size(); i++) {
             Parameter parameter = this.parameters.get(i);
             if (parameter == UNSPECIFIED) {
                 throw new IllegalStateException(String.format("No parameter specified for index %d", i));
             }
+
+            if (transformed == null) {
+                if (this.parameters.size() == 1) {
+                    return Collections.singletonList(transformer.apply(parameter));
+                }
+
+                transformed = new ArrayList<>(this.parameters.size());
+            }
+
 
             transformed.add(transformer.apply(parameter));
         }

@@ -34,12 +34,6 @@ import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 final class BindingTest {
 
     @Test
-    void addNoIndex() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new Binding(1).add(null, new Parameter(FORMAT_TEXT, 100, NULL_VALUE)))
-            .withMessage("index must not be null");
-    }
-
-    @Test
     void addNoParameter() {
         assertThatIllegalArgumentException().isThrownBy(() -> new Binding(1).add(1, null))
             .withMessage("parameter must not be null");

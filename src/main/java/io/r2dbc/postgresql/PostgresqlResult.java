@@ -21,6 +21,7 @@ import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.DataRow;
 import io.r2dbc.postgresql.message.backend.EmptyQueryResponse;
+import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.PortalSuspended;
 import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.postgresql.util.Assert;
@@ -29,6 +30,7 @@ import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.SynchronousSink;
 
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
@@ -52,41 +54,50 @@ final class PostgresqlResult implements io.r2dbc.postgresql.api.PostgresqlResult
 
     private volatile RowDescription rowDescription;
 
-    PostgresqlResult(Codecs codecs, Flux<BackendMessage> messages, ExceptionFactory factory) {
-        this.codecs = Assert.requireNonNull(codecs, "codecs must not be null");
-        this.messages = Assert.requireNonNull(messages, "messages must not be null");
-        this.factory = Assert.requireNonNull(factory, "factory must not be null");
+    private PostgresqlResult(Codecs codecs, Flux<BackendMessage> messages, ExceptionFactory factory) {
+        this.codecs = codecs;
+        this.messages = messages;
+        this.factory = factory;
     }
 
     @Override
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public Mono<Integer> getRowsUpdated() {
 
         return this.messages
-            .handle(this.factory::handleErrorResponse)
-            .doOnNext(message -> {
+            .<Integer>handle((message, sink) -> {
+
+                if (message instanceof ErrorResponse) {
+                    this.factory.handleErrorResponse(message, (SynchronousSink) sink);
+                    return;
+                }
+
                 if (message instanceof DataRow) {
                     ((DataRow) message).release();
                 }
-            })
-            .ofType(CommandComplete.class)
-            .singleOrEmpty()
-            .handle((commandComplete, sink) -> {
-                Integer rowCount = commandComplete.getRows();
-                if (rowCount != null) {
-                    sink.next(rowCount);
-                } else {
-                    sink.complete();
+
+                if (message instanceof CommandComplete) {
+
+                    Integer rowCount = ((CommandComplete) message).getRows();
+                    if (rowCount != null) {
+                        sink.next(rowCount);
+                    }
                 }
-            });
+            }).singleOrEmpty();
     }
 
     @Override
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public <T> Flux<T> map(BiFunction<Row, RowMetadata, ? extends T> f) {
         Assert.requireNonNull(f, "f must not be null");
 
         return this.messages.takeUntil(TAKE_UNTIL)
-            .handle(this.factory::handleErrorResponse)
             .handle((message, sink) -> {
+
+                if (message instanceof ErrorResponse) {
+                    this.factory.handleErrorResponse(message, (SynchronousSink) sink);
+                    return;
+                }
 
                 if (message instanceof RowDescription) {
                     this.rowDescription = (RowDescription) message;

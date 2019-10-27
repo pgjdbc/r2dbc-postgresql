@@ -73,7 +73,7 @@ final class PostgresqlColumnMetadata implements io.r2dbc.postgresql.api.Postgres
 
     @Override
     public Class<?> getJavaType() {
-        return codecs.preferredType(this.nativeType, this.format);
+        return this.codecs.preferredType(this.nativeType, this.format);
     }
 
     @Override
@@ -106,9 +106,6 @@ final class PostgresqlColumnMetadata implements io.r2dbc.postgresql.api.Postgres
     }
 
     static PostgresqlColumnMetadata toColumnMetadata(Codecs codecs, Field field) {
-        Assert.requireNonNull(codecs, "codecs must not be null");
-        Assert.requireNonNull(field, "field must not be null");
-
         return new PostgresqlColumnMetadata(codecs, field);
     }
 

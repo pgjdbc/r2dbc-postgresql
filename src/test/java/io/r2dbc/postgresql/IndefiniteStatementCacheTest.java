@@ -50,11 +50,11 @@ final class IndefiniteStatementCacheTest {
     void getName() {
         // @formatter:off
         Client client = TestClient.builder()
-            .expectRequest(new Parse("S_0", Collections.singletonList(100), "test-query"), new Describe("S_0", ExecutionType.STATEMENT), Sync.INSTANCE)
+            .expectRequest(new Parse("S_0", new int[]{100}, "test-query"), new Describe("S_0", ExecutionType.STATEMENT), Sync.INSTANCE)
                 .thenRespond(ParseComplete.INSTANCE)
-            .expectRequest(new Parse("S_1", Collections.singletonList(200), "test-query"), new Describe("S_1", ExecutionType.STATEMENT), Sync.INSTANCE)
+            .expectRequest(new Parse("S_1", new int[]{200}, "test-query"), new Describe("S_1", ExecutionType.STATEMENT), Sync.INSTANCE)
                 .thenRespond(ParseComplete.INSTANCE)
-            .expectRequest(new Parse("S_2", Collections.singletonList(200), "test-query-2"), new Describe("S_2", ExecutionType.STATEMENT), Sync.INSTANCE)
+            .expectRequest(new Parse("S_2", new int[]{200}, "test-query-2"), new Describe("S_2", ExecutionType.STATEMENT), Sync.INSTANCE)
                 .thenRespond(ParseComplete.INSTANCE)
             .build();
         // @formatter:on
@@ -86,7 +86,7 @@ final class IndefiniteStatementCacheTest {
     void getNameErrorResponse() {
         // @formatter:off
         Client client = TestClient.builder()
-            .expectRequest(new Parse("S_0", Collections.singletonList(100), "test-query"), new Describe("S_0", ExecutionType.STATEMENT), Sync.INSTANCE)
+            .expectRequest(new Parse("S_0", new int[]{100}, "test-query"), new Describe("S_0", ExecutionType.STATEMENT), Sync.INSTANCE)
                 .thenRespond(new ErrorResponse(Collections.emptyList()))
             .build();
         // @formatter:on

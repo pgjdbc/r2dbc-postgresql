@@ -27,18 +27,6 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 final class PostgresqlColumnMetadataTest {
 
     @Test
-    void constructorNoName() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlColumnMetadata(null, null))
-            .withMessage("codecs must not be null");
-    }
-
-    @Test
-    void constructorNoNativeType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlColumnMetadata(MockCodecs.empty(), null))
-            .withMessage("field must not be null");
-    }
-
-    @Test
     void toColumnMetadata() {
         MockCodecs codecs = MockCodecs.builder()
             .preferredType(200, FORMAT_TEXT, String.class)
@@ -50,18 +38,6 @@ final class PostgresqlColumnMetadataTest {
         assertThat(columnMetadata.getName()).isEqualTo("test-name");
         assertThat(columnMetadata.getNativeTypeMetadata()).isEqualTo(200);
         assertThat(columnMetadata.getPrecision()).isEqualTo(400);
-    }
-
-    @Test
-    void toColumnMetadataNoCodecs() {
-        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlColumnMetadata.toColumnMetadata(null, new Field((short) 100, 200, 300, (short) 400, FORMAT_TEXT, "test-name", 500)))
-            .withMessage("codecs must not be null");
-    }
-
-    @Test
-    void toColumnMetadataNoField() {
-        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlColumnMetadata.toColumnMetadata(MockCodecs.empty(), null))
-            .withMessage("field must not be null");
     }
 
 }

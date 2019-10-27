@@ -33,13 +33,13 @@ final class PostgresqlResultTest {
 
     @Test
     void constructorNoCodec() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlResult(null, Flux.empty(), ExceptionFactory.INSTANCE))
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlResult.toResult(null, Flux.empty(), ExceptionFactory.INSTANCE))
             .withMessage("codecs must not be null");
     }
 
     @Test
     void constructorNoRowMetadata() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlResult(MockCodecs.empty(), null, ExceptionFactory.INSTANCE))
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlResult.toResult(MockCodecs.empty(), null, ExceptionFactory.INSTANCE))
             .withMessage("messages must not be null");
     }
 
