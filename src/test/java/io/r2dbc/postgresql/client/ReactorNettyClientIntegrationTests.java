@@ -284,7 +284,7 @@ final class ReactorNettyClientIntegrationTests {
 
     @Test
     void parallelExchangeExtendedFlow() {
-        ExtendedQueryMessageFlow.parse(this.client, "S_1", "SELECT $1", Arrays.asList(INT4.getObjectId()))
+        ExtendedQueryMessageFlow.parse(this.client, "S_1", "SELECT $1", new int[]{INT4.getObjectId()})
             .as(StepVerifier::create)
             .verifyComplete();
 

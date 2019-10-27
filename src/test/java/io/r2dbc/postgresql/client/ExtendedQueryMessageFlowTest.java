@@ -38,6 +38,7 @@ import reactor.test.StepVerifier;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 
 import static io.r2dbc.postgresql.client.TestClient.NO_OP;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
@@ -48,7 +49,7 @@ final class ExtendedQueryMessageFlowTest {
 
     @Test
     void execute() {
-        Flux<Binding> bindings = Flux.just(
+        List<Binding> bindings = Arrays.asList(
             new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200)))),
             new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))))
         );
@@ -73,7 +74,7 @@ final class ExtendedQueryMessageFlowTest {
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
 
         ExtendedQueryMessageFlow
-            .execute(bindings, client, portalNameSupplier, "test-name", "", false)
+            .execute(Flux.fromIterable(bindings), client, portalNameSupplier, "test-name", "", false)
             .as(StepVerifier::create)
             .expectNext(BindComplete.INSTANCE, NoData.INSTANCE, new CommandComplete("test", null, null))
             .expectNext(BindComplete.INSTANCE, NoData.INSTANCE, new CommandComplete("test", null, null))
@@ -107,12 +108,12 @@ final class ExtendedQueryMessageFlowTest {
     @Test
     void parse() {
         Client client = TestClient.builder()
-            .expectRequest(new Parse("test-name", Collections.singletonList(100), "test-query"), Flush.INSTANCE)
+            .expectRequest(new Parse("test-name", new int[]{100}, "test-query"), Flush.INSTANCE)
             .thenRespond(ParseComplete.INSTANCE)
             .build();
 
         ExtendedQueryMessageFlow
-            .parse(client, "test-name", "test-query", Collections.singletonList(100))
+            .parse(client, "test-name", "test-query", new int[]{100})
             .as(StepVerifier::create)
             .verifyComplete();
     }
@@ -120,14 +121,14 @@ final class ExtendedQueryMessageFlowTest {
     @Test
     void parseWithError() {
         Client client = TestClient.builder()
-            .expectRequest(new Parse("test-name", Collections.singletonList(100), "test-query"), Flush.INSTANCE)
+            .expectRequest(new Parse("test-name", new int[]{100}, "test-query"), Flush.INSTANCE)
             .thenRespond(new ErrorResponse(Collections.emptyList()))
             .expectRequest(Sync.INSTANCE)
             .thenRespond(new ReadyForQuery(ReadyForQuery.TransactionStatus.IDLE))
             .build();
 
         ExtendedQueryMessageFlow
-            .parse(client, "test-name", "test-query", Collections.singletonList(100))
+            .parse(client, "test-name", "test-query", new int[]{100})
             .as(StepVerifier::create)
             .expectNext(new ErrorResponse(Collections.emptyList()))
             .verifyComplete();
@@ -135,19 +136,19 @@ final class ExtendedQueryMessageFlowTest {
 
     @Test
     void parseNoClient() {
-        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryMessageFlow.parse(null, "test-name", "test-query", Collections.emptyList()))
+        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryMessageFlow.parse(null, "test-name", "test-query", new int[0]))
             .withMessage("client must not be null");
     }
 
     @Test
     void parseNoName() {
-        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryMessageFlow.parse(NO_OP, null, "test-query", Collections.emptyList()))
+        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryMessageFlow.parse(NO_OP, null, "test-query", new int[0]))
             .withMessage("name must not be null");
     }
 
     @Test
     void parseNoQuery() {
-        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryMessageFlow.parse(NO_OP, "test-name", null, Collections.emptyList()))
+        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryMessageFlow.parse(NO_OP, "test-name", null, new int[0]))
             .withMessage("query must not be null");
     }
 

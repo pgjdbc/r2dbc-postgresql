@@ -22,7 +22,7 @@ import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
+import java.util.Arrays;
 import java.util.Objects;
 
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeByte;
@@ -49,7 +49,7 @@ public final class Parse implements FrontendMessage {
 
     private final String name;
 
-    private final List<Integer> parameters;
+    private final int[] parameters;
 
     private final String query;
 
@@ -63,7 +63,7 @@ public final class Parse implements FrontendMessage {
      * @see #UNNAMED_STATEMENT
      * @see #UNSPECIFIED
      */
-    public Parse(String name, List<Integer> parameters, String query) {
+    public Parse(String name, int[] parameters, String query) {
         this.name = Assert.requireNonNull(name, "name must not be null");
         this.parameters = Assert.requireNonNull(parameters, "parameters must not be null");
         this.query = Assert.requireNonNull(query, "query must not be null");
@@ -81,8 +81,10 @@ public final class Parse implements FrontendMessage {
             writeCStringUTF8(out, this.name);
             writeCStringUTF8(out, this.query);
 
-            writeShort(out, this.parameters.size());
-            this.parameters.forEach(parameter -> writeInt(out, parameter));
+            writeShort(out, this.parameters.length);
+            for (int parameter : this.parameters) {
+                writeInt(out, parameter);
+            }
 
             return writeSize(out);
         });
@@ -98,7 +100,7 @@ public final class Parse implements FrontendMessage {
         }
         Parse that = (Parse) o;
         return Objects.equals(this.name, that.name) &&
-            Objects.equals(this.parameters, that.parameters) &&
+            Arrays.equals(this.parameters, that.parameters) &&
             Objects.equals(this.query, that.query);
     }
 
@@ -111,7 +113,7 @@ public final class Parse implements FrontendMessage {
     public String toString() {
         return "Parse{" +
             "name='" + this.name + '\'' +
-            ", parameters=" + this.parameters +
+            ", parameters=" + Arrays.toString(this.parameters) +
             ", query='" + this.query + '\'' +
             '}';
     }
