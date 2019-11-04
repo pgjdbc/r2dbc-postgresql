@@ -55,14 +55,7 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
             return PostgresqlServerExtension.containerInstance;
         }
 
-        PostgresqlServerExtension.containerInstance = container();
-
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            containerInstance.stop();
-            containerInstance = null;
-        }, "PostgresqlServerExtension-Shutdown"));
-
-        return PostgresqlServerExtension.containerInstance;
+        return PostgresqlServerExtension.containerInstance = container();
     };
 
     private final DatabaseContainer postgres = getContainer();
@@ -199,6 +192,7 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
             .withCopyFileToContainer(getHostPath("pg_hba.conf", 0600), "/var/pg_hba.conf")
             .withCopyFileToContainer(getHostPath("setup.sh", 0755), "/var/setup.sh")
             .withCopyFileToContainer(getHostPath("test-db-init-script.sql", 0755), "/docker-entrypoint-initdb.d/test-db-init-script.sql")
+            .withReuse(true)
             .withCommand("/var/setup.sh");
 
         return container;
