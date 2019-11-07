@@ -148,4 +148,12 @@ final class PostgresqlConnectionConfigurationTest {
             .withMessage("option values must not be null");
     }
 
+    @Test
+    void constructorNoSslCustomizer() {
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder()
+            .sslContextBuilderCustomizer(null)
+            .build())
+            .withMessage("sslContextBuilderCustomizer must not be null");
+    }
+
 }

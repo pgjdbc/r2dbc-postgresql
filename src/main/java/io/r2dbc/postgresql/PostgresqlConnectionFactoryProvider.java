@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql;
 
+import io.netty.handler.ssl.SslContextBuilder;
 import io.r2dbc.postgresql.client.SSLMode;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ConnectionFactoryOptions;
@@ -24,6 +25,7 @@ import io.r2dbc.spi.Option;
 
 import javax.net.ssl.HostnameVerifier;
 import java.util.Map;
+import java.util.function.Function;
 
 import static io.r2dbc.spi.ConnectionFactoryOptions.CONNECT_TIMEOUT;
 import static io.r2dbc.spi.ConnectionFactoryOptions.DATABASE;
@@ -73,6 +75,11 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
      * Unix domain socket.
      */
     public static final Option<String> SOCKET = Option.valueOf("socket");
+
+    /**
+     * Customizer {@link Function} for {@link SslContextBuilder}.
+     */
+    public static final Option<Function<SslContextBuilder, SslContextBuilder>> SSL_CONTEXT_BUILDER_CUSTOMIZER = Option.valueOf("sslContextBuilderCustomizer");
 
     /**
      * Full path for the certificate file.
@@ -215,6 +222,10 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
                 } else {
                     builder.sslHostnameVerifier((HostnameVerifier) sslHostnameVerifier);
                 }
+            }
+
+            if (connectionFactoryOptions.hasOption(SSL_CONTEXT_BUILDER_CUSTOMIZER)) {
+                builder.sslContextBuilderCustomizer(connectionFactoryOptions.getRequiredValue(SSL_CONTEXT_BUILDER_CUSTOMIZER));
             }
         }
 

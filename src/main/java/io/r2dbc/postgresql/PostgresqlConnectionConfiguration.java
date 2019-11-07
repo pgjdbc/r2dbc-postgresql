@@ -36,6 +36,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static reactor.netty.tcp.SslProvider.DefaultConfigurationType.TCP;
 
@@ -277,6 +279,8 @@ public final class PostgresqlConnectionConfiguration {
         @Nullable
         private String sslRootCert = null;
 
+        private Function<SslContextBuilder, SslContextBuilder> sslContextBuilderCustomizer = Function.identity();
+
         @Nullable
         private String username;
 
@@ -474,6 +478,20 @@ public final class PostgresqlConnectionConfiguration {
         }
 
         /**
+         * Configure a {@link SslContextBuilder} customizer. The customizer gets applied on each SSL connection attempt to allow for just-in-time configuration updates. The {@link Function} gets
+         * called with the prepared {@link SslContextBuilder} that has all configuration options applied. The customizer may return the same builder or return a new builder instance to be used to
+         * build the SSL context.
+         *
+         * @param sslContextBuilderCustomizer customizer function
+         * @return this {@link Builder}
+         * @throws IllegalArgumentException if {@code sslContextBuilderCustomizer} is {@code null}
+         */
+        public Builder sslContextBuilderCustomizer(Function<SslContextBuilder, SslContextBuilder> sslContextBuilderCustomizer) {
+            this.sslContextBuilderCustomizer = Assert.requireNonNull(sslContextBuilderCustomizer, "sslContextBuilderCustomizer must not be null");
+            return this;
+        }
+
+        /**
          * Configure ssl cert for client certificate authentication.
          *
          * @param sslCert an X.509 certificate chain file in PEM format
@@ -544,6 +562,7 @@ public final class PostgresqlConnectionConfiguration {
                 ", schema='" + this.schema + '\'' +
                 ", username='" + this.username + '\'' +
                 ", socket='" + this.socket + '\'' +
+                ", sslContextBuilderCustomizer='" + this.sslContextBuilderCustomizer + '\'' +
                 ", sslMode='" + this.sslMode + '\'' +
                 ", sslRootCert='" + this.sslRootCert + '\'' +
                 ", sslCert='" + this.sslCert + '\'' +
@@ -577,14 +596,14 @@ public final class PostgresqlConnectionConfiguration {
 
         private SSLConfig createSslConfig() {
             if (this.socket != null || this.sslMode == SSLMode.DISABLE) {
-                return new SSLConfig(SSLMode.DISABLE, null, (hostname, session) -> true);
+                return SSLConfig.disabled();
             }
+
             HostnameVerifier hostnameVerifier = this.sslHostnameVerifier;
-            SslProvider sslProvider = createSslProvider();
-            return new SSLConfig(this.sslMode, sslProvider, hostnameVerifier);
+            return new SSLConfig(this.sslMode, createSslProvider(), hostnameVerifier);
         }
 
-        private SslProvider createSslProvider() {
+        private Supplier<SslProvider> createSslProvider() {
             SslContextBuilder sslContextBuilder = SslContextBuilder.forClient();
             if (this.sslMode.verifyCertificate()) {
                 if (this.sslRootCert != null) {
@@ -625,8 +644,10 @@ public final class PostgresqlConnectionConfiguration {
                 String sslPassword = this.sslPassword == null ? null : this.sslPassword.toString();
                 sslContextBuilder.keyManager(new File(sslCert), new File(sslKey), sslPassword);
             }
-            return SslProvider.builder()
-                .sslContext(sslContextBuilder)
+
+
+            return () -> SslProvider.builder()
+                .sslContext(this.sslContextBuilderCustomizer.apply(sslContextBuilder))
                 .defaultConfiguration(TCP)
                 .build();
         }

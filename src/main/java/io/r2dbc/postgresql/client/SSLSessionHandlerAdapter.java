@@ -48,7 +48,7 @@ final class SSLSessionHandlerAdapter extends ChannelInboundHandlerAdapter implem
     SSLSessionHandlerAdapter(ByteBufAllocator alloc, SSLConfig sslConfig) {
         this.alloc = alloc;
         this.sslConfig = sslConfig;
-        this.sslEngine = sslConfig.getSslProvider()
+        this.sslEngine = sslConfig.getSslProvider().get()
             .getSslContext()
             .newEngine(alloc);
         this.handshakeFuture = new CompletableFuture<>();

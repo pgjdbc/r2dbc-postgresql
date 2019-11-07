@@ -30,6 +30,8 @@ import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.LEGACY_POS
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.OPTIONS;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.POSTGRESQL_DRIVER;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SOCKET;
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_CONTEXT_BUILDER_CUSTOMIZER;
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_MODE;
 import static io.r2dbc.spi.ConnectionFactoryOptions.DRIVER;
 import static io.r2dbc.spi.ConnectionFactoryOptions.HOST;
 import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
@@ -37,6 +39,7 @@ import static io.r2dbc.spi.ConnectionFactoryOptions.SSL;
 import static io.r2dbc.spi.ConnectionFactoryOptions.USER;
 import static io.r2dbc.spi.ConnectionFactoryOptions.builder;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 final class PostgresqlConnectionFactoryProviderTest {
@@ -200,6 +203,23 @@ final class PostgresqlConnectionFactoryProviderTest {
             .build());
 
         assertThat(factory.getConfiguration().isAutodetectExtensions()).isFalse();
+    }
+
+    @Test
+    void shouldApplySslContextBuilderCustomizer() {
+
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(SSL_MODE, SSLMode.ALLOW)
+            .option(SSL_CONTEXT_BUILDER_CUSTOMIZER, sslContextBuilder -> {
+                throw new IllegalStateException("Works!");
+            })
+            .build());
+
+        assertThatIllegalStateException().isThrownBy(() -> factory.getConfiguration().getSslConfig().getSslProvider().get()).withMessageContaining("Works!");
     }
 
     @Test

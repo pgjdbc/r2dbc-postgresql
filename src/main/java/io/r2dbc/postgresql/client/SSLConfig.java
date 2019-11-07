@@ -22,16 +22,19 @@ import reactor.netty.tcp.SslProvider;
 import reactor.util.annotation.Nullable;
 
 import javax.net.ssl.HostnameVerifier;
+import java.util.function.Supplier;
 
 public final class SSLConfig {
 
+    @Nullable
     private final HostnameVerifier hostnameVerifier;
 
     private final SSLMode sslMode;
 
-    private final SslProvider sslProvider;
+    @Nullable
+    private final Supplier<SslProvider> sslProvider;
 
-    public SSLConfig(SSLMode sslMode, @Nullable SslProvider sslProvider, @Nullable HostnameVerifier hostnameVerifier) {
+    public SSLConfig(SSLMode sslMode, @Nullable Supplier<SslProvider> sslProvider, @Nullable HostnameVerifier hostnameVerifier) {
         if (sslMode != SSLMode.DISABLE) {
             Assert.requireNonNull(sslProvider, "Ssl provider is required for ssl mode " + sslMode);
         }
@@ -43,16 +46,23 @@ public final class SSLConfig {
         this.hostnameVerifier = hostnameVerifier;
     }
 
-    public HostnameVerifier getHostnameVerifier() {
-        return hostnameVerifier;
+    public static SSLConfig disabled() {
+        return new SSLConfig(SSLMode.DISABLE, null, (hostname, session) -> true);
+    }
+
+    HostnameVerifier getHostnameVerifier() {
+        return this.hostnameVerifier;
     }
 
     public SSLMode getSslMode() {
-        return sslMode;
+        return this.sslMode;
     }
 
-    public SslProvider getSslProvider() {
-        return sslProvider;
+    public Supplier<SslProvider> getSslProvider() {
+        if (this.sslProvider == null) {
+            throw new IllegalStateException("SSL Mode disabled. SslProvider not available");
+        }
+        return this.sslProvider;
     }
 
     public SSLConfig mutateMode(SSLMode newMode) {

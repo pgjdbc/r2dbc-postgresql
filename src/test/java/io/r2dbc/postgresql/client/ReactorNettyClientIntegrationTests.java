@@ -646,6 +646,20 @@ final class ReactorNettyClientIntegrationTests {
             }
 
             @Test
+            void verifyCaWithCustomizer() {
+                client(
+                    c -> c.sslContextBuilderCustomizer(sslContextBuilder -> {
+                        return sslContextBuilder.trustManager(new File(SERVER.getServerCrt()))
+                            .keyManager(new File(SERVER.getClientCrt()), new File(SERVER.getClientKey()));
+                    })
+                        .sslMode(SSLMode.VERIFY_CA),
+                    c -> c
+                        .as(StepVerifier::create)
+                        .expectNextCount(1)
+                        .verifyComplete());
+            }
+
+            @Test
             void verifyCaFailedWithWrongRootCert() {
                 client(
                     c -> c
