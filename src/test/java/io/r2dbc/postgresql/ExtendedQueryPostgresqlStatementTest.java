@@ -77,7 +77,7 @@ final class ExtendedQueryPostgresqlStatementTest {
 
     @Test
     void bindIndex() {
-        assertThat(((ExtendedQueryPostgresqlStatement) this.statement.bind(0, 100)).getCurrentBinding()).isEqualTo(new Binding(1).add(0, this.parameter));
+        assertThat(this.statement.bind(0, 100).getCurrentBinding()).isEqualTo(new Binding(1).add(0, this.parameter));
     }
 
     @Test

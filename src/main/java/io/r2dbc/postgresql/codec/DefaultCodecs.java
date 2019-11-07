@@ -54,10 +54,8 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
             new BinaryByteArrayCodec(byteBufAllocator),
 
             new BigDecimalCodec(byteBufAllocator),
-            new BlobCodec(byteBufAllocator),
             new BooleanCodec(byteBufAllocator),
             new CharacterCodec(byteBufAllocator),
-            new ClobCodec(byteBufAllocator),
             new DoubleCodec(byteBufAllocator),
             new FloatCodec(byteBufAllocator),
             new InetAddressCodec(byteBufAllocator),
@@ -84,6 +82,9 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
             // Fallback for Object.class
             new ByteCodec(byteBufAllocator),
             new DateCodec(byteBufAllocator),
+
+            new BlobCodec(byteBufAllocator),
+            new ClobCodec(byteBufAllocator),
 
             new ShortArrayCodec(byteBufAllocator),
             new StringArrayCodec(byteBufAllocator),

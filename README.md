@@ -275,7 +275,7 @@ This reference table shows the type mapping between [PostgreSQL][p] and Java dat
 | [`smallint`][psql-smallint-ref]                 | [**`Short`**][java-short-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Integer`][java-integer-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref]|
 | [`smallserial`][psql-smallserial-ref]           | [**`Integer`**][java-integer-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref]|
 | [`serial`][psql-serial-ref]                     | [**`Long`**][java-long-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Integer`][java-integer-ref], [`BigDecimal`][java-bigdecimal-ref]|
-| [`text`][psql-text-ref]                         | [`String`][java-string-ref]|
+| [`text`][psql-text-ref]                         | [**`String`**][java-string-ref], `Clob`|
 | [`time [without time zone]`][psql-time-ref]     | [`LocalTime`][java-lt-ref]|
 | [`time [with time zone]`][psql-time-ref]        | Not yet supported.|
 | [`timestamp [without time zone]`][psql-time-ref]|[**`LocalDateTime`**][java-ldt-ref], [`LocalTime`][java-lt-ref], [`LocalDate`][java-ld-ref]|
