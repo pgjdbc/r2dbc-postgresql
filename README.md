@@ -165,13 +165,13 @@ For Listen/Notify, two actors are involved: The sender (notify) and the receiver
 to illustrate how they work together:
 
 ```java
-Connection sender = …;
-Connection receiver = …;
+PostgresqlConnection sender = …;
+PostgresqlConnection receiver = …;
 
 Flux<Notification> listen = receiver.createStatement("LISTEN mymessage")
                                 .execute()
                                 .flatMap(PostgresqlResult::getRowsUpdated)
-                                .thenMany(listen.getNotifications());
+                                .thenMany(receiver.getNotifications());
 
 Mono<Void> notify = sender.createStatement("NOTIFY mymessage, 'Hello World'")
                             .execute()
