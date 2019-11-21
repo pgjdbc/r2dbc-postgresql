@@ -20,7 +20,6 @@ import io.r2dbc.postgresql.client.Parameter;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
-import java.time.LocalTime;
 import java.time.ZonedDateTime;
 
 import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
