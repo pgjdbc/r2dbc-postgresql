@@ -32,7 +32,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMP;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMPTZ;
 
 final class InstantCodec extends AbstractTemporalCodec<Instant> {
 
@@ -45,7 +45,7 @@ final class InstantCodec extends AbstractTemporalCodec<Instant> {
 
     @Override
     public Parameter encodeNull() {
-        return createNull(TIMESTAMP, FORMAT_TEXT);
+        return createNull(TIMESTAMPTZ, FORMAT_TEXT);
     }
 
     @Override
@@ -70,7 +70,7 @@ final class InstantCodec extends AbstractTemporalCodec<Instant> {
     Parameter doEncode(Instant value) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return create(TIMESTAMP, FORMAT_TEXT, () -> ByteBufUtils.encode(this.byteBufAllocator, value.toString()));
+        return create(TIMESTAMPTZ, FORMAT_TEXT, () -> ByteBufUtils.encode(this.byteBufAllocator, value.toString()));
     }
 
     @Override

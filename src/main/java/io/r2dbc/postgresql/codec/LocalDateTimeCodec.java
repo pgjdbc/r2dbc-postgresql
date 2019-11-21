@@ -26,7 +26,9 @@ import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
@@ -51,6 +53,10 @@ final class LocalDateTimeCodec extends AbstractTemporalCodec<LocalDateTime> {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         return decodeTemporal(buffer, dataType, format, LocalDateTime.class, temporal -> {
+            if (temporal instanceof LocalDate) {
+                return ((LocalDate) temporal).atStartOfDay(ZoneId.systemDefault()).toLocalDateTime();
+            }
+
             return Instant.from(temporal).atOffset(ZoneOffset.UTC).toLocalDateTime();
         });
     }

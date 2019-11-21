@@ -49,9 +49,10 @@ final class DateCodecTest {
 
     @Test
     void decode() {
-        Date date = Date.from(Instant.parse("2018-11-04T15:37:31.177Z"));
+        Instant testInstant = LocalDateTime.parse("2010-02-01T10:08:04.412").atZone(ZoneId.systemDefault()).toInstant();
+        Date date = Date.from(testInstant);
 
-        assertThat(new DateCodec(TEST).decode(encode(TEST, "2018-11-04 15:37:31.177"), dataType, FORMAT_TEXT, Date.class))
+        assertThat(new DateCodec(TEST).decode(encode(TEST, "2010-02-01 10:08:04.412"), dataType, FORMAT_TEXT, Date.class))
             .isEqualTo(date);
     }
 
@@ -91,12 +92,13 @@ final class DateCodecTest {
 
     @Test
     void doEncode() {
-        Date date = new Date();
+        Instant testInstant = LocalDateTime.parse("2010-02-01T10:08:04.412").atZone(ZoneId.systemDefault()).toInstant();
+        Date date = Date.from(testInstant);
 
         assertThat(new DateCodec(TEST).doEncode(date))
             .hasFormat(FORMAT_TEXT)
             .hasType(TIMESTAMP.getObjectId())
-            .hasValue(encode(TEST, date.toInstant().toString()));
+            .hasValue(encode(TEST, "2010-02-01T10:08:04.412"));
     }
 
     @Test

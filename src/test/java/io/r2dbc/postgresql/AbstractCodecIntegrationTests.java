@@ -180,7 +180,7 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
 
     @Test
     void instant() {
-        testCodec(Instant.class, Instant.now(), "TIMESTAMP");
+        testCodec(Instant.class, Instant.now(), "TIMESTAMPTZ");
     }
 
     @Test

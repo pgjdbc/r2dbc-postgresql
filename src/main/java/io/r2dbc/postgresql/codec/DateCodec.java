@@ -24,18 +24,19 @@ import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 
 final class DateCodec extends AbstractCodec<Date> {
 
-    private final InstantCodec delegate;
+    private final LocalDateTimeCodec delegate;
 
     DateCodec(ByteBufAllocator byteBufAllocator) {
         super(Date.class);
 
         Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
-        this.delegate = new InstantCodec(byteBufAllocator);
+        this.delegate = new LocalDateTimeCodec(byteBufAllocator);
     }
 
     @Override
@@ -55,14 +56,15 @@ final class DateCodec extends AbstractCodec<Date> {
     Date doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends Date> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
-        return Date.from(this.delegate.doDecode(buffer, dataType, format, Instant.class));
+        LocalDateTime intermediary = this.delegate.doDecode(buffer, dataType, format, LocalDateTime.class);
+        return Date.from(intermediary.atZone(ZoneId.systemDefault()).toInstant());
     }
 
     @Override
     Parameter doEncode(Date value) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return this.delegate.doEncode(value.toInstant());
+        return this.delegate.doEncode(value.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
     }
 
 }
