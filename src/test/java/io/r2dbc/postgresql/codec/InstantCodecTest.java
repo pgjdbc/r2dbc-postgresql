@@ -75,6 +75,8 @@ final class InstantCodecTest {
         assertThat(codec.doCanDecode(TIMESTAMP, FORMAT_BINARY)).isTrue();
         assertThat(codec.doCanDecode(MONEY, FORMAT_TEXT)).isFalse();
         assertThat(codec.doCanDecode(TIMESTAMP, FORMAT_TEXT)).isTrue();
+        assertThat(codec.doCanDecode(TIMESTAMPTZ, FORMAT_TEXT)).isTrue();
+        assertThat(codec.doCanDecode(TIMESTAMPTZ, FORMAT_BINARY)).isTrue();
     }
 
     @Test
@@ -95,7 +97,7 @@ final class InstantCodecTest {
 
         assertThat(new InstantCodec(TEST).doEncode(instant))
             .hasFormat(FORMAT_TEXT)
-            .hasType(TIMESTAMP.getObjectId())
+            .hasType(TIMESTAMPTZ.getObjectId())
             .hasValue(encode(TEST, instant.toString()));
     }
 
@@ -108,7 +110,7 @@ final class InstantCodecTest {
     @Test
     void encodeNull() {
         assertThat(new InstantCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(FORMAT_TEXT, TIMESTAMP.getObjectId(), NULL_VALUE));
+            .isEqualTo(new Parameter(FORMAT_TEXT, TIMESTAMPTZ.getObjectId(), NULL_VALUE));
     }
 
 }
