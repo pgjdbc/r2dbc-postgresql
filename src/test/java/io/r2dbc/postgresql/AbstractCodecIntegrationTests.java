@@ -193,6 +193,7 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(Integer.class, 100, "INT2");
         testCodec(Integer.class, 100, "INT4");
         testCodec(Integer.class, 100, "INT8");
+        testCodec(Integer.class, 100, "OID");
         testCodec(Integer.class, 100, "NUMERIC");
         testCodec(Integer.class, 100, "FLOAT4");
         testCodec(Integer.class, 100, "FLOAT8");
@@ -289,6 +290,7 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(Long.class, 100L, "INT2");
         testCodec(Long.class, 100L, "INT4");
         testCodec(Long.class, 100L, "INT8");
+        testCodec(Long.class, 100L, "OID");
         testCodec(Long.class, 100L, "NUMERIC");
         testCodec(Long.class, 100L, "FLOAT4");
         testCodec(Long.class, 100L, "FLOAT8");

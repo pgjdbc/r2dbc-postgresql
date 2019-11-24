@@ -35,6 +35,7 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT2;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT8;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.NUMERIC;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.OID;;
 
 /**
  * Codec to decode all known numeric types.
@@ -43,7 +44,7 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.NUMERIC;
  */
 abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> {
 
-    private static final Set<PostgresqlObjectId> SUPPORTED_TYPES = EnumSet.of(INT2, INT4, INT8, FLOAT4, FLOAT8, NUMERIC);
+    private static final Set<PostgresqlObjectId> SUPPORTED_TYPES = EnumSet.of(INT2, INT4, INT8, FLOAT4, FLOAT8, NUMERIC, OID);
 
     /**
      * Creates a new {@link AbstractCodec}.
@@ -133,9 +134,14 @@ abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> {
                     return buffer.readDouble();
                 }
                 return Double.parseDouble(ByteBufUtils.decode(buffer));
+            case OID:
+                if (FORMAT_BINARY == format) {
+                    return buffer.readInt();
+                }
+                return Integer.parseInt(ByteBufUtils.decode(buffer));
+            default:
+                throw new UnsupportedOperationException(String.format("Cannot decode value for type %s, format %s", dataType, format));
         }
-
-        throw new UnsupportedOperationException(String.format("Cannot decode value for type %s, format %s", dataType, format));
     }
 
     /**
