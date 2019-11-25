@@ -1,6 +1,24 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+0.8.0.RELEASE
+-----------------------------------------
+* Fix instant handling #196
+* Add an auth-config for local connections in testing #195
+* Invalid listen example in README #192
+* Add customizeSslContext(Consumer<SslContextBuilder>) #191
+*  Default to scalar values for LOB column retrieval according to spec changes #190
+* Upgrade to Testcontainers 1.12.3 #189
+* SSL disabled exceptions not propagated in connect phase #187
+* Enable BlobCodec and ClobCodec for binary usage #186
+* Split unit test and integration test execution #185
+* Cannot decode value of type java.net.InetAddress #184
+* DB exceptions are not handled correctly by PostgresqlConnection for INSERT ... RETURNING in transaction #182
+* Support unix domain socket connections #181
+* Relax requirement for password #178
+* Statement execution gets stuck when connection gets disconnected #177
+* Add ConnectionFactory option for binaryTransfer (forceBinary) #160
+
 0.8.0.RC2
 ------------------
 * Revert reactor-netty exclusions #175
