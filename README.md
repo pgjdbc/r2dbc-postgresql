@@ -369,8 +369,11 @@ If SL4J is on the classpath, it will be used. Otherwise, there are two possible 
 
 Logging facilities:
 
-* Driver Logging: `io.r2dbc.postgresql`.                                                                                                                                                                                            
-* Query Logging: `io.r2dbc.postgresql.QUERY` on `DEBUG` level.                                                                                                                                                                                            
+* Driver Logging (`io.r2dbc.postgresql`)
+* Query Logging (`io.r2dbc.postgresql.QUERY` on `DEBUG` level)
+* Transport Logging (`io.r2dbc.postgresql.client`)
+    * `DEBUG` enables `Message` exchange logging
+    * `TRACE` enables traffic logging
 
 ## License
 This project is released under version 2.0 of the [Apache License][l].

@@ -97,7 +97,7 @@ final class ExtendedQueryMessageFlowTest {
     @Test
     void executeNoStatement() {
         assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryMessageFlow.execute(Flux.empty(), NO_OP, () -> "", null, "", false))
-            .withMessage("statement must not be null");
+            .withMessage("statementName must not be null");
     }
 
     @Test

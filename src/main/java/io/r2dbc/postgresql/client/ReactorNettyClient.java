@@ -21,12 +21,17 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.ServerChannel;
 import io.netty.channel.epoll.Epoll;
 import io.netty.channel.socket.DatagramChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.ReferenceCountUtil;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.r2dbc.postgresql.message.backend.BackendKeyData;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.BackendMessageDecoder;
@@ -303,7 +308,18 @@ public final class ReactorNettyClient implements Client {
             tcpClient = tcpClient.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Math.toIntExact(connectTimeout.toMillis()));
         }
 
-        return tcpClient.connect().flatMap(it -> registerSslHandler(sslConfig, it).thenReturn(new ReactorNettyClient(it)));
+        return tcpClient.connect().flatMap(it -> {
+
+            ChannelPipeline pipeline = it.channel().pipeline();
+
+            InternalLogger logger = InternalLoggerFactory.getInstance(ReactorNettyClient.class);
+            if (logger.isTraceEnabled()) {
+                pipeline.addFirst(LoggingHandler.class.getSimpleName(),
+                    new LoggingHandler(ReactorNettyClient.class, LogLevel.TRACE));
+            }
+
+            return registerSslHandler(sslConfig, it).thenReturn(new ReactorNettyClient(it));
+        });
     }
 
     private static Mono<? extends Void> registerSslHandler(SSLConfig sslConfig, Connection it) {
