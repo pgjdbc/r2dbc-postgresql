@@ -69,7 +69,7 @@ final class ExtendedQueryMessageFlowTest {
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
 
         ExtendedQueryMessageFlow
-            .execute(bindings, client, portalNameSupplier, "test-name", false)
+            .execute(bindings, client, portalNameSupplier, "test-name", "", false)
             .as(StepVerifier::create)
             .expectNext(BindComplete.INSTANCE, NoData.INSTANCE, new CommandComplete("test", null, null))
             .expectNext(BindComplete.INSTANCE, NoData.INSTANCE, new CommandComplete("test", null, null))
@@ -78,25 +78,25 @@ final class ExtendedQueryMessageFlowTest {
 
     @Test
     void executeNoBindings() {
-        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryMessageFlow.execute(null, NO_OP, () -> "", "test-statement", false))
+        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryMessageFlow.execute(null, NO_OP, () -> "", "test-statement", "", false))
             .withMessage("bindings must not be null");
     }
 
     @Test
     void executeNoClient() {
-        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryMessageFlow.execute(Flux.empty(), null, () -> "", "test-statement", false))
+        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryMessageFlow.execute(Flux.empty(), null, () -> "", "test-statement", "", false))
             .withMessage("client must not be null");
     }
 
     @Test
     void executeNoPortalNameSupplier() {
-        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryMessageFlow.execute(Flux.empty(), NO_OP, null, "test-statement", false))
+        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryMessageFlow.execute(Flux.empty(), NO_OP, null, "test-statement", "", false))
             .withMessage("portalNameSupplier must not be null");
     }
 
     @Test
     void executeNoStatement() {
-        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryMessageFlow.execute(Flux.empty(), NO_OP, () -> "", null, false))
+        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryMessageFlow.execute(Flux.empty(), NO_OP, () -> "", null, "", false))
             .withMessage("statement must not be null");
     }
 

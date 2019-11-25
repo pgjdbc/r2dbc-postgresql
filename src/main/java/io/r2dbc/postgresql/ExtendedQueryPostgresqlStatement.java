@@ -183,7 +183,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
         ExceptionFactory factory = ExceptionFactory.withSql(sql);
         return this.statementCache.getName(this.bindings.first(), sql)
             .flatMapMany(name -> ExtendedQueryMessageFlow
-                .execute(Flux.fromIterable(this.bindings.bindings), this.client, this.portalNameSupplier, name, this.forceBinary))
+                .execute(Flux.fromIterable(this.bindings.bindings), this.client, this.portalNameSupplier, name, sql, this.forceBinary))
             .filter(RESULT_FRAME_FILTER)
             .windowUntil(CloseComplete.class::isInstance)
             .map(messages -> PostgresqlResult.toResult(this.codecs, messages, factory));

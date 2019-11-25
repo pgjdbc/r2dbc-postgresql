@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.client;
 
 import io.r2dbc.postgresql.message.backend.BackendMessage;
+import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.message.frontend.Query;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Flux;
@@ -42,7 +43,7 @@ public final class SimpleQueryMessageFlow {
         Assert.requireNonNull(client, "client must not be null");
         Assert.requireNonNull(query, "query must not be null");
 
-        return client.exchange(Mono.just(new Query(query)));
+        return client.exchange(Mono.<FrontendMessage>just(new Query(query)).doOnSubscribe(ignore -> QueryLogger.logQuery(query)));
     }
 
 }
