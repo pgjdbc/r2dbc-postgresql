@@ -362,7 +362,15 @@ This driver accepts the following extensions:
 
 * `CodecRegistrar` to contribute `Codec`s for Postgres ObjectIDs. 
 
-Extensions can be registered programmatically using `PostgresConnectionConfiguration` or discovered using Java's `ServiceLoader` mechanism (from `META-INF/services/io.r2dbc.postgresql.extension.Extension`).                                                                                                                                                                                                
+Extensions can be registered programmatically using `PostgresConnectionConfiguration` or discovered using Java's `ServiceLoader` mechanism (from `META-INF/services/io.r2dbc.postgresql.extension.Extension`).
+
+## Logging
+If SL4J is on the classpath, it will be used. Otherwise, there are two possible fallbacks: Console or `java.util.logging.Logger`). By default, the Console fallback is used. To use the JDK loggers, set the `reactor.logging.fallback` System property to `JDK`.
+
+Logging facilities:
+
+* Driver Logging: `io.r2dbc.postgresql`.                                                                                                                                                                                            
+* Query Logging: `io.r2dbc.postgresql.QUERY` on `DEBUG` level.                                                                                                                                                                                            
 
 ## License
 This project is released under version 2.0 of the [Apache License][l].
