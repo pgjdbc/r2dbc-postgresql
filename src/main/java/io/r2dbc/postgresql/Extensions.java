@@ -17,8 +17,8 @@
 package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.extension.Extension;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.util.Logger;
+import reactor.util.Loggers;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -33,7 +33,7 @@ import java.util.function.Consumer;
  */
 final class Extensions {
 
-    private static final Logger logger = LoggerFactory.getLogger(Extensions.class);
+    private static final Logger logger = Loggers.getLogger(Extensions.class);
 
     private final List<Extension> extensions;
 

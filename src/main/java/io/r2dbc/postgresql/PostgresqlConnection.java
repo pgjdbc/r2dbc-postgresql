@@ -30,14 +30,14 @@ import io.r2dbc.spi.IsolationLevel;
 import io.r2dbc.spi.ValidationDepth;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import reactor.core.CoreSubscriber;
 import reactor.core.Disposable;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
+import reactor.util.Logger;
+import reactor.util.Loggers;
 import reactor.util.annotation.Nullable;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -51,7 +51,7 @@ import static io.r2dbc.postgresql.client.TransactionStatus.OPEN;
  */
 final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlConnection {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = Loggers.getLogger(this.getClass());
 
     private final Client client;
 

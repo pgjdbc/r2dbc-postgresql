@@ -48,7 +48,6 @@
         <r2dbc-spi.version>${project.version}</r2dbc-spi.version>
         <reactor.version>Dysprosium-SR1</reactor.version>
         <scram-client.version>2.1</scram-client.version>
-        <slf4j.version>1.7.26</slf4j.version>
         <spring-framework.version>5.2.1.RELEASE</spring-framework.version>
         <testcontainers.version>1.12.3</testcontainers.version>
     </properties>
@@ -56,7 +55,7 @@
     <licenses>
         <license>
             <name>Apache License 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
@@ -148,11 +147,6 @@
             <artifactId>netty-transport-native-kqueue</artifactId>
             <classifier>osx-x86_64</classifier>
             <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.findbugs</groupId>

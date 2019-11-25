@@ -16,8 +16,8 @@
 
 package io.r2dbc.postgresql.client;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.util.Logger;
+import reactor.util.Loggers;
 import reactor.util.annotation.Nullable;
 
 import javax.naming.InvalidNameException;
@@ -94,7 +94,7 @@ public enum DefaultHostnameVerifier implements HostnameVerifier {
         }
     };
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = Loggers.getLogger(this.getClass());
 
     @Override
     public boolean verify(String hostname, SSLSession session) {
