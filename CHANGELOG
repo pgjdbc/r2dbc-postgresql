@@ -20,6 +20,7 @@ R2DBC PostgreSQL Changelog
 * Relax requirement for password #178
 * Statement execution gets stuck when connection gets disconnected #177
 * Add ConnectionFactory option for binaryTransfer (forceBinary) #160
+* Add LogicalDecoding #18
 
 0.8.0.RC2
 ------------------
