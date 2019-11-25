@@ -3,6 +3,8 @@ R2DBC PostgreSQL Changelog
 
 0.8.0.RELEASE
 -----------------------------------------
+* Add query logger #201
+* Drop SLF4J in favor of Reactor's Logger utilities #200
 * Fix instant handling #196
 * Add an auth-config for local connections in testing #195
 * Invalid listen example in README #192
