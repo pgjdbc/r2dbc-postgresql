@@ -3,6 +3,7 @@ R2DBC PostgreSQL Changelog
 
 0.8.0.RELEASE
 -----------------------------------------
+* Upgrade to R2DBC SPI 0.8.0.RELEASE #202
 * Add query logger #201
 * Drop SLF4J in favor of Reactor's Logger utilities #200
 * Fix instant handling #196
