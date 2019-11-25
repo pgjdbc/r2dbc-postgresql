@@ -28,29 +28,62 @@
     <packaging>jar</packaging>
 
     <name>Reactive Relational Database Connectivity - Postgresql</name>
+    <description>Reactive Relational Database Connectivity Driver Implementation for Postgresql</description>
     <url>https://github.com/r2dbc/r2dbc-potsgresql</url>
 
     <properties>
-        <assertj.version>3.12.0</assertj.version>
+        <assertj.version>3.14.0</assertj.version>
         <hikari-cp.version>3.4.0</hikari-cp.version>
         <java.version>1.8</java.version>
         <jsr305.version>3.0.2</jsr305.version>
         <junit.version>5.5.2</junit.version>
-        <jmh.version>1.21</jmh.version>
-        <netty.version>4.1.42.Final</netty.version>
-        <mbr.version>0.1.0.RELEASE</mbr.version>
+        <jmh.version>1.22</jmh.version>
+        <mbr.version>0.2.0.RELEASE</mbr.version>
         <logback.version>1.2.3</logback.version>
-        <mockito.version>3.0.0</mockito.version>
-        <postgresql.version>42.2.6</postgresql.version>
+        <mockito.version>3.1.0</mockito.version>
+        <netty.version>4.1.43.Final</netty.version>
+        <postgresql.version>42.2.8</postgresql.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <r2dbc-spi.version>${project.version}</r2dbc-spi.version>
-        <reactor.version>Dysprosium-RELEASE</reactor.version>
+        <reactor.version>Dysprosium-SR1</reactor.version>
         <scram-client.version>2.1</scram-client.version>
         <slf4j.version>1.7.26</slf4j.version>
-        <spring-framework.version>5.1.8.RELEASE</spring-framework.version>
+        <spring-framework.version>5.2.1.RELEASE</spring-framework.version>
         <testcontainers.version>1.12.3</testcontainers.version>
     </properties>
+
+    <licenses>
+        <license>
+            <name>Apache License 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:https://github.com/r2dbc/r2dbc-potsgresql</connection>
+        <url>https://github.com/r2dbc/r2dbc-potsgresql</url>
+    </scm>
+
+    <developers>
+        <developer>
+            <name>Anton Duyun</name>
+            <email>anton.duyun@gmail.com</email>
+        </developer>
+        <developer>
+            <name>Ben Hale</name>
+            <email>bhale@pivotal.io</email>
+        </developer>
+        <developer>
+            <name>Mark Paluch</name>
+            <email>mpaluch@pivotal.io</email>
+        </developer>
+        <developer>
+            <name>Greg Turnquist</name>
+            <email>gturnquist@pivotal.io</email>
+        </developer>
+    </developers>
 
     <dependencyManagement>
         <dependencies>
@@ -87,6 +120,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>io.r2dbc</groupId>
+            <artifactId>r2dbc-spi</artifactId>
+            <version>${r2dbc-spi.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.ongres.scram</groupId>
             <artifactId>client</artifactId>
             <version>${scram-client.version}</version>
@@ -100,16 +138,22 @@
             <artifactId>reactor-netty</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.r2dbc</groupId>
-            <artifactId>r2dbc-spi</artifactId>
-            <version>${r2dbc-spi.version}</version>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport-native-epoll</artifactId>
+            <classifier>linux-x86_64</classifier>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport-native-kqueue</artifactId>
+            <classifier>osx-x86_64</classifier>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
         </dependency>
-
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>jsr305</artifactId>
@@ -117,12 +161,7 @@
             <scope>provided</scope>
         </dependency>
 
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>${logback.version}</version>
-            <scope>test</scope>
-        </dependency>
+        <!-- Test Dependencies -->
         <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-test</artifactId>
@@ -180,14 +219,14 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-transport-native-kqueue</artifactId>
-            <classifier>osx-x86_64</classifier>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -231,7 +270,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
-                <version>3.0.0-M1</version>
+                <version>2.8.2</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -242,6 +281,7 @@
                         io.r2dbc.postgresql.authentication,io.r2dbc.postgresql.client,io.r2dbc.postgresql.message,io.r2dbc.postgresql.util
                     </excludePackageNames>
                     <links>
+                        <link>https://r2dbc.io/spec/${r2dbc-spi.version}/api/</link>
                         <link>https://projectreactor.io/docs/core/release/api/</link>
                         <link>https://www.reactive-streams.org/reactive-streams-1.0.3-javadoc/</link>
                     </links>
@@ -258,7 +298,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>3.0.1</version>
+                <version>3.2.0</version>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
@@ -271,7 +311,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M3</version>
+                <version>2.22.2</version>
                 <configuration>
                     <runOrder>random</runOrder>
                     <excludes>
@@ -289,7 +329,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.0.0-M3</version>
+                <version>2.22.2</version>
                 <executions>
                     <execution>
                         <goals>
@@ -324,10 +364,10 @@
                             <updatePomFile>true</updatePomFile>
                             <flattenMode>oss</flattenMode>
                             <pomElements>
-                                <pluginManagement>keep</pluginManagement>
-                                <properties>keep</properties>
+                                <properties>remove</properties>
                                 <parent>expand</parent>
                                 <repositories>remove</repositories>
+                                <profiles>remove</profiles>
                             </pomElements>
                         </configuration>
                     </execution>
@@ -347,6 +387,7 @@
                 <includes>
                     <include>LICENSE</include>
                     <include>NOTICE</include>
+                    <include>CHANGELOG</include>
                 </includes>
                 <targetPath>META-INF</targetPath>
             </resource>
@@ -392,6 +433,27 @@
                     </snapshots>
                 </repository>
             </repositories>
+        </profile>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
         <profile>
             <id>jmh</id>
