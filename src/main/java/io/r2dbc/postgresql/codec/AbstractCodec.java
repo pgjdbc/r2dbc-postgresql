@@ -98,7 +98,7 @@ abstract class AbstractCodec<T> implements Codec<T> {
     /**
      * Create a {@link Parameter}.
      *
-     * @param type   the type OID
+     * @param type   the well-known {@link PostgresqlObjectId type OID}
      * @param format the format to use
      * @param value  {@link Publisher} emitting {@link ByteBuf buffers}. Make sure to use deferred buffer creation instead of {@link Mono#just(Object)} and {@link Flux#just(Object)} to avoid memory
      *               leaks
@@ -111,7 +111,7 @@ abstract class AbstractCodec<T> implements Codec<T> {
     /**
      * Create a {@link Parameter}.
      *
-     * @param type           the type OID
+     * @param type           the well-known {@link PostgresqlObjectId type OID}
      * @param format         the format to use
      * @param bufferSupplier {@link Supplier} supplying the encoded {@link ByteBuf buffer}
      * @return the encoded  {@link Parameter}
@@ -123,7 +123,7 @@ abstract class AbstractCodec<T> implements Codec<T> {
     /**
      * Encode a {@code null} value.
      *
-     * @param type
+     * @param type   the well-known {@link PostgresqlObjectId type OID}
      * @param format the data type {@link Format}, text or binary
      * @return the encoded {@code null} value.
      */
@@ -134,7 +134,7 @@ abstract class AbstractCodec<T> implements Codec<T> {
     /**
      * Determine whether this {@link Codec} is capable of decoding column values based on the given {@link Format} and {@link PostgresqlObjectId}.
      *
-     * @param type
+     * @param type   the well-known {@link PostgresqlObjectId type OID}
      * @param format the data type {@link Format}, text or binary
      * @return {@code true} if this codec is able to decode values of {@link Format} and {@link PostgresqlObjectId}.
      */
@@ -144,7 +144,7 @@ abstract class AbstractCodec<T> implements Codec<T> {
      * Decode the {@link ByteBuf data} into the {@link Class value type}.
      *
      * @param buffer   the data buffer
-     * @param dataType the data type
+     * @param dataType the well-known {@link PostgresqlObjectId type OID}
      * @param format   data type format
      * @param type     the desired value type.
      * @return the decoded value. Can be {@code null} if the column value is {@code null}.

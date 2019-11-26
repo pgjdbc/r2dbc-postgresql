@@ -301,14 +301,15 @@ This reference table shows the type mapping between [PostgreSQL][p] and Java dat
 | [`inet`][psql-inet-ref]                         | [**`InetAddress`**][java-inet-ref]|
 | [`integer`][psql-integer-ref]                   | [**`Integer`**][java-integer-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref]|
 | [`interval`][psql-interval-ref]                 | Not yet supported.|
-| [`json`][psql-json-ref]                         | **`Json`**, [`String`][java-string-ref]. Reading: [`ByteBuf`][`byte[]`][java-primitive-ref][`ByteBuffer`][java-ByteBuffer-ref][`String`][java-string-ref][`InputStream`][java-inputstream-ref]|
-| [`jsonb`][psql-json-ref]                        | **`Json`**, [`String`][java-string-ref]. Reading: [`ByteBuf`][`byte[]`][java-primitive-ref][`ByteBuffer`][java-ByteBuffer-ref][`String`][java-string-ref][`InputStream`][java-inputstream-ref]|
+| [`json`][psql-json-ref]                         | **`Json`**, [`String`][java-string-ref]. Reading: `ByteBuf`[`byte[]`][java-primitive-ref], [`ByteBuffer`][java-ByteBuffer-ref], [`String`][java-string-ref], [`InputStream`][java-inputstream-ref]|
+| [`jsonb`][psql-json-ref]                        | **`Json`**, [`String`][java-string-ref]. Reading: `ByteBuf`[`byte[]`][java-primitive-ref], [`ByteBuffer`][java-ByteBuffer-ref], [`String`][java-string-ref], [`InputStream`][java-inputstream-ref]|
 | [`line`][psql-line-ref]                         | Not yet supported.|
 | [`lseg`][psql-lseq-ref]                         | Not yet supported.|
 | [`macaddr`][psql-macaddr-ref]                   | Not yet supported.|
 | [`macaddr8`][psql-macaddr8-ref]                 | Not yet supported.|
 | [`money`][psql-money-ref]                       | Not yet supported.|
 | [`numeric`][psql-bignumeric-ref]                | [`BigDecimal`][java-bigdecimal-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Integer`][java-integer-ref], [`Long`][java-long-ref]|
+| [`oid`][psql-oid-ref]                           | [**`Integer`**][java-integer-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref]|
 | [`path`][psql-path-ref]                         | Not yet supported.|
 | [`pg_lsn`][psql-pg_lsn-ref]                     | Not yet supported.|
 | [`point`][psql-point-ref]                       | Not yet supported.|
@@ -358,6 +359,7 @@ Support for the following single-dimensional arrays (read and write):
 [psql-macaddr-ref]: https://www.postgresql.org/docs/11/datatype-net-types.html#DATATYPE-MACADDR
 [psql-macaddr8-ref]: https://www.postgresql.org/docs/11/datatype-net-types.html#DATATYPE-MACADDR8
 [psql-money-ref]: https://www.postgresql.org/docs/11/datatype.html
+[psql-oid-ref]: https://www.postgresql.org/docs/11/datatype-oid.html
 [psql-path-ref]: https://www.postgresql.org/docs/11/datatype-geometric.html#id-1.5.7.16.9
 [psql-pg_lsn-ref]: https://www.postgresql.org/docs/11/datatype-pg-lsn.html
 [psql-point-ref]: https://www.postgresql.org/docs/11/datatype-geometric.html#id-1.5.7.16.5
