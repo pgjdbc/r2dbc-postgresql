@@ -17,18 +17,10 @@
 package io.r2dbc.postgresql;
 
 import io.netty.buffer.ByteBufAllocator;
-import io.netty.channel.unix.DomainSocketAddress;
-import io.r2dbc.postgresql.authentication.AuthenticationHandler;
-import io.r2dbc.postgresql.authentication.PasswordAuthenticationHandler;
-import io.r2dbc.postgresql.authentication.SASLAuthenticationHandler;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.ReactorNettyClient;
-import io.r2dbc.postgresql.client.SSLConfig;
-import io.r2dbc.postgresql.client.SSLMode;
-import io.r2dbc.postgresql.client.StartupMessageFlow;
 import io.r2dbc.postgresql.codec.DefaultCodecs;
 import io.r2dbc.postgresql.extension.CodecRegistrar;
-import io.r2dbc.postgresql.message.backend.AuthenticationMessage;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryMetadata;
@@ -41,15 +33,12 @@ import reactor.core.publisher.Mono;
 import reactor.netty.resources.ConnectionProvider;
 import reactor.util.annotation.Nullable;
 
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 /**
  * An implementation of {@link ConnectionFactory} for creating connections to a PostgreSQL database.
@@ -60,11 +49,9 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
 
     private static final String REPLICATION_DATABASE = "database";
 
-    private final Function<SSLConfig, Mono<? extends Client>> clientFactory;
+    private final Function<Map<String, String>, Mono<? extends Client>> clientFactory;
 
     private final PostgresqlConnectionConfiguration configuration;
-
-    private final SocketAddress endpoint;
 
     private final Extensions extensions;
 
@@ -76,29 +63,17 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
      */
     public PostgresqlConnectionFactory(PostgresqlConnectionConfiguration configuration) {
         this.configuration = Assert.requireNonNull(configuration, "configuration must not be null");
-        this.endpoint = createSocketAddress(configuration);
-        this.clientFactory = sslConfig -> ReactorNettyClient.connect(ConnectionProvider.newConnection(), this.endpoint, configuration.getConnectTimeout(), sslConfig).cast(Client.class);
+        this.clientFactory = new ClientFactory(configuration,
+            (endpoint, connectTimeout, sslConfig) -> ReactorNettyClient.connect(ConnectionProvider.newConnection(), endpoint, connectTimeout, sslConfig)
+                .cast(Client.class));
         this.extensions = getExtensions(configuration);
     }
 
-    PostgresqlConnectionFactory(Function<SSLConfig, Mono<? extends Client>> clientFactory, PostgresqlConnectionConfiguration configuration) {
+    PostgresqlConnectionFactory(ClientFactory.ConnectionSupplier connectionSupplier, PostgresqlConnectionConfiguration configuration) {
         this.configuration = Assert.requireNonNull(configuration, "configuration must not be null");
-        this.endpoint = createSocketAddress(configuration);
-        this.clientFactory = Assert.requireNonNull(clientFactory, "clientFactory must not be null");
+        Assert.requireNonNull(connectionSupplier, "connectionSupplier must not be null");
+        this.clientFactory = new ClientFactory(configuration, connectionSupplier);
         this.extensions = getExtensions(configuration);
-    }
-
-    private static SocketAddress createSocketAddress(PostgresqlConnectionConfiguration configuration) {
-
-        if (!configuration.isUseSocket()) {
-            return InetSocketAddress.createUnresolved(configuration.getRequiredHost(), configuration.getPort());
-        }
-
-        if (configuration.isUseSocket()) {
-            return new DomainSocketAddress(configuration.getRequiredSocket());
-        }
-
-        throw new IllegalArgumentException("Cannot create SocketAddress for " + configuration);
     }
 
     private static Extensions getExtensions(PostgresqlConnectionConfiguration configuration) {
@@ -140,56 +115,20 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
         return doCreateConnection(true, options).map(DefaultPostgresqlReplicationConnection::new);
     }
 
-    private Mono<PostgresqlConnection> doCreateConnection(boolean forReplication, @Nullable Map<String, String> options) {
+    private Throwable cannotConnect(Throwable throwable) {
 
-        SSLConfig sslConfig = this.configuration.getSslConfig();
-        Predicate<Throwable> isAuthSpecificationError = e -> e instanceof ExceptionFactory.PostgresqlAuthenticationFailure;
-        return this.tryConnectWithConfig(sslConfig, options)
-            .onErrorResume(
-                isAuthSpecificationError.and(e -> sslConfig.getSslMode() == SSLMode.ALLOW),
-                e -> this.tryConnectWithConfig(sslConfig.mutateMode(SSLMode.REQUIRE), options)
-                    .onErrorResume(sslAuthError -> {
-                        e.addSuppressed(sslAuthError);
-                        return Mono.error(e);
-                    })
-            )
-            .onErrorResume(
-                isAuthSpecificationError.and(e -> sslConfig.getSslMode() == SSLMode.PREFER),
-                e -> this.tryConnectWithConfig(sslConfig.mutateMode(SSLMode.DISABLE), options)
-                    .onErrorResume(sslAuthError -> {
-                        e.addSuppressed(sslAuthError);
-                        return Mono.error(e);
-                    })
-            )
-            .flatMap(client -> {
-                DefaultCodecs codecs = new DefaultCodecs(client.getByteBufAllocator());
+        if (throwable instanceof R2dbcException) {
+            return throwable;
+        }
 
-                Mono<IsolationLevel> isolationLevelMono = Mono.just(IsolationLevel.READ_COMMITTED);
-                if (!forReplication) {
-                    isolationLevelMono = getIsolationLevel(client, codecs);
-                }
-
-                return isolationLevelMono
-                    .map(it -> new PostgresqlConnection(client, codecs, DefaultPortalNameSupplier.INSTANCE, new IndefiniteStatementCache(client), it, this.configuration.isForceBinary()))
-                    .delayUntil(connection -> {
-                        return prepareConnection(connection, client.getByteBufAllocator(), codecs);
-                    })
-                    .onErrorResume(throwable -> this.closeWithError(client, throwable));
-            }).onErrorMap(this::cannotConnect);
+        return new PostgresConnectionException(
+            String.format("Cannot connect to %s", "TODO"), throwable // TODO
+        );
     }
 
     private boolean isReplicationConnection() {
         Map<String, String> options = this.configuration.getOptions();
         return options != null && REPLICATION_DATABASE.equalsIgnoreCase(options.get(REPLICATION_OPTION));
-    }
-
-    private Mono<Client> tryConnectWithConfig(SSLConfig sslConfig, @Nullable Map<String, String> options) {
-        return this.clientFactory.apply(sslConfig)
-            .delayUntil(client -> StartupMessageFlow
-                .exchange(this.configuration.getApplicationName(), this::getAuthenticationHandler, client, this.configuration.getDatabase(), this.configuration.getUsername(),
-                    options)
-                .handle(ExceptionFactory.INSTANCE::handleErrorResponse))
-            .cast(Client.class);
     }
 
     private Publisher<?> prepareConnection(PostgresqlConnection connection, ByteBufAllocator byteBufAllocator, DefaultCodecs codecs) {
@@ -208,15 +147,23 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
         return client.close().then(Mono.error(throwable));
     }
 
-    private Throwable cannotConnect(Throwable throwable) {
+    private Mono<PostgresqlConnection> doCreateConnection(boolean forReplication, @Nullable Map<String, String> options) {
+        return this.clientFactory.apply(options)
+            .flatMap(client -> {
+                DefaultCodecs codecs = new DefaultCodecs(client.getByteBufAllocator());
 
-        if (throwable instanceof R2dbcException) {
-            return throwable;
-        }
+                Mono<IsolationLevel> isolationLevelMono = Mono.just(IsolationLevel.READ_COMMITTED);
+                if (!forReplication) {
+                    isolationLevelMono = getIsolationLevel(client, codecs);
+                }
 
-        return new PostgresConnectionException(
-            String.format("Cannot connect to %s", this.endpoint), throwable
-        );
+                return isolationLevelMono
+                    .map(it -> new PostgresqlConnection(client, codecs, DefaultPortalNameSupplier.INSTANCE, new IndefiniteStatementCache(client), it, this.configuration.isForceBinary()))
+                    .delayUntil(connection -> {
+                        return prepareConnection(connection, client.getByteBufAllocator(), codecs);
+                    })
+                    .onErrorResume(throwable -> this.closeWithError(client, throwable));
+            }).onErrorMap(this::cannotConnect);
     }
 
     @Override
@@ -235,18 +182,6 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
             ", configuration=" + this.configuration +
             ", extensions=" + this.extensions +
             '}';
-    }
-
-    private AuthenticationHandler getAuthenticationHandler(AuthenticationMessage message) {
-        if (PasswordAuthenticationHandler.supports(message)) {
-            CharSequence password = Assert.requireNonNull(this.configuration.getPassword(), "Password must not be null");
-            return new PasswordAuthenticationHandler(password, this.configuration.getUsername());
-        } else if (SASLAuthenticationHandler.supports(message)) {
-            CharSequence password = Assert.requireNonNull(this.configuration.getPassword(), "Password must not be null");
-            return new SASLAuthenticationHandler(password, this.configuration.getUsername());
-        } else {
-            throw new IllegalStateException(String.format("Unable to provide AuthenticationHandler capable of handling %s", message));
-        }
     }
 
     private Mono<IsolationLevel> getIsolationLevel(Client client, DefaultCodecs codecs) {

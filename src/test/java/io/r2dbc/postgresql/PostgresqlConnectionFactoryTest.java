@@ -49,7 +49,7 @@ final class PostgresqlConnectionFactoryTest {
             .password("test-password")
             .username("test-username")
             .build()))
-            .withMessage("clientFactory must not be null");
+            .withMessage("connectionSupplier must not be null");
     }
 
     @Test
@@ -77,7 +77,7 @@ final class PostgresqlConnectionFactoryTest {
             .password("test-password")
             .build();
 
-        new PostgresqlConnectionFactory(c -> Mono.just(client), configuration)
+        new PostgresqlConnectionFactory((a, b, c) -> Mono.just(client), configuration)
             .create()
             .as(StepVerifier::create)
             .expectNextCount(1)
@@ -128,7 +128,7 @@ final class PostgresqlConnectionFactoryTest {
             .password("test-password")
             .build();
 
-        new PostgresqlConnectionFactory(c -> Mono.just(client), configuration).create()
+        new PostgresqlConnectionFactory((a, b, c) -> Mono.just(client), configuration).create()
             .as(StepVerifier::create)
             .verifyErrorMatches(R2dbcNonTransientResourceException.class::isInstance);
     }
@@ -152,7 +152,7 @@ final class PostgresqlConnectionFactoryTest {
             .password("test-password")
             .build();
 
-        assertThat(new PostgresqlConnectionFactory(c -> Mono.just(client), configuration).getMetadata()).isNotNull();
+        assertThat(new PostgresqlConnectionFactory((a, b, c) -> Mono.just(client), configuration).getMetadata()).isNotNull();
     }
 
 }

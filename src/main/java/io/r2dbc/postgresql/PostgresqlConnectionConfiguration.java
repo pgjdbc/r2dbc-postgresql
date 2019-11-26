@@ -79,10 +79,20 @@ public final class PostgresqlConnectionConfiguration {
 
     private final SSLConfig sslConfig;
 
+    private final int hostRecheckTime;
+
+    private final boolean loadBalance;
+
+    private final TargetServerType targetServerType;
+
+    private final String[] tmpHosts;
+
+    private final int[] tmpPorts;
+
     private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions,
                                               @Nullable Duration connectTimeout, @Nullable String database, List<Extension> extensions, boolean forceBinary, @Nullable String host,
                                               @Nullable Map<String, String> options, @Nullable CharSequence password, int port, @Nullable String schema, @Nullable String socket, String username,
-                                              SSLConfig sslConfig) {
+                                              SSLConfig sslConfig, TargetServerType targetServerType, int hostRecheckTime, boolean loadBalance, @Nullable String[] tmpHosts, @Nullable int[] tmpPorts) {
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
         this.autodetectExtensions = autodetectExtensions;
         this.connectTimeout = connectTimeout;
@@ -97,6 +107,11 @@ public final class PostgresqlConnectionConfiguration {
         this.socket = socket;
         this.username = Assert.requireNonNull(username, "username must not be null");
         this.sslConfig = sslConfig;
+        this.targetServerType = targetServerType;
+        this.hostRecheckTime = hostRecheckTime;
+        this.loadBalance = loadBalance;
+        this.tmpHosts = tmpHosts;
+        this.tmpPorts = tmpPorts;
     }
 
     /**
@@ -226,6 +241,28 @@ public final class PostgresqlConnectionConfiguration {
         return this.sslConfig;
     }
 
+    @Nullable
+    public String[] getTmpHosts() {
+        return tmpHosts;
+    }
+
+    @Nullable
+    public int[] getTmpPorts() {
+        return tmpPorts;
+    }
+
+    int getHostRecheckTime() {
+        return this.hostRecheckTime;
+    }
+
+    TargetServerType getTargetServerType() {
+        return this.targetServerType;
+    }
+
+    boolean isLoadBalance() {
+        return this.loadBalance;
+    }
+
     /**
      * A builder for {@link PostgresqlConnectionConfiguration} instances.
      * <p>
@@ -284,6 +321,16 @@ public final class PostgresqlConnectionConfiguration {
         @Nullable
         private String username;
 
+        private int hostRecheckTime = 10000;
+
+        private boolean loadBalance = false;
+
+        private TargetServerType targetServerType = TargetServerType.ANY;
+
+        private String[] tmpHosts;
+
+        private int[] tmpPorts;
+
         private Builder() {
         }
 
@@ -317,7 +364,7 @@ public final class PostgresqlConnectionConfiguration {
          */
         public PostgresqlConnectionConfiguration build() {
 
-            if (this.host == null && this.socket == null) {
+            if (this.host == null && this.socket == null && this.tmpHosts == null) {
                 throw new IllegalArgumentException("host or socket must not be null");
             }
 
@@ -330,7 +377,8 @@ public final class PostgresqlConnectionConfiguration {
             }
 
             return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.connectTimeout, this.database, this.extensions, this.forceBinary, this.host,
-                this.options, this.password, this.port, this.schema, this.socket, this.username, this.createSslConfig());
+                this.options, this.password, this.port, this.schema, this.socket, this.username, this.createSslConfig(), this.targetServerType, this.hostRecheckTime, this.loadBalance, tmpHosts,
+                tmpPorts);
         }
 
         /**
@@ -546,29 +594,9 @@ public final class PostgresqlConnectionConfiguration {
             return this;
         }
 
-        @Override
-        public String toString() {
-            return "Builder{" +
-                "applicationName='" + this.applicationName + '\'' +
-                ", autodetectExtensions='" + this.autodetectExtensions + '\'' +
-                ", connectTimeout='" + this.connectTimeout + '\'' +
-                ", database='" + this.database + '\'' +
-                ", extensions='" + this.extensions + '\'' +
-                ", forceBinary='" + this.forceBinary + '\'' +
-                ", host='" + this.host + '\'' +
-                ", parameters='" + this.options + '\'' +
-                ", password='" + repeat(this.password != null ? this.password.length() : 0, "*") + '\'' +
-                ", port=" + this.port +
-                ", schema='" + this.schema + '\'' +
-                ", username='" + this.username + '\'' +
-                ", socket='" + this.socket + '\'' +
-                ", sslContextBuilderCustomizer='" + this.sslContextBuilderCustomizer + '\'' +
-                ", sslMode='" + this.sslMode + '\'' +
-                ", sslRootCert='" + this.sslRootCert + '\'' +
-                ", sslCert='" + this.sslCert + '\'' +
-                ", sslKey='" + this.sslKey + '\'' +
-                ", sslHostnameVerifier='" + this.sslHostnameVerifier + '\'' +
-                '}';
+        public Builder hostRecheckTime(int hostRecheckTime) {
+            this.hostRecheckTime = hostRecheckTime;
+            return this;
         }
 
         /**
@@ -592,6 +620,54 @@ public final class PostgresqlConnectionConfiguration {
         public Builder username(String username) {
             this.username = Assert.requireNonNull(username, "username must not be null");
             return this;
+        }
+
+        public Builder loadBalance(boolean loadBalance) {
+            this.loadBalance = loadBalance;
+            return this;
+        }
+
+        public Builder targetServerType(TargetServerType targetServerType) {
+            this.targetServerType = targetServerType;
+            return this;
+        }
+
+        public Builder tmpHosts(String[] tmpHosts) {
+            this.tmpHosts = tmpHosts;
+            return this;
+        }
+
+        public Builder tmpPorts(int[] tmpPorts) {
+            this.tmpPorts = tmpPorts;
+            return this;
+        }
+
+        @Override
+        public String toString() {
+            return "Builder{" +
+                "applicationName='" + this.applicationName + '\'' +
+                ", autodetectExtensions='" + this.autodetectExtensions + '\'' +
+                ", connectTimeout='" + this.connectTimeout + '\'' +
+                ", database='" + this.database + '\'' +
+                ", extensions='" + this.extensions + '\'' +
+                ", forceBinary='" + this.forceBinary + '\'' +
+                ", host='" + this.host + '\'' +
+                ", parameters='" + this.options + '\'' +
+                ", password='" + repeat(this.password != null ? this.password.length() : 0, "*") + '\'' +
+                ", port=" + this.port +
+                ", schema='" + this.schema + '\'' +
+                ", username='" + this.username + '\'' +
+                ", socket='" + this.socket + '\'' +
+                ", sslContextBuilderCustomizer='" + this.sslContextBuilderCustomizer + '\'' +
+                ", sslMode='" + this.sslMode + '\'' +
+                ", sslRootCert='" + this.sslRootCert + '\'' +
+                ", sslCert='" + this.sslCert + '\'' +
+                ", sslKey='" + this.sslKey + '\'' +
+                ", sslHostnameVerifier='" + this.sslHostnameVerifier + '\'' +
+                ", targetServerType='" + this.targetServerType + '\'' +
+                ", hostRecheckTime='" + this.hostRecheckTime + '\'' +
+                ", loadBalance='" + this.loadBalance + '\'' +
+                '}';
         }
 
         private SSLConfig createSslConfig() {
