@@ -35,6 +35,7 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT2;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT8;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.NUMERIC;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.OID;
 
 /**
  * Codec to decode all known numeric types.
@@ -43,7 +44,7 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.NUMERIC;
  */
 abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> {
 
-    private static final Set<PostgresqlObjectId> SUPPORTED_TYPES = EnumSet.of(INT2, INT4, INT8, FLOAT4, FLOAT8, NUMERIC);
+    private static final Set<PostgresqlObjectId> SUPPORTED_TYPES = EnumSet.of(INT2, INT4, INT8, FLOAT4, FLOAT8, NUMERIC, OID);
 
     /**
      * Creates a new {@link AbstractCodec}.
@@ -77,12 +78,12 @@ abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> {
     /**
      * Decode {@code buffer} to {@link Number} and potentially convert it to {@link Class expectedType} using {@link Function converter} if the decoded type does not match {@code expectedType}.
      *
-     * @param buffer
-     * @param dataType
-     * @param format
-     * @param expectedType
-     * @param converter
-     * @return
+     * @param buffer       the data buffer
+     * @param dataType     the well-known {@link PostgresqlObjectId type OID}
+     * @param format       the data type {@link Format}, text or binary
+     * @param expectedType the expected result type
+     * @param converter    the converter function to convert from {@link Number} to {@code expectedType}
+     * @return the decoded number
      */
     T decodeNumber(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, Class<T> expectedType, Function<Number, T> converter) {
         Number number = decodeNumber(buffer, dataType, format);
@@ -92,10 +93,10 @@ abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> {
     /**
      * Decode {@code buffer} to {@link Number} according to {@link PostgresqlObjectId}.
      *
-     * @param buffer
-     * @param dataType
-     * @param format
-     * @return
+     * @param buffer   the data buffer
+     * @param dataType the well-known {@link PostgresqlObjectId type OID}
+     * @param format   the data type {@link Format}, text or binary
+     * @return the decoded number
      */
     private Number decodeNumber(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
@@ -114,6 +115,7 @@ abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> {
                 }
                 return Short.parseShort(ByteBufUtils.decode(buffer));
             case INT4:
+            case OID:
                 if (FORMAT_BINARY == format) {
                     return buffer.readInt();
                 }
@@ -133,9 +135,9 @@ abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> {
                     return buffer.readDouble();
                 }
                 return Double.parseDouble(ByteBufUtils.decode(buffer));
+            default:
+                throw new UnsupportedOperationException(String.format("Cannot decode value for type %s, format %s", dataType, format));
         }
-
-        throw new UnsupportedOperationException(String.format("Cannot decode value for type %s, format %s", dataType, format));
     }
 
     /**
