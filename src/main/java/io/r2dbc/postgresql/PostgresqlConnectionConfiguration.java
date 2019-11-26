@@ -20,8 +20,10 @@ package io.r2dbc.postgresql;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.r2dbc.postgresql.client.DefaultHostnameVerifier;
+import io.r2dbc.postgresql.client.MultipleHostsConfiguration;
 import io.r2dbc.postgresql.client.SSLConfig;
 import io.r2dbc.postgresql.client.SSLMode;
+import io.r2dbc.postgresql.client.SingleHostConfiguration;
 import io.r2dbc.postgresql.codec.Codec;
 import io.r2dbc.postgresql.extension.CodecRegistrar;
 import io.r2dbc.postgresql.extension.Extension;
@@ -63,55 +65,40 @@ public final class PostgresqlConnectionConfiguration {
 
     private final boolean forceBinary;
 
-    private final String host;
-
     private final Map<String, String> options;
 
     private final CharSequence password;
 
-    private final int port;
-
     private final String schema;
 
-    private final String socket;
 
     private final String username;
 
     private final SSLConfig sslConfig;
 
-    private final int hostRecheckTime;
+    private final MultipleHostsConfiguration multipleHostsConfiguration;
 
-    private final boolean loadBalance;
-
-    private final TargetServerType targetServerType;
-
-    private final String[] tmpHosts;
-
-    private final int[] tmpPorts;
+    private final SingleHostConfiguration singleHostConfiguration;
 
     private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions,
-                                              @Nullable Duration connectTimeout, @Nullable String database, List<Extension> extensions, boolean forceBinary, @Nullable String host,
-                                              @Nullable Map<String, String> options, @Nullable CharSequence password, int port, @Nullable String schema, @Nullable String socket, String username,
-                                              SSLConfig sslConfig, TargetServerType targetServerType, int hostRecheckTime, boolean loadBalance, @Nullable String[] tmpHosts, @Nullable int[] tmpPorts) {
+                                              @Nullable Duration connectTimeout, @Nullable String database, List<Extension> extensions, boolean forceBinary,
+                                              @Nullable Map<String, String> options, @Nullable CharSequence password, @Nullable String schema, String username,
+                                              SSLConfig sslConfig,
+                                              @Nullable SingleHostConfiguration singleHostConfiguration,
+                                              @Nullable MultipleHostsConfiguration multipleHostsConfiguration) {
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
         this.autodetectExtensions = autodetectExtensions;
         this.connectTimeout = connectTimeout;
         this.extensions = Assert.requireNonNull(extensions, "extensions must not be null");
         this.database = database;
         this.forceBinary = forceBinary;
-        this.host = host;
         this.options = options;
         this.password = password;
-        this.port = port;
         this.schema = schema;
-        this.socket = socket;
         this.username = Assert.requireNonNull(username, "username must not be null");
         this.sslConfig = sslConfig;
-        this.targetServerType = targetServerType;
-        this.hostRecheckTime = hostRecheckTime;
-        this.loadBalance = loadBalance;
-        this.tmpHosts = tmpHosts;
-        this.tmpPorts = tmpPorts;
+        this.singleHostConfiguration = singleHostConfiguration;
+        this.multipleHostsConfiguration = multipleHostsConfiguration;
     }
 
     /**
@@ -134,19 +121,29 @@ public final class PostgresqlConnectionConfiguration {
         return builder.toString();
     }
 
+    @Nullable
+    public MultipleHostsConfiguration getMultipleHostsConfiguration() {
+        return multipleHostsConfiguration;
+    }
+
+    @Nullable
+    public SingleHostConfiguration getSingleHostConfiguration() {
+        return singleHostConfiguration;
+    }
+
     @Override
     public String toString() {
         return "PostgresqlConnectionConfiguration{" +
             "applicationName='" + this.applicationName + '\'' +
+            ", singleHostConfiguration='" + this.singleHostConfiguration + '\'' +
+            ", multipleHostsConfiguration='" + this.multipleHostsConfiguration + '\'' +
             ", autodetectExtensions='" + this.autodetectExtensions + '\'' +
             ", connectTimeout=" + this.connectTimeout +
             ", database='" + this.database + '\'' +
             ", extensions=" + this.extensions +
             ", forceBinary='" + this.forceBinary + '\'' +
-            ", host='" + this.host + '\'' +
             ", options='" + this.options + '\'' +
             ", password='" + repeat(this.password != null ? this.password.length() : 0, "*") + '\'' +
-            ", port=" + this.port +
             ", schema='" + this.schema + '\'' +
             ", username='" + this.username + '\'' +
             '}';
@@ -171,22 +168,6 @@ public final class PostgresqlConnectionConfiguration {
     }
 
     @Nullable
-    String getHost() {
-        return this.host;
-    }
-
-    String getRequiredHost() {
-
-        String host = getHost();
-
-        if (host == null || host.isEmpty()) {
-            throw new IllegalStateException("Connection is configured for socket connections and not for host usage");
-        }
-
-        return host;
-    }
-
-    @Nullable
     Map<String, String> getOptions() {
         return this.options;
     }
@@ -196,30 +177,11 @@ public final class PostgresqlConnectionConfiguration {
         return this.password;
     }
 
-    int getPort() {
-        return this.port;
-    }
-
     @Nullable
     String getSchema() {
         return this.schema;
     }
 
-    @Nullable
-    String getSocket() {
-        return this.socket;
-    }
-
-    String getRequiredSocket() {
-
-        String socket = getSocket();
-
-        if (socket == null || socket.isEmpty()) {
-            throw new IllegalStateException("Connection is configured to use host and port connections and not for socket usage");
-        }
-
-        return socket;
-    }
 
     String getUsername() {
         return this.username;
@@ -233,34 +195,8 @@ public final class PostgresqlConnectionConfiguration {
         return this.forceBinary;
     }
 
-    boolean isUseSocket() {
-        return getSocket() != null;
-    }
-
     SSLConfig getSslConfig() {
         return this.sslConfig;
-    }
-
-    @Nullable
-    public String[] getTmpHosts() {
-        return tmpHosts;
-    }
-
-    @Nullable
-    public int[] getTmpPorts() {
-        return tmpPorts;
-    }
-
-    int getHostRecheckTime() {
-        return this.hostRecheckTime;
-    }
-
-    TargetServerType getTargetServerType() {
-        return this.targetServerType;
-    }
-
-    boolean isLoadBalance() {
-        return this.loadBalance;
     }
 
     /**
@@ -285,20 +221,18 @@ public final class PostgresqlConnectionConfiguration {
         private boolean forceBinary = false;
 
         @Nullable
-        private String host;
+        private MultipleHostsConfiguration multipleHostsConfiguration;
+
+        @Nullable
+        private SingleHostConfiguration singleHostConfiguration;
 
         private Map<String, String> options;
 
         @Nullable
         private CharSequence password;
 
-        private int port = DEFAULT_PORT;
-
         @Nullable
         private String schema;
-
-        @Nullable
-        private String socket;
 
         @Nullable
         private String sslCert = null;
@@ -320,16 +254,6 @@ public final class PostgresqlConnectionConfiguration {
 
         @Nullable
         private String username;
-
-        private int hostRecheckTime = 10000;
-
-        private boolean loadBalance = false;
-
-        private TargetServerType targetServerType = TargetServerType.ANY;
-
-        private String[] tmpHosts;
-
-        private int[] tmpPorts;
 
         private Builder() {
         }
@@ -364,11 +288,11 @@ public final class PostgresqlConnectionConfiguration {
          */
         public PostgresqlConnectionConfiguration build() {
 
-            if (this.host == null && this.socket == null && this.tmpHosts == null) {
+            if (this.singleHostConfiguration != null && this.singleHostConfiguration.getHost() == null && this.singleHostConfiguration.getSocket() == null) {
                 throw new IllegalArgumentException("host or socket must not be null");
             }
 
-            if (this.host != null && this.socket != null) {
+            if (this.singleHostConfiguration != null && this.singleHostConfiguration.getHost() != null && this.singleHostConfiguration.getSocket() != null) {
                 throw new IllegalArgumentException("Connection must be configured for either host/port or socket usage but not both");
             }
 
@@ -376,9 +300,8 @@ public final class PostgresqlConnectionConfiguration {
                 throw new IllegalArgumentException("username must not be null");
             }
 
-            return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.connectTimeout, this.database, this.extensions, this.forceBinary, this.host,
-                this.options, this.password, this.port, this.schema, this.socket, this.username, this.createSslConfig(), this.targetServerType, this.hostRecheckTime, this.loadBalance, tmpHosts,
-                tmpPorts);
+            return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.connectTimeout, this.database, this.extensions, this.forceBinary,
+                this.options, this.password, this.schema, this.username, this.createSslConfig(), this.singleHostConfiguration, this.multipleHostsConfiguration);
         }
 
         /**
@@ -452,7 +375,12 @@ public final class PostgresqlConnectionConfiguration {
          * @throws IllegalArgumentException if {@code host} is {@code null}
          */
         public Builder host(String host) {
-            this.host = Assert.requireNonNull(host, "host must not be null");
+            Assert.requireNonNull(host, "host must not be null");
+            if (this.singleHostConfiguration == null) {
+                this.singleHostConfiguration = new SingleHostConfiguration(host, DEFAULT_PORT, null);
+            } else {
+                this.singleHostConfiguration = new SingleHostConfiguration(host, this.singleHostConfiguration.getPort(), this.singleHostConfiguration.getSocket());
+            }
             return this;
         }
 
@@ -490,14 +418,8 @@ public final class PostgresqlConnectionConfiguration {
             return this;
         }
 
-        /**
-         * Configure the port.  Defaults to {@code 5432}.
-         *
-         * @param port the port
-         * @return this {@link Builder}
-         */
-        public Builder port(int port) {
-            this.port = port;
+        public Builder multipleHostsConfiguration(MultipleHostsConfiguration multipleHostsConfiguration) {
+            this.multipleHostsConfiguration = Assert.requireNonNull(multipleHostsConfiguration, "multipleHostsConfiguration must not be null");
             return this;
         }
 
@@ -513,15 +435,17 @@ public final class PostgresqlConnectionConfiguration {
         }
 
         /**
-         * Configure the unix domain socket to connect to.
+         * Configure the port.  Defaults to {@code 5432}.
          *
-         * @param socket the socket path
+         * @param port the port
          * @return this {@link Builder}
-         * @throws IllegalArgumentException if {@code socket} is {@code null}
          */
-        public Builder socket(String socket) {
-            this.socket = Assert.requireNonNull(socket, "host must not be null");
-            sslMode(SSLMode.DISABLE);
+        public Builder port(int port) {
+            if (this.singleHostConfiguration == null) {
+                this.singleHostConfiguration = new SingleHostConfiguration(null, port, null);
+            } else {
+                this.singleHostConfiguration = new SingleHostConfiguration(this.singleHostConfiguration.getHost(), port, this.singleHostConfiguration.getSocket());
+            }
             return this;
         }
 
@@ -594,11 +518,6 @@ public final class PostgresqlConnectionConfiguration {
             return this;
         }
 
-        public Builder hostRecheckTime(int hostRecheckTime) {
-            this.hostRecheckTime = hostRecheckTime;
-            return this;
-        }
-
         /**
          * Configure ssl root cert for server certificate validation.
          *
@@ -622,23 +541,23 @@ public final class PostgresqlConnectionConfiguration {
             return this;
         }
 
-        public Builder loadBalance(boolean loadBalance) {
-            this.loadBalance = loadBalance;
-            return this;
-        }
+        /**
+         * Configure the unix domain socket to connect to.
+         *
+         * @param socket the socket path
+         * @return this {@link Builder}
+         * @throws IllegalArgumentException if {@code socket} is {@code null}
+         */
+        public Builder socket(String socket) {
+            Assert.requireNonNull(socket, "host must not be null");
 
-        public Builder targetServerType(TargetServerType targetServerType) {
-            this.targetServerType = targetServerType;
-            return this;
-        }
+            if (this.singleHostConfiguration == null) {
+                this.singleHostConfiguration = new SingleHostConfiguration(null, DEFAULT_PORT, socket);
+            } else {
+                this.singleHostConfiguration = new SingleHostConfiguration(this.singleHostConfiguration.getHost(), this.singleHostConfiguration.getPort(), socket);
+            }
 
-        public Builder tmpHosts(String[] tmpHosts) {
-            this.tmpHosts = tmpHosts;
-            return this;
-        }
-
-        public Builder tmpPorts(int[] tmpPorts) {
-            this.tmpPorts = tmpPorts;
+            sslMode(SSLMode.DISABLE);
             return this;
         }
 
@@ -646,32 +565,28 @@ public final class PostgresqlConnectionConfiguration {
         public String toString() {
             return "Builder{" +
                 "applicationName='" + this.applicationName + '\'' +
+                ", singleHostConfiguration='" + this.singleHostConfiguration + '\'' +
+                ", multipleHostsConfiguration='" + this.multipleHostsConfiguration + '\'' +
                 ", autodetectExtensions='" + this.autodetectExtensions + '\'' +
                 ", connectTimeout='" + this.connectTimeout + '\'' +
                 ", database='" + this.database + '\'' +
                 ", extensions='" + this.extensions + '\'' +
                 ", forceBinary='" + this.forceBinary + '\'' +
-                ", host='" + this.host + '\'' +
                 ", parameters='" + this.options + '\'' +
                 ", password='" + repeat(this.password != null ? this.password.length() : 0, "*") + '\'' +
-                ", port=" + this.port +
                 ", schema='" + this.schema + '\'' +
                 ", username='" + this.username + '\'' +
-                ", socket='" + this.socket + '\'' +
                 ", sslContextBuilderCustomizer='" + this.sslContextBuilderCustomizer + '\'' +
                 ", sslMode='" + this.sslMode + '\'' +
                 ", sslRootCert='" + this.sslRootCert + '\'' +
                 ", sslCert='" + this.sslCert + '\'' +
                 ", sslKey='" + this.sslKey + '\'' +
                 ", sslHostnameVerifier='" + this.sslHostnameVerifier + '\'' +
-                ", targetServerType='" + this.targetServerType + '\'' +
-                ", hostRecheckTime='" + this.hostRecheckTime + '\'' +
-                ", loadBalance='" + this.loadBalance + '\'' +
                 '}';
         }
 
         private SSLConfig createSslConfig() {
-            if (this.socket != null || this.sslMode == SSLMode.DISABLE) {
+            if (this.singleHostConfiguration != null && this.singleHostConfiguration.getSocket() != null || this.sslMode == SSLMode.DISABLE) {
                 return SSLConfig.disabled();
             }
 

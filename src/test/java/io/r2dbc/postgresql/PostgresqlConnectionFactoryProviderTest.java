@@ -231,8 +231,8 @@ final class PostgresqlConnectionFactoryProviderTest {
             .option(USER, "postgres")
             .build());
 
-        assertThat(factory.getConfiguration().isUseSocket()).isTrue();
-        assertThat(factory.getConfiguration().getRequiredSocket()).isEqualTo("/tmp/.s.PGSQL.5432");
+        assertThat(factory.getConfiguration().getSingleHostConfiguration().isUseSocket()).isTrue();
+        assertThat(factory.getConfiguration().getSingleHostConfiguration().getRequiredSocket()).isEqualTo("/tmp/.s.PGSQL.5432");
     }
 
 }

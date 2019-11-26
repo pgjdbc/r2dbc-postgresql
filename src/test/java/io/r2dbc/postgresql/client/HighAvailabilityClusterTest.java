@@ -13,6 +13,9 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class HighAvailabilityClusterTest {
 
     @RegisterExtension
@@ -180,19 +183,20 @@ public class HighAvailabilityClusterTest {
     }
 
     private PostgresqlConnectionFactory multipleHostsConnectionFactory(TargetServerType targetServerType, PostgreSQLContainer<?>... servers) {
-        PostgreSQLContainer<?> server = servers[0];
-        String[] hosts = new String[servers.length];
-        int[] ports = new int[servers.length];
-        for (int i = 0; i < servers.length; i++) {
-            hosts[i] = servers[i].getContainerIpAddress();
-            ports[i] = servers[i].getMappedPort(5432);
+        PostgreSQLContainer<?> firstServer = servers[0];
+        List<MultipleHostsConfiguration.ServerHost> hosts = new ArrayList<>(servers.length);
+        for (PostgreSQLContainer<?> server : servers) {
+            hosts.add(new MultipleHostsConfiguration.ServerHost(
+                server.getContainerIpAddress(),
+                server.getMappedPort(5432)
+            ));
         }
         PostgresqlConnectionConfiguration configuration = PostgresqlConnectionConfiguration.builder()
-            .tmpHosts(hosts)
-            .tmpPorts(ports)
-            .username(server.getUsername())
-            .password(server.getPassword())
-            .targetServerType(targetServerType)
+            .multipleHostsConfiguration(new MultipleHostsConfiguration(
+                hosts, 10000, false, targetServerType
+            ))
+            .username(firstServer.getUsername())
+            .password(firstServer.getPassword())
             .build();
         return new PostgresqlConnectionFactory(configuration);
     }

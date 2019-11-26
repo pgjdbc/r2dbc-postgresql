@@ -38,7 +38,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.function.Function;
 
 /**
  * An implementation of {@link ConnectionFactory} for creating connections to a PostgreSQL database.
@@ -49,7 +48,11 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
 
     private static final String REPLICATION_DATABASE = "database";
 
-    private final Function<Map<String, String>, Mono<? extends Client>> clientFactory;
+    private static final ClientSupplier DEFAULT_CLIENT_SUPPLIER = (endpoint, connectTimeout, sslConfig) -> ReactorNettyClient.
+        connect(ConnectionProvider.newConnection(), endpoint, connectTimeout, sslConfig)
+        .cast(Client.class);
+
+    private final ClientFactory clientFactory;
 
     private final PostgresqlConnectionConfiguration configuration;
 
@@ -63,16 +66,13 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
      */
     public PostgresqlConnectionFactory(PostgresqlConnectionConfiguration configuration) {
         this.configuration = Assert.requireNonNull(configuration, "configuration must not be null");
-        this.clientFactory = new ClientFactory(configuration,
-            (endpoint, connectTimeout, sslConfig) -> ReactorNettyClient.connect(ConnectionProvider.newConnection(), endpoint, connectTimeout, sslConfig)
-                .cast(Client.class));
+        this.clientFactory = ClientFactory.getFactory(configuration, DEFAULT_CLIENT_SUPPLIER);
         this.extensions = getExtensions(configuration);
     }
 
-    PostgresqlConnectionFactory(ClientFactory.ConnectionSupplier connectionSupplier, PostgresqlConnectionConfiguration configuration) {
+    PostgresqlConnectionFactory(ClientFactory clientFactory, PostgresqlConnectionConfiguration configuration) {
         this.configuration = Assert.requireNonNull(configuration, "configuration must not be null");
-        Assert.requireNonNull(connectionSupplier, "connectionSupplier must not be null");
-        this.clientFactory = new ClientFactory(configuration, connectionSupplier);
+        this.clientFactory = Assert.requireNonNull(clientFactory, "clientFactory must not be null");
         this.extensions = getExtensions(configuration);
     }
 
@@ -148,7 +148,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
     }
 
     private Mono<PostgresqlConnection> doCreateConnection(boolean forReplication, @Nullable Map<String, String> options) {
-        return this.clientFactory.apply(options)
+        return this.clientFactory.create(options)
             .flatMap(client -> {
                 DefaultCodecs codecs = new DefaultCodecs(client.getByteBufAllocator());
 

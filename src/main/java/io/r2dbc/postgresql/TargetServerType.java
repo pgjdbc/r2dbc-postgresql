@@ -5,26 +5,26 @@ import javax.annotation.Nullable;
 public enum TargetServerType {
     ANY("any") {
         @Override
-        public boolean allowStatus(ClientFactory.HostStatus hostStatus) {
-            return hostStatus != ClientFactory.HostStatus.CONNECT_FAIL;
+        public boolean allowStatus(MultipleHostsClientFactory.HostStatus hostStatus) {
+            return hostStatus != MultipleHostsClientFactory.HostStatus.CONNECT_FAIL;
         }
     },
     MASTER("master") {
         @Override
-        public boolean allowStatus(ClientFactory.HostStatus hostStatus) {
-            return hostStatus == ClientFactory.HostStatus.PRIMARY || hostStatus == ClientFactory.HostStatus.CONNECT_OK;
+        public boolean allowStatus(MultipleHostsClientFactory.HostStatus hostStatus) {
+            return hostStatus == MultipleHostsClientFactory.HostStatus.PRIMARY || hostStatus == MultipleHostsClientFactory.HostStatus.CONNECT_OK;
         }
     },
     SECONDARY("secondary") {
         @Override
-        public boolean allowStatus(ClientFactory.HostStatus hostStatus) {
-            return hostStatus == ClientFactory.HostStatus.STANDBY || hostStatus == ClientFactory.HostStatus.CONNECT_OK;
+        public boolean allowStatus(MultipleHostsClientFactory.HostStatus hostStatus) {
+            return hostStatus == MultipleHostsClientFactory.HostStatus.STANDBY || hostStatus == MultipleHostsClientFactory.HostStatus.CONNECT_OK;
         }
     },
     PREFER_SECONDARY("preferSecondary") {
         @Override
-        public boolean allowStatus(ClientFactory.HostStatus hostStatus) {
-            return hostStatus == ClientFactory.HostStatus.STANDBY || hostStatus == ClientFactory.HostStatus.CONNECT_OK;
+        public boolean allowStatus(MultipleHostsClientFactory.HostStatus hostStatus) {
+            return hostStatus == MultipleHostsClientFactory.HostStatus.STANDBY || hostStatus == MultipleHostsClientFactory.HostStatus.CONNECT_OK;
         }
     };
 
@@ -49,5 +49,5 @@ public enum TargetServerType {
         return value;
     }
 
-    public abstract boolean allowStatus(ClientFactory.HostStatus hostStatus);
+    public abstract boolean allowStatus(MultipleHostsClientFactory.HostStatus hostStatus);
 }
