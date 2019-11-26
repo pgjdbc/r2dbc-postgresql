@@ -33,7 +33,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-final class LogicalDecodeIntegrationTest {
+final class LogicalDecodeIntegrationTests {
 
     @RegisterExtension
     static final PostgresqlServerExtension SERVER = new PostgresqlServerExtension();
