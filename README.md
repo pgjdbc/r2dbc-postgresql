@@ -291,7 +291,7 @@ This reference table shows the type mapping between [PostgreSQL][p] and Java dat
 | [`bit varying`][psql-bit-ref]                   | Not yet supported.|
 | [`boolean or bool`][psql-boolean-ref]           | [`Boolean`][java-boolean-ref]|
 | [`box`][psql-box-ref]                           | Not yet supported.|
-| [`bytea`][psql-bytea-ref]                       | [**`ByteBuffer`**][java-ByteBuffer-ref], [`byte[]`][java-byte-ref], `Blob`|
+| [`bytea`][psql-bytea-ref]                       | [**`ByteBuffer`**][java-ByteBuffer-ref], [`byte[]`][java-byte-ref], [`Blob`][r2dbc-blob-ref]|
 | [`character`][psql-character-ref]               | [`String`][java-string-ref]|
 | [`character varying`][psql-character-ref]       | [`String`][java-string-ref]|
 | [`cidr`][psql-cidr-ref]                         | Not yet supported.|
@@ -318,7 +318,7 @@ This reference table shows the type mapping between [PostgreSQL][p] and Java dat
 | [`smallint`][psql-smallint-ref]                 | [**`Short`**][java-short-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Integer`][java-integer-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref]|
 | [`smallserial`][psql-smallserial-ref]           | [**`Integer`**][java-integer-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref]|
 | [`serial`][psql-serial-ref]                     | [**`Long`**][java-long-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Integer`][java-integer-ref], [`BigDecimal`][java-bigdecimal-ref]|
-| [`text`][psql-text-ref]                         | [**`String`**][java-string-ref], `Clob`|
+| [`text`][psql-text-ref]                         | [**`String`**][java-string-ref], [`Clob`][r2dbc-clob-ref]|
 | [`time [without time zone]`][psql-time-ref]     | [`LocalTime`][java-lt-ref]|
 | [`time [with time zone]`][psql-time-ref]        | Not yet supported.|
 | [`timestamp [without time zone]`][psql-time-ref]|[**`LocalDateTime`**][java-ldt-ref], [`LocalTime`][java-lt-ref], [`LocalDate`][java-ld-ref], [`java.util.Date`][java-legacy-date-ref]|
@@ -377,7 +377,8 @@ Support for the following single-dimensional arrays (read and write):
 [psql-xml-ref]: https://www.postgresql.org/docs/11/datatype-xml.html
 [psql-runtime-config]: https://www.postgresql.org/docs/current/runtime-config-client.html
 
-
+[r2dbc-blob-ref]: https://r2dbc.io/spec/0.8.0.RELEASE/api/io/r2dbc/spi/Blob.html
+[r2dbc-clob-ref]: https://r2dbc.io/spec/0.8.0.RELEASE/api/io/r2dbc/spi/Clob.html
 
 [java-bigdecimal-ref]: https://docs.oracle.com/javase/8/docs/api/java/math/BigDecimal.html
 [java-boolean-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/Boolean.html
