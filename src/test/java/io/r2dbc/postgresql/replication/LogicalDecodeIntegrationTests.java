@@ -99,12 +99,12 @@ final class LogicalDecodeIntegrationTests {
 
         ReplicationStream replicationStream = replicationConnection.startReplication(replicationRequest).block(Duration.ofSeconds(10));
 
-        connection.createStatement("INSERT INTO test VALUES('Hello World')").execute().flatMap(PostgresqlResult::getRowsUpdated).as(StepVerifier::create).expectNext(1).verifyComplete();
+        connection.createStatement("INSERT INTO logical_decode_test VALUES('Hello World')").execute().flatMap(PostgresqlResult::getRowsUpdated).as(StepVerifier::create).expectNext(1).verifyComplete();
 
         replicationStream.map(byteBuf -> byteBuf.toString(StandardCharsets.UTF_8))
             .as(StepVerifier::create)
             .expectNext("BEGIN")
-            .expectNext("table public.test: INSERT: first_name[character varying]:'Hello World'")
+            .expectNext("table public.logical_decode_test: INSERT: first_name[character varying]:'Hello World'")
             .expectNext("COMMIT")
             .then(() -> replicationStream.close().subscribe())
             .verifyComplete();
@@ -133,9 +133,9 @@ final class LogicalDecodeIntegrationTests {
     }
 
     private void prepare(PostgresqlConnection connection) {
-        connection.createStatement("DROP TABLE IF EXISTS test").execute().flatMap(PostgresqlResult::getRowsUpdated).as(StepVerifier::create).verifyComplete();
+        connection.createStatement("DROP TABLE IF EXISTS logical_decode_test").execute().flatMap(PostgresqlResult::getRowsUpdated).as(StepVerifier::create).verifyComplete();
 
-        connection.createStatement("CREATE TABLE test (first_name varchar(255))").execute().flatMap(PostgresqlResult::getRowsUpdated).as(StepVerifier::create).verifyComplete();
+        connection.createStatement("CREATE TABLE logical_decode_test (first_name varchar(255))").execute().flatMap(PostgresqlResult::getRowsUpdated).as(StepVerifier::create).verifyComplete();
     }
 
     private ReplicationSlotRequest createSlot(PostgresqlReplicationConnection replicationConnection) {
