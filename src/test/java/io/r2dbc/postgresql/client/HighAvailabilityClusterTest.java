@@ -13,9 +13,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class HighAvailabilityClusterTest {
 
     @RegisterExtension
@@ -184,17 +181,12 @@ public class HighAvailabilityClusterTest {
 
     private PostgresqlConnectionFactory multipleHostsConnectionFactory(TargetServerType targetServerType, PostgreSQLContainer<?>... servers) {
         PostgreSQLContainer<?> firstServer = servers[0];
-        List<MultipleHostsConfiguration.ServerHost> hosts = new ArrayList<>(servers.length);
+        PostgresqlConnectionConfiguration.Builder builder = PostgresqlConnectionConfiguration.builder();
         for (PostgreSQLContainer<?> server : servers) {
-            hosts.add(new MultipleHostsConfiguration.ServerHost(
-                server.getContainerIpAddress(),
-                server.getMappedPort(5432)
-            ));
+            builder.addHost(server.getContainerIpAddress(), server.getMappedPort(5432));
         }
-        PostgresqlConnectionConfiguration configuration = PostgresqlConnectionConfiguration.builder()
-            .multipleHostsConfiguration(new MultipleHostsConfiguration(
-                hosts, 10000, false, targetServerType
-            ))
+        PostgresqlConnectionConfiguration configuration = builder
+            .targetServerType(targetServerType)
             .username(firstServer.getUsername())
             .password(firstServer.getPassword())
             .build();

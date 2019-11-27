@@ -33,6 +33,7 @@ import static io.r2dbc.spi.ConnectionFactoryOptions.DRIVER;
 import static io.r2dbc.spi.ConnectionFactoryOptions.HOST;
 import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
 import static io.r2dbc.spi.ConnectionFactoryOptions.PORT;
+import static io.r2dbc.spi.ConnectionFactoryOptions.PROTOCOL;
 import static io.r2dbc.spi.ConnectionFactoryOptions.SSL;
 import static io.r2dbc.spi.ConnectionFactoryOptions.USER;
 
@@ -57,9 +58,29 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<Boolean> FORCE_BINARY = Option.valueOf("forceBinary");
 
     /**
+     * Load balance hosts.
+     */
+    public static final Option<Boolean> LOAD_BALANCE_HOSTS = Option.valueOf("loadBalanceHosts");
+
+    /**
+     * Host status recheck time im ms.
+     */
+    public static final Option<Integer> HOST_RECHECK_TIME = Option.valueOf("hostRecheckTime");
+
+    /**
+     * Target server type. Allowed values: any, master, secondary, preferSecondary.
+     */
+    public static final Option<TargetServerType> TARGET_SERVER_TYPE = Option.valueOf("targetServerType");
+
+    /**
      * Driver option value.
      */
     public static final String POSTGRESQL_DRIVER = "postgresql";
+
+    /**
+     * Failover driver protocol.
+     */
+    public static final String FAILOVER_PROTOCOL = "failover";
 
     /**
      * Legacy driver option value.
@@ -144,21 +165,57 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         builder.connectTimeout(connectionFactoryOptions.getValue(CONNECT_TIMEOUT));
         builder.database(connectionFactoryOptions.getValue(DATABASE));
 
-        if (connectionFactoryOptions.hasOption(SOCKET)) {
-            tcp = false;
-            builder.socket(connectionFactoryOptions.getRequiredValue(SOCKET));
-        } else {
+        if (FAILOVER_PROTOCOL.equals(connectionFactoryOptions.getValue(PROTOCOL))) {
+            if (connectionFactoryOptions.hasOption(HOST_RECHECK_TIME)) {
+                builder.hostRecheckTime(connectionFactoryOptions.getRequiredValue(HOST_RECHECK_TIME));
+            }
+            if (connectionFactoryOptions.hasOption(LOAD_BALANCE_HOSTS)) {
+                Object loadBalanceHosts = connectionFactoryOptions.getRequiredValue(LOAD_BALANCE_HOSTS);
+                if (loadBalanceHosts instanceof Boolean) {
+                    builder.loadBalanceHosts((Boolean) loadBalanceHosts);
+                } else {
+                    builder.loadBalanceHosts(Boolean.parseBoolean(loadBalanceHosts.toString()));
+                }
+            }
+            if (connectionFactoryOptions.hasOption(TARGET_SERVER_TYPE)) {
+                Object targetServerType = connectionFactoryOptions.getRequiredValue(TARGET_SERVER_TYPE);
+                if (targetServerType instanceof TargetServerType) {
+                    builder.targetServerType((TargetServerType) targetServerType);
+                } else {
+                    builder.targetServerType(TargetServerType.fromValue(targetServerType.toString()));
+                }
+            }
+            String hosts = connectionFactoryOptions.getRequiredValue(HOST);
+            String[] hostsArray = hosts.split(",");
+            for (String host : hostsArray) {
+                String[] hostParts = host.split(":");
+                if (hostParts.length == 1) {
+                    builder.addHost(hostParts[0]);
+                } else {
+                    int port = Integer.parseInt(hostParts[1]);
+                    builder.addHost(hostParts[0], port);
+                }
+            }
             tcp = true;
-            builder.host(connectionFactoryOptions.getRequiredValue(HOST));
+        } else {
+            if (connectionFactoryOptions.hasOption(SOCKET)) {
+                tcp = false;
+                builder.socket(connectionFactoryOptions.getRequiredValue(SOCKET));
+            } else {
+                tcp = true;
+                builder.host(connectionFactoryOptions.getRequiredValue(HOST));
+            }
+            Integer port = connectionFactoryOptions.getValue(PORT);
+            if (port != null) {
+                builder.port(port);
+            }
         }
+
+
         builder.password(connectionFactoryOptions.getValue(PASSWORD));
         builder.schema(connectionFactoryOptions.getValue(SCHEMA));
         builder.username(connectionFactoryOptions.getRequiredValue(USER));
 
-        Integer port = connectionFactoryOptions.getValue(PORT);
-        if (port != null) {
-            builder.port(port);
-        }
 
         Boolean forceBinary = connectionFactoryOptions.getValue(FORCE_BINARY);
 
@@ -242,10 +299,6 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         Assert.requireNonNull(connectionFactoryOptions, "connectionFactoryOptions must not be null");
 
         String driver = connectionFactoryOptions.getValue(DRIVER);
-        if (driver == null || !(driver.equals(POSTGRESQL_DRIVER) || driver.equals(LEGACY_POSTGRESQL_DRIVER))) {
-            return false;
-        }
-
-        return true;
+        return driver != null && (driver.equals(POSTGRESQL_DRIVER) || driver.equals(LEGACY_POSTGRESQL_DRIVER));
     }
 }

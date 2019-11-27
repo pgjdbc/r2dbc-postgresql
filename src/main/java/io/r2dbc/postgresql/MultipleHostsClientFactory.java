@@ -3,6 +3,7 @@ package io.r2dbc.postgresql;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.MultipleHostsConfiguration;
 import io.r2dbc.postgresql.codec.DefaultCodecs;
+import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -31,7 +32,7 @@ class MultipleHostsClientFactory extends ClientFactoryBase {
 
     public MultipleHostsClientFactory(PostgresqlConnectionConfiguration configuration, ClientSupplier clientSupplier) {
         super(configuration, clientSupplier);
-        this.configuration = configuration.getMultipleHostsConfiguration();
+        this.configuration = Assert.requireNonNull(configuration.getMultipleHostsConfiguration(), "MultipleHostsConfiguration must not be null");
         this.addresses = MultipleHostsClientFactory.createSocketAddress(this.configuration);
     }
 
@@ -99,21 +100,29 @@ class MultipleHostsClientFactory extends ClientFactoryBase {
 
     private Flux<SocketAddress> getCandidates(TargetServerType targetServerType) {
         return Flux.create(sink -> {
-            if (this.addresses.size() == 1) {
-                sink.next(this.addresses.get(0));
-                sink.complete();
-                return;
-            }
             long now = System.currentTimeMillis();
             List<SocketAddress> addresses = new ArrayList<>(this.addresses);
-            if (this.configuration.isLoadBalance()) {
+            if (this.configuration.isLoadBalanceHosts()) {
                 Collections.shuffle(addresses);
             }
+            int counter = 0;
             for (SocketAddress address : addresses) {
                 HostSpecStatus currentStatus = this.statusMap.get(address);
                 if (currentStatus == null || now > currentStatus.updated + this.configuration.getHostRecheckTime()) {
                     sink.next(address);
+                    counter++;
                 } else if (targetServerType.allowStatus(currentStatus.hostStatus)) {
+                    sink.next(address);
+                    counter++;
+                }
+            }
+            if (counter == 0) {
+                // if no candidate match the requirement or all of them are in unavailable status try all the hosts
+                addresses = new ArrayList<>(this.addresses);
+                if (this.configuration.isLoadBalanceHosts()) {
+                    Collections.shuffle(addresses);
+                }
+                for (SocketAddress address : addresses) {
                     sink.next(address);
                 }
             }

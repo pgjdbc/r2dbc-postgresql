@@ -71,7 +71,6 @@ public final class PostgresqlConnectionConfiguration {
 
     private final String schema;
 
-
     private final String username;
 
     private final SSLConfig sslConfig;
@@ -221,10 +220,10 @@ public final class PostgresqlConnectionConfiguration {
         private boolean forceBinary = false;
 
         @Nullable
-        private MultipleHostsConfiguration multipleHostsConfiguration;
+        private MultipleHostsConfiguration.Builder multipleHostsConfiguration;
 
         @Nullable
-        private SingleHostConfiguration singleHostConfiguration;
+        private SingleHostConfiguration.Builder singleHostConfiguration;
 
         private Map<String, String> options;
 
@@ -287,13 +286,17 @@ public final class PostgresqlConnectionConfiguration {
          * @return a configured {@link PostgresqlConnectionConfiguration}
          */
         public PostgresqlConnectionConfiguration build() {
-
-            if (this.singleHostConfiguration != null && this.singleHostConfiguration.getHost() == null && this.singleHostConfiguration.getSocket() == null) {
-                throw new IllegalArgumentException("host or socket must not be null");
+            SingleHostConfiguration singleHostConfiguration = this.singleHostConfiguration != null
+                ? this.singleHostConfiguration.build()
+                : null;
+            MultipleHostsConfiguration multipleHostsConfiguration = this.multipleHostsConfiguration != null
+                ? this.multipleHostsConfiguration.build()
+                : null;
+            if (singleHostConfiguration == null && multipleHostsConfiguration == null) {
+                throw new IllegalArgumentException("Either multiple hosts configuration or single host configuration should be provided");
             }
-
-            if (this.singleHostConfiguration != null && this.singleHostConfiguration.getHost() != null && this.singleHostConfiguration.getSocket() != null) {
-                throw new IllegalArgumentException("Connection must be configured for either host/port or socket usage but not both");
+            if (singleHostConfiguration != null && multipleHostsConfiguration != null) {
+                throw new IllegalArgumentException("Either multiple hosts configuration or single host configuration should be provided");
             }
 
             if (this.username == null) {
@@ -301,7 +304,7 @@ public final class PostgresqlConnectionConfiguration {
             }
 
             return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.connectTimeout, this.database, this.extensions, this.forceBinary,
-                this.options, this.password, this.schema, this.username, this.createSslConfig(), this.singleHostConfiguration, this.multipleHostsConfiguration);
+                this.options, this.password, this.schema, this.username, this.createSslConfig(), singleHostConfiguration, multipleHostsConfiguration);
         }
 
         /**
@@ -377,10 +380,9 @@ public final class PostgresqlConnectionConfiguration {
         public Builder host(String host) {
             Assert.requireNonNull(host, "host must not be null");
             if (this.singleHostConfiguration == null) {
-                this.singleHostConfiguration = new SingleHostConfiguration(host, DEFAULT_PORT, null);
-            } else {
-                this.singleHostConfiguration = new SingleHostConfiguration(host, this.singleHostConfiguration.getPort(), this.singleHostConfiguration.getSocket());
+                this.singleHostConfiguration = SingleHostConfiguration.builder();
             }
+            this.singleHostConfiguration.host(host);
             return this;
         }
 
@@ -418,11 +420,6 @@ public final class PostgresqlConnectionConfiguration {
             return this;
         }
 
-        public Builder multipleHostsConfiguration(MultipleHostsConfiguration multipleHostsConfiguration) {
-            this.multipleHostsConfiguration = Assert.requireNonNull(multipleHostsConfiguration, "multipleHostsConfiguration must not be null");
-            return this;
-        }
-
         /**
          * Configure the schema.
          *
@@ -442,10 +439,9 @@ public final class PostgresqlConnectionConfiguration {
          */
         public Builder port(int port) {
             if (this.singleHostConfiguration == null) {
-                this.singleHostConfiguration = new SingleHostConfiguration(null, port, null);
-            } else {
-                this.singleHostConfiguration = new SingleHostConfiguration(this.singleHostConfiguration.getHost(), port, this.singleHostConfiguration.getSocket());
+                this.singleHostConfiguration = SingleHostConfiguration.builder();
             }
+            this.singleHostConfiguration.port(port);
             return this;
         }
 
@@ -550,14 +546,91 @@ public final class PostgresqlConnectionConfiguration {
          */
         public Builder socket(String socket) {
             Assert.requireNonNull(socket, "host must not be null");
-
             if (this.singleHostConfiguration == null) {
-                this.singleHostConfiguration = new SingleHostConfiguration(null, DEFAULT_PORT, socket);
-            } else {
-                this.singleHostConfiguration = new SingleHostConfiguration(this.singleHostConfiguration.getHost(), this.singleHostConfiguration.getPort(), socket);
+                this.singleHostConfiguration = SingleHostConfiguration.builder();
             }
+            this.singleHostConfiguration.socket(socket);
 
             sslMode(SSLMode.DISABLE);
+            return this;
+        }
+
+        /**
+         * Allows opening connections to only servers with required state, the allowed values are any, master, slave, secondary, preferSlave and preferSecondary.
+         * The master/secondary distinction is currently done by observing if the server allows writes.
+         * The value preferSecondary tries to connect to secondary if any are available, otherwise allows falls back to connecting also to master.
+         * Default value is any.
+         *
+         * @param targetServerType target server type
+         * @return this {@link Builder}
+         * @throws IllegalArgumentException if {@code targetServerType} is {@code null}
+         */
+        public Builder targetServerType(TargetServerType targetServerType) {
+            if (this.multipleHostsConfiguration == null) {
+                this.multipleHostsConfiguration = MultipleHostsConfiguration.builder();
+            }
+            this.multipleHostsConfiguration.targetServerType(targetServerType);
+            return this;
+        }
+
+        /**
+         * Controls how long in seconds the knowledge about a host state is cached connection factory. The default value is 10000 milliseconds.
+         *
+         * @param hostRecheckTime host recheck time in milliseconds
+         * @return this {@link Builder}
+         */
+        public Builder hostRecheckTime(int hostRecheckTime) {
+            if (this.multipleHostsConfiguration == null) {
+                this.multipleHostsConfiguration = MultipleHostsConfiguration.builder();
+            }
+            this.multipleHostsConfiguration.hostRecheckTime(hostRecheckTime);
+            return this;
+        }
+
+        /**
+         * In default mode (disabled) hosts are connected in the given order. If enabled hosts are chosen randomly from the set of suitable candidates.
+         *
+         * @param loadBalanceHosts is load balance mode enabled
+         * @return this {@link Builder}
+         */
+        public Builder loadBalanceHosts(boolean loadBalanceHosts) {
+            if (this.multipleHostsConfiguration == null) {
+                this.multipleHostsConfiguration = MultipleHostsConfiguration.builder();
+            }
+            this.multipleHostsConfiguration.loadBalanceHosts(loadBalanceHosts);
+            return this;
+        }
+
+        /**
+         * Add host with default port to hosts list.
+         *
+         * @param host the host
+         * @return this {@link Builder}
+         * @throws IllegalArgumentException if {@code host} is {@code null}
+         */
+        public Builder addHost(String host) {
+            Assert.requireNonNull(host, "host must not be null");
+            if (this.multipleHostsConfiguration == null) {
+                this.multipleHostsConfiguration = MultipleHostsConfiguration.builder();
+            }
+            this.multipleHostsConfiguration.addHost(host);
+            return this;
+        }
+
+        /**
+         * Add host to hosts list.
+         *
+         * @param host the host
+         * @param port the port
+         * @return this {@link Builder}
+         * @throws IllegalArgumentException if {@code host} is {@code null}
+         */
+        public Builder addHost(String host, int port) {
+            Assert.requireNonNull(host, "host must not be null");
+            if (this.multipleHostsConfiguration == null) {
+                this.multipleHostsConfiguration = MultipleHostsConfiguration.builder();
+            }
+            this.multipleHostsConfiguration.addHost(host, port);
             return this;
         }
 

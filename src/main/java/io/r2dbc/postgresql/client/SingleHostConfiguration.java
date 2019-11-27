@@ -1,6 +1,9 @@
 package io.r2dbc.postgresql.client;
 
+import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
+
+import static io.r2dbc.postgresql.PostgresqlConnectionConfiguration.DEFAULT_PORT;
 
 public class SingleHostConfiguration {
 
@@ -57,5 +60,105 @@ public class SingleHostConfiguration {
     public boolean isUseSocket() {
         return getSocket() != null;
     }
+
+    @Override
+    public String toString() {
+        return "SingleHostConfiguration{" +
+            "host='" + this.host + '\'' +
+            ", port=" + this.port +
+            ", socket='" + this.socket + '\'' +
+            '}';
+    }
+
+    /**
+     * Returns a new {@link Builder}.
+     *
+     * @return a new {@link Builder}
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /**
+     * A builder for {@link SingleHostConfiguration} instances.
+     * <p>
+     * <i>This class is not threadsafe</i>
+     */
+    public static class Builder {
+
+        @Nullable
+        private String host;
+
+        private int port = DEFAULT_PORT;
+
+        @Nullable
+        private String socket;
+
+        /**
+         * Configure the host.
+         *
+         * @param host the host
+         * @return this {@link Builder}
+         * @throws IllegalArgumentException if {@code host} is {@code null}
+         */
+        public Builder host(String host) {
+            this.host = Assert.requireNonNull(host, "host must not be null");
+            return this;
+        }
+
+        /**
+         * Configure the port.  Defaults to {@code 5432}.
+         *
+         * @param port the port
+         * @return this {@link Builder}
+         */
+        public Builder port(int port) {
+            this.port = port;
+            return this;
+        }
+
+        /**
+         * Configure the unix domain socket to connect to.
+         *
+         * @param socket the socket path
+         * @return this {@link Builder}
+         * @throws IllegalArgumentException if {@code socket} is {@code null}
+         */
+        public Builder socket(String socket) {
+            this.socket = Assert.requireNonNull(socket, "host must not be null");
+            return this;
+        }
+
+        /**
+         * Returns a configured {@link SingleHostConfiguration}.
+         *
+         * @return a configured {@link SingleHostConfiguration}
+         */
+        public SingleHostConfiguration build() {
+            if (this.host == null && this.socket == null) {
+                throw new IllegalArgumentException("host or socket must not be null");
+            }
+            if (this.host != null && this.socket != null) {
+                throw new IllegalArgumentException("Connection must be configured for either host/port or socket usage but not both");
+            }
+
+            return new SingleHostConfiguration(this.host, this.port, this.socket);
+        }
+
+        @Nullable
+        public String getSocket() {
+            return socket;
+        }
+
+        @Override
+        public String toString() {
+            return "Builder{" +
+                "host='" + this.host + '\'' +
+                ", port=" + this.port +
+                ", socket='" + this.socket + '\'' +
+                '}';
+        }
+    }
+
 
 }

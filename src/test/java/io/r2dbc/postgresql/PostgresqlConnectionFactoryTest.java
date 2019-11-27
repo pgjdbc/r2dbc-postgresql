@@ -49,7 +49,7 @@ final class PostgresqlConnectionFactoryTest {
             .password("test-password")
             .username("test-username")
             .build()))
-            .withMessage("connectionSupplier must not be null");
+            .withMessage("clientFactory must not be null");
     }
 
     @Test
