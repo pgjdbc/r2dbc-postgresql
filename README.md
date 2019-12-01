@@ -14,7 +14,6 @@ This driver provides the following features:
 * Binary data transfer
 * Execution of prepared statements with bindings
 * Execution of batch statements without bindings
-* Binary data transfer
 * Read and write support for all data types except LOB types (e.g. `BLOB`, `CLOB`)
 * Extension points to register `Codec`s to handle additional PostgreSQL data types
 
