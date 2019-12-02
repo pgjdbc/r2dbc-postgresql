@@ -29,7 +29,7 @@
 
     <name>Reactive Relational Database Connectivity - Postgresql</name>
     <description>Reactive Relational Database Connectivity Driver Implementation for Postgresql</description>
-    <url>https://github.com/r2dbc/r2dbc-potsgresql</url>
+    <url>https://github.com/r2dbc/r2dbc-postgresql</url>
 
     <properties>
         <assertj.version>3.14.0</assertj.version>
@@ -61,8 +61,8 @@
     </licenses>
 
     <scm>
-        <connection>scm:git:https://github.com/r2dbc/r2dbc-potsgresql</connection>
-        <url>https://github.com/r2dbc/r2dbc-potsgresql</url>
+        <connection>scm:git:https://github.com/r2dbc/r2dbc-postgresql</connection>
+        <url>https://github.com/r2dbc/r2dbc-postgresql</url>
     </scm>
 
     <developers>
