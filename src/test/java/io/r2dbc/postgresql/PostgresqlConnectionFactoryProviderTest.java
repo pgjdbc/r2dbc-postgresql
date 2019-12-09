@@ -19,6 +19,7 @@ package io.r2dbc.postgresql;
 import io.r2dbc.postgresql.client.SSLConfig;
 import io.r2dbc.postgresql.client.SSLMode;
 import io.r2dbc.spi.ConnectionFactoryOptions;
+import io.r2dbc.spi.Option;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
@@ -158,6 +159,19 @@ final class PostgresqlConnectionFactoryProviderTest {
             .option(PASSWORD, "test-password")
             .option(USER, "test-user")
             .option(FORCE_BINARY, true)
+            .build());
+
+        assertThat(factory.getConfiguration().isForceBinary()).isTrue();
+    }
+
+    @Test
+    void providerShouldConsiderBinaryTransferWhenProvidedAsString() {
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, LEGACY_POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(Option.valueOf("forceBinary"), "true")
             .build());
 
         assertThat(factory.getConfiguration().isForceBinary()).isTrue();
