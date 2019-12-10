@@ -16,7 +16,6 @@
 
 package io.r2dbc.postgresql;
 
-
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.r2dbc.postgresql.client.DefaultHostnameVerifier;
@@ -27,7 +26,6 @@ import io.r2dbc.postgresql.extension.CodecRegistrar;
 import io.r2dbc.postgresql.extension.Extension;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ConnectionFactoryOptions;
-import io.r2dbc.spi.Option;
 import reactor.netty.tcp.SslProvider;
 import reactor.util.annotation.Nullable;
 
@@ -130,33 +128,31 @@ public final class PostgresqlConnectionConfiguration {
         return new Builder();
     }
 
-    private static String repeat(int length, String character) {
-
-        StringBuilder builder = new StringBuilder();
-
-        for (int i = 0; i < length; i++) {
-            builder.append(character);
-        }
-
-        return builder.toString();
+    /**
+     * Returns a new {@link Builder} configured with the given {@link ConnectionFactoryOptions}.
+     *
+     * @return a {@link Builder}
+     */
+    public static Builder builder(ConnectionFactoryOptions connectionFactoryOptions) {
+        return Builder.fromConnectionFactoryOptions(connectionFactoryOptions);
     }
 
     @Override
     public String toString() {
         return "PostgresqlConnectionConfiguration{" +
-            "applicationName='" + this.applicationName + '\'' +
-            ", autodetectExtensions='" + this.autodetectExtensions + '\'' +
-            ", connectTimeout=" + this.connectTimeout +
-            ", database='" + this.database + '\'' +
-            ", extensions=" + this.extensions +
-            ", forceBinary='" + this.forceBinary + '\'' +
-            ", host='" + this.host + '\'' +
-            ", options='" + this.options + '\'' +
-            ", password='" + repeat(this.password != null ? this.password.length() : 0, "*") + '\'' +
-            ", port=" + this.port +
-            ", schema='" + this.schema + '\'' +
-            ", username='" + this.username + '\'' +
-            '}';
+               "applicationName='" + this.applicationName + '\'' +
+               ", autodetectExtensions='" + this.autodetectExtensions + '\'' +
+               ", connectTimeout=" + this.connectTimeout +
+               ", database='" + this.database + '\'' +
+               ", extensions=" + this.extensions +
+               ", forceBinary='" + this.forceBinary + '\'' +
+               ", host='" + this.host + '\'' +
+               ", options='" + this.options + '\'' +
+               ", password='" + obfuscate(this.password != null ? this.password.length() : 0) + '\'' +
+               ", port=" + this.port +
+               ", schema='" + this.schema + '\'' +
+               ", username='" + this.username + '\'' +
+               '}';
     }
 
     String getApplicationName() {
@@ -248,6 +244,17 @@ public final class PostgresqlConnectionConfiguration {
         return this.sslConfig;
     }
 
+    private static String obfuscate(int length) {
+
+        StringBuilder builder = new StringBuilder();
+
+        for (int i = 0; i < length; i++) {
+            builder.append("*");
+        }
+
+        return builder.toString();
+    }
+
     /**
      * A builder for {@link PostgresqlConnectionConfiguration} instances.
      * <p>
@@ -316,28 +323,51 @@ public final class PostgresqlConnectionConfiguration {
          * @return this {@link Builder}
          * @throws IllegalArgumentException if {@code connectionFactoryOptions} is {@code null}
          */
-        Builder fromOptions(ConnectionFactoryOptions connectionFactoryOptions) {
+        private static Builder fromConnectionFactoryOptions(ConnectionFactoryOptions connectionFactoryOptions) {
+
             Assert.requireNonNull(connectionFactoryOptions, "connectionFactoryOptions must not be null");
 
-            setApplicationName(connectionFactoryOptions);
-            setAutoDetections(connectionFactoryOptions);
-            setConnectTimeout(connectionFactoryOptions);
-            setDatabase(connectionFactoryOptions);
-            password(connectionFactoryOptions.getValue(PASSWORD));
-            schema(connectionFactoryOptions.getValue(SCHEMA));
-            username(connectionFactoryOptions.getRequiredValue(USER));
-            setPort(connectionFactoryOptions);
-            setForceBinary(connectionFactoryOptions);
-            setOptions(connectionFactoryOptions);
+            Builder builder = new Builder();
 
-            if (isUsingTcp(connectionFactoryOptions)) {
-                host(connectionFactoryOptions.getRequiredValue(HOST));
-                setupTcp(connectionFactoryOptions);
-            } else {
-                socket(connectionFactoryOptions.getRequiredValue(SOCKET));
+            builder.connectTimeout(connectionFactoryOptions.getValue(CONNECT_TIMEOUT));
+            builder.database(connectionFactoryOptions.getValue(DATABASE));
+            builder.password(connectionFactoryOptions.getValue(PASSWORD));
+            builder.schema(connectionFactoryOptions.getValue(SCHEMA));
+            builder.username(connectionFactoryOptions.getRequiredValue(USER));
+
+            String applicationName = connectionFactoryOptions.getValue(APPLICATION_NAME);
+            if (applicationName != null) {
+                builder.applicationName(applicationName);
             }
 
-            return this;
+            Object autodetectExtensions = connectionFactoryOptions.getValue(AUTODETECT_EXTENSIONS);
+            if (autodetectExtensions != null) {
+                builder.autodetectExtensions(convertToBoolean(autodetectExtensions));
+            }
+
+            Integer port = connectionFactoryOptions.getValue(PORT);
+            if (port != null) {
+                builder.port(port);
+            }
+
+            Object forceBinary = connectionFactoryOptions.getValue(FORCE_BINARY);
+            if (forceBinary != null) {
+                builder.forceBinary(convertToBoolean(forceBinary));
+            }
+
+            Map<String, String> options = connectionFactoryOptions.getValue(OPTIONS);
+            if (options != null) {
+                builder.options(options);
+            }
+
+            if (isUsingTcp(connectionFactoryOptions)) {
+                builder.host(connectionFactoryOptions.getRequiredValue(HOST));
+                setupSsl(builder, connectionFactoryOptions);
+            } else {
+                builder.socket(connectionFactoryOptions.getRequiredValue(SOCKET));
+            }
+
+            return builder;
         }
 
         /**
@@ -558,7 +588,7 @@ public final class PostgresqlConnectionConfiguration {
         /**
          * Configure ssl HostnameVerifier.
          *
-         * @param sslHostnameVerifier {@link javax.net.ssl.HostnameVerifier}
+         * @param sslHostnameVerifier {@link HostnameVerifier}
          * @return this {@link Builder}
          */
         public Builder sslHostnameVerifier(HostnameVerifier sslHostnameVerifier) {
@@ -599,31 +629,6 @@ public final class PostgresqlConnectionConfiguration {
             return this;
         }
 
-        @Override
-        public String toString() {
-            return "Builder{" +
-                "applicationName='" + this.applicationName + '\'' +
-                ", autodetectExtensions='" + this.autodetectExtensions + '\'' +
-                ", connectTimeout='" + this.connectTimeout + '\'' +
-                ", database='" + this.database + '\'' +
-                ", extensions='" + this.extensions + '\'' +
-                ", forceBinary='" + this.forceBinary + '\'' +
-                ", host='" + this.host + '\'' +
-                ", parameters='" + this.options + '\'' +
-                ", password='" + repeat(this.password != null ? this.password.length() : 0, "*") + '\'' +
-                ", port=" + this.port +
-                ", schema='" + this.schema + '\'' +
-                ", username='" + this.username + '\'' +
-                ", socket='" + this.socket + '\'' +
-                ", sslContextBuilderCustomizer='" + this.sslContextBuilderCustomizer + '\'' +
-                ", sslMode='" + this.sslMode + '\'' +
-                ", sslRootCert='" + this.sslRootCert + '\'' +
-                ", sslCert='" + this.sslCert + '\'' +
-                ", sslKey='" + this.sslKey + '\'' +
-                ", sslHostnameVerifier='" + this.sslHostnameVerifier + '\'' +
-                '}';
-        }
-
         /**
          * Configure ssl root cert for server certificate validation.
          *
@@ -645,6 +650,31 @@ public final class PostgresqlConnectionConfiguration {
         public Builder username(String username) {
             this.username = Assert.requireNonNull(username, "username must not be null");
             return this;
+        }
+
+        @Override
+        public String toString() {
+            return "Builder{" +
+                   "applicationName='" + this.applicationName + '\'' +
+                   ", autodetectExtensions='" + this.autodetectExtensions + '\'' +
+                   ", connectTimeout='" + this.connectTimeout + '\'' +
+                   ", database='" + this.database + '\'' +
+                   ", extensions='" + this.extensions + '\'' +
+                   ", forceBinary='" + this.forceBinary + '\'' +
+                   ", host='" + this.host + '\'' +
+                   ", parameters='" + this.options + '\'' +
+                   ", password='" + obfuscate(this.password != null ? this.password.length() : 0) + '\'' +
+                   ", port=" + this.port +
+                   ", schema='" + this.schema + '\'' +
+                   ", username='" + this.username + '\'' +
+                   ", socket='" + this.socket + '\'' +
+                   ", sslContextBuilderCustomizer='" + this.sslContextBuilderCustomizer + '\'' +
+                   ", sslMode='" + this.sslMode + '\'' +
+                   ", sslRootCert='" + this.sslRootCert + '\'' +
+                   ", sslCert='" + this.sslCert + '\'' +
+                   ", sslKey='" + this.sslKey + '\'' +
+                   ", sslHostnameVerifier='" + this.sslHostnameVerifier + '\'' +
+                   '}';
         }
 
         private SSLConfig createSslConfig() {
@@ -671,23 +701,23 @@ public final class PostgresqlConnectionConfiguration {
 
             // Emulate Libpq behavior
             // Determining the default file location
-            String pathsep = System.getProperty("file.separator");
-            String defaultdir;
+            String pathSeparator = System.getProperty("file.separator");
+            String defaultDir;
             if (System.getProperty("os.name").toLowerCase().contains("windows")) { // It is Windows
-                defaultdir = System.getenv("APPDATA") + pathsep + "postgresql" + pathsep;
+                defaultDir = System.getenv("APPDATA") + pathSeparator + "postgresql" + pathSeparator;
             } else {
-                defaultdir = System.getProperty("user.home") + pathsep + ".postgresql" + pathsep;
+                defaultDir = System.getProperty("user.home") + pathSeparator + ".postgresql" + pathSeparator;
             }
 
             if (sslCert == null) {
-                String pathname = defaultdir + "postgresql.crt";
+                String pathname = defaultDir + "postgresql.crt";
                 if (new File(pathname).exists()) {
                     sslCert = pathname;
                 }
             }
 
             if (sslKey == null) {
-                String pathname = defaultdir + "postgresql.pk8";
+                String pathname = defaultDir + "postgresql.pk8";
                 if (new File(pathname).exists()) {
                     sslKey = pathname;
                 }
@@ -698,38 +728,55 @@ public final class PostgresqlConnectionConfiguration {
                 sslContextBuilder.keyManager(new File(sslCert), new File(sslKey), sslPassword);
             }
 
-
             return () -> SslProvider.builder()
                 .sslContext(this.sslContextBuilderCustomizer.apply(sslContextBuilder))
                 .defaultConfiguration(TCP)
                 .build();
         }
 
-        private void setupTcp(ConnectionFactoryOptions connectionFactoryOptions) {
-            enableSsl(connectionFactoryOptions);
-
-            setSslMode(connectionFactoryOptions);
-
-            setRootCert(connectionFactoryOptions);
-
-            setCert(connectionFactoryOptions);
-
-            setKey(connectionFactoryOptions);
-
-            setPassword(connectionFactoryOptions);
-
-            setHostnameVerifier(connectionFactoryOptions);
-
-            setCustomizer(connectionFactoryOptions);
-        }
-
-        private void setCustomizer(ConnectionFactoryOptions connectionFactoryOptions) {
-            if (connectionFactoryOptions.hasOption(SSL_CONTEXT_BUILDER_CUSTOMIZER)) {
-                sslContextBuilderCustomizer(connectionFactoryOptions.getRequiredValue(SSL_CONTEXT_BUILDER_CUSTOMIZER));
+        private static void setupSsl(Builder builder, ConnectionFactoryOptions connectionFactoryOptions) {
+            Boolean ssl = connectionFactoryOptions.getValue(SSL);
+            if (ssl != null && ssl) {
+                builder.enableSsl();
             }
+
+            Object sslMode = connectionFactoryOptions.getValue(SSL_MODE);
+            if (sslMode != null) {
+                if (sslMode instanceof String) {
+                    builder.sslMode(SSLMode.fromValue(sslMode.toString()));
+                } else {
+                    builder.sslMode((SSLMode) sslMode);
+                }
+            }
+
+            String sslRootCert = connectionFactoryOptions.getValue(SSL_ROOT_CERT);
+            if (sslRootCert != null) {
+                builder.sslRootCert(sslRootCert);
+            }
+
+            String sslCert = connectionFactoryOptions.getValue(SSL_CERT);
+            if (sslCert != null) {
+                builder.sslCert(sslCert);
+            }
+
+            String sslKey = connectionFactoryOptions.getValue(SSL_KEY);
+            if (sslKey != null) {
+                builder.sslKey(sslKey);
+            }
+
+            String sslPassword = connectionFactoryOptions.getValue(SSL_PASSWORD);
+            if (sslPassword != null) {
+                builder.sslPassword(sslPassword);
+            }
+
+            if (connectionFactoryOptions.hasOption(SSL_CONTEXT_BUILDER_CUSTOMIZER)) {
+                builder.sslContextBuilderCustomizer(connectionFactoryOptions.getRequiredValue(SSL_CONTEXT_BUILDER_CUSTOMIZER));
+            }
+
+            setSslHostnameVerifier(builder, connectionFactoryOptions);
         }
 
-        private void setHostnameVerifier(ConnectionFactoryOptions connectionFactoryOptions) {
+        private static void setSslHostnameVerifier(Builder builder, ConnectionFactoryOptions connectionFactoryOptions) {
             Object sslHostnameVerifier = connectionFactoryOptions.getValue(SSL_HOSTNAME_VERIFIER);
             if (sslHostnameVerifier != null) {
 
@@ -739,107 +786,17 @@ public final class PostgresqlConnectionConfiguration {
                         Class<?> verifierClass = Class.forName((String) sslHostnameVerifier);
                         Object verifier = verifierClass.getConstructor().newInstance();
 
-                        sslHostnameVerifier((HostnameVerifier) verifier);
+                        builder.sslHostnameVerifier((HostnameVerifier) verifier);
                     } catch (ReflectiveOperationException e) {
                         throw new IllegalStateException("Cannot instantiate " + sslHostnameVerifier, e);
                     }
                 } else {
-                    sslHostnameVerifier((HostnameVerifier) sslHostnameVerifier);
+                    builder.sslHostnameVerifier((HostnameVerifier) sslHostnameVerifier);
                 }
             }
         }
 
-        private void setPassword(ConnectionFactoryOptions connectionFactoryOptions) {
-            String sslPassword = connectionFactoryOptions.getValue(SSL_PASSWORD);
-            if (sslPassword != null) {
-                sslPassword(sslPassword);
-            }
-        }
-
-        private void setKey(ConnectionFactoryOptions connectionFactoryOptions) {
-            String sslKey = connectionFactoryOptions.getValue(SSL_KEY);
-            if (sslKey != null) {
-                sslKey(sslKey);
-            }
-        }
-
-        private void setCert(ConnectionFactoryOptions connectionFactoryOptions) {
-            String sslCert = connectionFactoryOptions.getValue(SSL_CERT);
-            if (sslCert != null) {
-                sslCert(sslCert);
-            }
-        }
-
-        private void setRootCert(ConnectionFactoryOptions connectionFactoryOptions) {
-            String sslRootCert = connectionFactoryOptions.getValue(SSL_ROOT_CERT);
-            if (sslRootCert != null) {
-                sslRootCert(sslRootCert);
-            }
-        }
-
-        private void setSslMode(ConnectionFactoryOptions connectionFactoryOptions) {
-            Object sslMode = connectionFactoryOptions.getValue(SSL_MODE);
-            if (sslMode != null) {
-                if (sslMode instanceof String) {
-                    sslMode(SSLMode.fromValue(sslMode.toString()));
-                } else {
-                    sslMode((SSLMode) sslMode);
-                }
-            }
-        }
-
-        private void enableSsl(ConnectionFactoryOptions connectionFactoryOptions) {
-            Boolean ssl = connectionFactoryOptions.getValue(SSL);
-            if (ssl != null && ssl) {
-                enableSsl();
-            }
-        }
-
-        private void setOptions(ConnectionFactoryOptions connectionFactoryOptions) {
-            Map<String, String> options = connectionFactoryOptions.getValue(OPTIONS);
-            if (options != null) {
-                options(options);
-            }
-        }
-
-        private void setForceBinary(ConnectionFactoryOptions connectionFactoryOptions) {
-            Object forceBinary = connectionFactoryOptions.getValue(FORCE_BINARY);
-
-            if (forceBinary != null) {
-                forceBinary(convertToBoolean(forceBinary));
-            }
-        }
-
-        private void setPort(ConnectionFactoryOptions connectionFactoryOptions) {
-            Integer port = connectionFactoryOptions.getValue(PORT);
-            if (port != null) {
-                port(port);
-            }
-        }
-
-        private void setDatabase(ConnectionFactoryOptions connectionFactoryOptions) {
-            database(connectionFactoryOptions.getValue(DATABASE));
-        }
-
-        private void setConnectTimeout(ConnectionFactoryOptions connectionFactoryOptions) {
-            connectTimeout(connectionFactoryOptions.getValue(CONNECT_TIMEOUT));
-        }
-
-        private void setApplicationName(ConnectionFactoryOptions connectionFactoryOptions) {
-            String applicationName = connectionFactoryOptions.getValue(APPLICATION_NAME);
-            if (applicationName != null) {
-                this.applicationName(applicationName);
-            }
-        }
-
-        private void setAutoDetections(ConnectionFactoryOptions connectionFactoryOptions) {
-            Object autodetectExtensions = connectionFactoryOptions.getValue(AUTODETECT_EXTENSIONS);
-            if (autodetectExtensions != null) {
-                this.autodetectExtensions(convertToBoolean(autodetectExtensions));
-            }
-        }
-
-        private boolean isUsingTcp(ConnectionFactoryOptions connectionFactoryOptions) {
+        private static boolean isUsingTcp(ConnectionFactoryOptions connectionFactoryOptions) {
             return !connectionFactoryOptions.hasOption(SOCKET);
         }
 

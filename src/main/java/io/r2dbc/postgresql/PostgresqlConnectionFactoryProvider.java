@@ -112,8 +112,8 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     @Override
     public PostgresqlConnectionFactory create(ConnectionFactoryOptions connectionFactoryOptions) {
 
-        PostgresqlConnectionConfiguration configuration = PostgresqlConnectionConfiguration.builder()
-            .fromOptions(connectionFactoryOptions)
+        PostgresqlConnectionConfiguration configuration = PostgresqlConnectionConfiguration
+            .builder(connectionFactoryOptions)
             .build();
 
         return new PostgresqlConnectionFactory(configuration);
