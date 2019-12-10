@@ -121,7 +121,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         return new PostgresqlConnectionFactory(createConfiguration(connectionFactoryOptions));
     }
 
-    static PostgresqlConnectionConfiguration createConfiguration(ConnectionFactoryOptions connectionFactoryOptions) {
+    private static PostgresqlConnectionConfiguration createConfiguration(ConnectionFactoryOptions connectionFactoryOptions) {
         Assert.requireNonNull(connectionFactoryOptions, "connectionFactoryOptions must not be null");
 
         boolean tcp;
@@ -134,11 +134,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
 
         Object autodetectExtensions = connectionFactoryOptions.getValue(AUTODETECT_EXTENSIONS);
         if (autodetectExtensions != null) {
-            if (autodetectExtensions instanceof Boolean) {
-                builder.autodetectExtensions((Boolean) autodetectExtensions);
-            } else {
-                builder.autodetectExtensions(Boolean.parseBoolean(autodetectExtensions.toString()));
-            }
+            builder.autodetectExtensions(convertToBoolean(autodetectExtensions));
         }
 
         builder.connectTimeout(connectionFactoryOptions.getValue(CONNECT_TIMEOUT));
@@ -160,10 +156,10 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
             builder.port(port);
         }
 
-        Boolean forceBinary = connectionFactoryOptions.getValue(FORCE_BINARY);
+        Object forceBinary = connectionFactoryOptions.getValue(FORCE_BINARY);
 
         if (forceBinary != null) {
-            builder.forceBinary(forceBinary);
+            builder.forceBinary(convertToBoolean(forceBinary));
         }
 
         Map<String, String> options = connectionFactoryOptions.getValue(OPTIONS);
@@ -242,10 +238,10 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         Assert.requireNonNull(connectionFactoryOptions, "connectionFactoryOptions must not be null");
 
         String driver = connectionFactoryOptions.getValue(DRIVER);
-        if (driver == null || !(driver.equals(POSTGRESQL_DRIVER) || driver.equals(LEGACY_POSTGRESQL_DRIVER))) {
-            return false;
-        }
+        return driver != null && (driver.equals(POSTGRESQL_DRIVER) || driver.equals(LEGACY_POSTGRESQL_DRIVER));
+    }
 
-        return true;
+    private static boolean convertToBoolean(Object value) {
+        return value instanceof Boolean ? (boolean) value : Boolean.parseBoolean(value.toString());
     }
 }
