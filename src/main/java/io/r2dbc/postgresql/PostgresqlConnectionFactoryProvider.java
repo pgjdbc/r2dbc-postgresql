@@ -241,10 +241,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         return driver != null && (driver.equals(POSTGRESQL_DRIVER) || driver.equals(LEGACY_POSTGRESQL_DRIVER));
     }
 
-    private static boolean convertToBoolean(Object object) {
-        if (object instanceof Boolean) {
-            return (Boolean) object;
-        }
-        return Boolean.parseBoolean(object.toString());
+    private static boolean convertToBoolean(Object value) {
+        return value instanceof Boolean ? (boolean) value : Boolean.parseBoolean(value.toString());
     }
 }
