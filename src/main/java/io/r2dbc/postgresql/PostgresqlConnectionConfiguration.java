@@ -16,7 +16,6 @@
 
 package io.r2dbc.postgresql;
 
-
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.r2dbc.postgresql.client.DefaultHostnameVerifier;
@@ -108,16 +107,6 @@ public final class PostgresqlConnectionConfiguration {
         return new Builder();
     }
 
-    private static String repeat(int length, String character) {
-
-        StringBuilder builder = new StringBuilder();
-
-        for (int i = 0; i < length; i++) {
-            builder.append(character);
-        }
-
-        return builder.toString();
-    }
 
     @Override
     public String toString() {
@@ -130,7 +119,7 @@ public final class PostgresqlConnectionConfiguration {
             ", forceBinary='" + this.forceBinary + '\'' +
             ", host='" + this.host + '\'' +
             ", options='" + this.options + '\'' +
-            ", password='" + repeat(this.password != null ? this.password.length() : 0, "*") + '\'' +
+            ", password='" + obfuscate(this.password != null ? this.password.length() : 0) + '\'' +
             ", port=" + this.port +
             ", schema='" + this.schema + '\'' +
             ", username='" + this.username + '\'' +
@@ -224,6 +213,17 @@ public final class PostgresqlConnectionConfiguration {
 
     SSLConfig getSslConfig() {
         return this.sslConfig;
+    }
+
+    private static String obfuscate(int length) {
+
+        StringBuilder builder = new StringBuilder();
+
+        for (int i = 0; i < length; i++) {
+            builder.append("*");
+        }
+
+        return builder.toString();
     }
 
     /**
@@ -505,7 +505,7 @@ public final class PostgresqlConnectionConfiguration {
         /**
          * Configure ssl HostnameVerifier.
          *
-         * @param sslHostnameVerifier {@link javax.net.ssl.HostnameVerifier}
+         * @param sslHostnameVerifier {@link HostnameVerifier}
          * @return this {@link Builder}
          */
         public Builder sslHostnameVerifier(HostnameVerifier sslHostnameVerifier) {
@@ -546,31 +546,6 @@ public final class PostgresqlConnectionConfiguration {
             return this;
         }
 
-        @Override
-        public String toString() {
-            return "Builder{" +
-                "applicationName='" + this.applicationName + '\'' +
-                ", autodetectExtensions='" + this.autodetectExtensions + '\'' +
-                ", connectTimeout='" + this.connectTimeout + '\'' +
-                ", database='" + this.database + '\'' +
-                ", extensions='" + this.extensions + '\'' +
-                ", forceBinary='" + this.forceBinary + '\'' +
-                ", host='" + this.host + '\'' +
-                ", parameters='" + this.options + '\'' +
-                ", password='" + repeat(this.password != null ? this.password.length() : 0, "*") + '\'' +
-                ", port=" + this.port +
-                ", schema='" + this.schema + '\'' +
-                ", username='" + this.username + '\'' +
-                ", socket='" + this.socket + '\'' +
-                ", sslContextBuilderCustomizer='" + this.sslContextBuilderCustomizer + '\'' +
-                ", sslMode='" + this.sslMode + '\'' +
-                ", sslRootCert='" + this.sslRootCert + '\'' +
-                ", sslCert='" + this.sslCert + '\'' +
-                ", sslKey='" + this.sslKey + '\'' +
-                ", sslHostnameVerifier='" + this.sslHostnameVerifier + '\'' +
-                '}';
-        }
-
         /**
          * Configure ssl root cert for server certificate validation.
          *
@@ -592,6 +567,31 @@ public final class PostgresqlConnectionConfiguration {
         public Builder username(String username) {
             this.username = Assert.requireNonNull(username, "username must not be null");
             return this;
+        }
+
+        @Override
+        public String toString() {
+            return "Builder{" +
+                "applicationName='" + this.applicationName + '\'' +
+                ", autodetectExtensions='" + this.autodetectExtensions + '\'' +
+                ", connectTimeout='" + this.connectTimeout + '\'' +
+                ", database='" + this.database + '\'' +
+                ", extensions='" + this.extensions + '\'' +
+                ", forceBinary='" + this.forceBinary + '\'' +
+                ", host='" + this.host + '\'' +
+                ", parameters='" + this.options + '\'' +
+                ", password='" + obfuscate(this.password != null ? this.password.length() : 0) + '\'' +
+                ", port=" + this.port +
+                ", schema='" + this.schema + '\'' +
+                ", username='" + this.username + '\'' +
+                ", socket='" + this.socket + '\'' +
+                ", sslContextBuilderCustomizer='" + this.sslContextBuilderCustomizer + '\'' +
+                ", sslMode='" + this.sslMode + '\'' +
+                ", sslRootCert='" + this.sslRootCert + '\'' +
+                ", sslCert='" + this.sslCert + '\'' +
+                ", sslKey='" + this.sslKey + '\'' +
+                ", sslHostnameVerifier='" + this.sslHostnameVerifier + '\'' +
+                '}';
         }
 
         private SSLConfig createSslConfig() {
@@ -618,23 +618,23 @@ public final class PostgresqlConnectionConfiguration {
 
             // Emulate Libpq behavior
             // Determining the default file location
-            String pathsep = System.getProperty("file.separator");
-            String defaultdir;
+            String pathSeparator = System.getProperty("file.separator");
+            String defaultDir;
             if (System.getProperty("os.name").toLowerCase().contains("windows")) { // It is Windows
-                defaultdir = System.getenv("APPDATA") + pathsep + "postgresql" + pathsep;
+                defaultDir = System.getenv("APPDATA") + pathSeparator + "postgresql" + pathSeparator;
             } else {
-                defaultdir = System.getProperty("user.home") + pathsep + ".postgresql" + pathsep;
+                defaultDir = System.getProperty("user.home") + pathSeparator + ".postgresql" + pathSeparator;
             }
 
             if (sslCert == null) {
-                String pathname = defaultdir + "postgresql.crt";
+                String pathname = defaultDir + "postgresql.crt";
                 if (new File(pathname).exists()) {
                     sslCert = pathname;
                 }
             }
 
             if (sslKey == null) {
-                String pathname = defaultdir + "postgresql.pk8";
+                String pathname = defaultDir + "postgresql.pk8";
                 if (new File(pathname).exists()) {
                     sslKey = pathname;
                 }
@@ -644,7 +644,6 @@ public final class PostgresqlConnectionConfiguration {
                 String sslPassword = this.sslPassword == null ? null : this.sslPassword.toString();
                 sslContextBuilder.keyManager(new File(sslCert), new File(sslKey), sslPassword);
             }
-
 
             return () -> SslProvider.builder()
                 .sslContext(this.sslContextBuilderCustomizer.apply(sslContextBuilder))
