@@ -17,14 +17,18 @@
 package io.r2dbc.postgresql.client;
 
 import io.r2dbc.postgresql.message.backend.BindComplete;
+import io.r2dbc.postgresql.message.backend.CloseComplete;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
+import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.NoData;
 import io.r2dbc.postgresql.message.backend.ParseComplete;
+import io.r2dbc.postgresql.message.backend.ReadyForQuery;
 import io.r2dbc.postgresql.message.frontend.Bind;
 import io.r2dbc.postgresql.message.frontend.Close;
 import io.r2dbc.postgresql.message.frontend.Describe;
 import io.r2dbc.postgresql.message.frontend.Execute;
 import io.r2dbc.postgresql.message.frontend.ExecutionType;
+import io.r2dbc.postgresql.message.frontend.Flush;
 import io.r2dbc.postgresql.message.frontend.Parse;
 import io.r2dbc.postgresql.message.frontend.Sync;
 import org.junit.jupiter.api.Test;
@@ -103,14 +107,29 @@ final class ExtendedQueryMessageFlowTest {
     @Test
     void parse() {
         Client client = TestClient.builder()
-            .expectRequest(new Parse("test-name", Collections.singletonList(100), "test-query"), new Describe("test-name", ExecutionType.STATEMENT), Sync.INSTANCE)
+            .expectRequest(new Parse("test-name", Collections.singletonList(100), "test-query"), Flush.INSTANCE)
             .thenRespond(ParseComplete.INSTANCE)
             .build();
 
         ExtendedQueryMessageFlow
             .parse(client, "test-name", "test-query", Collections.singletonList(100))
             .as(StepVerifier::create)
-            .expectNext(ParseComplete.INSTANCE)
+            .verifyComplete();
+    }
+
+    @Test
+    void parseWithError() {
+        Client client = TestClient.builder()
+            .expectRequest(new Parse("test-name", Collections.singletonList(100), "test-query"), Flush.INSTANCE)
+            .thenRespond(new ErrorResponse(Collections.emptyList()))
+            .expectRequest(Sync.INSTANCE)
+            .thenRespond(new ReadyForQuery(ReadyForQuery.TransactionStatus.IDLE))
+            .build();
+
+        ExtendedQueryMessageFlow
+            .parse(client, "test-name", "test-query", Collections.singletonList(100))
+            .as(StepVerifier::create)
+            .expectNext(new ErrorResponse(Collections.emptyList()))
             .verifyComplete();
     }
 
@@ -136,6 +155,32 @@ final class ExtendedQueryMessageFlowTest {
     void parseNoTypes() {
         assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryMessageFlow.parse(NO_OP, "test-name", "test-query", null))
             .withMessage("types must not be null");
+    }
+
+    @Test
+    void closeStatement() {
+        Client client = TestClient.builder()
+            .expectRequest(new Close("test-name", ExecutionType.STATEMENT), Sync.INSTANCE)
+            .thenRespond(CloseComplete.INSTANCE)
+            .build();
+
+        ExtendedQueryMessageFlow
+            .closeStatement(client, "test-name")
+            .as(StepVerifier::create)
+            .expectNext(CloseComplete.INSTANCE)
+            .verifyComplete();
+    }
+
+    @Test
+    void closeStatementNoClient() {
+        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryMessageFlow.closeStatement(null, "test-name"))
+            .withMessage("client must not be null");
+    }
+
+    @Test
+    void closeStatementNoName() {
+        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryMessageFlow.closeStatement(NO_OP, null))
+            .withMessage("name must not be null");
     }
 
 }

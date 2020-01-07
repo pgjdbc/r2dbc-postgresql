@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static io.r2dbc.postgresql.client.TransactionStatus.IDLE;
 
@@ -112,6 +113,17 @@ public final class TestClient implements Client {
     }
 
     @Override
+    public Flux<BackendMessage> exchange(Predicate<BackendMessage> takeUntil, Publisher<FrontendMessage> requests) {
+        return this.responseProcessor
+            .doOnSubscribe(s ->
+                Flux.from(requests)
+                    .subscribe(this.requests::next, this.requests::error))
+            .next()
+            .flatMapMany(Function.identity())
+            .takeWhile(takeUntil.negate());
+    }
+
+    @Override
     public ByteBufAllocator getByteBufAllocator() {
         return TestByteBufAllocator.TEST;
     }
@@ -139,6 +151,11 @@ public final class TestClient implements Client {
     @Override
     public boolean isConnected() {
         return this.connected;
+    }
+
+    @Override
+    public void send(FrontendMessage message) {
+        this.requests.next(message);
     }
 
     @Override

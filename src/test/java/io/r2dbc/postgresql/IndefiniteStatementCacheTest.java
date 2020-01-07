@@ -22,10 +22,8 @@ import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.client.TestClient;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.ParseComplete;
-import io.r2dbc.postgresql.message.frontend.Describe;
-import io.r2dbc.postgresql.message.frontend.ExecutionType;
+import io.r2dbc.postgresql.message.frontend.Flush;
 import io.r2dbc.postgresql.message.frontend.Parse;
-import io.r2dbc.postgresql.message.frontend.Sync;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
@@ -50,11 +48,11 @@ final class IndefiniteStatementCacheTest {
     void getName() {
         // @formatter:off
         Client client = TestClient.builder()
-            .expectRequest(new Parse("S_0", Collections.singletonList(100), "test-query"), new Describe("S_0", ExecutionType.STATEMENT), Sync.INSTANCE)
+            .expectRequest(new Parse("S_0", Collections.singletonList(100), "test-query"), Flush.INSTANCE)
                 .thenRespond(ParseComplete.INSTANCE)
-            .expectRequest(new Parse("S_1", Collections.singletonList(200), "test-query"), new Describe("S_1", ExecutionType.STATEMENT), Sync.INSTANCE)
+            .expectRequest(new Parse("S_1", Collections.singletonList(200), "test-query"), Flush.INSTANCE)
                 .thenRespond(ParseComplete.INSTANCE)
-            .expectRequest(new Parse("S_2", Collections.singletonList(200), "test-query-2"), new Describe("S_2", ExecutionType.STATEMENT), Sync.INSTANCE)
+            .expectRequest(new Parse("S_2", Collections.singletonList(200), "test-query-2"), Flush.INSTANCE)
                 .thenRespond(ParseComplete.INSTANCE)
             .build();
         // @formatter:on
@@ -86,7 +84,7 @@ final class IndefiniteStatementCacheTest {
     void getNameErrorResponse() {
         // @formatter:off
         Client client = TestClient.builder()
-            .expectRequest(new Parse("S_0", Collections.singletonList(100), "test-query"), new Describe("S_0", ExecutionType.STATEMENT), Sync.INSTANCE)
+            .expectRequest(new Parse("S_0", Collections.singletonList(100), "test-query"), Flush.INSTANCE)
                 .thenRespond(new ErrorResponse(Collections.emptyList()))
             .build();
         // @formatter:on
