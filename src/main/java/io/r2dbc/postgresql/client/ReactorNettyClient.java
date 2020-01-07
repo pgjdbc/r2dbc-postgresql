@@ -193,8 +193,7 @@ public final class ReactorNettyClient implements Client {
             if (this.isClosed.compareAndSet(false, true)) {
 
                 if (!connected || this.processId == null) {
-                    this.connection.dispose();
-                    return this.connection.onDispose();
+                    return closeConnection();
                 }
 
                 return Flux.just(Terminate.INSTANCE)
@@ -207,6 +206,11 @@ public final class ReactorNettyClient implements Client {
 
             return Mono.empty();
         });
+    }
+
+    private Mono<? extends Void> closeConnection() {
+        this.connection.dispose();
+        return this.connection.onDispose();
     }
 
     @Override

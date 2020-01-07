@@ -25,7 +25,6 @@ import io.r2dbc.spi.Option;
 
 import javax.net.ssl.HostnameVerifier;
 import java.util.LinkedHashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -126,6 +125,12 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<String> SSL_ROOT_CERT = Option.valueOf("sslRootCert");
 
     /**
+     * Determine the number of queries that are cached in each connection.
+     * The default is -1, meaning there's no limit. The value of 0 disables the cache.
+     */
+    public static final Option<Integer> PREPARED_STATEMENT_CACHE_QUERIES = Option.valueOf("preparedStatementCacheQueries");
+
+    /**
      * Connection options which are applied once after the connection has been created.
      */
     public static final Option<Map<String, String>> OPTIONS = Option.valueOf("options");
@@ -186,6 +191,11 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
 
         if (forceBinary != null) {
             builder.forceBinary(convertToBoolean(forceBinary));
+        }
+
+        Object preparedStatementCacheQueries = connectionFactoryOptions.getValue(PREPARED_STATEMENT_CACHE_QUERIES);
+        if (preparedStatementCacheQueries != null) {
+            builder.preparedStatementCacheQueries(convertToInt(preparedStatementCacheQueries));
         }
 
         Object options = connectionFactoryOptions.getValue(Option.valueOf("options"));
@@ -274,7 +284,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     private static int convertToInt(Object value) {
         return value instanceof Integer ? (int) value : Integer.parseInt(value.toString());
     }
-    
+
     @SuppressWarnings("unchecked")
     private static Map<String, String> convertToMap(Object options) {
         if (options instanceof Map) {

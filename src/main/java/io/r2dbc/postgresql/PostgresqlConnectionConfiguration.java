@@ -83,12 +83,14 @@ public final class PostgresqlConnectionConfiguration {
 
     private final SSLConfig sslConfig;
 
+    private final int preparedStatementCacheQueries;
+
     private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions,
                                               @Nullable Duration connectTimeout, @Nullable String database, List<Extension> extensions,
                                               ToIntFunction<String> fetchSize, boolean forceBinary,
                                               @Nullable String host,
                                               @Nullable Map<String, String> options, @Nullable CharSequence password, int port, @Nullable String schema, @Nullable String socket, String username,
-                                              SSLConfig sslConfig) {
+                                              SSLConfig sslConfig, int preparedStatementCacheQueries) {
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
         this.autodetectExtensions = autodetectExtensions;
         this.connectTimeout = connectTimeout;
@@ -108,6 +110,7 @@ public final class PostgresqlConnectionConfiguration {
         this.socket = socket;
         this.username = Assert.requireNonNull(username, "username must not be null");
         this.sslConfig = sslConfig;
+        this.preparedStatementCacheQueries = preparedStatementCacheQueries;
     }
 
     /**
@@ -239,6 +242,21 @@ public final class PostgresqlConnectionConfiguration {
         return this.sslConfig;
     }
 
+    int getPreparedStatementCacheQueries() {
+        return this.preparedStatementCacheQueries;
+    }
+
+    private static String obfuscate(int length) {
+
+        StringBuilder builder = new StringBuilder();
+
+        for (int i = 0; i < length; i++) {
+            builder.append("*");
+        }
+
+        return builder.toString();
+    }
+
     /**
      * A builder for {@link PostgresqlConnectionConfiguration} instances.
      * <p>
@@ -299,6 +317,8 @@ public final class PostgresqlConnectionConfiguration {
         @Nullable
         private String username;
 
+        private int preparedStatementCacheQueries = -1;
+
         private Builder() {
         }
 
@@ -346,7 +366,7 @@ public final class PostgresqlConnectionConfiguration {
 
             return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.connectTimeout, this.database, this.extensions, this.fetchSize, this.forceBinary,
                 this.host,
-                this.options, this.password, this.port, this.schema, this.socket, this.username, this.createSslConfig());
+                this.options, this.password, this.port, this.schema, this.socket, this.username, this.createSslConfig(), this.preparedStatementCacheQueries);
         }
 
         /**
@@ -589,6 +609,18 @@ public final class PostgresqlConnectionConfiguration {
             return this;
         }
 
+        /**
+         * Configure the preparedStatementCacheQueries.
+         *
+         * @param preparedStatementCacheQueries the preparedStatementCacheQueries
+         * @return this {@link Builder}
+         * @throws IllegalArgumentException if {@code username} is {@code null}
+         */
+        public Builder preparedStatementCacheQueries(int preparedStatementCacheQueries) {
+            this.preparedStatementCacheQueries = preparedStatementCacheQueries;
+            return this;
+        }
+
         @Override
         public String toString() {
             return "Builder{" +
@@ -612,6 +644,7 @@ public final class PostgresqlConnectionConfiguration {
                 ", sslCert='" + this.sslCert + '\'' +
                 ", sslKey='" + this.sslKey + '\'' +
                 ", sslHostnameVerifier='" + this.sslHostnameVerifier + '\'' +
+                ", preparedStatementCacheQueries='" + this.preparedStatementCacheQueries + '\'' +
                 '}';
         }
 
