@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,11 +36,11 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
-final class IndefiniteStatementCacheTest {
+class DisabledStatementCacheTest {
 
     @Test
     void constructorNoClient() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new IndefiniteStatementCache(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new DisabledStatementCache(null))
             .withMessage("client must not be null");
     }
 
@@ -48,35 +48,37 @@ final class IndefiniteStatementCacheTest {
     void getName() {
         // @formatter:off
         Client client = TestClient.builder()
-            .expectRequest(new Parse("S_0", Collections.singletonList(100), "test-query"), Flush.INSTANCE)
-                .thenRespond(ParseComplete.INSTANCE)
-            .expectRequest(new Parse("S_1", Collections.singletonList(200), "test-query"), Flush.INSTANCE)
-                .thenRespond(ParseComplete.INSTANCE)
-            .expectRequest(new Parse("S_2", Collections.singletonList(200), "test-query-2"), Flush.INSTANCE)
-                .thenRespond(ParseComplete.INSTANCE)
+            .expectRequest(new Parse("", Collections.singletonList(100), "test-query"),  Flush.INSTANCE)
+            .thenRespond(ParseComplete.INSTANCE)
+            .expectRequest(new Parse("", Collections.singletonList(100), "test-query"),  Flush.INSTANCE)
+            .thenRespond(ParseComplete.INSTANCE)
+            .expectRequest(new Parse("", Collections.singletonList(200), "test-query"),  Flush.INSTANCE)
+            .thenRespond(ParseComplete.INSTANCE)
+            .expectRequest(new Parse("", Collections.singletonList(200), "test-query-2"), Flush.INSTANCE)
+            .thenRespond(ParseComplete.INSTANCE)
             .build();
         // @formatter:on
 
-        IndefiniteStatementCache statementCache = new IndefiniteStatementCache(client);
+        DisabledStatementCache statementCache = new DisabledStatementCache(client);
 
         statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(100)))), "test-query")
             .as(StepVerifier::create)
-            .expectNext("S_0")
+            .expectNext("")
             .verifyComplete();
 
         statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200)))), "test-query")
             .as(StepVerifier::create)
-            .expectNext("S_0")
+            .expectNext("")
             .verifyComplete();
 
         statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 200, Flux.just(TEST.buffer(2).writeShort(300)))), "test-query")
             .as(StepVerifier::create)
-            .expectNext("S_1")
+            .expectNext("")
             .verifyComplete();
 
         statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 200, Flux.just(TEST.buffer(4).writeShort(300)))), "test-query-2")
             .as(StepVerifier::create)
-            .expectNext("S_2")
+            .expectNext("")
             .verifyComplete();
     }
 
@@ -84,12 +86,12 @@ final class IndefiniteStatementCacheTest {
     void getNameErrorResponse() {
         // @formatter:off
         Client client = TestClient.builder()
-            .expectRequest(new Parse("S_0", Collections.singletonList(100), "test-query"), Flush.INSTANCE)
-                .thenRespond(new ErrorResponse(Collections.emptyList()))
+            .expectRequest(new Parse("", Collections.singletonList(100), "test-query"), Flush.INSTANCE)
+            .thenRespond(new ErrorResponse(Collections.emptyList()))
             .build();
         // @formatter:on
 
-        IndefiniteStatementCache statementCache = new IndefiniteStatementCache(client);
+        DisabledStatementCache statementCache = new DisabledStatementCache(client);
 
         statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200)))), "test-query")
             .as(StepVerifier::create)
@@ -98,13 +100,13 @@ final class IndefiniteStatementCacheTest {
 
     @Test
     void getNameNoBinding() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new IndefiniteStatementCache(NO_OP).getName(null, "test-query"))
+        assertThatIllegalArgumentException().isThrownBy(() -> new DisabledStatementCache(NO_OP).getName(null, "test-query"))
             .withMessage("binding must not be null");
     }
 
     @Test
     void getNameNoSql() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new IndefiniteStatementCache(NO_OP).getName(new Binding(0), null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new DisabledStatementCache(NO_OP).getName(new Binding(0), null))
             .withMessage("sql must not be null");
     }
 

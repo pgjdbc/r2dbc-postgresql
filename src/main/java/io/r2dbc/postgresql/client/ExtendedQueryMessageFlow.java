@@ -19,12 +19,14 @@ package io.r2dbc.postgresql.client;
 import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
-import io.r2dbc.postgresql.message.backend.NoData;
-import io.r2dbc.postgresql.message.backend.RowDescription;
+import io.r2dbc.postgresql.message.backend.CloseComplete;
+import io.r2dbc.postgresql.message.backend.ParseComplete;
 import io.r2dbc.postgresql.message.frontend.Bind;
 import io.r2dbc.postgresql.message.frontend.Close;
 import io.r2dbc.postgresql.message.frontend.Describe;
 import io.r2dbc.postgresql.message.frontend.Execute;
+import io.r2dbc.postgresql.message.frontend.ExecutionType;
+import io.r2dbc.postgresql.message.frontend.Flush;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.message.frontend.Parse;
 import io.r2dbc.postgresql.message.frontend.Sync;
@@ -36,13 +38,10 @@ import reactor.core.publisher.Mono;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import static io.r2dbc.postgresql.message.frontend.Execute.NO_LIMIT;
 import static io.r2dbc.postgresql.message.frontend.ExecutionType.PORTAL;
-import static io.r2dbc.postgresql.message.frontend.ExecutionType.STATEMENT;
-import static io.r2dbc.postgresql.util.PredicateUtils.or;
 
 /**
  * A utility class that encapsulates the <a href="https://www.postgresql.org/docs/current/static/protocol-flow.html#PROTOCOL-FLOW-EXT-QUERY">Extended query</a> message flow.
@@ -53,8 +52,6 @@ public final class ExtendedQueryMessageFlow {
      * The pattern that identifies a parameter symbol.
      */
     public static final Pattern PARAMETER_SYMBOL = Pattern.compile("\\$([\\d]+)", Pattern.DOTALL);
-
-    private static final Predicate<BackendMessage> TAKE_UNTIL = or(RowDescription.class::isInstance, NoData.class::isInstance);
 
     private ExtendedQueryMessageFlow() {
     }
@@ -98,8 +95,23 @@ public final class ExtendedQueryMessageFlow {
         Assert.requireNonNull(query, "query must not be null");
         Assert.requireNonNull(types, "types must not be null");
 
-        return client.exchange(Flux.just(new Parse(name, types, query), new Describe(name, STATEMENT), Sync.INSTANCE))
-            .takeUntil(TAKE_UNTIL);
+        return client.exchange(ParseComplete.class::isInstance, Flux.just(new Parse(name, types, query), Flush.INSTANCE));
+    }
+
+    /**
+     * Execute the close portion of the <a href="https://www.postgresql.org/docs/current/static/protocol-flow.html#PROTOCOL-FLOW-EXT-QUERY">Extended query</a> message flow.
+     *
+     * @param client the {@link Client} to exchange messages with
+     * @param name   the name of the statement to close
+     * @return the messages received in response to this exchange
+     * @throws IllegalArgumentException if {@code client}, {@code name}, {@code query}, or {@code types} is {@code null}
+     */
+    public static Flux<BackendMessage> closeStatement(Client client, String name) {
+        Assert.requireNonNull(client, "client must not be null");
+        Assert.requireNonNull(name, "name must not be null");
+
+        return client.exchange(Flux.just(new Close(name, ExecutionType.STATEMENT), Sync.INSTANCE))
+            .takeUntil(CloseComplete.class::isInstance);
     }
 
     private static Collection<Format> resultFormat(boolean forceBinary) {

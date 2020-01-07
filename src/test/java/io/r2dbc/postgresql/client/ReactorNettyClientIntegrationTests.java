@@ -39,6 +39,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.util.ReflectionUtils;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
@@ -146,7 +148,7 @@ final class ReactorNettyClientIntegrationTests {
             future.get(5, TimeUnit.SECONDS);
             fail("Expected PostgresConnectionClosedException");
         } catch (ExecutionException e) {
-            assertThat(e).hasCauseInstanceOf(ReactorNettyClient.PostgresConnectionClosedException.class).hasMessageContaining("Connection closed");
+            assertThat(e).hasCauseInstanceOf(ReactorNettyClient.PostgresConnectionClosedException.class);
         }
     }
 
@@ -331,6 +333,41 @@ final class ReactorNettyClientIntegrationTests {
             return true;
         }
     }
+
+    @Nested
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    final class StatementCacheSizeTests {
+
+        @ParameterizedTest
+        @ValueSource(ints = {0, 2, -1})
+        void multiplePreparedStatementsTest(int statementCacheSize) {
+            PostgresqlConnectionFactory connectionFactory = this.createConnectionFactory(statementCacheSize);
+
+            connectionFactory.create().flatMapMany(connection -> {
+                Flux<Integer> firstQuery = connection.createStatement("SELECT 1 WHERE $1 = 1").bind(0, 1).execute().flatMap(r -> r.map((row, rowMetadata) -> row.get(0, Integer.class)));
+                Flux<Integer> secondQuery = connection.createStatement("SELECT 2 WHERE $1 = 2").bind(0, 2).execute().flatMap(r -> r.map((row, rowMetadata) -> row.get(0, Integer.class)));
+                Flux<Integer> thirdQuery = connection.createStatement("SELECT 3 WHERE $1 = 3").bind(0, 3).execute().flatMap(r -> r.map((row, rowMetadata) -> row.get(0, Integer.class)));
+
+                return Flux.concat(firstQuery, secondQuery, thirdQuery, connection.close());
+            })
+                .as(StepVerifier::create)
+                .expectNext(1, 2, 3)
+                .verifyComplete();
+        }
+
+        private PostgresqlConnectionFactory createConnectionFactory(int statementCacheSize) {
+            return new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
+                .host(SERVER.getHost())
+                .port(SERVER.getPort())
+                .username(SERVER.getUsername())
+                .password(SERVER.getPassword())
+                .database(SERVER.getDatabase())
+                .preparedStatementCacheQueries(statementCacheSize)
+                .applicationName(ReactorNettyClientIntegrationTests.class.getName())
+                .build());
+        }
+    }
+
 
     @Nested
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)

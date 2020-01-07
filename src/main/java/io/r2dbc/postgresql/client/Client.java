@@ -28,6 +28,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * An abstraction that wraps the networking part of exchanging methods.
@@ -57,7 +58,18 @@ public interface Client {
      * @return a {@link Flux} of incoming messages that ends with the end of the frame (i.e. reception of a {@link ReadyForQuery} message.
      * @throws IllegalArgumentException if {@code requests} is {@code null}
      */
-    Flux<BackendMessage> exchange(Publisher<FrontendMessage> requests);
+    default Flux<BackendMessage> exchange(Publisher<FrontendMessage> requests) {
+        return this.exchange(it -> it.getClass() == ReadyForQuery.class, requests);
+    }
+
+    /**
+     * Perform an exchange of messages.
+     *
+     * @param requests the publisher of outbound messages
+     * @return a {@link Flux} of incoming messages that ends with the end of the frame (i.e. reception of a {@link ReadyForQuery} message.
+     * @throws IllegalArgumentException if {@code requests} is {@code null}
+     */
+    Flux<BackendMessage> exchange(Predicate<BackendMessage> takeUntil, Publisher<FrontendMessage> requests);
 
     /**
      * Returns the {@link ByteBufAllocator}.

@@ -30,6 +30,7 @@ import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.FORCE_BINA
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.LEGACY_POSTGRESQL_DRIVER;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.OPTIONS;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.POSTGRESQL_DRIVER;
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.PREPARED_STATEMENT_CACHE_QUERIES;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SOCKET;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_CONTEXT_BUILDER_CUSTOMIZER;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_MODE;
@@ -175,6 +176,32 @@ final class PostgresqlConnectionFactoryProviderTest {
             .build());
 
         assertThat(factory.getConfiguration().isForceBinary()).isTrue();
+    }
+
+    @Test
+    void providerShouldConsiderPreparedStatementCacheQueries() {
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, LEGACY_POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(PREPARED_STATEMENT_CACHE_QUERIES, -1)
+            .build());
+
+        assertThat(factory.getConfiguration().getPreparedStatementCacheQueries()).isEqualTo(-1);
+    }
+
+    @Test
+    void providerShouldConsiderPreparedStatementCacheQueriesWhenProvidedAsString() {
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, LEGACY_POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(Option.valueOf("preparedStatementCacheQueries"), "-1")
+            .build());
+
+        assertThat(factory.getConfiguration().getPreparedStatementCacheQueries()).isEqualTo(-1);
     }
 
     @Test

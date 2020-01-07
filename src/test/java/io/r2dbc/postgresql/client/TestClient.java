@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static io.r2dbc.postgresql.client.TransactionStatus.IDLE;
 
@@ -103,6 +104,16 @@ public final class TestClient implements Client {
     public Flux<BackendMessage> exchange(Publisher<FrontendMessage> requests) {
         Assert.requireNonNull(requests, "requests must not be null");
 
+        return this.responseProcessor
+            .doOnSubscribe(s ->
+                Flux.from(requests)
+                    .subscribe(this.requests::next, this.requests::error))
+            .next()
+            .flatMapMany(Function.identity());
+    }
+
+    @Override
+    public Flux<BackendMessage> exchange(Predicate<BackendMessage> takeUntil, Publisher<FrontendMessage> requests) {
         return this.responseProcessor
             .doOnSubscribe(s ->
                 Flux.from(requests)

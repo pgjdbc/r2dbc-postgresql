@@ -169,8 +169,10 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
                     isolationLevelMono = getIsolationLevel(client, codecs);
                 }
 
+                StatementCache statementCache = StatementCache.fromPreparedStatementCacheQueries(client, this.configuration.getPreparedStatementCacheQueries());
+
                 return isolationLevelMono
-                    .map(it -> new PostgresqlConnection(client, codecs, DefaultPortalNameSupplier.INSTANCE, new IndefiniteStatementCache(client), it, this.configuration.isForceBinary()))
+                    .map(it -> new PostgresqlConnection(client, codecs, DefaultPortalNameSupplier.INSTANCE, statementCache, it, this.configuration.isForceBinary()))
                     .delayUntil(connection -> {
                         return prepareConnection(connection, client.getByteBufAllocator(), codecs);
                     })
