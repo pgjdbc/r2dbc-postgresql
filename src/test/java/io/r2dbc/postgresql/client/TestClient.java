@@ -119,7 +119,8 @@ public final class TestClient implements Client {
                 Flux.from(requests)
                     .subscribe(this.requests::next, this.requests::error))
             .next()
-            .flatMapMany(Function.identity());
+            .flatMapMany(Function.identity())
+            .takeWhile(takeUntil.negate());
     }
 
     @Override
@@ -150,6 +151,11 @@ public final class TestClient implements Client {
     @Override
     public boolean isConnected() {
         return this.connected;
+    }
+
+    @Override
+    public void send(FrontendMessage message) {
+        this.requests.next(message);
     }
 
     @Override

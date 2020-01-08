@@ -209,6 +209,13 @@ public final class ReactorNettyClient implements Client {
             });
     }
 
+    @Override
+    public void send(FrontendMessage message) {
+        Assert.requireNonNull(message, "requests must not be null");
+
+        this.requests.next(message);
+    }
+
     private Mono<Void> resumeError(Throwable throwable) {
 
         handleConnectionError(throwable);

@@ -20,7 +20,9 @@ import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.CloseComplete;
+import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.ParseComplete;
+import io.r2dbc.postgresql.message.backend.ReadyForQuery;
 import io.r2dbc.postgresql.message.frontend.Bind;
 import io.r2dbc.postgresql.message.frontend.Close;
 import io.r2dbc.postgresql.message.frontend.Describe;
@@ -95,7 +97,20 @@ public final class ExtendedQueryMessageFlow {
         Assert.requireNonNull(query, "query must not be null");
         Assert.requireNonNull(types, "types must not be null");
 
-        return client.exchange(ParseComplete.class::isInstance, Flux.just(new Parse(name, types, query), Flush.INSTANCE));
+        /*
+         ParseComplete will be received if parse was successful
+         ReadyForQuery will be received as a response to Sync, which was send in case of error in parsing
+         */
+        return client.exchange(message -> message instanceof ParseComplete || message instanceof ReadyForQuery, Flux.just(new Parse(name, types, query), Flush.INSTANCE))
+            .doOnNext(message -> {
+                if (message instanceof ErrorResponse) {
+                    /*
+                    When an error is detected while processing any extended-query message, the backend issues ErrorResponse, then reads and discards messages until a Sync is reached.
+                    So we have to provide Sync message to continue.
+                    */
+                    client.send(Sync.INSTANCE);
+                }
+            });
     }
 
     /**

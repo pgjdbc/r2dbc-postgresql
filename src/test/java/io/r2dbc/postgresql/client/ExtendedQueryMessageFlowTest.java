@@ -19,8 +19,10 @@ package io.r2dbc.postgresql.client;
 import io.r2dbc.postgresql.message.backend.BindComplete;
 import io.r2dbc.postgresql.message.backend.CloseComplete;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
+import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.NoData;
 import io.r2dbc.postgresql.message.backend.ParseComplete;
+import io.r2dbc.postgresql.message.backend.ReadyForQuery;
 import io.r2dbc.postgresql.message.frontend.Bind;
 import io.r2dbc.postgresql.message.frontend.Close;
 import io.r2dbc.postgresql.message.frontend.Describe;
@@ -112,7 +114,22 @@ final class ExtendedQueryMessageFlowTest {
         ExtendedQueryMessageFlow
             .parse(client, "test-name", "test-query", Collections.singletonList(100))
             .as(StepVerifier::create)
-            .expectNext(ParseComplete.INSTANCE)
+            .verifyComplete();
+    }
+
+    @Test
+    void parseWithError() {
+        Client client = TestClient.builder()
+            .expectRequest(new Parse("test-name", Collections.singletonList(100), "test-query"), Flush.INSTANCE)
+            .thenRespond(new ErrorResponse(Collections.emptyList()))
+            .expectRequest(Sync.INSTANCE)
+            .thenRespond(new ReadyForQuery(ReadyForQuery.TransactionStatus.IDLE))
+            .build();
+
+        ExtendedQueryMessageFlow
+            .parse(client, "test-name", "test-query", Collections.singletonList(100))
+            .as(StepVerifier::create)
+            .expectNext(new ErrorResponse(Collections.emptyList()))
             .verifyComplete();
     }
 

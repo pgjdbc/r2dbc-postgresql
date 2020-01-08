@@ -72,6 +72,14 @@ public interface Client {
     Flux<BackendMessage> exchange(Predicate<BackendMessage> takeUntil, Publisher<FrontendMessage> requests);
 
     /**
+     * Send one message without waiting for response.
+     *
+     * @param message outbound message
+     * @throws IllegalArgumentException if {@code message} is {@code null}
+     */
+    void send(FrontendMessage message);
+
+    /**
      * Returns the {@link ByteBufAllocator}.
      *
      * @return the {@link ByteBufAllocator}
