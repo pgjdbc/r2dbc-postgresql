@@ -24,6 +24,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.testcontainers.containers.JdbcDatabaseContainer;
+import org.testcontainers.containers.Network;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.MountableFile;
 import reactor.util.annotation.Nullable;
@@ -48,6 +49,7 @@ import static org.testcontainers.utility.MountableFile.forHostPath;
 public final class PostgresqlServerExtension implements BeforeAllCallback, AfterAllCallback {
 
     private static PostgreSQLContainer<?> containerInstance = null;
+    private static Network containerNetwork = null;
 
     private final Supplier<PostgreSQLContainer<?>> container = () -> {
 
@@ -55,6 +57,7 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
             return PostgresqlServerExtension.containerInstance;
         }
 
+        PostgresqlServerExtension.containerNetwork = Network.newNetwork();
         return PostgresqlServerExtension.containerInstance = container();
     };
 
@@ -183,6 +186,9 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
         return this.postgres.getPassword();
     }
 
+    public DatabaseContainer getPostgres() {
+        return postgres;
+    }
 
     private <T extends PostgreSQLContainer<T>> T container() {
         T container = new PostgreSQLContainer<T>("postgres:latest")
@@ -193,7 +199,9 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
             .withCopyFileToContainer(getHostPath("setup.sh", 0755), "/var/setup.sh")
             .withCopyFileToContainer(getHostPath("test-db-init-script.sql", 0755), "/docker-entrypoint-initdb.d/test-db-init-script.sql")
             .withReuse(true)
-            .withCommand("/var/setup.sh");
+            .withNetworkAliases("r2dbc-postgres")
+            .withCommand("/var/setup.sh")
+            .withNetwork(PostgresqlServerExtension.containerNetwork);
 
         return container;
     }
@@ -223,6 +231,9 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
 
         String getHost();
 
+        @Nullable
+        Network getNetwork();
+
         int getPort();
 
         String getDatabase();
@@ -230,6 +241,8 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
         String getUsername();
 
         String getPassword();
+
+        String getNetworkAlias();
     }
 
     /**
@@ -244,6 +257,12 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
         @Override
         public String getHost() {
             return "localhost";
+        }
+
+        @Override
+        @Nullable
+        public Network getNetwork() {
+            return null;
         }
 
         @Override
@@ -264,6 +283,11 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
         @Override
         public String getPassword() {
             return "postgres";
+        }
+
+        @Override
+        public String getNetworkAlias() {
+            return this.getHost();
         }
 
     }
@@ -287,6 +311,11 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
         }
 
         @Override
+        public Network getNetwork() {
+            return this.container.getNetwork();
+        }
+
+        @Override
         public int getPort() {
             return this.container.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT);
         }
@@ -304,6 +333,11 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
         @Override
         public String getPassword() {
             return this.container.getPassword();
+        }
+
+        @Override
+        public String getNetworkAlias() {
+            return "r2dbc-postgres";
         }
     }
 }

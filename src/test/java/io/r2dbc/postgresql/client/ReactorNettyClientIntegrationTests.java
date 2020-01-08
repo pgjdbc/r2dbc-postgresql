@@ -21,7 +21,9 @@ import io.netty.channel.kqueue.KQueue;
 import io.netty.util.ReferenceCountUtil;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
+import io.r2dbc.postgresql.api.ErrorDetails;
 import io.r2dbc.postgresql.api.PostgresqlConnection;
+import io.r2dbc.postgresql.api.PostgresqlException;
 import io.r2dbc.postgresql.authentication.PasswordAuthenticationHandler;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
@@ -30,7 +32,9 @@ import io.r2dbc.postgresql.message.backend.NotificationResponse;
 import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.message.frontend.Query;
+import io.r2dbc.postgresql.util.PgBouncer;
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
+import io.r2dbc.spi.R2dbcBadGrammarException;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import io.r2dbc.spi.R2dbcPermissionDeniedException;
 import org.junit.jupiter.api.AfterEach;
@@ -336,29 +340,77 @@ final class ReactorNettyClientIntegrationTests {
 
     @Nested
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-    final class StatementCacheSizeTests {
+    final class PgBouncerTests {
 
         @ParameterizedTest
-        @ValueSource(ints = {0, 2, -1})
-        void multiplePreparedStatementsTest(int statementCacheSize) {
-            PostgresqlConnectionFactory connectionFactory = this.createConnectionFactory(statementCacheSize);
+        @ValueSource(strings = {"transaction", "statement"})
+        void disabledCacheWorksWithTransactionAndStatementModes(String poolMode) {
+            try (PgBouncer pgBouncer = new PgBouncer(SERVER, poolMode)) {
+                PostgresqlConnectionFactory connectionFactory = this.createConnectionFactory(pgBouncer, 0);
 
-            connectionFactory.create().flatMapMany(connection -> {
-                Flux<Integer> firstQuery = connection.createStatement("SELECT 1 WHERE $1 = 1").bind(0, 1).execute().flatMap(r -> r.map((row, rowMetadata) -> row.get(0, Integer.class)));
-                Flux<Integer> secondQuery = connection.createStatement("SELECT 2 WHERE $1 = 2").bind(0, 2).execute().flatMap(r -> r.map((row, rowMetadata) -> row.get(0, Integer.class)));
-                Flux<Integer> thirdQuery = connection.createStatement("SELECT 3 WHERE $1 = 3").bind(0, 3).execute().flatMap(r -> r.map((row, rowMetadata) -> row.get(0, Integer.class)));
+                connectionFactory.create().flatMapMany(connection -> {
+                    Flux<Integer> q1 = connection.createStatement("SELECT 1 WHERE $1 = 1").bind(0, 1).execute().flatMap(r -> r.map((row, rowMetadata) -> row.get(0, Integer.class)));
+                    Flux<Integer> q2 = connection.createStatement("SELECT 2 WHERE $1 = 2").bind(0, 2).execute().flatMap(r -> r.map((row, rowMetadata) -> row.get(0, Integer.class)));
+                    Flux<Integer> q3 = connection.createStatement("SELECT 3 WHERE $1 = 3").bind(0, 3).execute().flatMap(r -> r.map((row, rowMetadata) -> row.get(0, Integer.class)));
 
-                return Flux.concat(firstQuery, secondQuery, thirdQuery, connection.close());
-            })
-                .as(StepVerifier::create)
-                .expectNext(1, 2, 3)
-                .verifyComplete();
+                    return Flux.concat(q1, q1, q2, q2, q3, q3, connection.close());
+                })
+                    .as(StepVerifier::create)
+                    .expectNext(1, 1, 2, 2, 3, 3)
+                    .verifyComplete();
+            }
         }
 
-        private PostgresqlConnectionFactory createConnectionFactory(int statementCacheSize) {
+        @ParameterizedTest
+        @ValueSource(ints = {-1, 0, 2})
+        void sessionModeWorksWithAllCaches(int statementCacheSize) {
+            try (PgBouncer pgBouncer = new PgBouncer(SERVER, "session")) {
+                PostgresqlConnectionFactory connectionFactory = this.createConnectionFactory(pgBouncer, statementCacheSize);
+
+                connectionFactory.create().flatMapMany(connection -> {
+                    Flux<Integer> q1 = connection.createStatement("SELECT 1 WHERE $1 = 1").bind(0, 1).execute().flatMap(r -> r.map((row, rowMetadata) -> row.get(0, Integer.class)));
+                    Flux<Integer> q2 = connection.createStatement("SELECT 2 WHERE $1 = 2").bind(0, 2).execute().flatMap(r -> r.map((row, rowMetadata) -> row.get(0, Integer.class)));
+                    Flux<Integer> q3 = connection.createStatement("SELECT 3 WHERE $1 = 3").bind(0, 3).execute().flatMap(r -> r.map((row, rowMetadata) -> row.get(0, Integer.class)));
+
+                    return Flux.concat(q1, q1, q2, q2, q3, q3, connection.close());
+                })
+                    .as(StepVerifier::create)
+                    .expectNext(1, 1, 2, 2, 3, 3)
+                    .verifyComplete();
+            }
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"transaction", "statement"})
+        void statementCacheDoesntWorkWithTransactionAndStatementModes(String poolMode) {
+            try (PgBouncer pgBouncer = new PgBouncer(SERVER, poolMode)) {
+                PostgresqlConnectionFactory connectionFactory = this.createConnectionFactory(pgBouncer, -1);
+
+                connectionFactory.create().flatMapMany(connection -> {
+                    Flux<Integer> q1 = connection.createStatement("SELECT 1 WHERE $1 = 1").bind(0, 1).execute().flatMap(r -> r.map((row, rowMetadata) -> row.get(0, Integer.class)));
+
+                    return Flux.concat(q1, q1, connection.close());
+                })
+                    .as(StepVerifier::create)
+                    .expectNext(1)
+                    .verifyErrorMatches(e -> {
+                        if (!(e instanceof R2dbcBadGrammarException)) {
+                            return false;
+                        }
+                        if (!(e instanceof PostgresqlException)) {
+                            return false;
+                        }
+                        PostgresqlException pgException = (PostgresqlException) e;
+                        ErrorDetails errorDetails = pgException.getErrorDetails();
+                        return errorDetails.getCode().equals("26000") && errorDetails.getMessage().equals("prepared statement \"S_0\" does not exist");
+                    });
+            }
+        }
+
+        private PostgresqlConnectionFactory createConnectionFactory(PgBouncer pgBouncer, int statementCacheSize) {
             return new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
-                .host(SERVER.getHost())
-                .port(SERVER.getPort())
+                .host(pgBouncer.getHost())
+                .port(pgBouncer.getPort())
                 .username(SERVER.getUsername())
                 .password(SERVER.getPassword())
                 .database(SERVER.getDatabase())
