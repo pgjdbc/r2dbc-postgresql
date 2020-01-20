@@ -46,6 +46,7 @@ import io.r2dbc.postgresql.message.frontend.Terminate;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
 import reactor.core.Disposable;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.EmitterProcessor;
@@ -179,15 +180,15 @@ public final class ReactorNettyClient implements Client {
     }
 
     @Override
-    public Disposable addNotificationListener(Consumer<NotificationResponse> consumer) {
-        return this.notificationProcessor.subscribe(consumer);
-    }
-
-    @Override
     public Mono<Void> close() {
         return Mono.defer(() -> {
 
+            if (!this.notificationProcessor.isTerminated()) {
+                this.notificationProcessor.onComplete();
+            }
+
             drainError(EXPECTED);
+
             if (this.isClosed.compareAndSet(false, true)) {
 
                 if (!isConnected() || this.processId == null) {
@@ -391,6 +392,16 @@ public final class ReactorNettyClient implements Client {
     }
 
     @Override
+    public Disposable addNotificationListener(Consumer<NotificationResponse> consumer) {
+        return this.notificationProcessor.subscribe(consumer);
+    }
+
+    @Override
+    public Disposable addNotificationListener(Subscriber<NotificationResponse> consumer) {
+        return this.notificationProcessor.subscribe(consumer::onNext, consumer::onError, consumer::onComplete, consumer::onSubscribe);
+    }
+
+    @Override
     public ByteBufAllocator getByteBufAllocator() {
         return this.byteBufAllocator;
     }
@@ -456,6 +467,10 @@ public final class ReactorNettyClient implements Client {
 
         while ((receiver = this.conversations.poll()) != null) {
             receiver.sink.error(supplier.get());
+        }
+
+        if (!this.notificationProcessor.isTerminated()) {
+            this.notificationProcessor.onError(supplier.get());
         }
     }
 

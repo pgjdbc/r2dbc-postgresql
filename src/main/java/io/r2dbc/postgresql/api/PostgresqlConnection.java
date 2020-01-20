@@ -18,7 +18,9 @@ package io.r2dbc.postgresql.api;
 
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.IsolationLevel;
+import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import io.r2dbc.spi.ValidationDepth;
+import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -64,8 +66,9 @@ public interface PostgresqlConnection extends Connection {
     PostgresqlStatement createStatement(String sql);
 
     /**
-     * Return a {@link Flux} of {@link Notification} received from {@code LISTEN} registrations.
-     * The stream is a hot stream producing messages as they are received.
+     * Return a {@link Flux} of {@link Notification} received from {@code LISTEN} registrations. The stream is a hot stream producing messages as they are received. Notifications received by this
+     * connection are published as they are received. When the client gets {@link #close() closed}, the subscription {@link Subscriber#onComplete() completes normally}. Otherwise (transport
+     * connection disconnected unintentionally) with an {@link R2dbcNonTransientResourceException error}.
      *
      * @return a hot {@link Flux} of {@link Notification Notifications}.
      */
