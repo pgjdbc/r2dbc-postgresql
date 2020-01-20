@@ -68,7 +68,7 @@ final class IndefiniteStatementCache implements StatementCache {
 
         Mono<String> mono = typedMap.get(binding.getParameterTypes());
         if (mono == null) {
-            mono = this.parse(sql, binding.getParameterTypes());
+            mono = parse(sql, binding.getParameterTypes());
             typedMap.put(binding.getParameterTypes(), mono);
         }
 

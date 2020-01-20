@@ -212,10 +212,10 @@ final class PostgresqlConnectionFactoryProviderTest {
             .option(HOST, "test-host")
             .option(PASSWORD, "test-password")
             .option(USER, "test-user")
-            .option(PREPARED_STATEMENT_CACHE_QUERIES, -1)
+            .option(PREPARED_STATEMENT_CACHE_QUERIES, -2)
             .build());
 
-        assertThat(factory.getConfiguration().getPreparedStatementCacheQueries()).isEqualTo(-1);
+        assertThat(factory.getConfiguration().getPreparedStatementCacheQueries()).isEqualTo(-2);
     }
 
     @Test
@@ -225,10 +225,10 @@ final class PostgresqlConnectionFactoryProviderTest {
             .option(HOST, "test-host")
             .option(PASSWORD, "test-password")
             .option(USER, "test-user")
-            .option(Option.valueOf("preparedStatementCacheQueries"), "-1")
+            .option(Option.valueOf("preparedStatementCacheQueries"), "5")
             .build());
 
-        assertThat(factory.getConfiguration().getPreparedStatementCacheQueries()).isEqualTo(-1);
+        assertThat(factory.getConfiguration().getPreparedStatementCacheQueries()).isEqualTo(5);
     }
 
     @Test

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 the original author or authors.
+ * Copyright 2019-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,21 +38,22 @@ import java.util.Collections;
 import static io.r2dbc.postgresql.client.TestClient.NO_OP;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
-class LimitedStatementCacheTest {
+final class BoundedStatementCacheTest {
 
     @Test
     void constructorInvalidLimit() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new LimitedStatementCache(NO_OP, -1))
+        assertThatIllegalArgumentException().isThrownBy(() -> new BoundedStatementCache(NO_OP, -1))
             .withMessage("statement cache limit must be greater than zero");
-        assertThatIllegalArgumentException().isThrownBy(() -> new LimitedStatementCache(NO_OP, 0))
+        assertThatIllegalArgumentException().isThrownBy(() -> new BoundedStatementCache(NO_OP, 0))
             .withMessage("statement cache limit must be greater than zero");
     }
 
     @Test
     void constructorNoClient() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new LimitedStatementCache(null, 2))
+        assertThatIllegalArgumentException().isThrownBy(() -> new BoundedStatementCache(null, 2))
             .withMessage("client must not be null");
     }
 
@@ -60,9 +61,9 @@ class LimitedStatementCacheTest {
     void getName() {
         // @formatter:off
         Client client = TestClient.builder()
-            .expectRequest(new Parse("S_0", new int[]{100}, "test-query"),  Flush.INSTANCE)
+            .expectRequest(new Parse("S_0", new int[]{100}, "test-query-0"),  Flush.INSTANCE)
             .thenRespond(ParseComplete.INSTANCE)
-            .expectRequest(new Parse("S_1", new int[]{200}, "test-query"), Flush.INSTANCE)
+            .expectRequest(new Parse("S_1", new int[]{200}, "test-query-1"), Flush.INSTANCE)
             .thenRespond(ParseComplete.INSTANCE)
             .expectRequest(new Close("S_0", ExecutionType.STATEMENT), Sync.INSTANCE)
             .thenRespond(CloseComplete.INSTANCE)
@@ -70,24 +71,24 @@ class LimitedStatementCacheTest {
             .thenRespond(ParseComplete.INSTANCE)
             .expectRequest(new Close("S_2", ExecutionType.STATEMENT), Sync.INSTANCE)
             .thenRespond(CloseComplete.INSTANCE)
-            .expectRequest(new Parse("S_0", new int[]{100}, "test-query"),  Flush.INSTANCE)
+            .expectRequest(new Parse("S_3", new int[]{100}, "test-query-0"),  Flush.INSTANCE)
             .thenRespond(ParseComplete.INSTANCE)
             .build();
         // @formatter:on
 
-        LimitedStatementCache statementCache = new LimitedStatementCache(client, 2);
+        BoundedStatementCache statementCache = new BoundedStatementCache(client, 2);
 
-        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(100)))), "test-query")
+        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(100)))), "test-query-0")
             .as(StepVerifier::create)
             .expectNext("S_0")
             .verifyComplete();
 
-        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200)))), "test-query")
+        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200)))), "test-query-0")
             .as(StepVerifier::create)
             .expectNext("S_0")
             .verifyComplete();
 
-        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 200, Flux.just(TEST.buffer(2).writeShort(300)))), "test-query")
+        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 200, Flux.just(TEST.buffer(2).writeShort(300)))), "test-query-1")
             .as(StepVerifier::create)
             .expectNext("S_1")
             .verifyComplete();
@@ -97,20 +98,22 @@ class LimitedStatementCacheTest {
             .expectNext("S_2")
             .verifyComplete();
 
-        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 200, Flux.just(TEST.buffer(2).writeShort(300)))), "test-query")
+        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 200, Flux.just(TEST.buffer(2).writeShort(300)))), "test-query-1")
             .as(StepVerifier::create)
             .expectNext("S_1")
             .verifyComplete();
 
-        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(100)))), "test-query")
+        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(100)))), "test-query-0")
             .as(StepVerifier::create)
-            .expectNext("S_0")
+            .expectNext("S_3")
             .verifyComplete();
 
-        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(100)))), "test-query")
+        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(100)))), "test-query-0")
             .as(StepVerifier::create)
-            .expectNext("S_0")
+            .expectNext("S_3")
             .verifyComplete();
+
+        assertThat(statementCache.getCachedStatementNames()).hasSize(2).containsOnly("S_1", "S_3");
     }
 
     @Test
@@ -122,7 +125,7 @@ class LimitedStatementCacheTest {
             .build();
         // @formatter:on
 
-        LimitedStatementCache statementCache = new LimitedStatementCache(client, 2);
+        BoundedStatementCache statementCache = new BoundedStatementCache(client, 2);
 
         statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200)))), "test-query")
             .as(StepVerifier::create)
@@ -131,13 +134,13 @@ class LimitedStatementCacheTest {
 
     @Test
     void getNameNoBinding() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new LimitedStatementCache(NO_OP, 2).getName(null, "test-query"))
+        assertThatIllegalArgumentException().isThrownBy(() -> new BoundedStatementCache(NO_OP, 2).getName(null, "test-query"))
             .withMessage("binding must not be null");
     }
 
     @Test
     void getNameNoSql() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new LimitedStatementCache(NO_OP, 2).getName(new Binding(0), null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new BoundedStatementCache(NO_OP, 2).getName(new Binding(0), null))
             .withMessage("sql must not be null");
     }
 

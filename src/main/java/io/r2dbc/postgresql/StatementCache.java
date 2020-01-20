@@ -31,6 +31,6 @@ interface StatementCache {
         if (preparedStatementCacheQueries == 0) {
             return new DisabledStatementCache(client);
         }
-        return new LimitedStatementCache(client, preparedStatementCacheQueries);
+        return new BoundedStatementCache(client, preparedStatementCacheQueries);
     }
 }
