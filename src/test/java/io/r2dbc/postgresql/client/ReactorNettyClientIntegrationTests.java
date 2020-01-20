@@ -146,7 +146,7 @@ final class ReactorNettyClientIntegrationTests {
             future.get(5, TimeUnit.SECONDS);
             fail("Expected PostgresConnectionClosedException");
         } catch (ExecutionException e) {
-            assertThat(e).hasCauseInstanceOf(ReactorNettyClient.PostgresConnectionClosedException.class).hasMessageContaining("Connection closed");
+            assertThat(e).hasCauseInstanceOf(ReactorNettyClient.PostgresConnectionClosedException.class);
         }
     }
 
@@ -331,6 +331,7 @@ final class ReactorNettyClientIntegrationTests {
             return true;
         }
     }
+
 
     @Nested
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)

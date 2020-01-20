@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2017-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.FORCE_BINA
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.LEGACY_POSTGRESQL_DRIVER;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.OPTIONS;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.POSTGRESQL_DRIVER;
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.PREPARED_STATEMENT_CACHE_QUERIES;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SOCKET;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_CONTEXT_BUILDER_CUSTOMIZER;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_MODE;
@@ -175,6 +176,32 @@ final class PostgresqlConnectionFactoryProviderTest {
             .build());
 
         assertThat(factory.getConfiguration().isForceBinary()).isTrue();
+    }
+
+    @Test
+    void providerShouldConsiderPreparedStatementCacheQueries() {
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, LEGACY_POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(PREPARED_STATEMENT_CACHE_QUERIES, -2)
+            .build());
+
+        assertThat(factory.getConfiguration().getPreparedStatementCacheQueries()).isEqualTo(-2);
+    }
+
+    @Test
+    void providerShouldConsiderPreparedStatementCacheQueriesWhenProvidedAsString() {
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, LEGACY_POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(Option.valueOf("preparedStatementCacheQueries"), "5")
+            .build());
+
+        assertThat(factory.getConfiguration().getPreparedStatementCacheQueries()).isEqualTo(5);
     }
 
     @Test

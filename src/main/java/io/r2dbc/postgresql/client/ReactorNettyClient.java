@@ -52,7 +52,6 @@ import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.MonoSink;
 import reactor.core.publisher.SynchronousSink;
 import reactor.netty.Connection;
 import reactor.netty.resources.ConnectionProvider;
@@ -76,7 +75,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static io.r2dbc.postgresql.client.TransactionStatus.IDLE;
@@ -104,7 +103,7 @@ public final class ReactorNettyClient implements Client {
 
     private final FluxSink<FrontendMessage> requests = this.requestProcessor.sink();
 
-    private final Queue<MonoSink<Flux<BackendMessage>>> responseReceivers = Queues.<MonoSink<Flux<BackendMessage>>>unbounded().get();
+    private final Queue<ResponseReceiver> responseReceivers = Queues.<ResponseReceiver>unbounded().get();
 
     private final DirectProcessor<NotificationResponse> notificationProcessor = DirectProcessor.create();
 
@@ -140,21 +139,15 @@ public final class ReactorNettyClient implements Client {
                 receiveError.set(throwable);
                 handleConnectionError(throwable);
             })
-            .windowWhile(it -> it.getClass() != ReadyForQuery.class)
-            .doOnNext(fluxOfMessages -> {
-                MonoSink<Flux<BackendMessage>> receiver = this.responseReceivers.poll();
+            .handle((message, sink) -> {
+                ResponseReceiver receiver = this.responseReceivers.peek();
                 if (receiver != null) {
-                    receiver.success(fluxOfMessages.doOnComplete(() -> {
-
-                        Throwable throwable = receiveError.get();
-                        if (throwable != null) {
-                            throw new PostgresConnectionException(throwable);
-                        }
-
-                        if (!isConnected()) {
-                            throw EXPECTED.get();
-                        }
-                    }));
+                    if (receiver.takeUntil.test(message)) {
+                        receiver.sink.complete();
+                        this.responseReceivers.poll();
+                    } else {
+                        receiver.sink.next(message);
+                    }
                 }
             })
             .doOnComplete(this::handleClose)
@@ -177,6 +170,50 @@ public final class ReactorNettyClient implements Client {
             .onErrorResume(this::resumeError)
             .doAfterTerminate(this::handleClose)
             .subscribe();
+    }
+
+    @Override
+    public Flux<BackendMessage> exchange(Predicate<BackendMessage> takeUntil, Publisher<FrontendMessage> requests) {
+        Assert.requireNonNull(requests, "requests must not be null");
+
+        return Flux
+            .create(sink -> {
+
+                final AtomicInteger once = new AtomicInteger();
+
+                Flux.from(requests)
+                    .subscribe(message -> {
+
+                        if (!isConnected()) {
+                            ReferenceCountUtil.safeRelease(message);
+                            sink.error(new PostgresConnectionClosedException("Cannot exchange messages because the connection is closed"));
+                            return;
+                        }
+
+                        if (once.get() == 0 && once.compareAndSet(0, 1)) {
+                            synchronized (this) {
+                                this.responseReceivers.add(new ResponseReceiver(sink, takeUntil));
+                                this.requests.next(message);
+                            }
+                        } else {
+                            this.requests.next(message);
+                        }
+
+                    }, this.requests::error, () -> {
+
+                        if (!isConnected()) {
+                            sink.error(new PostgresConnectionClosedException("Cannot exchange messages because the connection is closed"));
+                        }
+                    });
+
+            });
+    }
+
+    @Override
+    public void send(FrontendMessage message) {
+        Assert.requireNonNull(message, "requests must not be null");
+
+        this.requests.next(message);
     }
 
     private Mono<Void> resumeError(Throwable throwable) {
@@ -357,42 +394,12 @@ public final class ReactorNettyClient implements Client {
         });
     }
 
-    @Override
-    public Flux<BackendMessage> exchange(Publisher<FrontendMessage> requests) {
-        Assert.requireNonNull(requests, "requests must not be null");
+    private void drainError(Supplier<? extends Throwable> supplier) {
+        ResponseReceiver receiver;
 
-        return Mono
-            .<Flux<BackendMessage>>create(sink -> {
-
-                final AtomicInteger once = new AtomicInteger();
-
-                Flux.from(requests)
-                    .subscribe(message -> {
-
-                        if (!isConnected()) {
-                            ReferenceCountUtil.safeRelease(message);
-                            sink.error(new PostgresConnectionClosedException("Cannot exchange messages because the connection is closed"));
-                            return;
-                        }
-
-                        if (once.get() == 0 && once.compareAndSet(0, 1)) {
-                            synchronized (this) {
-                                this.responseReceivers.add(sink);
-                                this.requests.next(message);
-                            }
-                        } else {
-                            this.requests.next(message);
-                        }
-
-                    }, this.requests::error, () -> {
-
-                        if (!isConnected()) {
-                            sink.error(new PostgresConnectionClosedException("Cannot exchange messages because the connection is closed"));
-                        }
-                    });
-
-            })
-            .flatMapMany(Function.identity());
+        while ((receiver = this.responseReceivers.poll()) != null) {
+            receiver.sink.error(supplier.get());
+        }
     }
 
     @Override
@@ -461,11 +468,15 @@ public final class ReactorNettyClient implements Client {
         drainError(() -> new PostgresConnectionException(error));
     }
 
-    private void drainError(Supplier<? extends Throwable> supplier) {
-        MonoSink<Flux<BackendMessage>> receiver;
+    private static class ResponseReceiver {
 
-        while ((receiver = this.responseReceivers.poll()) != null) {
-            receiver.error(supplier.get());
+        private final FluxSink<BackendMessage> sink;
+
+        private final Predicate<BackendMessage> takeUntil;
+
+        private ResponseReceiver(FluxSink<BackendMessage> sink, Predicate<BackendMessage> takeUntil) {
+            this.sink = sink;
+            this.takeUntil = takeUntil;
         }
     }
 

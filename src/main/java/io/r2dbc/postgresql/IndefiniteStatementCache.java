@@ -46,8 +46,10 @@ final class IndefiniteStatementCache implements StatementCache {
         Assert.requireNonNull(binding, "binding must not be null");
         Assert.requireNonNull(sql, "sql must not be null");
 
-        return this.cache.computeIfAbsent(Tuples.of(sql, binding.getParameterTypes()),
-            tuple -> this.parse(tuple.getT1(), tuple.getT2()));
+        synchronized (this.cache) {
+            return this.cache.computeIfAbsent(Tuples.of(sql, binding.getParameterTypes()),
+                tuple -> this.parse(tuple.getT1(), tuple.getT2()));
+        }
     }
 
     @Override
