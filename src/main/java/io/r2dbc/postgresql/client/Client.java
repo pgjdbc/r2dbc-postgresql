@@ -21,7 +21,9 @@ import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.NotificationResponse;
 import io.r2dbc.postgresql.message.backend.ReadyForQuery;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
+import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -36,13 +38,25 @@ import java.util.function.Predicate;
 public interface Client {
 
     /**
-     * Add a consumer of notification messages.
+     * Add a consumer of notification messages. Notifications received by this connection are sent to the {@link Consumer notification consumer}. Note that connection errors and events such as
+     * disconnects are not visible to the {@link Consumer notification consumer}.
      *
      * @param consumer the consumer of notification messages
      * @return a new {@link Disposable} that can be used to cancel the underlying subscription.
      * @throws IllegalArgumentException if {@code consumer} is {@code null}
      */
     Disposable addNotificationListener(Consumer<NotificationResponse> consumer);
+
+    /**
+     * Add a consumer of notification messages. Notifications received by this connection are sent to the {@link Subscriber notification listener}. When the client gets {@link #close() closed}, the
+     * subscription {@link Subscriber#onComplete() completes normally}. Otherwise (transport connection disconnected unintentionally) with an {@link R2dbcNonTransientResourceException error}.
+     *
+     * @param consumer the consumer of notification messages
+     * @return a new {@link Disposable} that can be used to cancel the underlying subscription.
+     * @throws IllegalArgumentException if {@code consumer} is {@code null}
+     * @since 0.8.1
+     */
+    Disposable addNotificationListener(Subscriber<NotificationResponse> consumer);
 
     /**
      * Release any resources held by the {@link Client}.

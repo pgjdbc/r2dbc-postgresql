@@ -24,12 +24,14 @@ import io.r2dbc.postgresql.client.PortalNameSupplier;
 import io.r2dbc.postgresql.client.SimpleQueryMessageFlow;
 import io.r2dbc.postgresql.client.TransactionStatus;
 import io.r2dbc.postgresql.codec.Codecs;
+import io.r2dbc.postgresql.message.backend.NotificationResponse;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.Operators;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.IsolationLevel;
 import io.r2dbc.spi.ValidationDepth;
 import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.CoreSubscriber;
 import reactor.core.Disposable;
@@ -243,17 +245,17 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
 
         return useTransactionStatus(transactionStatus -> {
 
-            logger.debug(String.format("Setting auto-commit mode to [%s]", autoCommit));
+            this.logger.debug(String.format("Setting auto-commit mode to [%s]", autoCommit));
 
             if (isAutoCommit()) {
                 if (!autoCommit) {
-                    logger.debug("Beginning transaction");
+                    this.logger.debug("Beginning transaction");
                     return beginTransaction();
                 }
             } else {
 
                 if (autoCommit) {
-                    logger.debug("Committing pending transactions");
+                    this.logger.debug("Committing pending transactions");
                     return commitTransaction();
                 }
             }
@@ -311,7 +313,7 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
 
                 @Override
                 public void onError(Throwable t) {
-                    logger.debug("Validation failed", t);
+                    PostgresqlConnection.this.logger.debug("Validation failed", t);
                     sink.success(false);
                 }
 
@@ -357,7 +359,7 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
 
         private final DirectProcessor<Notification> processor = DirectProcessor.create();
 
-        private final FluxSink<Notification> sink = processor.sink();
+        private final FluxSink<Notification> sink = this.processor.sink();
 
         @Nullable
         private volatile Disposable subscription = null;
@@ -371,13 +373,32 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
 
         void register(Client client) {
 
-            this.subscription = client.addNotificationListener(notificationResponse -> {
-                sink.next(new NotificationResponseWrapper(notificationResponse));
+            this.subscription = client.addNotificationListener(new Subscriber<NotificationResponse>() {
+
+                @Override
+                public void onSubscribe(Subscription subscription) {
+                    subscription.request(Long.MAX_VALUE);
+                }
+
+                @Override
+                public void onNext(NotificationResponse notificationResponse) {
+                    NotificationAdapter.this.sink.next(new NotificationResponseWrapper(notificationResponse));
+                }
+
+                @Override
+                public void onError(Throwable throwable) {
+                    NotificationAdapter.this.sink.error(throwable);
+                }
+
+                @Override
+                public void onComplete() {
+                    NotificationAdapter.this.sink.complete();
+                }
             });
         }
 
         Flux<Notification> getEvents() {
-            return processor;
+            return this.processor;
         }
     }
 

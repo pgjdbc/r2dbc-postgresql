@@ -16,7 +16,11 @@
 
 package io.r2dbc.postgresql;
 
+import io.netty.channel.Channel;
 import io.r2dbc.postgresql.api.Notification;
+import io.r2dbc.postgresql.api.PostgresqlConnection;
+import io.r2dbc.postgresql.util.ConnectionIntrospector;
+import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.junit.jupiter.api.Test;
 import reactor.core.Disposable;
 import reactor.test.StepVerifier;
@@ -54,5 +58,29 @@ final class PostgresNotificationIntegrationTests extends AbstractIntegrationTest
         assertThat(notification.getParameter()).isEqualTo("Mötorhead");
 
         listener.dispose();
+    }
+
+    @Test
+    void listenShouldCompleteOnConnectionClose() {
+
+        PostgresqlConnection connection = this.connectionFactory.create().block();
+
+        connection.getNotifications().as(StepVerifier::create).expectSubscription()
+            .then(() -> connection.close().subscribe())
+            .verifyComplete();
+    }
+
+    @Test
+    void listenShouldFailOnConnectionDisconnected() {
+
+        PostgresqlConnection connection = this.connectionFactory.create().block();
+
+        connection.getNotifications().as(StepVerifier::create).expectSubscription()
+            .then(() -> {
+
+                Channel channel = ConnectionIntrospector.of(connection).getChannel();
+                channel.close();
+            })
+            .verifyError(R2dbcNonTransientResourceException.class);
     }
 }
