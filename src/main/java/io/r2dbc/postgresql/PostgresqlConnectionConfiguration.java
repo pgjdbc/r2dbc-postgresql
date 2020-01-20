@@ -579,11 +579,12 @@ public final class PostgresqlConnectionConfiguration {
         }
 
         /**
-         * Configure the preparedStatementCacheQueries.
+         * Configure the preparedStatementCacheQueries. The default is {@code -1}, meaning there's no limit. The value of {@code 0} disables the cache. Any other value specifies the cache size.
          *
          * @param preparedStatementCacheQueries the preparedStatementCacheQueries
          * @return this {@link Builder}
          * @throws IllegalArgumentException if {@code username} is {@code null}
+         * @since 0.8.1
          */
         public Builder preparedStatementCacheQueries(int preparedStatementCacheQueries) {
             this.preparedStatementCacheQueries = preparedStatementCacheQueries;

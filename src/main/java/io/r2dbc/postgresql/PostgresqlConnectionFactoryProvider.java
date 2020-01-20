@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql;
 
 import io.netty.handler.ssl.SslContextBuilder;
+import io.r2dbc.postgresql.client.DefaultHostnameVerifier;
 import io.r2dbc.postgresql.client.SSLMode;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ConnectionFactoryOptions;
@@ -87,7 +88,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<String> SSL_CERT = Option.valueOf("sslCert");
 
     /**
-     * Class name of hostname verifier. Defaults to using io.r2dbc.postgresql.client.PGHostnameVerifier
+     * Class name of hostname verifier. Defaults to {@link DefaultHostnameVerifier}.
      */
     public static final Option<HostnameVerifier> SSL_HOSTNAME_VERIFIER = Option.valueOf("sslHostnameVerifier");
 
@@ -113,7 +114,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
 
     /**
      * Determine the number of queries that are cached in each connection.
-     * The default is -1, meaning there's no limit. The value of 0 disables the cache.
+     * The default is {@code -1}, meaning there's no limit. The value of {@code 0} disables the cache. Any other value specifies the cache size.
      */
     public static final Option<Integer> PREPARED_STATEMENT_CACHE_QUERIES = Option.valueOf("preparedStatementCacheQueries");
 
@@ -125,6 +126,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     /**
      * Returns a new {@link PostgresqlConnectionConfiguration.Builder} configured with the given {@link ConnectionFactoryOptions}.
      *
+     * @param connectionFactoryOptions {@link ConnectionFactoryOptions} used to initialize the {@link PostgresqlConnectionConfiguration.Builder}.
      * @return a {@link PostgresqlConnectionConfiguration.Builder}
      * @since 0.9
      */
