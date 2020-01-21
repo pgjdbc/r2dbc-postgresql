@@ -29,7 +29,6 @@ import io.netty.channel.socket.DatagramChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-import io.netty.util.ReferenceCountUtil;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.r2dbc.postgresql.message.backend.BackendKeyData;
@@ -72,9 +71,9 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -99,9 +98,9 @@ public final class ReactorNettyClient implements Client {
 
     private final Connection connection;
 
-    private final EmitterProcessor<FrontendMessage> requestProcessor = EmitterProcessor.create(false);
+    private final EmitterProcessor<Publisher<FrontendMessage>> requestProcessor = EmitterProcessor.create(false);
 
-    private final FluxSink<FrontendMessage> requests = this.requestProcessor.sink();
+    private final FluxSink<Publisher<FrontendMessage>> requests = this.requestProcessor.sink();
 
     private final Queue<ResponseReceiver> responseReceivers = Queues.<ResponseReceiver>unbounded().get();
 
@@ -154,6 +153,7 @@ public final class ReactorNettyClient implements Client {
             .then();
 
         Mono<Void> request = this.requestProcessor
+            .concatMap(Function.identity())
             .flatMap(message -> {
                 if (DEBUG_ENABLED) {
                     logger.debug("Request:  {}", message);
@@ -178,34 +178,18 @@ public final class ReactorNettyClient implements Client {
 
         return Flux
             .create(sink -> {
-
-                final AtomicInteger once = new AtomicInteger();
-
-                Flux.from(requests)
-                    .subscribe(message -> {
-
-                        if (!isConnected()) {
-                            ReferenceCountUtil.safeRelease(message);
-                            sink.error(new PostgresConnectionClosedException("Cannot exchange messages because the connection is closed"));
-                            return;
-                        }
-
-                        if (once.get() == 0 && once.compareAndSet(0, 1)) {
-                            synchronized (this) {
-                                this.responseReceivers.add(new ResponseReceiver(sink, takeUntil));
-                                this.requests.next(message);
-                            }
-                        } else {
-                            this.requests.next(message);
-                        }
-
-                    }, this.requests::error, () -> {
-
+                if (!isConnected()) {
+                    sink.error(new PostgresConnectionClosedException("Cannot exchange messages because the connection is closed"));
+                    return;
+                }
+                synchronized (this) {
+                    this.responseReceivers.add(new ResponseReceiver(sink, takeUntil));
+                    this.requests.next(Flux.from(requests).doOnNext(m -> {
                         if (!isConnected()) {
                             sink.error(new PostgresConnectionClosedException("Cannot exchange messages because the connection is closed"));
                         }
-                    });
-
+                    }));
+                }
             });
     }
 
@@ -213,7 +197,7 @@ public final class ReactorNettyClient implements Client {
     public void send(FrontendMessage message) {
         Assert.requireNonNull(message, "requests must not be null");
 
-        this.requests.next(message);
+        this.requests.next(Mono.just(message));
     }
 
     private Mono<Void> resumeError(Throwable throwable) {
@@ -482,9 +466,9 @@ public final class ReactorNettyClient implements Client {
 
     private final class EnsureSubscribersCompleteChannelHandler extends ChannelDuplexHandler {
 
-        private final EmitterProcessor<FrontendMessage> requestProcessor;
+        private final EmitterProcessor<Publisher<FrontendMessage>> requestProcessor;
 
-        private EnsureSubscribersCompleteChannelHandler(EmitterProcessor<FrontendMessage> requestProcessor) {
+        private EnsureSubscribersCompleteChannelHandler(EmitterProcessor<Publisher<FrontendMessage>> requestProcessor) {
             this.requestProcessor = requestProcessor;
         }
 
