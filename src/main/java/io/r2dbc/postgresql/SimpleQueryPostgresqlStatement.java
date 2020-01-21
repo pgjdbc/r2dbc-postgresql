@@ -16,6 +16,8 @@
 
 package io.r2dbc.postgresql;
 
+import io.netty.util.ReferenceCountUtil;
+import io.netty.util.ReferenceCounted;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.postgresql.client.SimpleQueryMessageFlow;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
@@ -24,6 +26,7 @@ import io.r2dbc.postgresql.message.backend.EmptyQueryResponse;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.GeneratedValuesUtils;
+import io.r2dbc.postgresql.util.Operators;
 import reactor.core.publisher.Flux;
 import reactor.util.annotation.Nullable;
 
@@ -120,7 +123,10 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
         return SimpleQueryMessageFlow
             .exchange(this.context.getClient(), sql)
             .windowUntil(WINDOW_UNTIL)
-            .map(dataRow -> PostgresqlResult.toResult(this.context, dataRow, factory));
+            .map(dataRow -> PostgresqlResult.toResult(this.context, dataRow, factory))
+            .cast(io.r2dbc.postgresql.api.PostgresqlResult.class)
+            .as(Operators::discardOnCancel)
+            .doOnDiscard(ReferenceCounted.class, ReferenceCountUtil::release);
     }
 
 }
