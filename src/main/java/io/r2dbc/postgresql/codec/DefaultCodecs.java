@@ -85,6 +85,8 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
 
             new BlobCodec(byteBufAllocator),
             new ClobCodec(byteBufAllocator),
+            RefCursorCodec.INSTANCE,
+            RefCursorNameCodec.INSTANCE,
 
             new ShortArrayCodec(byteBufAllocator),
             new StringArrayCodec(byteBufAllocator),

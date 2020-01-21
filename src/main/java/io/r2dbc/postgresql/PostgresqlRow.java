@@ -90,10 +90,28 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
         int readerIndex = data.readerIndex();
         try {
             RowDescription.Field field = this.fields.get(index);
-            return this.codecs.decode(data, field.getDataType(), field.getFormat(), type);
+
+            T decoded = this.context.getCodecs().decode(data, field.getDataType(), field.getFormat(), type);
+
+            return type.cast(postProcessResult(decoded));
+
         } finally {
             data.readerIndex(readerIndex);
         }
+    }
+
+    @Nullable
+    private Object postProcessResult(@Nullable Object decoded) {
+
+        if (decoded instanceof RefCursor) {
+            return createCursor((RefCursor) decoded);
+        }
+
+        return decoded;
+    }
+
+    private AttachedRefCursor createCursor(RefCursor decoded) {
+        return new AttachedRefCursor(this.context, decoded.getCursorName());
     }
 
     @Override
@@ -160,6 +178,44 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
     private void requireNotReleased() {
         if (this.isReleased) {
             throw new IllegalStateException("Value cannot be retrieved after row has been released");
+        }
+    }
+
+    /**
+     * Default {@link RefCursor} implementation that is attached to a {@link io.r2dbc.postgresql.api.PostgresqlConnection}.
+     */
+    static class AttachedRefCursor implements RefCursor {
+
+        private final ConnectionContext context;
+
+        private final String portal;
+
+        AttachedRefCursor(ConnectionContext context, String portal) {
+            this.context = Assert.requireNonNull(context, "connection must not be null");
+            this.portal = Assert.requireNotEmpty(portal, "portal must not be empty");
+        }
+
+        @Override
+        public String getCursorName() {
+            return this.portal;
+        }
+
+        @Override
+        public Mono<io.r2dbc.postgresql.api.PostgresqlResult> fetch() {
+            return Mono.fromDirect(this.context.getConnection().createStatement("FETCH ALL IN \"" + getCursorName() + "\"").execute());
+        }
+
+        @Override
+        public Mono<Void> close() {
+            return this.context.getConnection().createStatement("CLOSE \"" + getCursorName() + "\"").execute().flatMap(PostgresqlResult::getRowsUpdated).then();
+        }
+
+        @Override
+        public String toString() {
+            return "AttachedRefCursor{" +
+                "portal='" + this.portal + '\'' +
+                ", context=" + this.context +
+                '}';
         }
     }
 

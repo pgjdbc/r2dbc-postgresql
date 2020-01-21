@@ -31,9 +31,9 @@ public abstract class AbstractIntegrationTests {
     @RegisterExtension
     public static final PostgresqlServerExtension SERVER = new PostgresqlServerExtension();
 
-    PostgresqlConnectionFactory connectionFactory;
+    public PostgresqlConnectionFactory connectionFactory;
 
-    PostgresqlConnection connection;
+    public PostgresqlConnection connection;
 
     /**
      * Entry-point to obtain a {@link PostgresqlConnectionFactory}.

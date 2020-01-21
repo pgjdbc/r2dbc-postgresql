@@ -21,7 +21,7 @@ import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.codec.Codecs;
 
 /**
- * @author Mark Paluch
+ * Value object capturing contextual connection resources such as {@link Client}, {@link Codecs} and the {@link PostgresqlConnection connection facade}.
  */
 final class ConnectionContext {
 

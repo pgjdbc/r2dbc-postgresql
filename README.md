@@ -15,6 +15,7 @@ This driver provides the following features:
 * Execution of prepared statements with bindings
 * Execution of batch statements without bindings
 * Read and write support for all data types except LOB types (e.g. `BLOB`, `CLOB`)
+* Fetching of `REFCURSOR` using `io.r2dbc.postgresql.api.RefCursor`
 * Extension points to register `Codec`s to handle additional PostgreSQL data types
 
 Next steps:
@@ -200,7 +201,8 @@ CREATE TABLE my_table (my_json JSON);
 ```java
 connection.createStatement("INSERT INTO my_table (my_json) VALUES($1)")
             .bind("$1", Json.of("{\"hello\": \"world\"}")).execute();
-```		
+```
+
 **Consume JSON**
 
 ```java
@@ -209,12 +211,13 @@ connection.createStatement("SELECT my_json FROM my_table")
             .flatMap(it -> it.map((row, rowMetadata) -> row.get("my_json", Json.class)))
             .map(Json::asString);
 ```
+
 **Write JSON using casting**
 
 ```java
 connection.createStatement("INSERT INTO my_table (my_json) VALUES($1::JSON)")
     .bind("$1", "{\"hello\": \"world\"}").execute();
-```		
+```
 
 **Consume JSON as scalar type**
 
@@ -232,6 +235,24 @@ The following types are supported for JSON exchange:
 * `byte[]`
 * `String`
 * `InputStream` (must be closed after usage to avoid memory leaks)
+
+## Cursors
+
+The driver can consume cursors that were created by PL/pgSQL as `refcursor`. 
+Cursors are represented as `RefCursor` objects. Cursors obtained from `Result` can be used to fetch the cursor directly. 
+Since cursors are stateful, they must be closed once they are no longer in use.
+
+```java
+connection.createStatement("SELECT show_cities_multiple()").execute()
+    .flatMap(result -> result.map((row, rowMetadata) -> row.get(0, RefCursor.class)))
+    .flatMap(cursor -> {
+        Mono<PostgresResult> data = cursor.fetch()
+            .flatMap(…)
+            .then(rc.close());
+        return data;
+    });
+
+```
 
 ## Logical Decode
 
