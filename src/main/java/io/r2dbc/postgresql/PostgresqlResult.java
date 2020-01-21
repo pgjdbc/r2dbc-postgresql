@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2017-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 
 package io.r2dbc.postgresql;
 
+import io.netty.util.AbstractReferenceCounted;
 import io.netty.util.ReferenceCountUtil;
+import io.netty.util.ReferenceCounted;
 import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
@@ -39,7 +41,7 @@ import static io.r2dbc.postgresql.util.PredicateUtils.or;
 /**
  * An implementation of {@link Result} representing the results of a query against a PostgreSQL database.
  */
-final class PostgresqlResult implements io.r2dbc.postgresql.api.PostgresqlResult {
+final class PostgresqlResult extends AbstractReferenceCounted implements io.r2dbc.postgresql.api.PostgresqlResult {
 
     private static final Predicate<BackendMessage> TAKE_UNTIL = or(CommandComplete.class::isInstance, EmptyQueryResponse.class::isInstance, PortalSuspended.class::isInstance);
 
@@ -103,6 +105,18 @@ final class PostgresqlResult implements io.r2dbc.postgresql.api.PostgresqlResult
                     ReferenceCountUtil.release(message);
                 }
             });
+    }
+
+    @Override
+    protected void deallocate() {
+
+        // drain messages for cleanup
+        this.getRowsUpdated().subscribe();
+    }
+
+    @Override
+    public ReferenceCounted touch(Object hint) {
+        return this;
     }
 
     @Override
