@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2017-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,8 @@ package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.postgresql.client.Binding;
-import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.ExtendedQueryMessageFlow;
 import io.r2dbc.postgresql.client.PortalNameSupplier;
-import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.BindComplete;
 import io.r2dbc.postgresql.message.backend.CloseComplete;
@@ -48,9 +46,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
 
     private final Bindings bindings;
 
-    private final Client client;
-
-    private final Codecs codecs;
+    private final ConnectionContext context;
 
     private final boolean forceBinary;
 
@@ -62,9 +58,9 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
 
     private String[] generatedColumns;
 
-    ExtendedQueryPostgresqlStatement(Client client, Codecs codecs, PortalNameSupplier portalNameSupplier, String sql, StatementCache statementCache, boolean forceBinary) {
-        this.client = Assert.requireNonNull(client, "client must not be null");
-        this.codecs = Assert.requireNonNull(codecs, "codecs must not be null");
+    ExtendedQueryPostgresqlStatement(ConnectionContext context, PortalNameSupplier portalNameSupplier, String sql, StatementCache statementCache,
+                                     boolean forceBinary) {
+        this.context = Assert.requireNonNull(context, "context must not be null");
         this.portalNameSupplier = Assert.requireNonNull(portalNameSupplier, "portalNameSupplier must not be null");
         this.sql = Assert.requireNonNull(sql, "sql must not be null");
         this.statementCache = Assert.requireNonNull(statementCache, "statementCache must not be null");
@@ -91,7 +87,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
     public ExtendedQueryPostgresqlStatement bind(int index, Object value) {
         Assert.requireNonNull(value, "value must not be null");
 
-        this.bindings.getCurrent().add(index, this.codecs.encode(value));
+        this.bindings.getCurrent().add(index, this.context.getCodecs().encode(value));
 
         return this;
     }
@@ -110,7 +106,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
     public ExtendedQueryPostgresqlStatement bindNull(int index, Class<?> type) {
         Assert.requireNonNull(type, "type must not be null");
 
-        this.bindings.getCurrent().add(index, this.codecs.encodeNull(type));
+        this.bindings.getCurrent().add(index, this.context.getCodecs().encodeNull(type));
         return this;
     }
 
@@ -143,8 +139,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
     public String toString() {
         return "ExtendedQueryPostgresqlStatement{" +
             "bindings=" + this.bindings +
-            ", client=" + this.client +
-            ", codecs=" + this.codecs +
+            ", context=" + this.context +
             ", forceBinary=" + this.forceBinary +
             ", portalNameSupplier=" + this.portalNameSupplier +
             ", sql='" + this.sql + '\'' +
@@ -183,10 +178,10 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
         ExceptionFactory factory = ExceptionFactory.withSql(sql);
         return this.statementCache.getName(this.bindings.first(), sql)
             .flatMapMany(name -> ExtendedQueryMessageFlow
-                .execute(Flux.fromIterable(this.bindings.bindings), this.client, this.portalNameSupplier, name, sql, this.forceBinary))
+                .execute(Flux.fromIterable(this.bindings.bindings), this.context.getClient(), this.portalNameSupplier, name, sql, this.forceBinary))
             .filter(RESULT_FRAME_FILTER)
             .windowUntil(CloseComplete.class::isInstance)
-            .map(messages -> PostgresqlResult.toResult(this.codecs, messages, factory));
+            .map(messages -> PostgresqlResult.toResult(this.context, messages, factory));
     }
 
     private int getIndex(String identifier) {

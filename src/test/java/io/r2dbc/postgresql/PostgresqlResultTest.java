@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2017-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package io.r2dbc.postgresql;
 
-import io.r2dbc.postgresql.codec.MockCodecs;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.DataRow;
 import io.r2dbc.postgresql.message.backend.EmptyQueryResponse;
@@ -32,20 +31,14 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 final class PostgresqlResultTest {
 
     @Test
-    void constructorNoCodec() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlResult(null, Flux.empty(), ExceptionFactory.INSTANCE))
-            .withMessage("codecs must not be null");
-    }
-
-    @Test
     void constructorNoRowMetadata() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlResult(MockCodecs.empty(), null, ExceptionFactory.INSTANCE))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlResult(MockContext.empty(), null, ExceptionFactory.INSTANCE))
             .withMessage("messages must not be null");
     }
 
     @Test
     void toResultCommandComplete() {
-        PostgresqlResult result = PostgresqlResult.toResult(MockCodecs.empty(), Flux.just(new CommandComplete("test", null, 1)), ExceptionFactory.INSTANCE);
+        PostgresqlResult result = PostgresqlResult.toResult(MockContext.empty(), Flux.just(new CommandComplete("test", null, 1)), ExceptionFactory.INSTANCE);
 
         result.map((row, rowMetadata) -> row)
             .as(StepVerifier::create)
@@ -59,7 +52,7 @@ final class PostgresqlResultTest {
 
     @Test
     void toResultEmptyQueryResponse() {
-        PostgresqlResult result = PostgresqlResult.toResult(MockCodecs.empty(), Flux.just(EmptyQueryResponse.INSTANCE), ExceptionFactory.INSTANCE);
+        PostgresqlResult result = PostgresqlResult.toResult(MockContext.empty(), Flux.just(EmptyQueryResponse.INSTANCE), ExceptionFactory.INSTANCE);
 
         result.map((row, rowMetadata) -> row)
             .as(StepVerifier::create)
@@ -71,20 +64,20 @@ final class PostgresqlResultTest {
     }
 
     @Test
-    void toResultNoCodecs() {
+    void toResultNoContext() {
         assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlResult.toResult(null, Flux.empty(), ExceptionFactory.INSTANCE))
-            .withMessage("codecs must not be null");
+            .withMessage("context must not be null");
     }
 
     @Test
     void toResultNoMessages() {
-        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlResult.toResult(MockCodecs.empty(), null, ExceptionFactory.INSTANCE))
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlResult.toResult(MockContext.empty(), null, ExceptionFactory.INSTANCE))
             .withMessage("messages must not be null");
     }
 
     @Test
     void toResultRowDescriptionRowsUpdated() {
-        PostgresqlResult result = PostgresqlResult.toResult(MockCodecs.empty(), Flux.just(new RowDescription(Collections.emptyList()), new DataRow(), new CommandComplete
+        PostgresqlResult result = PostgresqlResult.toResult(MockContext.empty(), Flux.just(new RowDescription(Collections.emptyList()), new DataRow(), new CommandComplete
             ("test", null, null)), ExceptionFactory.INSTANCE);
 
         result.getRowsUpdated()
@@ -94,7 +87,7 @@ final class PostgresqlResultTest {
 
     @Test
     void toResultRowDescriptionMap() {
-        PostgresqlResult result = PostgresqlResult.toResult(MockCodecs.empty(), Flux.just(new RowDescription(Collections.emptyList()), new DataRow(), new CommandComplete
+        PostgresqlResult result = PostgresqlResult.toResult(MockContext.empty(), Flux.just(new RowDescription(Collections.emptyList()), new DataRow(), new CommandComplete
             ("test", null, null)), ExceptionFactory.INSTANCE);
 
         result.map((row, rowMetadata) -> row)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2017-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,13 @@
 package io.r2dbc.postgresql;
 
 import io.netty.buffer.ByteBuf;
-import io.r2dbc.postgresql.codec.Codecs;
+import io.r2dbc.postgresql.api.PostgresqlResult;
+import io.r2dbc.postgresql.api.RefCursor;
 import io.r2dbc.postgresql.message.backend.DataRow;
 import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Row;
+import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
 import java.util.ArrayList;
@@ -33,7 +35,7 @@ import java.util.Objects;
  */
 final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
 
-    private final Codecs codecs;
+    private final ConnectionContext context;
 
     private final List<RowDescription.Field> fields;
 
@@ -41,8 +43,8 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
 
     private volatile boolean isReleased = false;
 
-    PostgresqlRow(Codecs codecs, List<RowDescription.Field> fields, ByteBuf[] data) {
-        this.codecs = Assert.requireNonNull(codecs, "codecs must not be null");
+    PostgresqlRow(ConnectionContext context, List<RowDescription.Field> fields, ByteBuf[] data) {
+        this.context = Assert.requireNonNull(context, "context must not be null");
         this.fields = Assert.requireNonNull(fields, "fields must not be null");
         this.data = Assert.requireNonNull(data, "data must not be null");
     }
@@ -102,18 +104,17 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
     @Override
     public String toString() {
         return "PostgresqlRow{" +
-            "codecs=" + this.codecs +
+            "context=" + this.context +
             ", columns=" + this.fields +
             ", isReleased=" + this.isReleased +
             '}';
     }
 
-    static PostgresqlRow toRow(Codecs codecs, DataRow dataRow, RowDescription rowDescription) {
-        Assert.requireNonNull(codecs, "codecs must not be null");
+    static PostgresqlRow toRow(ConnectionContext context, DataRow dataRow, RowDescription rowDescription) {
         Assert.requireNonNull(dataRow, "dataRow must not be null");
         Assert.requireNonNull(rowDescription, "rowDescription must not be null");
 
-        return new PostgresqlRow(codecs, rowDescription.getFields(), dataRow.getColumns());
+        return new PostgresqlRow(context, rowDescription.getFields(), dataRow.getColumns());
     }
 
     void release() {
