@@ -162,15 +162,21 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
                     })
             )
             .flatMap(client -> {
+
                 DefaultCodecs codecs = new DefaultCodecs(client.getByteBufAllocator());
+                StatementCache statementCache = new IndefiniteStatementCache(client);
+
+                // early connection object to retrieve initialization details
+                PostgresqlConnection earlyConnection = new PostgresqlConnection(client, codecs, DefaultPortalNameSupplier.INSTANCE, statementCache, IsolationLevel.READ_COMMITTED,
+                    this.configuration.isForceBinary());
 
                 Mono<IsolationLevel> isolationLevelMono = Mono.just(IsolationLevel.READ_COMMITTED);
                 if (!forReplication) {
-                    isolationLevelMono = getIsolationLevel(client, codecs);
+                    isolationLevelMono = getIsolationLevel(earlyConnection);
                 }
-
                 return isolationLevelMono
-                    .map(it -> new PostgresqlConnection(client, codecs, DefaultPortalNameSupplier.INSTANCE, new IndefiniteStatementCache(client), it, this.configuration.isForceBinary()))
+                    // actual connection to be used
+                    .map(isolationLevel -> new PostgresqlConnection(client, codecs, DefaultPortalNameSupplier.INSTANCE, new IndefiniteStatementCache(client), isolationLevel, this.configuration.isForceBinary()))
                     .delayUntil(connection -> {
                         return prepareConnection(connection, client.getByteBufAllocator(), codecs);
                     })
@@ -249,8 +255,8 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
         }
     }
 
-    private Mono<IsolationLevel> getIsolationLevel(Client client, DefaultCodecs codecs) {
-        return new SimpleQueryPostgresqlStatement(client, codecs, "SHOW TRANSACTION ISOLATION LEVEL")
+    private Mono<IsolationLevel> getIsolationLevel(io.r2dbc.postgresql.api.PostgresqlConnection connection) {
+        return connection.createStatement("SHOW TRANSACTION ISOLATION LEVEL")
             .execute()
             .flatMap(it -> it.map((row, rowMetadata) -> {
                 String level = row.get(0, String.class);

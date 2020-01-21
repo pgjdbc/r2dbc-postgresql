@@ -26,10 +26,10 @@ import reactor.test.StepVerifier;
 /**
  * Support class for integration tests using {@link PostgresqlConnection}.
  */
-abstract class AbstractIntegrationTests {
+public abstract class AbstractIntegrationTests {
 
     @RegisterExtension
-    static final PostgresqlServerExtension SERVER = new PostgresqlServerExtension();
+    public static final PostgresqlServerExtension SERVER = new PostgresqlServerExtension();
 
     PostgresqlConnectionFactory connectionFactory;
 

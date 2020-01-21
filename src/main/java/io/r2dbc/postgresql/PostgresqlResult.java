@@ -19,7 +19,6 @@ package io.r2dbc.postgresql;
 import io.netty.util.AbstractReferenceCounted;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.ReferenceCounted;
-import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.DataRow;
@@ -47,7 +46,7 @@ final class PostgresqlResult extends AbstractReferenceCounted implements io.r2db
 
     private static final Predicate<BackendMessage> TAKE_UNTIL = or(CommandComplete.class::isInstance, EmptyQueryResponse.class::isInstance, PortalSuspended.class::isInstance);
 
-    private final Codecs codecs;
+    private final ConnectionContext context;
 
     private final Flux<BackendMessage> messages;
 
@@ -57,10 +56,10 @@ final class PostgresqlResult extends AbstractReferenceCounted implements io.r2db
 
     private volatile RowDescription rowDescription;
 
-    private PostgresqlResult(Codecs codecs, Flux<BackendMessage> messages, ExceptionFactory factory) {
-        this.codecs = codecs;
-        this.messages = messages;
-        this.factory = factory;
+    PostgresqlResult(ConnectionContext context, Flux<BackendMessage> messages, ExceptionFactory factory) {
+        this.context = Assert.requireNonNull(context, "context must not be null");
+        this.messages = Assert.requireNonNull(messages, "messages must not be null");
+        this.factory = Assert.requireNonNull(factory, "factory must not be null");
     }
 
     @Override
@@ -105,12 +104,12 @@ final class PostgresqlResult extends AbstractReferenceCounted implements io.r2db
 
                     if (message instanceof RowDescription) {
                         this.rowDescription = (RowDescription) message;
-                        this.metadata = PostgresqlRowMetadata.toRowMetadata(this.codecs, (RowDescription) message);
+                        this.metadata = PostgresqlRowMetadata.toRowMetadata(this.context.getCodecs(), (RowDescription) message);
                         return;
                     }
 
                     if (message instanceof DataRow) {
-                        PostgresqlRow row = PostgresqlRow.toRow(this.codecs, (DataRow) message, this.rowDescription);
+                        PostgresqlRow row = PostgresqlRow.toRow(this.context, (DataRow) message, this.rowDescription);
 
 
                         sink.next(f.apply(row, this.metadata));
@@ -137,17 +136,13 @@ final class PostgresqlResult extends AbstractReferenceCounted implements io.r2db
     @Override
     public String toString() {
         return "PostgresqlResult{" +
-            "codecs=" + this.codecs +
+            "context=" + this.context +
             ", messages=" + this.messages +
             '}';
     }
 
-    static PostgresqlResult toResult(Codecs codecs, Flux<BackendMessage> messages, ExceptionFactory factory) {
-        Assert.requireNonNull(codecs, "codecs must not be null");
-        Assert.requireNonNull(messages, "messages must not be null");
-        Assert.requireNonNull(factory, "factory must not be null");
-
-        return new PostgresqlResult(codecs, messages, factory);
+    static PostgresqlResult toResult(ConnectionContext context, Flux<BackendMessage> messages, ExceptionFactory factory) {
+        return new PostgresqlResult(context, messages, factory);
     }
 
 }

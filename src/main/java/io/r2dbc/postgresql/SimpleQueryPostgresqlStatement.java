@@ -19,9 +19,7 @@ package io.r2dbc.postgresql;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.ReferenceCounted;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
-import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.SimpleQueryMessageFlow;
-import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.EmptyQueryResponse;
@@ -40,17 +38,14 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
 
     private static final Predicate<BackendMessage> WINDOW_UNTIL = or(CommandComplete.class::isInstance, EmptyQueryResponse.class::isInstance, ErrorResponse.class::isInstance);
 
-    private final Client client;
-
-    private final Codecs codecs;
+    private final ConnectionContext context;
 
     private final String sql;
 
     private String[] generatedColumns;
 
-    SimpleQueryPostgresqlStatement(Client client, Codecs codecs, String sql) {
-        this.client = Assert.requireNonNull(client, "client must not be null");
-        this.codecs = Assert.requireNonNull(codecs, "codecs must not be null");
+    SimpleQueryPostgresqlStatement(ConnectionContext context, String sql) {
+        this.context = Assert.requireNonNull(context, "context must not be null");
         this.sql = Assert.requireNonNull(sql, "sql must not be null");
     }
 
@@ -112,8 +107,7 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
     @Override
     public String toString() {
         return "SimpleQueryPostgresqlStatement{" +
-            "client=" + this.client +
-            ", codecs=" + this.codecs +
+            "context=" + this.context +
             ", sql='" + this.sql + '\'' +
             '}';
     }
@@ -127,9 +121,9 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
     private Flux<io.r2dbc.postgresql.api.PostgresqlResult> execute(String sql) {
         ExceptionFactory factory = ExceptionFactory.withSql(sql);
         return SimpleQueryMessageFlow
-            .exchange(this.client, sql)
+            .exchange(this.context.getClient(), sql)
             .windowUntil(WINDOW_UNTIL)
-            .map(dataRow -> PostgresqlResult.toResult(this.codecs, dataRow, factory))
+            .map(dataRow -> PostgresqlResult.toResult(this.context, dataRow, factory))
             .cast(io.r2dbc.postgresql.api.PostgresqlResult.class)
             .as(Operators::discardOnCancel)
             .doOnDiscard(ReferenceCounted.class, ReferenceCountUtil::release);

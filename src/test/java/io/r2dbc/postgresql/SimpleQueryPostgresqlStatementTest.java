@@ -33,7 +33,6 @@ import reactor.test.StepVerifier;
 
 import java.util.Collections;
 
-import static io.r2dbc.postgresql.client.TestClient.NO_OP;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,45 +44,39 @@ final class SimpleQueryPostgresqlStatementTest {
 
     @Test
     void bind() {
-        assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> new SimpleQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), "test-query").bind(null, null))
+        assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> new SimpleQueryPostgresqlStatement(MockContext.empty(), "test-query").bind(null, null))
             .withMessage("Binding parameters is not supported for the statement 'test-query'");
     }
 
     @Test
     void bindIndex() {
-        assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> new SimpleQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), "test-query").bind(0, null))
+        assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> new SimpleQueryPostgresqlStatement(MockContext.empty(), "test-query").bind(0, null))
             .withMessage("Binding parameters is not supported for the statement 'test-query'");
     }
 
 
     @Test
     void bindNull() {
-        assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> new SimpleQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), "test-query").bindNull(null, null))
+        assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> new SimpleQueryPostgresqlStatement(MockContext.empty(), "test-query").bindNull(null, null))
             .withMessage("Binding parameters is not supported for the statement 'test-query'");
     }
 
     @Test
     void bindNullIndex() {
-        assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> new SimpleQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), "test-query").bindNull(0, null))
+        assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> new SimpleQueryPostgresqlStatement(MockContext.empty(), "test-query").bindNull(0, null))
             .withMessage("Binding parameters is not supported for the statement 'test-query'");
     }
 
 
     @Test
-    void constructorNoClient() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new SimpleQueryPostgresqlStatement(null, MockCodecs.empty(), "test-query"))
-            .withMessage("client must not be null");
-    }
-
-    @Test
-    void constructorNoCodecs() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new SimpleQueryPostgresqlStatement(NO_OP, null, "test-query"))
-            .withMessage("codecs must not be null");
+    void constructorNoContext() {
+        assertThatIllegalArgumentException().isThrownBy(() -> new SimpleQueryPostgresqlStatement(null, "test-query"))
+            .withMessage("context must not be null");
     }
 
     @Test
     void constructorNoSql() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new SimpleQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new SimpleQueryPostgresqlStatement(MockContext.empty(), null))
             .withMessage("sql must not be null");
     }
 
@@ -93,7 +86,7 @@ final class SimpleQueryPostgresqlStatementTest {
             .expectRequest(new Query("test-query")).thenRespond(new CommandComplete("test", null, 1))
             .build();
 
-        new SimpleQueryPostgresqlStatement(client, MockCodecs.empty(), "test-query")
+        new SimpleQueryPostgresqlStatement(MockContext.builder().client(client).build(), "test-query")
             .execute()
             .flatMap(result -> result.map((row, rowMetadata) -> row))
             .as(StepVerifier::create)
@@ -106,7 +99,7 @@ final class SimpleQueryPostgresqlStatementTest {
             .expectRequest(new Query("test-query")).thenRespond(new CommandComplete("test", null, 1))
             .build();
 
-        new SimpleQueryPostgresqlStatement(client, MockCodecs.empty(), "test-query")
+        new SimpleQueryPostgresqlStatement(MockContext.builder().client(client).build(), "test-query")
             .execute()
             .flatMap(PostgresqlResult::getRowsUpdated)
             .as(StepVerifier::create)
@@ -120,7 +113,7 @@ final class SimpleQueryPostgresqlStatementTest {
             .expectRequest(new Query("test-query")).thenRespond(EmptyQueryResponse.INSTANCE)
             .build();
 
-        new SimpleQueryPostgresqlStatement(client, MockCodecs.empty(), "test-query")
+        new SimpleQueryPostgresqlStatement(MockContext.builder().client(client).build(), "test-query")
             .execute()
             .flatMap(result -> result.map((row, rowMetadata) -> row))
             .as(StepVerifier::create)
@@ -133,7 +126,7 @@ final class SimpleQueryPostgresqlStatementTest {
             .expectRequest(new Query("test-query")).thenRespond(EmptyQueryResponse.INSTANCE)
             .build();
 
-        new SimpleQueryPostgresqlStatement(client, MockCodecs.empty(), "test-query")
+        new SimpleQueryPostgresqlStatement(MockContext.builder().client(client).build(), "test-query")
             .execute()
             .flatMap(PostgresqlResult::getRowsUpdated)
             .as(StepVerifier::create)
@@ -146,7 +139,7 @@ final class SimpleQueryPostgresqlStatementTest {
             .expectRequest(new Query("test-query")).thenRespond(new ErrorResponse(Collections.emptyList()))
             .build();
 
-        new SimpleQueryPostgresqlStatement(client, MockCodecs.empty(), "test-query")
+        new SimpleQueryPostgresqlStatement(MockContext.builder().client(client).build(), "test-query")
             .execute()
             .flatMap(result -> result.map((row, rowMetadata) -> row))
             .as(StepVerifier::create)
@@ -159,7 +152,7 @@ final class SimpleQueryPostgresqlStatementTest {
             .expectRequest(new Query("test-query")).thenRespond(new ErrorResponse(Collections.emptyList()))
             .build();
 
-        new SimpleQueryPostgresqlStatement(client, MockCodecs.empty(), "test-query")
+        new SimpleQueryPostgresqlStatement(MockContext.builder().client(client).build(), "test-query")
             .execute()
             .flatMap(PostgresqlResult::getRowsUpdated)
             .as(StepVerifier::create)
@@ -172,7 +165,7 @@ final class SimpleQueryPostgresqlStatementTest {
             .expectRequest(new Query("test-query")).thenRespond(new ErrorResponse(Collections.emptyList()))
             .build();
 
-        new SimpleQueryPostgresqlStatement(client, MockCodecs.empty(), "test-query")
+        new SimpleQueryPostgresqlStatement(MockContext.builder().client(client).build(), "test-query")
             .execute()
             .flatMap(PostgresqlResult::getRowsUpdated)
             .as(StepVerifier::create)
@@ -194,11 +187,13 @@ final class SimpleQueryPostgresqlStatementTest {
             .preferredType(200, FORMAT_TEXT, String.class)
             .build();
 
-        new SimpleQueryPostgresqlStatement(client, codecs, "test-query")
+        ConnectionContext context = MockContext.builder().client(client).codecs(codecs).build();
+
+        new SimpleQueryPostgresqlStatement(context, "test-query")
             .execute()
             .flatMap(result -> result.map((row, rowMetadata) -> row))
             .as(StepVerifier::create)
-            .expectNext(new PostgresqlRow(MockCodecs.empty(), Collections.singletonList(field),
+            .expectNext(new PostgresqlRow(context, Collections.singletonList(field),
                 new ByteBuf[]{TEST.buffer(4).writeInt(100)}))
             .verifyComplete();
     }
@@ -213,7 +208,7 @@ final class SimpleQueryPostgresqlStatementTest {
                 new CommandComplete("test", null, null))
             .build();
 
-        new SimpleQueryPostgresqlStatement(client, MockCodecs.empty(), "test-query")
+        new SimpleQueryPostgresqlStatement(MockContext.builder().client(client).build(), "test-query")
             .execute()
             .flatMap(PostgresqlResult::getRowsUpdated)
             .as(StepVerifier::create)
@@ -226,7 +221,7 @@ final class SimpleQueryPostgresqlStatementTest {
             .expectRequest(new Query("INSERT test-query RETURNING *")).thenRespond(new CommandComplete("test", null, 1))
             .build();
 
-        new SimpleQueryPostgresqlStatement(client, MockCodecs.empty(), "INSERT test-query")
+        new SimpleQueryPostgresqlStatement(MockContext.builder().client(client).build(), "INSERT test-query")
             .returnGeneratedValues()
             .execute()
             .flatMap(result -> result.map((row, rowMetadata) -> row))
@@ -236,13 +231,13 @@ final class SimpleQueryPostgresqlStatementTest {
 
     @Test
     void returnGeneratedValuesHasReturningClause() {
-        assertThatIllegalStateException().isThrownBy(() -> new SimpleQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), "RETURNING").returnGeneratedValues())
+        assertThatIllegalStateException().isThrownBy(() -> new SimpleQueryPostgresqlStatement(MockContext.empty(), "RETURNING").returnGeneratedValues())
             .withMessage("Statement already includes RETURNING clause");
     }
 
     @Test
     void returnGeneratedValuesUnsupportedCommand() {
-        assertThatIllegalStateException().isThrownBy(() -> new SimpleQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), "SELECT").returnGeneratedValues())
+        assertThatIllegalStateException().isThrownBy(() -> new SimpleQueryPostgresqlStatement(MockContext.empty(), "SELECT").returnGeneratedValues())
             .withMessage("Statement is not a DELETE, INSERT, or UPDATE command");
     }
 
