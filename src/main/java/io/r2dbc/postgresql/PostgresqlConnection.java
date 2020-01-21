@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2017-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import io.r2dbc.postgresql.client.SimpleQueryMessageFlow;
 import io.r2dbc.postgresql.client.TransactionStatus;
 import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.util.Assert;
+import io.r2dbc.postgresql.util.Operators;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.IsolationLevel;
 import io.r2dbc.spi.ValidationDepth;
@@ -334,6 +335,7 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
 
     private Mono<Void> useTransactionStatus(Function<TransactionStatus, Publisher<?>> f) {
         return Flux.defer(() -> f.apply(this.client.getTransactionStatus()))
+            .as(Operators::discardOnCancel)
             .then();
     }
 
@@ -342,9 +344,10 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
     }
 
     private Publisher<?> exchange(String sql) {
-        ExceptionFactory exceptionFactory = ExceptionFactory.withSql("BEGIN");
+        ExceptionFactory exceptionFactory = ExceptionFactory.withSql(sql);
         return SimpleQueryMessageFlow.exchange(this.client, sql)
-            .handle(exceptionFactory::handleErrorResponse);
+            .handle(exceptionFactory::handleErrorResponse)
+            .as(Operators::discardOnCancel);
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2017-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package io.r2dbc.postgresql;
 
+import io.netty.util.ReferenceCountUtil;
+import io.netty.util.ReferenceCounted;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.postgresql.client.Binding;
 import io.r2dbc.postgresql.client.Client;
@@ -28,6 +30,7 @@ import io.r2dbc.postgresql.message.backend.CloseComplete;
 import io.r2dbc.postgresql.message.backend.NoData;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.GeneratedValuesUtils;
+import io.r2dbc.postgresql.util.Operators;
 import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
@@ -182,11 +185,16 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
 
         ExceptionFactory factory = ExceptionFactory.withSql(sql);
         return this.statementCache.getName(this.bindings.first(), sql)
-            .flatMapMany(name -> ExtendedQueryMessageFlow
-                .execute(Flux.fromIterable(this.bindings.bindings), this.client, this.portalNameSupplier, name, sql, this.forceBinary))
+            .flatMapMany(name -> {
+                return ExtendedQueryMessageFlow
+                    .execute(Flux.fromIterable(this.bindings.bindings), this.client, this.portalNameSupplier, name, sql, this.forceBinary);
+            })
             .filter(RESULT_FRAME_FILTER)
             .windowUntil(CloseComplete.class::isInstance)
-            .map(messages -> PostgresqlResult.toResult(this.codecs, messages, factory));
+            .map(messages -> PostgresqlResult.toResult(this.codecs, messages, factory))
+            .cast(io.r2dbc.postgresql.api.PostgresqlResult.class)
+            .as(Operators::discardOnCancel)
+            .doOnDiscard(ReferenceCounted.class, ReferenceCountUtil::release);
     }
 
     private int getIndex(String identifier) {
