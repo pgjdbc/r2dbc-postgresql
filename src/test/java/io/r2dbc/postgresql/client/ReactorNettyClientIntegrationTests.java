@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2017-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,13 +23,20 @@ import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.postgresql.api.PostgresqlConnection;
 import io.r2dbc.postgresql.authentication.PasswordAuthenticationHandler;
+import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
+import io.r2dbc.postgresql.message.backend.BindComplete;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.DataRow;
 import io.r2dbc.postgresql.message.backend.NotificationResponse;
 import io.r2dbc.postgresql.message.backend.RowDescription;
+import io.r2dbc.postgresql.message.frontend.Bind;
+import io.r2dbc.postgresql.message.frontend.Describe;
+import io.r2dbc.postgresql.message.frontend.Execute;
+import io.r2dbc.postgresql.message.frontend.ExecutionType;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.message.frontend.Query;
+import io.r2dbc.postgresql.message.frontend.Sync;
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import io.r2dbc.spi.R2dbcPermissionDeniedException;
@@ -62,6 +69,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.fail;
@@ -265,6 +273,56 @@ final class ReactorNettyClientIntegrationTests {
             .zipWith(this.datarowCleanup(this.client.exchange(Mono.just(new Query("SELECT value FROM test LIMIT 1 OFFSET 1")))))
             .flatMapIterable(t -> Arrays.asList(t.getT1(), t.getT2()))
             .as(StepVerifier::create)
+            .assertNext(message -> assertThat(message).isInstanceOf(RowDescription.class))
+            .assertNext(message -> assertThat(message).isInstanceOf(RowDescription.class))
+            .assertNext(message -> assertThat(message).isInstanceOf(DataRow.class))
+            .assertNext(message -> assertThat(message).isInstanceOf(DataRow.class))
+            .expectNext(new CommandComplete("SELECT", null, 1))
+            .expectNext(new CommandComplete("SELECT", null, 1))
+            .verifyComplete();
+    }
+
+    @Test
+    void parallelExchangeExtendedFlow() {
+        ExtendedQueryMessageFlow.parse(this.client, "S_1", "SELECT $1", Arrays.asList(INT4.getObjectId()))
+            .as(StepVerifier::create)
+            .verifyComplete();
+
+        this.client.exchange(Mono.just(Sync.INSTANCE))
+            .as(StepVerifier::create)
+            .verifyComplete();
+
+        FrontendMessage bind1 = new Bind(
+            "P_1",
+            Collections.singletonList(Format.FORMAT_BINARY),
+            Collections.singletonList(this.client.getByteBufAllocator().buffer(4).writeInt(42)),
+            Collections.singletonList(Format.FORMAT_BINARY),
+            "S_1"
+        );
+        Describe describe1 = new Describe("P_1", ExecutionType.PORTAL);
+        Execute execute1 = new Execute("P_1", Integer.MAX_VALUE);
+        FrontendMessage bind2 = new Bind(
+            "P_2",
+            Collections.singletonList(Format.FORMAT_BINARY),
+            Collections.singletonList(this.client.getByteBufAllocator().buffer(4).writeInt(42)),
+            Collections.singletonList(Format.FORMAT_BINARY),
+            "S_1"
+        );
+        Describe describe2 = new Describe("P_2", ExecutionType.PORTAL);
+        Execute execute2 = new Execute("P_2", Integer.MAX_VALUE);
+
+        Flux<FrontendMessage> flow1 = Flux.just(bind1, describe1, execute1, Sync.INSTANCE).delayElements(Duration.ofMillis(10));
+        Flux<FrontendMessage> flow2 = Flux.just(bind2, describe2, execute2, Sync.INSTANCE).delayElements(Duration.ofMillis(20));
+
+        // Actual response sequence is BindComplete/RowDescription/DataRow/CommandComplete for each of the extended flows
+        // Zipping and flattening makes it appear in the assertions that it would be BindComplete/BindComplete/RowDescription/RowDescription…
+
+        this.datarowCleanup(Flux.zip(this.client.exchange(flow1), this.client.exchange(flow2))
+            .flatMapIterable(t -> Arrays.asList(t.getT1(), t.getT2()))
+        )
+            .as(StepVerifier::create)
+            .assertNext(message -> assertThat(message).isInstanceOf(BindComplete.class))
+            .assertNext(message -> assertThat(message).isInstanceOf(BindComplete.class))
             .assertNext(message -> assertThat(message).isInstanceOf(RowDescription.class))
             .assertNext(message -> assertThat(message).isInstanceOf(RowDescription.class))
             .assertNext(message -> assertThat(message).isInstanceOf(DataRow.class))

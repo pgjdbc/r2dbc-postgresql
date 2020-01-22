@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2017-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import io.netty.channel.socket.DatagramChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-import io.netty.util.ReferenceCountUtil;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.r2dbc.postgresql.message.backend.BackendKeyData;
@@ -72,9 +71,9 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -99,11 +98,11 @@ public final class ReactorNettyClient implements Client {
 
     private final Connection connection;
 
-    private final EmitterProcessor<FrontendMessage> requestProcessor = EmitterProcessor.create(false);
+    private final EmitterProcessor<Publisher<FrontendMessage>> requestProcessor = EmitterProcessor.create(false);
 
-    private final FluxSink<FrontendMessage> requests = this.requestProcessor.sink();
+    private final FluxSink<Publisher<FrontendMessage>> requests = this.requestProcessor.sink();
 
-    private final Queue<ResponseReceiver> responseReceivers = Queues.<ResponseReceiver>unbounded().get();
+    private final Queue<Conversation> conversations = Queues.<Conversation>unbounded().get();
 
     private final DirectProcessor<NotificationResponse> notificationProcessor = DirectProcessor.create();
 
@@ -140,11 +139,11 @@ public final class ReactorNettyClient implements Client {
                 handleConnectionError(throwable);
             })
             .handle((message, sink) -> {
-                ResponseReceiver receiver = this.responseReceivers.peek();
+                Conversation receiver = this.conversations.peek();
                 if (receiver != null) {
                     if (receiver.takeUntil.test(message)) {
                         receiver.sink.complete();
-                        this.responseReceivers.poll();
+                        this.conversations.poll();
                     } else {
                         receiver.sink.next(message);
                     }
@@ -154,6 +153,7 @@ public final class ReactorNettyClient implements Client {
             .then();
 
         Mono<Void> request = this.requestProcessor
+            .concatMap(Function.identity())
             .flatMap(message -> {
                 if (DEBUG_ENABLED) {
                     logger.debug("Request:  {}", message);
@@ -173,39 +173,53 @@ public final class ReactorNettyClient implements Client {
     }
 
     @Override
+    public Disposable addNotificationListener(Consumer<NotificationResponse> consumer) {
+        return this.notificationProcessor.subscribe(consumer);
+    }
+
+    @Override
+    public Mono<Void> close() {
+        return Mono.defer(() -> {
+
+            drainError(EXPECTED);
+            if (this.isClosed.compareAndSet(false, true)) {
+
+                if (!isConnected() || this.processId == null) {
+                    this.connection.dispose();
+                    return this.connection.onDispose();
+                }
+
+                return Flux.just(Terminate.INSTANCE)
+                    .doOnNext(message -> logger.debug("Request:  {}", message))
+                    .concatMap(message -> this.connection.outbound().send(message.encode(this.connection.outbound().alloc())))
+                    .then()
+                    .doOnSuccess(v -> this.connection.dispose())
+                    .then(this.connection.onDispose());
+            }
+
+            return Mono.empty();
+        });
+    }
+
+    @Override
     public Flux<BackendMessage> exchange(Predicate<BackendMessage> takeUntil, Publisher<FrontendMessage> requests) {
+        Assert.requireNonNull(takeUntil, "takeUntil must not be null");
         Assert.requireNonNull(requests, "requests must not be null");
 
         return Flux
             .create(sink -> {
-
-                final AtomicInteger once = new AtomicInteger();
-
-                Flux.from(requests)
-                    .subscribe(message -> {
-
-                        if (!isConnected()) {
-                            ReferenceCountUtil.safeRelease(message);
-                            sink.error(new PostgresConnectionClosedException("Cannot exchange messages because the connection is closed"));
-                            return;
-                        }
-
-                        if (once.get() == 0 && once.compareAndSet(0, 1)) {
-                            synchronized (this) {
-                                this.responseReceivers.add(new ResponseReceiver(sink, takeUntil));
-                                this.requests.next(message);
-                            }
-                        } else {
-                            this.requests.next(message);
-                        }
-
-                    }, this.requests::error, () -> {
-
+                if (!isConnected()) {
+                    sink.error(new PostgresConnectionClosedException("Cannot exchange messages because the connection is closed"));
+                    return;
+                }
+                synchronized (this) {
+                    this.conversations.add(new Conversation(sink, takeUntil));
+                    this.requests.next(Flux.from(requests).doOnNext(m -> {
                         if (!isConnected()) {
                             sink.error(new PostgresConnectionClosedException("Cannot exchange messages because the connection is closed"));
                         }
-                    });
-
+                    }));
+                }
             });
     }
 
@@ -213,7 +227,7 @@ public final class ReactorNettyClient implements Client {
     public void send(FrontendMessage message) {
         Assert.requireNonNull(message, "requests must not be null");
 
-        this.requests.next(message);
+        this.requests.next(Mono.just(message));
     }
 
     private Mono<Void> resumeError(Throwable throwable) {
@@ -371,38 +385,6 @@ public final class ReactorNettyClient implements Client {
     }
 
     @Override
-    public Mono<Void> close() {
-        return Mono.defer(() -> {
-
-            drainError(EXPECTED);
-            if (this.isClosed.compareAndSet(false, true)) {
-
-                if (!isConnected() || this.processId == null) {
-                    this.connection.dispose();
-                    return this.connection.onDispose();
-                }
-
-                return Flux.just(Terminate.INSTANCE)
-                    .doOnNext(message -> logger.debug("Request:  {}", message))
-                    .concatMap(message -> this.connection.outbound().send(message.encode(this.connection.outbound().alloc())))
-                    .then()
-                    .doOnSuccess(v -> this.connection.dispose())
-                    .then(this.connection.onDispose());
-            }
-
-            return Mono.empty();
-        });
-    }
-
-    private void drainError(Supplier<? extends Throwable> supplier) {
-        ResponseReceiver receiver;
-
-        while ((receiver = this.responseReceivers.poll()) != null) {
-            receiver.sink.error(supplier.get());
-        }
-    }
-
-    @Override
     public ByteBufAllocator getByteBufAllocator() {
         return this.byteBufAllocator;
     }
@@ -441,11 +423,6 @@ public final class ReactorNettyClient implements Client {
         return channel.isOpen();
     }
 
-    @Override
-    public Disposable addNotificationListener(Consumer<NotificationResponse> consumer) {
-        return this.notificationProcessor.subscribe(consumer);
-    }
-
     private static String toString(List<Field> fields) {
 
         StringJoiner joiner = new StringJoiner(", ");
@@ -468,13 +445,27 @@ public final class ReactorNettyClient implements Client {
         drainError(() -> new PostgresConnectionException(error));
     }
 
-    private static class ResponseReceiver {
+    private void drainError(Supplier<? extends Throwable> supplier) {
+        Conversation receiver;
+
+        while ((receiver = this.conversations.poll()) != null) {
+            receiver.sink.error(supplier.get());
+        }
+    }
+
+    /**
+     * Value object representing a single conversation. The driver permits a single conversation at a time to ensure that request messages get routed to the proper response receiver and do not leak
+     * into other conversations. A conversation must be finished in the sense that the {@link Publisher} of {@link FrontendMessage} has completed before the next conversation is started.
+     * <p>
+     * A single conversation can make use of pipelining.
+     */
+    private static class Conversation {
 
         private final FluxSink<BackendMessage> sink;
 
         private final Predicate<BackendMessage> takeUntil;
 
-        private ResponseReceiver(FluxSink<BackendMessage> sink, Predicate<BackendMessage> takeUntil) {
+        private Conversation(FluxSink<BackendMessage> sink, Predicate<BackendMessage> takeUntil) {
             this.sink = sink;
             this.takeUntil = takeUntil;
         }
@@ -482,9 +473,9 @@ public final class ReactorNettyClient implements Client {
 
     private final class EnsureSubscribersCompleteChannelHandler extends ChannelDuplexHandler {
 
-        private final EmitterProcessor<FrontendMessage> requestProcessor;
+        private final EmitterProcessor<Publisher<FrontendMessage>> requestProcessor;
 
-        private EnsureSubscribersCompleteChannelHandler(EmitterProcessor<FrontendMessage> requestProcessor) {
+        private EnsureSubscribersCompleteChannelHandler(EmitterProcessor<Publisher<FrontendMessage>> requestProcessor) {
             this.requestProcessor = requestProcessor;
         }
 

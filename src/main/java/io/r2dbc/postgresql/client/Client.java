@@ -68,6 +68,7 @@ public interface Client {
      * @param requests the publisher of outbound messages
      * @return a {@link Flux} of incoming messages that ends with the end of the frame (i.e. reception of a {@link ReadyForQuery} message.
      * @throws IllegalArgumentException if {@code requests} is {@code null}
+     * @since 0.9
      */
     Flux<BackendMessage> exchange(Predicate<BackendMessage> takeUntil, Publisher<FrontendMessage> requests);
 
@@ -76,6 +77,7 @@ public interface Client {
      *
      * @param message outbound message
      * @throws IllegalArgumentException if {@code message} is {@code null}
+     * @since 0.9
      */
     void send(FrontendMessage message);
 
