@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2017-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,7 +102,7 @@ public final class ReactorNettyClient implements Client {
 
     private final FluxSink<Publisher<FrontendMessage>> requests = this.requestProcessor.sink();
 
-    private final Queue<ResponseReceiver> responseReceivers = Queues.<ResponseReceiver>unbounded().get();
+    private final Queue<Conversation> conversations = Queues.<Conversation>unbounded().get();
 
     private final DirectProcessor<NotificationResponse> notificationProcessor = DirectProcessor.create();
 
@@ -139,11 +139,11 @@ public final class ReactorNettyClient implements Client {
                 handleConnectionError(throwable);
             })
             .handle((message, sink) -> {
-                ResponseReceiver receiver = this.responseReceivers.peek();
+                Conversation receiver = this.conversations.peek();
                 if (receiver != null) {
                     if (receiver.takeUntil.test(message)) {
                         receiver.sink.complete();
-                        this.responseReceivers.poll();
+                        this.conversations.poll();
                     } else {
                         receiver.sink.next(message);
                     }
@@ -174,6 +174,7 @@ public final class ReactorNettyClient implements Client {
 
     @Override
     public Flux<BackendMessage> exchange(Predicate<BackendMessage> takeUntil, Publisher<FrontendMessage> requests) {
+        Assert.requireNonNull(takeUntil, "takeUntil must not be null");
         Assert.requireNonNull(requests, "requests must not be null");
 
         return Flux
@@ -183,7 +184,7 @@ public final class ReactorNettyClient implements Client {
                     return;
                 }
                 synchronized (this) {
-                    this.responseReceivers.add(new ResponseReceiver(sink, takeUntil));
+                    this.conversations.add(new Conversation(sink, takeUntil));
                     this.requests.next(Flux.from(requests).doOnNext(m -> {
                         if (!isConnected()) {
                             sink.error(new PostgresConnectionClosedException("Cannot exchange messages because the connection is closed"));
@@ -379,9 +380,9 @@ public final class ReactorNettyClient implements Client {
     }
 
     private void drainError(Supplier<? extends Throwable> supplier) {
-        ResponseReceiver receiver;
+        Conversation receiver;
 
-        while ((receiver = this.responseReceivers.poll()) != null) {
+        while ((receiver = this.conversations.poll()) != null) {
             receiver.sink.error(supplier.get());
         }
     }
@@ -452,13 +453,19 @@ public final class ReactorNettyClient implements Client {
         drainError(() -> new PostgresConnectionException(error));
     }
 
-    private static class ResponseReceiver {
+    /**
+     * Value object representing a single conversation. The driver permits a single conversation at a time to ensure that request messages get routed to the proper response receiver and do not leak
+     * into other conversations. A conversation must be finished in the sense that the {@link Publisher} of {@link FrontendMessage} has completed before the next conversation is started.
+     * <p>
+     * A single conversation can make use of pipelining.
+     */
+    private static class Conversation {
 
         private final FluxSink<BackendMessage> sink;
 
         private final Predicate<BackendMessage> takeUntil;
 
-        private ResponseReceiver(FluxSink<BackendMessage> sink, Predicate<BackendMessage> takeUntil) {
+        private Conversation(FluxSink<BackendMessage> sink, Predicate<BackendMessage> takeUntil) {
             this.sink = sink;
             this.takeUntil = takeUntil;
         }

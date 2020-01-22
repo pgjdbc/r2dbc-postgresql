@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2017-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -311,9 +311,11 @@ final class ReactorNettyClientIntegrationTests {
         Describe describe2 = new Describe("P_2", ExecutionType.PORTAL);
         Execute execute2 = new Execute("P_2", Integer.MAX_VALUE);
 
-
         Flux<FrontendMessage> flow1 = Flux.just(bind1, describe1, execute1, Sync.INSTANCE).delayElements(Duration.ofMillis(10));
         Flux<FrontendMessage> flow2 = Flux.just(bind2, describe2, execute2, Sync.INSTANCE).delayElements(Duration.ofMillis(20));
+
+        // Actual response sequence is BindComplete/RowDescription/DataRow/CommandComplete for each of the extended flows
+        // Zipping and flattening makes it appear in the assertions that it would be BindComplete/BindComplete/RowDescription/RowDescription…
 
         this.datarowCleanup(Flux.zip(this.client.exchange(flow1), this.client.exchange(flow2))
             .flatMapIterable(t -> Arrays.asList(t.getT1(), t.getT2()))
