@@ -173,6 +173,35 @@ public final class ReactorNettyClient implements Client {
     }
 
     @Override
+    public Disposable addNotificationListener(Consumer<NotificationResponse> consumer) {
+        return this.notificationProcessor.subscribe(consumer);
+    }
+
+    @Override
+    public Mono<Void> close() {
+        return Mono.defer(() -> {
+
+            drainError(EXPECTED);
+            if (this.isClosed.compareAndSet(false, true)) {
+
+                if (!isConnected() || this.processId == null) {
+                    this.connection.dispose();
+                    return this.connection.onDispose();
+                }
+
+                return Flux.just(Terminate.INSTANCE)
+                    .doOnNext(message -> logger.debug("Request:  {}", message))
+                    .concatMap(message -> this.connection.outbound().send(message.encode(this.connection.outbound().alloc())))
+                    .then()
+                    .doOnSuccess(v -> this.connection.dispose())
+                    .then(this.connection.onDispose());
+            }
+
+            return Mono.empty();
+        });
+    }
+
+    @Override
     public Flux<BackendMessage> exchange(Predicate<BackendMessage> takeUntil, Publisher<FrontendMessage> requests) {
         Assert.requireNonNull(takeUntil, "takeUntil must not be null");
         Assert.requireNonNull(requests, "requests must not be null");
@@ -356,38 +385,6 @@ public final class ReactorNettyClient implements Client {
     }
 
     @Override
-    public Mono<Void> close() {
-        return Mono.defer(() -> {
-
-            drainError(EXPECTED);
-            if (this.isClosed.compareAndSet(false, true)) {
-
-                if (!isConnected() || this.processId == null) {
-                    this.connection.dispose();
-                    return this.connection.onDispose();
-                }
-
-                return Flux.just(Terminate.INSTANCE)
-                    .doOnNext(message -> logger.debug("Request:  {}", message))
-                    .concatMap(message -> this.connection.outbound().send(message.encode(this.connection.outbound().alloc())))
-                    .then()
-                    .doOnSuccess(v -> this.connection.dispose())
-                    .then(this.connection.onDispose());
-            }
-
-            return Mono.empty();
-        });
-    }
-
-    private void drainError(Supplier<? extends Throwable> supplier) {
-        Conversation receiver;
-
-        while ((receiver = this.conversations.poll()) != null) {
-            receiver.sink.error(supplier.get());
-        }
-    }
-
-    @Override
     public ByteBufAllocator getByteBufAllocator() {
         return this.byteBufAllocator;
     }
@@ -426,11 +423,6 @@ public final class ReactorNettyClient implements Client {
         return channel.isOpen();
     }
 
-    @Override
-    public Disposable addNotificationListener(Consumer<NotificationResponse> consumer) {
-        return this.notificationProcessor.subscribe(consumer);
-    }
-
     private static String toString(List<Field> fields) {
 
         StringJoiner joiner = new StringJoiner(", ");
@@ -451,6 +443,14 @@ public final class ReactorNettyClient implements Client {
 
     private void handleConnectionError(Throwable error) {
         drainError(() -> new PostgresConnectionException(error));
+    }
+
+    private void drainError(Supplier<? extends Throwable> supplier) {
+        Conversation receiver;
+
+        while ((receiver = this.conversations.poll()) != null) {
+            receiver.sink.error(supplier.get());
+        }
     }
 
     /**
