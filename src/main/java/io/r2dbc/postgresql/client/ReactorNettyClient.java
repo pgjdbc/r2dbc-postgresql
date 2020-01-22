@@ -29,6 +29,7 @@ import io.netty.channel.socket.DatagramChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.util.ReferenceCountUtil;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.r2dbc.postgresql.message.backend.BackendKeyData;
@@ -145,7 +146,12 @@ public final class ReactorNettyClient implements Client {
                         receiver.sink.complete();
                         this.conversations.poll();
                     } else {
-                        receiver.sink.next(message);
+
+                        if (receiver.sink.isCancelled()) {
+                            ReferenceCountUtil.release(message);
+                        } else {
+                            receiver.sink.next(message);
+                        }
                     }
                 }
             })
