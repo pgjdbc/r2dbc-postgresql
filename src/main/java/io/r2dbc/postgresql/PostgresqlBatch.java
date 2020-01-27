@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2017-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 package io.r2dbc.postgresql;
 
-import io.r2dbc.postgresql.client.Client;
-import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Batch;
 import reactor.core.publisher.Flux;
@@ -30,15 +28,12 @@ import java.util.List;
  */
 final class PostgresqlBatch implements io.r2dbc.postgresql.api.PostgresqlBatch {
 
-    private final Client client;
-
-    private final Codecs codecs;
+    private final ConnectionContext context;
 
     private final List<String> statements = new ArrayList<>();
 
-    PostgresqlBatch(Client client, Codecs codecs) {
-        this.client = Assert.requireNonNull(client, "client must not be null");
-        this.codecs = Assert.requireNonNull(codecs, "codecs must not be null");
+    PostgresqlBatch(ConnectionContext context) {
+        this.context = Assert.requireNonNull(context, "context must not be null");
     }
 
     @Override
@@ -55,15 +50,14 @@ final class PostgresqlBatch implements io.r2dbc.postgresql.api.PostgresqlBatch {
 
     @Override
     public Flux<io.r2dbc.postgresql.api.PostgresqlResult> execute() {
-        return new SimpleQueryPostgresqlStatement(this.client, this.codecs, String.join("; ", this.statements))
+        return new SimpleQueryPostgresqlStatement(this.context, String.join("; ", this.statements))
             .execute();
     }
 
     @Override
     public String toString() {
         return "PostgresqlBatch{" +
-            "client=" + this.client +
-            ", codecs=" + this.codecs +
+            "context=" + this.context +
             ", statements=" + this.statements +
             '}';
     }

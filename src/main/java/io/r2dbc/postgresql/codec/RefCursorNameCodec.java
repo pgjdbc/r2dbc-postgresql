@@ -17,7 +17,6 @@
 package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
@@ -25,25 +24,19 @@ import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
-import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.CHAR;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.UNKNOWN;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.REF_CURSOR;
 
-final class StringCodec extends AbstractCodec<String> {
+final class RefCursorNameCodec extends AbstractCodec<String> {
 
-    private final ByteBufAllocator byteBufAllocator;
+    static final RefCursorNameCodec INSTANCE = new RefCursorNameCodec();
 
-    StringCodec(ByteBufAllocator byteBufAllocator) {
+    RefCursorNameCodec() {
         super(String.class);
-        this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
     }
 
     @Override
     public Parameter encodeNull() {
-        return createNull(VARCHAR, FORMAT_TEXT);
+        throw new UnsupportedOperationException("Cannot encode RefCursor");
     }
 
     @Override
@@ -51,7 +44,7 @@ final class StringCodec extends AbstractCodec<String> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return BPCHAR == type || CHAR == type || TEXT == type || UNKNOWN == type || VARCHAR == type;
+        return REF_CURSOR == type;
     }
 
     @Override
@@ -63,9 +56,7 @@ final class StringCodec extends AbstractCodec<String> {
 
     @Override
     Parameter doEncode(String value) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return create(VARCHAR, FORMAT_TEXT, () -> ByteBufUtils.encode(this.byteBufAllocator, value));
+        throw new UnsupportedOperationException("Cannot encode RefCursor");
     }
 
 }

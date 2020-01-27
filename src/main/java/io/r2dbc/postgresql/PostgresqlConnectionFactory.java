@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2017-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,17 +162,21 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
                     })
             )
             .flatMap(client -> {
+
                 DefaultCodecs codecs = new DefaultCodecs(client.getByteBufAllocator());
+                StatementCache statementCache = StatementCache.fromPreparedStatementCacheQueries(client, this.configuration.getPreparedStatementCacheQueries());
+
+                // early connection object to retrieve initialization details
+                PostgresqlConnection earlyConnection = new PostgresqlConnection(client, codecs, DefaultPortalNameSupplier.INSTANCE, statementCache, IsolationLevel.READ_COMMITTED,
+                    this.configuration.isForceBinary());
 
                 Mono<IsolationLevel> isolationLevelMono = Mono.just(IsolationLevel.READ_COMMITTED);
                 if (!forReplication) {
-                    isolationLevelMono = getIsolationLevel(client, codecs);
+                    isolationLevelMono = getIsolationLevel(earlyConnection);
                 }
-
-                StatementCache statementCache = StatementCache.fromPreparedStatementCacheQueries(client, this.configuration.getPreparedStatementCacheQueries());
-
                 return isolationLevelMono
-                    .map(it -> new PostgresqlConnection(client, codecs, DefaultPortalNameSupplier.INSTANCE, statementCache, it, this.configuration.isForceBinary()))
+                    // actual connection to be used
+                    .map(isolationLevel -> new PostgresqlConnection(client, codecs, DefaultPortalNameSupplier.INSTANCE, statementCache, isolationLevel, this.configuration.isForceBinary()))
                     .delayUntil(connection -> {
                         return prepareConnection(connection, client.getByteBufAllocator(), codecs);
                     })
@@ -251,8 +255,8 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
         }
     }
 
-    private Mono<IsolationLevel> getIsolationLevel(Client client, DefaultCodecs codecs) {
-        return new SimpleQueryPostgresqlStatement(client, codecs, "SHOW TRANSACTION ISOLATION LEVEL")
+    private Mono<IsolationLevel> getIsolationLevel(io.r2dbc.postgresql.api.PostgresqlConnection connection) {
+        return connection.createStatement("SHOW TRANSACTION ISOLATION LEVEL")
             .execute()
             .flatMap(it -> it.map((row, rowMetadata) -> {
                 String level = row.get(0, String.class);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2017-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package io.r2dbc.postgresql;
 
 import io.netty.util.ReferenceCountUtil;
-import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.DataRow;
@@ -43,7 +42,7 @@ final class PostgresqlResult implements io.r2dbc.postgresql.api.PostgresqlResult
 
     private static final Predicate<BackendMessage> TAKE_UNTIL = or(CommandComplete.class::isInstance, EmptyQueryResponse.class::isInstance, PortalSuspended.class::isInstance);
 
-    private final Codecs codecs;
+    private final ConnectionContext context;
 
     private final Flux<BackendMessage> messages;
 
@@ -53,8 +52,8 @@ final class PostgresqlResult implements io.r2dbc.postgresql.api.PostgresqlResult
 
     private volatile RowDescription rowDescription;
 
-    PostgresqlResult(Codecs codecs, Flux<BackendMessage> messages, ExceptionFactory factory) {
-        this.codecs = Assert.requireNonNull(codecs, "codecs must not be null");
+    PostgresqlResult(ConnectionContext context, Flux<BackendMessage> messages, ExceptionFactory factory) {
+        this.context = Assert.requireNonNull(context, "context must not be null");
         this.messages = Assert.requireNonNull(messages, "messages must not be null");
         this.factory = Assert.requireNonNull(factory, "factory must not be null");
     }
@@ -88,12 +87,12 @@ final class PostgresqlResult implements io.r2dbc.postgresql.api.PostgresqlResult
                 try {
                     if (message instanceof RowDescription) {
                         this.rowDescription = (RowDescription) message;
-                        this.metadata = PostgresqlRowMetadata.toRowMetadata(this.codecs, (RowDescription) message);
+                        this.metadata = PostgresqlRowMetadata.toRowMetadata(this.context.getCodecs(), (RowDescription) message);
                         return;
                     }
 
                     if (message instanceof DataRow) {
-                        PostgresqlRow row = PostgresqlRow.toRow(this.codecs, (DataRow) message, this.rowDescription);
+                        PostgresqlRow row = PostgresqlRow.toRow(this.context, (DataRow) message, this.rowDescription);
 
 
                         sink.next(f.apply(row, this.metadata));
@@ -108,17 +107,13 @@ final class PostgresqlResult implements io.r2dbc.postgresql.api.PostgresqlResult
     @Override
     public String toString() {
         return "PostgresqlResult{" +
-            "codecs=" + this.codecs +
+            "context=" + this.context +
             ", messages=" + this.messages +
             '}';
     }
 
-    static PostgresqlResult toResult(Codecs codecs, Flux<BackendMessage> messages, ExceptionFactory factory) {
-        Assert.requireNonNull(codecs, "codecs must not be null");
-        Assert.requireNonNull(messages, "messages must not be null");
-        Assert.requireNonNull(factory, "factory must not be null");
-
-        return new PostgresqlResult(codecs, messages, factory);
+    static PostgresqlResult toResult(ConnectionContext context, Flux<BackendMessage> messages, ExceptionFactory factory) {
+        return new PostgresqlResult(context, messages, factory);
     }
 
 }

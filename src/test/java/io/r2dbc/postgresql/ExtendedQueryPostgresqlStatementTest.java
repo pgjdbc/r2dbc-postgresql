@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2017-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,12 +43,10 @@ import reactor.test.StepVerifier;
 
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 
 import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
-import static io.r2dbc.postgresql.client.TestClient.NO_OP;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
@@ -68,7 +66,8 @@ final class ExtendedQueryPostgresqlStatementTest {
 
     private final StatementCache statementCache = mock(StatementCache.class, RETURNS_SMART_NULLS);
 
-    private final ExtendedQueryPostgresqlStatement statement = new ExtendedQueryPostgresqlStatement(NO_OP, this.codecs, () -> "", "test-query-$1", this.statementCache, false);
+    private final ExtendedQueryPostgresqlStatement statement = new ExtendedQueryPostgresqlStatement(MockContext.builder().codecs(codecs).build(), () -> "", "test-query-$1", this.statementCache,
+        false);
 
     @Test
     void bind() {
@@ -104,7 +103,7 @@ final class ExtendedQueryPostgresqlStatementTest {
             .encoding(Integer.class, new Parameter(FORMAT_BINARY, INT4.getObjectId(), NULL_VALUE))
             .build();
 
-        ExtendedQueryPostgresqlStatement statement = new ExtendedQueryPostgresqlStatement(NO_OP, codecs, () -> "", "test-query-$1", this.statementCache, false);
+        ExtendedQueryPostgresqlStatement statement = new ExtendedQueryPostgresqlStatement(MockContext.builder().codecs(codecs).build(), () -> "", "test-query-$1", this.statementCache, false);
 
         assertThat(statement.bindNull("$1", Integer.class).getCurrentBinding())
             .isEqualTo(new Binding(1).add(0, new Parameter(FORMAT_BINARY, INT4.getObjectId(), NULL_VALUE)));
@@ -141,32 +140,26 @@ final class ExtendedQueryPostgresqlStatementTest {
     }
 
     @Test
-    void constructorNoClient() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(null, MockCodecs.empty(), () -> "", "test-query", this.statementCache, false))
-            .withMessage("client must not be null");
-    }
-
-    @Test
-    void constructorNoCodecs() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(NO_OP, null, () -> "", "test-query", this.statementCache, false))
-            .withMessage("codecs must not be null");
+    void constructorNoContext() {
+        assertThatIllegalArgumentException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(null, () -> "", "test-query", this.statementCache, false))
+            .withMessage("context must not be null");
     }
 
     @Test
     void constructorNoPortalNameSupplier() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), null, "test-query", this.statementCache, false))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(MockContext.empty(), null, "test-query", this.statementCache, false))
             .withMessage("portalNameSupplier must not be null");
     }
 
     @Test
     void constructorNoSql() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), () -> "", null, this.statementCache, false))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(MockContext.empty(), () -> "", null, this.statementCache, false))
             .withMessage("sql must not be null");
     }
 
     @Test
     void constructorNoStatementCache() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), () -> "", "test-query", null, false))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(MockContext.empty(), () -> "", "test-query", null, false))
             .withMessage("statementCache must not be null");
     }
 
@@ -198,7 +191,7 @@ final class ExtendedQueryPostgresqlStatementTest {
 
         when(this.statementCache.getName(any(), any())).thenReturn(Mono.just("test-name"));
 
-        new ExtendedQueryPostgresqlStatement(client, codecs, portalNameSupplier, "test-query-$1-$1", this.statementCache, false)
+        new ExtendedQueryPostgresqlStatement(MockContext.builder().client(client).codecs(codecs).build(), portalNameSupplier, "test-query-$1-$1", this.statementCache, false)
             .bind("$1", 100)
             .add()
             .bind("$1", 200)
@@ -235,7 +228,7 @@ final class ExtendedQueryPostgresqlStatementTest {
 
         when(this.statementCache.getName(any(), any())).thenReturn(Mono.just("test-name"));
 
-        new ExtendedQueryPostgresqlStatement(client, codecs, portalNameSupplier, "test-query-$1", this.statementCache, false)
+        new ExtendedQueryPostgresqlStatement(MockContext.builder().client(client).codecs(codecs).build(), portalNameSupplier, "test-query-$1", this.statementCache, false)
             .bind("$1", 100)
             .execute()
             .flatMap(PostgresqlResult::getRowsUpdated)
@@ -263,7 +256,7 @@ final class ExtendedQueryPostgresqlStatementTest {
 
         when(this.statementCache.getName(any(), any())).thenReturn(Mono.just("test-name"));
 
-        new ExtendedQueryPostgresqlStatement(client, codecs, portalNameSupplier, "test-query-$1", this.statementCache, false)
+        new ExtendedQueryPostgresqlStatement(MockContext.builder().client(client).codecs(codecs).build(), portalNameSupplier, "test-query-$1", this.statementCache, false)
             .bind("$1", 100)
             .execute()
             .flatMap(result -> result.map((row, rowMetadata) -> row))
@@ -291,7 +284,7 @@ final class ExtendedQueryPostgresqlStatementTest {
 
         when(this.statementCache.getName(any(), any())).thenReturn(Mono.just("test-name"));
 
-        new ExtendedQueryPostgresqlStatement(client, codecs, portalNameSupplier, "test-query-$1", this.statementCache, false)
+        new ExtendedQueryPostgresqlStatement(MockContext.builder().client(client).codecs(codecs).build(), portalNameSupplier, "test-query-$1", this.statementCache, false)
             .bind("$1", 100)
             .execute()
             .flatMap(PostgresqlResult::getRowsUpdated)
@@ -319,7 +312,7 @@ final class ExtendedQueryPostgresqlStatementTest {
 
         when(this.statementCache.getName(any(), any())).thenReturn(Mono.just("test-name"));
 
-        new ExtendedQueryPostgresqlStatement(client, codecs, portalNameSupplier, "test-query-$1", this.statementCache, false)
+        new ExtendedQueryPostgresqlStatement(MockContext.builder().client(client).codecs(codecs).build(), portalNameSupplier, "test-query-$1", this.statementCache, false)
             .bind("$1", 100)
             .execute()
             .flatMap(PostgresqlResult::getRowsUpdated)
@@ -348,7 +341,7 @@ final class ExtendedQueryPostgresqlStatementTest {
 
         when(this.statementCache.getName(any(), any())).thenReturn(Mono.just("test-name"));
 
-        new ExtendedQueryPostgresqlStatement(client, codecs, portalNameSupplier, "test-query-$1", this.statementCache, false)
+        new ExtendedQueryPostgresqlStatement(MockContext.builder().client(client).codecs(codecs).build(), portalNameSupplier, "test-query-$1", this.statementCache, false)
             .bind("$1", 100)
             .execute()
             .as(StepVerifier::create)
@@ -377,7 +370,7 @@ final class ExtendedQueryPostgresqlStatementTest {
 
         when(this.statementCache.getName(any(), any())).thenReturn(Mono.just("test-name"));
 
-        new ExtendedQueryPostgresqlStatement(client, codecs, portalNameSupplier, "test-query-$1", this.statementCache, false)
+        new ExtendedQueryPostgresqlStatement(MockContext.builder().client(client).codecs(codecs).build(), portalNameSupplier, "test-query-$1", this.statementCache, false)
             .bind("$1", 100)
             .execute()
             .flatMap(result -> result.map((row, metadata) -> 1))
@@ -408,7 +401,7 @@ final class ExtendedQueryPostgresqlStatementTest {
 
         when(this.statementCache.getName(any(), any())).thenReturn(Mono.just("test-name"));
 
-        new ExtendedQueryPostgresqlStatement(client, codecs, portalNameSupplier, "INSERT test-query-$1", this.statementCache, false)
+        new ExtendedQueryPostgresqlStatement(MockContext.builder().client(client).codecs(codecs).build(), portalNameSupplier, "INSERT test-query-$1", this.statementCache, false)
             .bind("$1", 100)
             .returnGeneratedValues()
             .execute()
@@ -420,13 +413,13 @@ final class ExtendedQueryPostgresqlStatementTest {
 
     @Test
     void returnGeneratedValuesHasReturningClause() {
-        assertThatIllegalStateException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), () -> "", "RETURNING", this.statementCache, false).returnGeneratedValues())
+        assertThatIllegalStateException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(MockContext.empty(), () -> "", "RETURNING", this.statementCache, false).returnGeneratedValues())
             .withMessage("Statement already includes RETURNING clause");
     }
 
     @Test
     void returnGeneratedValuesUnsupportedCommand() {
-        assertThatIllegalStateException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(NO_OP, MockCodecs.empty(), () -> "", "SELECT", this.statementCache, false).returnGeneratedValues())
+        assertThatIllegalStateException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(MockContext.empty(), () -> "", "SELECT", this.statementCache, false).returnGeneratedValues())
             .withMessage("Statement is not a DELETE, INSERT, or UPDATE command");
     }
 

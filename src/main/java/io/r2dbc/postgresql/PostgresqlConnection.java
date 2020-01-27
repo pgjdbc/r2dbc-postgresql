@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2017-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,8 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
 
     private final Logger logger = Loggers.getLogger(this.getClass());
 
+    private final ConnectionContext context;
+
     private final Client client;
 
     private final Codecs codecs;
@@ -70,13 +72,14 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
     private volatile IsolationLevel isolationLevel;
 
     PostgresqlConnection(Client client, Codecs codecs, PortalNameSupplier portalNameSupplier, StatementCache statementCache, IsolationLevel isolationLevel, boolean forceBinary) {
+        this.context = new ConnectionContext(client, codecs, this);
         this.client = Assert.requireNonNull(client, "client must not be null");
         this.codecs = Assert.requireNonNull(codecs, "codecs must not be null");
         this.portalNameSupplier = Assert.requireNonNull(portalNameSupplier, "portalNameSupplier must not be null");
         this.statementCache = Assert.requireNonNull(statementCache, "statementCache must not be null");
         this.forceBinary = forceBinary;
         this.isolationLevel = Assert.requireNonNull(isolationLevel, "isolationLevel must not be null");
-        this.validationQuery = new SimpleQueryPostgresqlStatement(this.client, this.codecs, "SELECT 1").fetchSize(0).execute().flatMap(PostgresqlResult::getRowsUpdated);
+        this.validationQuery = new SimpleQueryPostgresqlStatement(this.context, "SELECT 1").fetchSize(0).execute().flatMap(PostgresqlResult::getRowsUpdated);
     }
 
     Client getClient() {
@@ -121,7 +124,7 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
 
     @Override
     public PostgresqlBatch createBatch() {
-        return new PostgresqlBatch(this.client, this.codecs);
+        return new PostgresqlBatch(this.context);
     }
 
     @Override
@@ -144,9 +147,9 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
         Assert.requireNonNull(sql, "sql must not be null");
 
         if (SimpleQueryPostgresqlStatement.supports(sql)) {
-            return new SimpleQueryPostgresqlStatement(this.client, this.codecs, sql);
+            return new SimpleQueryPostgresqlStatement(this.context, sql);
         } else if (ExtendedQueryPostgresqlStatement.supports(sql)) {
-            return new ExtendedQueryPostgresqlStatement(this.client, this.codecs, this.portalNameSupplier, sql, this.statementCache, this.forceBinary);
+            return new ExtendedQueryPostgresqlStatement(this.context, this.portalNameSupplier, sql, this.statementCache, this.forceBinary);
         } else {
             throw new IllegalArgumentException(String.format("Statement '%s' cannot be created. This is often due to the presence of both multiple statements and parameters at the same time.", sql));
         }
