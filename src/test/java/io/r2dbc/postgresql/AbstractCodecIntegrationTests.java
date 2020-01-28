@@ -36,6 +36,7 @@ import reactor.test.StepVerifier;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -74,6 +75,21 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(BigDecimal.class, new BigDecimal("100"), "INT8");
         testCodec(BigDecimal.class, new BigDecimal("100"), "FLOAT4");
         testCodec(BigDecimal.class, new BigDecimal("100"), "FLOAT8");
+    }
+
+    @Test
+    void bigInteger() {
+        testCodec(BigInteger.class, new BigInteger("1000"), "NUMERIC");
+        testCodec(BigInteger.class, new BigInteger("-1"), "NUMERIC");
+        testCodec(BigInteger.class, new BigInteger("10000"), "NUMERIC");
+        testCodec(BigInteger.class, new BigInteger("10010"), "NUMERIC");
+        testCodec(BigInteger.class, new BigInteger("2000010010"), "NUMERIC");
+        testCodec(BigInteger.class, new BigInteger("0"), "NUMERIC");
+        testCodec(BigInteger.class, new BigInteger("100"), "INT2");
+        testCodec(BigInteger.class, new BigInteger("100"), "INT4");
+        testCodec(BigInteger.class, new BigInteger("100"), "INT8");
+        testCodec(BigInteger.class, new BigInteger("100"), "FLOAT4");
+        testCodec(BigInteger.class, new BigInteger("100"), "FLOAT8");
     }
 
     @Test

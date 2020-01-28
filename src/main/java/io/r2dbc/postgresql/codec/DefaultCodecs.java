@@ -54,6 +54,7 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
             new BinaryByteArrayCodec(byteBufAllocator),
 
             new BigDecimalCodec(byteBufAllocator),
+            new BigIntegerCodec(byteBufAllocator),
             new BooleanCodec(byteBufAllocator),
             new CharacterCodec(byteBufAllocator),
             new DoubleCodec(byteBufAllocator),
