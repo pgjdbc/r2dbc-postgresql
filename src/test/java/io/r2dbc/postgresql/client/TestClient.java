@@ -23,6 +23,7 @@ import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.TestByteBufAllocator;
 import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
 import reactor.core.Disposable;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
@@ -161,6 +162,11 @@ public final class TestClient implements Client {
     @Override
     public Disposable addNotificationListener(Consumer<NotificationResponse> consumer) {
         return this.notificationProcessor.subscribe(consumer);
+    }
+
+    @Override
+    public Disposable addNotificationListener(Subscriber<NotificationResponse> consumer) {
+        return this.notificationProcessor.subscribe(consumer::onNext, consumer::onError, consumer::onComplete, consumer::onSubscribe);
     }
 
     public void notify(NotificationResponse notification) {
