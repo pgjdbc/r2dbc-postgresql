@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 the original author or authors.
+ * Copyright 2019-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import reactor.test.StepVerifier;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -74,6 +75,21 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(BigDecimal.class, new BigDecimal("100"), "INT8");
         testCodec(BigDecimal.class, new BigDecimal("100"), "FLOAT4");
         testCodec(BigDecimal.class, new BigDecimal("100"), "FLOAT8");
+    }
+
+    @Test
+    void bigInteger() {
+        testCodec(BigInteger.class, new BigInteger("1000"), "NUMERIC");
+        testCodec(BigInteger.class, new BigInteger("-1"), "NUMERIC");
+        testCodecReadAs(new BigDecimal("10000.0000023"), BigInteger.class, new BigInteger("10000"), "NUMERIC");
+        testCodecReadAs(new BigDecimal("10010.1200023"), BigInteger.class, new BigInteger("10010"), "NUMERIC");
+        testCodecReadAs(new BigDecimal("2000010010.1200023"), BigInteger.class, new BigInteger("2000010010"), "NUMERIC");
+        testCodec(BigInteger.class, new BigInteger("0"), "NUMERIC");
+        testCodec(BigInteger.class, new BigInteger("100"), "INT2");
+        testCodec(BigInteger.class, new BigInteger("100"), "INT4");
+        testCodec(BigInteger.class, new BigInteger("100"), "INT8");
+        testCodec(BigInteger.class, new BigInteger("100"), "FLOAT4");
+        testCodec(BigInteger.class, new BigInteger("100"), "FLOAT8");
     }
 
     @Test
@@ -473,7 +489,6 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
             SERVER.getJdbcOperations().execute("DROP TABLE test");
         }
     }
-
 
     private <T> void testRead(Class<T> javaType, T value, String sqlType, String insertPlaceholder) {
         testCodec(javaType, value, (actual, expected) -> {
