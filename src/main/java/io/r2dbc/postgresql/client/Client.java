@@ -66,10 +66,10 @@ public interface Client {
     Mono<Void> close();
 
     /**
-     * Perform an exchange of messages.
+     * Perform an exchange of messages. Note that the {@link ReadyForQuery} frame is not emitted through the resulting {@link Flux}.
      *
      * @param requests the publisher of outbound messages
-     * @return a {@link Flux} of incoming messages that ends with the end of the frame (i.e. reception of a {@link ReadyForQuery} message.
+     * @return a {@link Flux} of incoming messages that ends with the end of conversation (i.e. reception of a {@link ReadyForQuery} message. Th
      * @throws IllegalArgumentException if {@code requests} is {@code null}
      */
     default Flux<BackendMessage> exchange(Publisher<FrontendMessage> requests) {
@@ -79,8 +79,10 @@ public interface Client {
     /**
      * Perform an exchange of messages.
      *
-     * @param requests the publisher of outbound messages
-     * @return a {@link Flux} of incoming messages that ends with the end of the frame (i.e. reception of a {@link ReadyForQuery} message.
+     * @param takeUntil the predicate that signals the resulting {@link Flux} to terminate. Typically a check if the {@link BackendMessage} is the last frame of a conversation. Note that the
+     *                  {@link BackendMessage} that matches the predicate is not emitted through the resulting {@link Flux}.
+     * @param requests  the publisher of outbound messages
+     * @return a {@link Flux} of incoming messages that ends with the end of conversation matching {@code takeUntil}. (i.e. reception of a {@link ReadyForQuery} message.
      * @throws IllegalArgumentException if {@code requests} is {@code null}
      * @since 0.8.1
      */

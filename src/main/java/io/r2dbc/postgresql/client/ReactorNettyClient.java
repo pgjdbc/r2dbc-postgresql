@@ -45,6 +45,7 @@ import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.message.frontend.Terminate;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
+import io.r2dbc.spi.R2dbcTransientResourceException;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -55,6 +56,7 @@ import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Operators;
 import reactor.netty.Connection;
 import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.resources.LoopResources;
@@ -76,6 +78,7 @@ import java.util.Queue;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -143,6 +146,14 @@ public final class ReactorNettyClient implements Client {
                 receiveError.set(throwable);
                 handleConnectionError(throwable);
             })
+            .<BackendMessage>handle((backendMessage, sink) -> {
+
+                if (consumeMessage(backendMessage)) {
+                    return;
+                }
+
+                sink.next(backendMessage);
+            })
             .subscribe(this.messageSubscriber);
 
         Mono<Void> request = this.requestProcessor
@@ -154,7 +165,6 @@ public final class ReactorNettyClient implements Client {
                 return connection.outbound().send(message.encode(this.byteBufAllocator));
             }, 1)
             .then();
-
 
         request
             .onErrorResume(this::resumeError)
@@ -196,14 +206,7 @@ public final class ReactorNettyClient implements Client {
         Assert.requireNonNull(takeUntil, "takeUntil must not be null");
         Assert.requireNonNull(requests, "requests must not be null");
 
-        return Flux
-            .create(sink -> {
-                if (!isConnected()) {
-                    sink.error(new PostgresConnectionClosedException("Cannot exchange messages because the connection is closed"));
-                    return;
-                }
-                this.messageSubscriber.addConversation(requests, sink, takeUntil);
-            });
+        return this.messageSubscriber.addConversation(takeUntil, requests, this.requests::next, this::isConnected);
     }
 
     @Override
@@ -231,7 +234,14 @@ public final class ReactorNettyClient implements Client {
         return throwable instanceof SSLException || throwable.getCause() instanceof SSLException;
     }
 
-    private boolean handleResponse(BackendMessage message) {
+    /**
+     * Consume a {@link BackendMessage}. This method can either fully consume the message or it can signal by returning {@literal false} that the method wasn't able to fully consume the message and
+     * that the message needs to be passed to an active {@link Conversation}.
+     *
+     * @param message
+     * @return {@literal false} if the message could not be fully consumed and should be propagated to the active {@link Conversation}.
+     */
+    private boolean consumeMessage(BackendMessage message) {
 
         if (DEBUG_ENABLED) {
             logger.debug("Response: {}", message);
@@ -239,7 +249,7 @@ public final class ReactorNettyClient implements Client {
 
         if (message.getClass() == NoticeResponse.class) {
             logger.warn("Notice: {}", toString(((NoticeResponse) message).getFields()));
-            return false;
+            return true;
         }
 
         if (message.getClass() == BackendKeyData.class) {
@@ -248,7 +258,7 @@ public final class ReactorNettyClient implements Client {
 
             this.processId = backendKeyData.getProcessId();
             this.secretKey = backendKeyData.getSecretKey();
-            return false;
+            return true;
         }
 
         if (message.getClass() == ErrorResponse.class) {
@@ -265,10 +275,10 @@ public final class ReactorNettyClient implements Client {
 
         if (message.getClass() == NotificationResponse.class) {
             this.notificationProcessor.onNext((NotificationResponse) message);
-            return false;
+            return true;
         }
 
-        return true;
+        return false;
     }
 
     private void handleParameterStatus(ParameterStatus message) {
@@ -487,6 +497,20 @@ public final class ReactorNettyClient implements Client {
         }
     }
 
+    static class RequestQueueException extends R2dbcTransientResourceException {
+
+        public RequestQueueException(String message) {
+            super(message);
+        }
+    }
+
+    static class ResponseQueueException extends R2dbcNonTransientResourceException {
+
+        public ResponseQueueException(String message) {
+            super(message);
+        }
+    }
+
     static class SocketLoopResources implements LoopResources {
 
         @Nullable
@@ -599,101 +623,199 @@ public final class ReactorNettyClient implements Client {
      */
     private static class Conversation {
 
-        private final FluxSink<BackendMessage> sink;
+        private static final AtomicLongFieldUpdater<Conversation> DEMAND_UPDATER = AtomicLongFieldUpdater.newUpdater(Conversation.class, "demand");
 
         private final Predicate<BackendMessage> takeUntil;
 
-        private final AtomicLong receiverCounter = new AtomicLong(0);
+        private final FluxSink<BackendMessage> sink;
 
-        private final AtomicLong requested = new AtomicLong();
+        // access via DEMAND_UPDATER
+        private volatile long demand;
 
-        private Conversation(FluxSink<BackendMessage> sink, Predicate<BackendMessage> takeUntil) {
+        private Conversation(Predicate<BackendMessage> takeUntil, FluxSink<BackendMessage> sink) {
             this.sink = sink;
             this.takeUntil = takeUntil;
         }
+
+        private long decrementDemand() {
+            return Operators.addCap(DEMAND_UPDATER, this, -1);
+        }
+
+        /**
+         * Emit a {@link BackendMessage}. Returns whether the emission should be continued by returning {@literal true} or whether the conversation is complete by returning {@literal false}.
+         *
+         * @param item
+         * @return
+         */
+        public boolean emit(BackendMessage item) {
+
+            if (this.sink.isCancelled()) {
+                ReferenceCountUtil.release(item);
+            }
+
+            if (this.takeUntil.test(item)) {
+                ReferenceCountUtil.release(item);
+                this.sink.complete();
+                return false;
+            }
+
+            decrementDemand();
+            this.sink.next(item);
+
+            return true;
+        }
+
+        public boolean hasDemand() {
+            return DEMAND_UPDATER.get(this) > 0;
+        }
+
+        public boolean isCancelled() {
+            return this.sink.isCancelled();
+        }
+
+        public void incrementDemand(long n) {
+            Operators.addCap(DEMAND_UPDATER, this, n);
+        }
     }
 
+    /**
+     * Subscriber that handles {@link Conversation}s and keeps track of the current demand. It also routes {@link BackendMessage}s to the currently active {@link Conversation}.
+     */
     private class BackendMessageSubscriber implements CoreSubscriber<BackendMessage> {
 
-        private final Queue<Conversation> conversations = Queues.<Conversation>unbounded().get();
+        private static final int DEMAND = 256;
+
+        private final Queue<Conversation> conversations = Queues.<Conversation>small().get();
+
+        private final Queue<BackendMessage> buffer = Queues.<BackendMessage>get(DEMAND).get();
 
         private final AtomicLong demand = new AtomicLong(0);
 
-        private Subscription subscription;
+        private final AtomicBoolean drain = new AtomicBoolean();
 
-        public synchronized void addConversation(Publisher<FrontendMessage> requests, FluxSink<BackendMessage> sink, Predicate<BackendMessage> takeUntil) {
-            Conversation conversation = new Conversation(sink, takeUntil);
-            this.conversations.offer(conversation);
-            sink.onRequest(n -> this.onRequest(conversation, n));
-            ReactorNettyClient.this.requests.next(Flux.from(requests).doOnNext(m -> {
-                if (!isConnected()) {
-                    sink.error(new PostgresConnectionClosedException("Cannot exchange messages because the connection is closed"));
+        private volatile boolean terminated;
+
+        private Subscription upstream;
+
+        public Flux<BackendMessage> addConversation(Predicate<BackendMessage> takeUntil, Publisher<FrontendMessage> requests, Consumer<Flux<FrontendMessage>> sender,
+                                                    Supplier<Boolean> isConnected) {
+
+            return Flux.create(sink -> {
+
+                Conversation conversation = new Conversation(takeUntil, sink);
+
+                // ensure ordering in which conversations are added to both queues.
+                synchronized (this.conversations) {
+                    if (this.conversations.offer(conversation)) {
+
+                        sink.onRequest(value -> onRequest(conversation, value));
+
+                        if (!isConnected.get()) {
+                            sink.error(new PostgresConnectionClosedException("Cannot exchange messages because the connection is closed"));
+                            return;
+                        }
+
+                        Flux<FrontendMessage> requestMessages = Flux.from(requests).doOnNext(m -> {
+                            if (!isConnected.get()) {
+                                sink.error(new PostgresConnectionClosedException("Cannot exchange messages because the connection is closed"));
+                            }
+                        });
+
+                        sender.accept(requestMessages);
+                    } else {
+                        sink.error(new RequestQueueException("Cannot exchange messages because the request queue limit is exceeded"));
+
+                    }
                 }
-            }));
+            });
         }
 
         public void onRequest(Conversation conversation, long n) {
-            long newRequested = conversation.requested.addAndGet(n);
-            if (newRequested < 0) {
-                conversation.requested.set(Long.MAX_VALUE);
-            }
-            this.demandMore();
+            conversation.incrementDemand(n);
+            drainLoop();
         }
 
         private void demandMore() {
-            if (this.demand.compareAndSet(0, 256)) {
-                this.subscription.request(256);
+            if (this.buffer.isEmpty() && this.demand.compareAndSet(0, DEMAND)) {
+                this.upstream.request(DEMAND);
             }
         }
 
         @Override
         public void onSubscribe(Subscription s) {
-            this.subscription = s;
+            this.upstream = s;
             this.demandMore();
         }
 
         @Override
         public void onNext(BackendMessage message) {
-            long currentDemand = this.demand.decrementAndGet();
-            if (!ReactorNettyClient.this.handleResponse(message)) {
-                if (currentDemand == 0) {
-                    this.demandMore();
-                }
-                return;
-            }
-            Conversation conversation = this.conversations.peek();
-            if (conversation == null) {
-                // never gonna happen
+
+            if (this.terminated) {
+                ReferenceCountUtil.release(message);
+                Operators.onNextDropped(message, currentContext());
                 return;
             }
 
-            long currentCounter = conversation.receiverCounter.incrementAndGet();
-            if (conversation.takeUntil.test(message)) {
-                conversation.sink.complete();
-                this.conversations.poll();
-            } else {
-                if (!conversation.sink.isCancelled()) {
-                    conversation.sink.next(message);
-                } else {
-                    ReferenceCountUtil.release(message);
+            this.demand.decrementAndGet();
+
+            if (!this.buffer.offer(message)) {
+                onError(new ResponseQueueException("Response queue is full"));
+                return;
+            }
+
+            drainLoop();
+        }
+
+        private void drainLoop() {
+
+            Conversation lastConversation = null;
+
+            if (this.drain.compareAndSet(false, true)) {
+
+                try {
+                    while (!this.buffer.isEmpty()) {
+
+                        Conversation conversation = this.conversations.peek();
+                        lastConversation = conversation;
+                        if (conversation == null) {
+                            break;
+                        }
+
+                        if (conversation.hasDemand()) {
+
+                            BackendMessage item = this.buffer.poll();
+
+                            if (item == null) {
+                                break;
+                            }
+
+                            if (!conversation.emit(item)) {
+                                this.conversations.poll();
+                            }
+                        }
+                    }
+                } finally {
+                    this.drain.compareAndSet(true, false);
                 }
             }
-            if (currentDemand == 0) {
-                if (conversation.requested.get() == Long.MAX_VALUE || conversation.sink.isCancelled()) {
-                    this.demandMore();
-                } else {
-                    long more = conversation.requested.get() - currentCounter;
-                    if (more > 0) {
-                        this.demandMore();
-                    }
-                }
+
+
+            if (lastConversation == null || lastConversation.hasDemand() || lastConversation.isCancelled()) {
+                this.demandMore();
             }
         }
 
         @Override
         public void onError(Throwable throwable) {
+
+            if (this.terminated) {
+                Operators.onErrorDropped(throwable, currentContext());
+                return;
+            }
+
             handleConnectionError(throwable);
             ReactorNettyClient.this.requestProcessor.onComplete();
+            this.terminated = true;
 
             if (isSslException(throwable)) {
                 logger.debug("Connection Error", throwable);
@@ -706,6 +828,7 @@ public final class ReactorNettyClient implements Client {
 
         @Override
         public void onComplete() {
+            this.terminated = true;
             ReactorNettyClient.this.handleClose();
         }
 
