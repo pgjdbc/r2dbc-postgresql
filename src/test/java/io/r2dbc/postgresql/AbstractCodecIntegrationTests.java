@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 the original author or authors.
+ * Copyright 2019-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,9 +81,9 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     void bigInteger() {
         testCodec(BigInteger.class, new BigInteger("1000"), "NUMERIC");
         testCodec(BigInteger.class, new BigInteger("-1"), "NUMERIC");
-        testCodec(BigInteger.class, new BigInteger("10000"), "NUMERIC");
-        testCodec(BigInteger.class, new BigInteger("10010"), "NUMERIC");
-        testCodec(BigInteger.class, new BigInteger("2000010010"), "NUMERIC");
+        testCodecReadAs(new BigDecimal("10000.0000023"), BigInteger.class, new BigInteger("10000"), "NUMERIC");
+        testCodecReadAs(new BigDecimal("10010.1200023"), BigInteger.class, new BigInteger("10010"), "NUMERIC");
+        testCodecReadAs(new BigDecimal("2000010010.1200023"), BigInteger.class, new BigInteger("2000010010"), "NUMERIC");
         testCodec(BigInteger.class, new BigInteger("0"), "NUMERIC");
         testCodec(BigInteger.class, new BigInteger("100"), "INT2");
         testCodec(BigInteger.class, new BigInteger("100"), "INT4");
@@ -489,7 +489,6 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
             SERVER.getJdbcOperations().execute("DROP TABLE test");
         }
     }
-
 
     private <T> void testRead(Class<T> javaType, T value, String sqlType, String insertPlaceholder) {
         testCodec(javaType, value, (actual, expected) -> {

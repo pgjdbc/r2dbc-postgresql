@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ class BigIntegerCodecTest {
     @Test
     void constructorNoByteBufAllocator() {
         assertThatIllegalArgumentException().isThrownBy(() -> new BigIntegerCodec(null))
-                .withMessage("byteBufAllocator must not be null");
+            .withMessage("byteBufAllocator must not be null");
     }
 
     @Test
@@ -48,7 +48,7 @@ class BigIntegerCodecTest {
         BigInteger bigInteger = new BigInteger("100");
 
         assertThat(new BigIntegerCodec(TEST).decode(encode(TEST, bigInteger.toString()), dataType, FORMAT_TEXT, BigInteger.class))
-                .isEqualTo(bigInteger);
+            .isEqualTo(bigInteger);
     }
 
     @Test
@@ -68,13 +68,13 @@ class BigIntegerCodecTest {
     @Test
     void doCanDecodeNoFormat() {
         assertThatIllegalArgumentException().isThrownBy(() -> new BigIntegerCodec(TEST).doCanDecode(VARCHAR, null))
-                .withMessage("format must not be null");
+            .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
         assertThatIllegalArgumentException().isThrownBy(() -> new BigIntegerCodec(TEST).doCanDecode(null, FORMAT_TEXT))
-                .withMessage("type must not be null");
+            .withMessage("type must not be null");
     }
 
     @Test
@@ -82,21 +82,21 @@ class BigIntegerCodecTest {
         BigInteger bigInteger = new BigInteger("100");
 
         assertThat(new BigIntegerCodec(TEST).doEncode(bigInteger))
-                .hasFormat(FORMAT_TEXT)
-                .hasType(NUMERIC.getObjectId())
-                .hasValue(encode(TEST, "100"));
+            .hasFormat(FORMAT_TEXT)
+            .hasType(NUMERIC.getObjectId())
+            .hasValue(encode(TEST, "100"));
     }
 
     @Test
     void doEncodeNoValue() {
         assertThatIllegalArgumentException().isThrownBy(() -> new BigIntegerCodec(TEST).doEncode(null))
-                .withMessage("value must not be null");
+            .withMessage("value must not be null");
     }
 
     @Test
     void encodeNull() {
         assertThat(new BigIntegerCodec(TEST).encodeNull())
-                .isEqualTo(new Parameter(FORMAT_TEXT, NUMERIC.getObjectId(), NULL_VALUE));
+            .isEqualTo(new Parameter(FORMAT_TEXT, NUMERIC.getObjectId(), NULL_VALUE));
     }
-    
+
 }

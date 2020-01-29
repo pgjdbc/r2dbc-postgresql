@@ -296,7 +296,7 @@ This reference table shows the type mapping between [PostgreSQL][p] and Java dat
 | [`cidr`][psql-cidr-ref]                         | Not yet supported.|
 | [`circle`][psql-circle-ref]                     | Not yet supported.|
 | [`date`][psql-date-ref]                         | [`LocalDate`][java-ld-ref]|
-| [`double precision`][psql-floating-point-ref]   | [**`Double`**][java-double-ref], [`Float`][java-float-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Integer`][java-integer-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref]|
+| [`double precision`][psql-floating-point-ref]   | [**`Double`**][java-double-ref], [`Float`][java-float-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Integer`][java-integer-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
 | [`inet`][psql-inet-ref]                         | [**`InetAddress`**][java-inet-ref]|
 | [`integer`][psql-integer-ref]                   | [**`Integer`**][java-integer-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
 | [`interval`][psql-interval-ref]                 | Not yet supported.|

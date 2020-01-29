@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
@@ -48,7 +49,9 @@ public class BigIntegerCodec extends AbstractNumericCodec<BigInteger> {
     BigInteger doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends BigInteger> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
-        return this.decodeNumber(buffer, dataType, format, BigInteger.class, it -> new BigInteger(it.toString()));
+        return this.decodeNumber(buffer, dataType, format, BigInteger.class, it -> {
+            return it instanceof BigDecimal ? ((BigDecimal) it).toBigInteger() : BigInteger.valueOf(it.longValue());
+        });
     }
 
     @Override
