@@ -47,13 +47,14 @@ import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
+import reactor.core.CoreSubscriber;
 import reactor.core.Disposable;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.SynchronousSink;
 import reactor.netty.Connection;
 import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.resources.LoopResources;
@@ -63,6 +64,7 @@ import reactor.util.Logger;
 import reactor.util.Loggers;
 import reactor.util.annotation.Nullable;
 import reactor.util.concurrent.Queues;
+import reactor.util.context.Context;
 
 import javax.net.ssl.SSLException;
 import java.net.InetSocketAddress;
@@ -73,6 +75,7 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -104,11 +107,11 @@ public final class ReactorNettyClient implements Client {
 
     private final FluxSink<Publisher<FrontendMessage>> requests = this.requestProcessor.sink();
 
-    private final Queue<Conversation> conversations = Queues.<Conversation>unbounded().get();
-
     private final DirectProcessor<NotificationResponse> notificationProcessor = DirectProcessor.create();
 
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
+
+    private final BackendMessageSubscriber messageSubscriber = new BackendMessageSubscriber();
 
     private volatile Integer processId;
 
@@ -133,31 +136,14 @@ public final class ReactorNettyClient implements Client {
         this.byteBufAllocator = connection.outbound().alloc();
 
         AtomicReference<Throwable> receiveError = new AtomicReference<>();
-        Mono<Void> receive = connection.inbound().receive()
+
+        connection.inbound().receive()
             .map(BackendMessageDecoder::decode)
-            .handle(this::handleResponse)
             .doOnError(throwable -> {
                 receiveError.set(throwable);
                 handleConnectionError(throwable);
             })
-            .handle((message, sink) -> {
-                Conversation receiver = this.conversations.peek();
-                if (receiver != null) {
-                    if (receiver.takeUntil.test(message)) {
-                        receiver.sink.complete();
-                        this.conversations.poll();
-                    } else {
-
-                        if (receiver.sink.isCancelled()) {
-                            ReferenceCountUtil.release(message);
-                        } else {
-                            receiver.sink.next(message);
-                        }
-                    }
-                }
-            })
-            .doOnComplete(this::handleClose)
-            .then();
+            .subscribe(this.messageSubscriber);
 
         Mono<Void> request = this.requestProcessor
             .concatMap(Function.identity())
@@ -169,9 +155,6 @@ public final class ReactorNettyClient implements Client {
             }, 1)
             .then();
 
-        receive
-            .onErrorResume(this::resumeError)
-            .subscribe();
 
         request
             .onErrorResume(this::resumeError)
@@ -219,14 +202,7 @@ public final class ReactorNettyClient implements Client {
                     sink.error(new PostgresConnectionClosedException("Cannot exchange messages because the connection is closed"));
                     return;
                 }
-                synchronized (this) {
-                    this.conversations.add(new Conversation(sink, takeUntil));
-                    this.requests.next(Flux.from(requests).doOnNext(m -> {
-                        if (!isConnected()) {
-                            sink.error(new PostgresConnectionClosedException("Cannot exchange messages because the connection is closed"));
-                        }
-                    }));
-                }
+                this.messageSubscriber.addConversation(requests, sink, takeUntil);
             });
     }
 
@@ -255,7 +231,7 @@ public final class ReactorNettyClient implements Client {
         return throwable instanceof SSLException || throwable.getCause() instanceof SSLException;
     }
 
-    private void handleResponse(BackendMessage message, SynchronousSink<BackendMessage> sink) {
+    private boolean handleResponse(BackendMessage message) {
 
         if (DEBUG_ENABLED) {
             logger.debug("Response: {}", message);
@@ -263,7 +239,7 @@ public final class ReactorNettyClient implements Client {
 
         if (message.getClass() == NoticeResponse.class) {
             logger.warn("Notice: {}", toString(((NoticeResponse) message).getFields()));
-            return;
+            return false;
         }
 
         if (message.getClass() == BackendKeyData.class) {
@@ -272,7 +248,7 @@ public final class ReactorNettyClient implements Client {
 
             this.processId = backendKeyData.getProcessId();
             this.secretKey = backendKeyData.getSecretKey();
-            return;
+            return false;
         }
 
         if (message.getClass() == ErrorResponse.class) {
@@ -289,10 +265,10 @@ public final class ReactorNettyClient implements Client {
 
         if (message.getClass() == NotificationResponse.class) {
             this.notificationProcessor.onNext((NotificationResponse) message);
-            return;
+            return false;
         }
 
-        sink.next(message);
+        return true;
     }
 
     private void handleParameterStatus(ParameterStatus message) {
@@ -465,7 +441,7 @@ public final class ReactorNettyClient implements Client {
     private void drainError(Supplier<? extends Throwable> supplier) {
         Conversation receiver;
 
-        while ((receiver = this.conversations.poll()) != null) {
+        while ((receiver = this.messageSubscriber.conversations.poll()) != null) {
             receiver.sink.error(supplier.get());
         }
 
@@ -474,23 +450,6 @@ public final class ReactorNettyClient implements Client {
         }
     }
 
-    /**
-     * Value object representing a single conversation. The driver permits a single conversation at a time to ensure that request messages get routed to the proper response receiver and do not leak
-     * into other conversations. A conversation must be finished in the sense that the {@link Publisher} of {@link FrontendMessage} has completed before the next conversation is started.
-     * <p>
-     * A single conversation can make use of pipelining.
-     */
-    private static class Conversation {
-
-        private final FluxSink<BackendMessage> sink;
-
-        private final Predicate<BackendMessage> takeUntil;
-
-        private Conversation(FluxSink<BackendMessage> sink, Predicate<BackendMessage> takeUntil) {
-            this.sink = sink;
-            this.takeUntil = takeUntil;
-        }
-    }
 
     private final class EnsureSubscribersCompleteChannelHandler extends ChannelDuplexHandler {
 
@@ -631,4 +590,133 @@ public final class ReactorNettyClient implements Client {
         }
     }
 
+
+    /**
+     * Value object representing a single conversation. The driver permits a single conversation at a time to ensure that request messages get routed to the proper response receiver and do not leak
+     * into other conversations. A conversation must be finished in the sense that the {@link Publisher} of {@link FrontendMessage} has completed before the next conversation is started.
+     * <p>
+     * A single conversation can make use of pipelining.
+     */
+    private static class Conversation {
+
+        private final FluxSink<BackendMessage> sink;
+
+        private final Predicate<BackendMessage> takeUntil;
+
+        private final AtomicLong receiverCounter = new AtomicLong(0);
+
+        private final AtomicLong requested = new AtomicLong();
+
+        private Conversation(FluxSink<BackendMessage> sink, Predicate<BackendMessage> takeUntil) {
+            this.sink = sink;
+            this.takeUntil = takeUntil;
+        }
+    }
+
+    private class BackendMessageSubscriber implements CoreSubscriber<BackendMessage> {
+
+        private final Queue<Conversation> conversations = Queues.<Conversation>unbounded().get();
+
+        private final AtomicLong demand = new AtomicLong(0);
+
+        private Subscription subscription;
+
+        public synchronized void addConversation(Publisher<FrontendMessage> requests, FluxSink<BackendMessage> sink, Predicate<BackendMessage> takeUntil) {
+            Conversation conversation = new Conversation(sink, takeUntil);
+            this.conversations.offer(conversation);
+            sink.onRequest(n -> this.onRequest(conversation, n));
+            ReactorNettyClient.this.requests.next(Flux.from(requests).doOnNext(m -> {
+                if (!isConnected()) {
+                    sink.error(new PostgresConnectionClosedException("Cannot exchange messages because the connection is closed"));
+                }
+            }));
+        }
+
+        public void onRequest(Conversation conversation, long n) {
+            long newRequested = conversation.requested.addAndGet(n);
+            if (newRequested < 0) {
+                conversation.requested.set(Long.MAX_VALUE);
+            }
+            this.demandMore();
+        }
+
+        private void demandMore() {
+            if (this.demand.compareAndSet(0, 256)) {
+                this.subscription.request(256);
+            }
+        }
+
+        @Override
+        public void onSubscribe(Subscription s) {
+            this.subscription = s;
+            this.demandMore();
+        }
+
+        @Override
+        public void onNext(BackendMessage message) {
+            long currentDemand = this.demand.decrementAndGet();
+            if (!ReactorNettyClient.this.handleResponse(message)) {
+                if (currentDemand == 0) {
+                    this.demandMore();
+                }
+                return;
+            }
+            Conversation conversation = this.conversations.peek();
+            if (conversation == null) {
+                // never gonna happen
+                return;
+            }
+
+            long currentCounter = conversation.receiverCounter.incrementAndGet();
+            if (conversation.takeUntil.test(message)) {
+                conversation.sink.complete();
+                this.conversations.poll();
+            } else {
+                if (!conversation.sink.isCancelled()) {
+                    conversation.sink.next(message);
+                } else {
+                    ReferenceCountUtil.release(message);
+                }
+            }
+            if (currentDemand == 0) {
+                if (conversation.requested.get() == Long.MAX_VALUE || conversation.sink.isCancelled()) {
+                    this.demandMore();
+                } else {
+                    long more = conversation.requested.get() - currentCounter;
+                    if (more > 0) {
+                        this.demandMore();
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            handleConnectionError(throwable);
+            ReactorNettyClient.this.requestProcessor.onComplete();
+
+            if (isSslException(throwable)) {
+                logger.debug("Connection Error", throwable);
+            } else {
+                logger.error("Connection Error", throwable);
+            }
+
+            ReactorNettyClient.this.close().subscribe();
+        }
+
+        @Override
+        public void onComplete() {
+            ReactorNettyClient.this.handleClose();
+        }
+
+        @Override
+        public Context currentContext() {
+            Conversation receiver = this.conversations.peek();
+            if (receiver != null) {
+                return receiver.sink.currentContext();
+            } else {
+                return Context.empty();
+            }
+        }
+    }
 }
