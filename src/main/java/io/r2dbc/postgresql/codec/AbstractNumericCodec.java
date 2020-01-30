@@ -40,7 +40,7 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.OID;
 /**
  * Codec to decode all known numeric types.
  *
- * @param <T>
+ * @param <T> the type that is handled by this {@link Codec}.
  */
 abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> {
 
