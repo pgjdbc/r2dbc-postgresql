@@ -88,9 +88,7 @@ class FluxDiscardOnCancel<T> extends FluxOperator<T, T> {
 
         @Override
         public void onError(Throwable t) {
-            if (this.get()) {
-                Operators.onErrorDropped(t, this.ctx);
-            } else {
+            if (!this.get()) {
                 this.actual.onError(t);
             }
         }
