@@ -182,9 +182,10 @@ public final class ReactorNettyClient implements Client {
 
             drainError(EXPECTED);
 
+            boolean connected = isConnected();
             if (this.isClosed.compareAndSet(false, true)) {
 
-                if (!isConnected() || this.processId == null) {
+                if (!connected || this.processId == null) {
                     this.connection.dispose();
                     return this.connection.onDispose();
                 }
@@ -452,7 +453,7 @@ public final class ReactorNettyClient implements Client {
         Conversation receiver;
 
         while ((receiver = this.messageSubscriber.conversations.poll()) != null) {
-            receiver.sink.error(supplier.get());
+            receiver.onError(supplier.get());
         }
 
         if (!this.notificationProcessor.isTerminated()) {
@@ -642,27 +643,55 @@ public final class ReactorNettyClient implements Client {
         }
 
         /**
-         * Emit a {@link BackendMessage}. Returns whether the emission should be continued by returning {@literal true} or whether the conversation is complete by returning {@literal false}.
+         * Check whether the {@link BackendMessage} can complete the conversation.
          *
          * @param item
          * @return
          */
-        public boolean emit(BackendMessage item) {
+        public boolean canComplete(BackendMessage item) {
+            return this.takeUntil.test(item);
+        }
+
+        /**
+         * Complete the conversation.
+         *
+         * @param item
+         * @return
+         */
+        public void complete(BackendMessage item) {
+
+            ReferenceCountUtil.release(item);
+            if (!this.sink.isCancelled()) {
+                this.sink.complete();
+            }
+        }
+
+        /**
+         * Emit a {@link BackendMessage}.
+         *
+         * @param item
+         * @return
+         */
+        public void emit(BackendMessage item) {
 
             if (this.sink.isCancelled()) {
                 ReferenceCountUtil.release(item);
             }
 
-            if (this.takeUntil.test(item)) {
-                ReferenceCountUtil.release(item);
-                this.sink.complete();
-                return false;
-            }
-
             decrementDemand();
             this.sink.next(item);
+        }
 
-            return true;
+        /**
+         * Notify the conversation about an error. Drops errors silently if the conversation is finished.
+         *
+         * @param throwable
+         */
+        public void onError(Throwable throwable) {
+
+            if (!this.sink.isCancelled()) {
+                this.sink.error(throwable);
+            }
         }
 
         public boolean hasDemand() {
@@ -789,8 +818,11 @@ public final class ReactorNettyClient implements Client {
                                 break;
                             }
 
-                            if (!conversation.emit(item)) {
+                            if (conversation.canComplete(item)) {
                                 this.conversations.poll();
+                                conversation.complete(item);
+                            } else {
+                                conversation.emit(item);
                             }
                         }
                     }
