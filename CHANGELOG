@@ -1,6 +1,26 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+0.8.1.RELEASE
+-----------------------------------------
+* Upgrade dependencies #238
+* Update license header years to 2020 #236
+* Add a codec for BigInteger #233
+* ConcurrentHashModification at IndefiniteStatementCache #232
+* Reinstantiate backpressure propagation to NettyInbound #231
+* Fix for concurrent exchanging on one client #230
+* Capability to disable prepared statement caching #223
+* Insertion of too many rows do not complete #222
+* Upgrade to Testcontainers 1.12.4 #218
+* Backport Travis support to 0.8.x #217
+* Backport Jenkins to 0.8.x #216
+* On error not triggered when listen connection terminated #212
+* Fails to startup with forceBinary=true using Spring Boot #208
+* rowsUpdated() returns more than one item #207
+* Readme cleanup #206
+* Fix typo in project url #205
+* Reduce allocations #138
+
 0.8.0.RELEASE
 -----------------------------------------
 * Upgrade to Reactor Dysprosium SR2 #204
