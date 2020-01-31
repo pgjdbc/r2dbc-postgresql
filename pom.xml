@@ -45,7 +45,7 @@
         <postgresql.version>42.2.9</postgresql.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <r2dbc-spi.version>0.8.0.RELEASE</r2dbc-spi.version>
+        <r2dbc-spi.version>0.8.1.RELEASE</r2dbc-spi.version>
         <reactor.version>Dysprosium-SR4</reactor.version>
         <scram-client.version>2.1</scram-client.version>
         <spring-framework.version>5.2.3.RELEASE</spring-framework.version>
@@ -392,6 +392,14 @@
     </build>
 
     <repositories>
+        <repository>
+            <id>spring-releases</id>
+            <name>Spring Releases</name>
+            <url>https://repo.spring.io/release</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
         <repository>
             <id>spring-milestones</id>
             <name>Spring Milestones</name>
