@@ -768,7 +768,7 @@ public final class ReactorNettyClient implements Client {
         }
 
         private void demandMore() {
-            if (this.buffer.isEmpty() && this.demand.compareAndSet(0, DEMAND)) {
+            if (!hasBufferedItems() && this.demand.compareAndSet(0, DEMAND)) {
                 this.upstream.request(DEMAND);
             }
         }
@@ -797,6 +797,17 @@ public final class ReactorNettyClient implements Client {
 
             this.demand.decrementAndGet();
 
+            // fast-path
+            if (this.buffer.isEmpty()) {
+                Conversation conversation = this.conversations.peek();
+                if (conversation != null && conversation.hasDemand()) {
+                    emit(conversation, message);
+                    potentiallyDemandMore(conversation);
+                    return;
+                }
+            }
+
+            // slow-path
             if (!this.buffer.offer(message)) {
                 ReferenceCountUtil.release(message);
                 Operators.onNextDropped(message, currentContext());
