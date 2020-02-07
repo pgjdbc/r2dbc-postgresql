@@ -761,7 +761,10 @@ public final class ReactorNettyClient implements Client {
 
         public void onRequest(Conversation conversation, long n) {
             conversation.incrementDemand(n);
-            drainLoop();
+
+            while (hasBufferedItems() && hasDownstreamDemand()) {
+                drainLoop();
+            }
         }
 
         private void demandMore() {
@@ -776,6 +779,13 @@ public final class ReactorNettyClient implements Client {
             this.demandMore();
         }
 
+        private boolean hasDownstreamDemand() {
+
+            Conversation conversation = this.conversations.peek();
+
+            return conversation != null && conversation.hasDemand();
+        }
+
         @Override
         public void onNext(BackendMessage message) {
 
@@ -788,11 +798,15 @@ public final class ReactorNettyClient implements Client {
             this.demand.decrementAndGet();
 
             if (!this.buffer.offer(message)) {
+                ReferenceCountUtil.release(message);
+                Operators.onNextDropped(message, currentContext());
                 onError(new ResponseQueueException("Response queue is full"));
                 return;
             }
 
-            drainLoop();
+            while (hasBufferedItems() && hasDownstreamDemand()) {
+                this.drainLoop();
+            }
         }
 
         private void drainLoop() {
@@ -802,7 +816,7 @@ public final class ReactorNettyClient implements Client {
             if (this.drain.compareAndSet(false, true)) {
 
                 try {
-                    while (!this.buffer.isEmpty()) {
+                    while (hasBufferedItems()) {
 
                         Conversation conversation = this.conversations.peek();
                         lastConversation = conversation;
@@ -818,12 +832,9 @@ public final class ReactorNettyClient implements Client {
                                 break;
                             }
 
-                            if (conversation.canComplete(item)) {
-                                this.conversations.poll();
-                                conversation.complete(item);
-                            } else {
-                                conversation.emit(item);
-                            }
+                            emit(conversation, item);
+                        } else {
+                            break;
                         }
                     }
                 } finally {
@@ -831,10 +842,26 @@ public final class ReactorNettyClient implements Client {
                 }
             }
 
+            potentiallyDemandMore(lastConversation);
+        }
 
+        private void potentiallyDemandMore(@Nullable Conversation lastConversation) {
             if (lastConversation == null || lastConversation.hasDemand() || lastConversation.isCancelled()) {
                 this.demandMore();
             }
+        }
+
+        private void emit(Conversation conversation, BackendMessage item) {
+            if (conversation.canComplete(item)) {
+                this.conversations.poll();
+                conversation.complete(item);
+            } else {
+                conversation.emit(item);
+            }
+        }
+
+        private boolean hasBufferedItems() {
+            return !this.buffer.isEmpty();
         }
 
         @Override
