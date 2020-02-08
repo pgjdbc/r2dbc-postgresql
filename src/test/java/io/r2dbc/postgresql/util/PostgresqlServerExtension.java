@@ -24,6 +24,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.testcontainers.containers.JdbcDatabaseContainer;
+import org.testcontainers.containers.Network;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.MountableFile;
 import reactor.util.annotation.Nullable;
@@ -47,7 +48,9 @@ import static org.testcontainers.utility.MountableFile.forHostPath;
  */
 public final class PostgresqlServerExtension implements BeforeAllCallback, AfterAllCallback {
 
-    private static PostgreSQLContainer<?> containerInstance = null;
+    static PostgreSQLContainer<?> containerInstance = null;
+
+    static Network containerNetwork = null;
 
     private final Supplier<PostgreSQLContainer<?>> container = () -> {
 
