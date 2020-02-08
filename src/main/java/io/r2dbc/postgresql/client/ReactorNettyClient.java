@@ -104,7 +104,12 @@ public final class ReactorNettyClient implements Client {
 
     private final ByteBufAllocator byteBufAllocator;
 
+    @Nullable
+    private final Duration connectTimeout;
+
     private final Connection connection;
+
+    private final ConnectionProvider connectionProvider;
 
     private final EmitterProcessor<Publisher<FrontendMessage>> requestProcessor = EmitterProcessor.create(false);
 
@@ -115,6 +120,10 @@ public final class ReactorNettyClient implements Client {
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
     private final BackendMessageSubscriber messageSubscriber = new BackendMessageSubscriber();
+
+    private final SocketAddress socketAddress;
+
+    private final SSLConfig sslConfig;
 
     private volatile Integer processId;
 
@@ -127,11 +136,19 @@ public final class ReactorNettyClient implements Client {
     /**
      * Creates a new frame processor connected to a given TCP connection.
      *
-     * @param connection the TCP connection
+     * @param connection         the TCP connection
+     * @param connectionProvider the connection provider resources
+     * @param socketAddress      the socketAddress to connect to
+     * @param connectTimeout     connect timeout
+     * @param sslConfig          SSL configuration
      * @throws IllegalArgumentException if {@code connection} is {@code null}
      */
-    private ReactorNettyClient(Connection connection) {
+    private ReactorNettyClient(Connection connection, ConnectionProvider connectionProvider, SocketAddress socketAddress, @Nullable Duration connectTimeout, SSLConfig sslConfig) {
         Assert.requireNonNull(connection, "Connection must not be null");
+        this.connectionProvider = Assert.requireNonNull(connectionProvider, "connectionProvider must not be null");
+        this.socketAddress = Assert.requireNonNull(socketAddress, "socketAddress must not be null");
+        this.sslConfig = Assert.requireNonNull(sslConfig, "sslConfig must not be null");
+        this.connectTimeout = connectTimeout;
 
         connection.addHandler(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE - 5, 1, 4, -4, 0));
         connection.addHandler(new EnsureSubscribersCompleteChannelHandler(this.requestProcessor));
@@ -363,7 +380,7 @@ public final class ReactorNettyClient implements Client {
                     new LoggingHandler(ReactorNettyClient.class, LogLevel.TRACE));
             }
 
-            return registerSslHandler(sslConfig, it).thenReturn(new ReactorNettyClient(it));
+            return registerSslHandler(sslConfig, it).thenReturn(new ReactorNettyClient(it, connectionProvider, socketAddress, connectTimeout, sslConfig));
         });
     }
 
@@ -425,6 +442,18 @@ public final class ReactorNettyClient implements Client {
 
         Channel channel = this.connection.channel();
         return channel.isOpen();
+    }
+
+    @Override
+    public Mono<Void> cancelRunningQuery() {
+        return Mono.defer(() -> {
+            int processId = this.getProcessId().orElseThrow(() -> new IllegalStateException("Connection does not yet have a processId"));
+            int secretKey = this.getSecretKey().orElseThrow(() -> new IllegalStateException("Connection does not yet have a secretKey"));
+
+            return ReactorNettyClient.connect(this.connectionProvider, this.socketAddress, this.connectTimeout, this.sslConfig)
+                .flatMap(client -> CancelRequestMessageFlow.exchange(client, processId, secretKey))
+                .onErrorResume(e -> e instanceof PostgresConnectionClosedException && e.getMessage().equals("Connection unexpectedly closed"), e -> Mono.empty());
+        });
     }
 
     private static String toString(List<Field> fields) {

@@ -21,47 +21,24 @@ import org.junit.jupiter.api.Test;
 import reactor.test.StepVerifier;
 
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 
 final class CancelRequestMessageFlowTest {
 
     @Test
     void exchange() {
         Client client = TestClient.builder()
-            .processId(100)
-            .secretKey(200)
             .expectRequest(new CancelRequest(100, 200)).thenRespond()
             .build();
 
         CancelRequestMessageFlow
-            .exchange(client)
+            .exchange(client, 100, 200)
             .as(StepVerifier::create)
             .verifyComplete();
     }
 
     @Test
     void exchangeNoClient() {
-        assertThatIllegalArgumentException().isThrownBy(() -> CancelRequestMessageFlow.exchange(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> CancelRequestMessageFlow.exchange(null, 100, 200))
             .withMessage("client must not be null");
     }
-
-    @Test
-    void exchangeNoProcessId() {
-        Client client = TestClient.builder()
-            .build();
-
-        assertThatIllegalStateException().isThrownBy(() -> CancelRequestMessageFlow.exchange(client))
-            .withMessage("Connection does not yet have a processId");
-    }
-
-    @Test
-    void exchangeNoSecretKey() {
-        Client client = TestClient.builder()
-            .processId(100)
-            .build();
-
-        assertThatIllegalStateException().isThrownBy(() -> CancelRequestMessageFlow.exchange(client))
-            .withMessage("Connection does not yet have a secretKey");
-    }
-
 }
