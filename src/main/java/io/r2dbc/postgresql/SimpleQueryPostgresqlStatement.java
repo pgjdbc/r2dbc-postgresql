@@ -32,6 +32,7 @@ import reactor.util.annotation.Nullable;
 
 import java.util.function.Predicate;
 
+import static io.r2dbc.postgresql.message.frontend.Execute.NO_LIMIT;
 import static io.r2dbc.postgresql.util.PredicateUtils.or;
 
 final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
@@ -43,6 +44,8 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
     private final String sql;
 
     private String[] generatedColumns;
+
+    private int fetchSize = NO_LIMIT;
 
     SimpleQueryPostgresqlStatement(ConnectionContext context, String sql) {
         this.context = Assert.requireNonNull(context, "context must not be null");
@@ -85,6 +88,12 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
 
     @Override
     public SimpleQueryPostgresqlStatement fetchSize(int rows) {
+        Assert.isTrue(rows >= 0, "fetch size must be greater or equal zero");
+        if (rows != NO_LIMIT) {
+            Assert.isTrue(!this.sql.contains(";"), "fetch size can be used with one query sql only");
+            this.fetchSize = rows;
+        }
+
         return this;
     }
 
@@ -119,6 +128,13 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
     }
 
     private Flux<io.r2dbc.postgresql.api.PostgresqlResult> execute(String sql) {
+        if (this.fetchSize != NO_LIMIT) {
+            return new ExtendedQueryPostgresqlStatement(this.context, this.sql)
+                .bindEmpty()
+                .fetchSize(this.fetchSize)
+                .execute();
+        }
+
         ExceptionFactory factory = ExceptionFactory.withSql(sql);
         return SimpleQueryMessageFlow
             .exchange(this.context.getClient(), sql)

@@ -48,8 +48,9 @@ import static org.testcontainers.utility.MountableFile.forHostPath;
  */
 public final class PostgresqlServerExtension implements BeforeAllCallback, AfterAllCallback {
 
-    private static PostgreSQLContainer<?> containerInstance = null;
-    private static Network containerNetwork = null;
+    static PostgreSQLContainer<?> containerInstance = null;
+
+    static Network containerNetwork = null;
 
     private final Supplier<PostgreSQLContainer<?>> container = () -> {
 

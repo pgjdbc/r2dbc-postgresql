@@ -17,11 +17,15 @@
 package io.r2dbc.postgresql.client;
 
 import io.netty.buffer.Unpooled;
+import io.netty.util.ReferenceCountUtil;
+import io.netty.util.ReferenceCounted;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.CloseComplete;
+import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.ParseComplete;
+import io.r2dbc.postgresql.message.backend.PortalSuspended;
 import io.r2dbc.postgresql.message.backend.ReadyForQuery;
 import io.r2dbc.postgresql.message.frontend.Bind;
 import io.r2dbc.postgresql.message.frontend.Close;
@@ -33,12 +37,15 @@ import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.message.frontend.Parse;
 import io.r2dbc.postgresql.message.frontend.Sync;
 import io.r2dbc.postgresql.util.Assert;
-import org.reactivestreams.Publisher;
+import io.r2dbc.postgresql.util.Operators;
+import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import reactor.core.publisher.FluxSink;
+import reactor.core.publisher.SynchronousSink;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 import static io.r2dbc.postgresql.message.frontend.Execute.NO_LIMIT;
@@ -60,7 +67,7 @@ public final class ExtendedQueryMessageFlow {
     /**
      * Execute the execute portion of the <a href="https://www.postgresql.org/docs/current/static/protocol-flow.html#PROTOCOL-FLOW-EXT-QUERY">Extended query</a> message flow.
      *
-     * @param bindings           the {@link Binding}s to bind
+     * @param binding            the {@link Binding} to bind
      * @param client             the {@link Client} to exchange messages with
      * @param portalNameSupplier supplier unique portal names for each binding
      * @param statementName      the name of the statementName to execute
@@ -69,15 +76,55 @@ public final class ExtendedQueryMessageFlow {
      * @return the messages received in response to the exchange
      * @throws IllegalArgumentException if {@code bindings}, {@code client}, {@code portalNameSupplier}, or {@code statementName} is {@code null}
      */
-    public static Flux<BackendMessage> execute(Publisher<Binding> bindings, Client client, PortalNameSupplier portalNameSupplier, String statementName, String query, boolean forceBinary) {
-        Assert.requireNonNull(bindings, "bindings must not be null");
+    public static Flux<BackendMessage> execute(Binding binding, Client client, PortalNameSupplier portalNameSupplier, String statementName, String query, boolean forceBinary,
+                                               int fetchSize) {
+        Assert.requireNonNull(binding, "binding must not be null");
         Assert.requireNonNull(client, "client must not be null");
         Assert.requireNonNull(portalNameSupplier, "portalNameSupplier must not be null");
         Assert.requireNonNull(statementName, "statementName must not be null");
-
-        return client.exchange(Flux.from(bindings)
-            .flatMap(binding -> toBindFlow(binding, portalNameSupplier, statementName, query, forceBinary))
-            .concatWith(Mono.just(Sync.INSTANCE)));
+        if (fetchSize == NO_LIMIT) {
+            return Flux.defer(() -> {
+                String portal = portalNameSupplier.get();
+                Flux<FrontendMessage> bindFlow = toBindFlow(binding, portal, statementName, query, forceBinary, fetchSize)
+                    .concatWithValues(new Close(portal, PORTAL), Sync.INSTANCE);
+                return client.exchange(bindFlow)
+                    .as(Operators::discardOnCancel)
+                    .doOnDiscard(ReferenceCounted.class, ReferenceCountUtil::release);
+            });
+        }
+        return Flux.defer(() -> {
+            String portal = portalNameSupplier.get();
+            Flux<FrontendMessage> bindFlow = toBindFlow(binding, portal, statementName, query, forceBinary, fetchSize).concatWithValues(Flush.INSTANCE);
+            DirectProcessor<FrontendMessage> requestsProcessor = DirectProcessor.create();
+            FluxSink<FrontendMessage> requestsSink = requestsProcessor.sink();
+            AtomicBoolean isCanceled = new AtomicBoolean(false);
+            return client.exchange(bindFlow.concatWith(requestsProcessor))
+                .handle((BackendMessage message, SynchronousSink<BackendMessage> sink) -> {
+                    if (message instanceof CommandComplete) {
+                        requestsSink.next(new Close(portal, PORTAL));
+                        requestsSink.next(Sync.INSTANCE);
+                        requestsSink.complete();
+                        sink.next(message);
+                    } else if (message instanceof ErrorResponse) {
+                        requestsSink.next(Sync.INSTANCE);
+                        requestsSink.complete();
+                        sink.next(message);
+                    } else if (message instanceof PortalSuspended) {
+                        if (isCanceled.get()) {
+                            requestsSink.next(new Close(portal, PORTAL));
+                            requestsSink.next(Sync.INSTANCE);
+                            requestsSink.complete();
+                        } else {
+                            requestsSink.next(new Execute(portal, fetchSize));
+                            requestsSink.next(Flush.INSTANCE);
+                        }
+                    } else {
+                        sink.next(message);
+                    }
+                })
+                .as(flux -> Operators.discardOnCancel(flux, () -> isCanceled.set(true)))
+                .doOnDiscard(ReferenceCounted.class, ReferenceCountUtil::release);
+        });
     }
 
     /**
@@ -136,8 +183,7 @@ public final class ExtendedQueryMessageFlow {
         }
     }
 
-    private static Flux<FrontendMessage> toBindFlow(Binding binding, PortalNameSupplier portalNameSupplier, String statementName, String query, boolean forceBinary) {
-        String portal = portalNameSupplier.get();
+    private static Flux<FrontendMessage> toBindFlow(Binding binding, String portal, String statementName, String query, boolean forceBinary, int fetchSize) {
 
         return Flux.fromIterable(binding.getParameterValues())
             .flatMap(f -> {
@@ -152,8 +198,7 @@ public final class ExtendedQueryMessageFlow {
             .flatMapMany(values -> {
                 Bind bind = new Bind(portal, binding.getParameterFormats(), values, resultFormat(forceBinary), statementName);
 
-                return Flux.<FrontendMessage>just(bind, new Describe(portal, PORTAL), new Execute(portal, NO_LIMIT), new Close(portal, PORTAL));
+                return Flux.<FrontendMessage>just(bind, new Describe(portal, PORTAL), new Execute(portal, fetchSize));
             }).doOnSubscribe(ignore -> QueryLogger.logQuery(query));
     }
-
 }

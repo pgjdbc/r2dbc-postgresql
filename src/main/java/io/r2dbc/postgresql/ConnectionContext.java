@@ -18,7 +18,9 @@ package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.api.PostgresqlConnection;
 import io.r2dbc.postgresql.client.Client;
+import io.r2dbc.postgresql.client.PortalNameSupplier;
 import io.r2dbc.postgresql.codec.Codecs;
+import io.r2dbc.postgresql.util.Assert;
 
 /**
  * Value object capturing contextual connection resources such as {@link Client}, {@link Codecs} and the {@link PostgresqlConnection connection facade}.
@@ -31,10 +33,19 @@ final class ConnectionContext {
 
     private final PostgresqlConnection connection;
 
-    ConnectionContext(Client client, Codecs codecs, PostgresqlConnection connection) {
+    private final StatementCache statementCache;
+
+    private final boolean forceBinary;
+
+    private final PortalNameSupplier portalNameSupplier;
+
+    ConnectionContext(Client client, Codecs codecs, PostgresqlConnection connection, StatementCache statementCache, boolean forceBinary, PortalNameSupplier portalNameSupplier) {
         this.client = client;
         this.codecs = codecs;
         this.connection = connection;
+        this.portalNameSupplier = Assert.requireNonNull(portalNameSupplier, "portalNameSupplier must not be null");
+        this.statementCache = Assert.requireNonNull(statementCache, "statementCache must not be null");
+        this.forceBinary = forceBinary;
     }
 
     public Client getClient() {
@@ -49,12 +60,27 @@ final class ConnectionContext {
         return this.connection;
     }
 
+    public StatementCache getStatementCache() {
+        return this.statementCache;
+    }
+
+    public boolean isForceBinary() {
+        return this.forceBinary;
+    }
+
+    public PortalNameSupplier getPortalNameSupplier() {
+        return this.portalNameSupplier;
+    }
+
     @Override
     public String toString() {
         return "ConnectionContext{" +
             "client=" + this.client +
             ", codecs=" + this.codecs +
             ", connection=" + this.connection +
+            ", statementCache=" + this.statementCache +
+            ", forceBinary=" + this.forceBinary +
+            ", portalNameSupplier=" + this.portalNameSupplier +
             '}';
     }
 }
