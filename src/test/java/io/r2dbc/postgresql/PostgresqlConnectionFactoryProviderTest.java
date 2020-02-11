@@ -18,6 +18,7 @@ package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.client.SSLConfig;
 import io.r2dbc.postgresql.client.SSLMode;
+import io.r2dbc.postgresql.util.LogLevel;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.Option;
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.AUTODETECT_EXTENSIONS;
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.ERROR_RESPONSE_LOG_LEVEL;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.FETCH_SIZE;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.FORCE_BINARY;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.LEGACY_POSTGRESQL_DRIVER;
@@ -271,6 +273,22 @@ final class PostgresqlConnectionFactoryProviderTest {
             .build());
 
         assertThat(factory.getConfiguration().isAutodetectExtensions()).isFalse();
+    }
+
+    @Test
+    void shouldConfigureLogLevels() {
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(ERROR_RESPONSE_LOG_LEVEL, LogLevel.OFF)
+            .option(Option.valueOf("noticeLogLevel"), "WARN")
+            .build());
+
+        assertThat(factory.getConfiguration())
+            .hasFieldOrPropertyWithValue("errorResponseLogLevel", LogLevel.OFF)
+            .hasFieldOrPropertyWithValue("noticeLogLevel", LogLevel.WARN);
     }
 
     @Test

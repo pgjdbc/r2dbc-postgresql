@@ -22,6 +22,7 @@ import io.r2dbc.postgresql.authentication.AuthenticationHandler;
 import io.r2dbc.postgresql.authentication.PasswordAuthenticationHandler;
 import io.r2dbc.postgresql.authentication.SASLAuthenticationHandler;
 import io.r2dbc.postgresql.client.Client;
+import io.r2dbc.postgresql.client.ConnectionSettings;
 import io.r2dbc.postgresql.client.ReactorNettyClient;
 import io.r2dbc.postgresql.client.SSLConfig;
 import io.r2dbc.postgresql.client.SSLMode;
@@ -38,7 +39,6 @@ import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.netty.resources.ConnectionProvider;
 import reactor.util.annotation.Nullable;
 
 import java.net.InetSocketAddress;
@@ -60,7 +60,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
 
     private static final String REPLICATION_DATABASE = "database";
 
-    private final Function<SSLConfig, Mono<? extends Client>> clientFactory;
+    private final Function<ConnectionSettings, Mono<? extends Client>> clientFactory;
 
     private final PostgresqlConnectionConfiguration configuration;
 
@@ -77,11 +77,11 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
     public PostgresqlConnectionFactory(PostgresqlConnectionConfiguration configuration) {
         this.configuration = Assert.requireNonNull(configuration, "configuration must not be null");
         this.endpoint = createSocketAddress(configuration);
-        this.clientFactory = sslConfig -> ReactorNettyClient.connect(ConnectionProvider.newConnection(), this.endpoint, configuration.getConnectTimeout(), sslConfig).cast(Client.class);
+        this.clientFactory = settings -> ReactorNettyClient.connect(this.endpoint, settings).cast(Client.class);
         this.extensions = getExtensions(configuration);
     }
 
-    PostgresqlConnectionFactory(Function<SSLConfig, Mono<? extends Client>> clientFactory, PostgresqlConnectionConfiguration configuration) {
+    PostgresqlConnectionFactory(Function<ConnectionSettings, Mono<? extends Client>> clientFactory, PostgresqlConnectionConfiguration configuration) {
         this.configuration = Assert.requireNonNull(configuration, "configuration must not be null");
         this.endpoint = createSocketAddress(configuration);
         this.clientFactory = Assert.requireNonNull(clientFactory, "clientFactory must not be null");
@@ -143,11 +143,12 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
     private Mono<PostgresqlConnection> doCreateConnection(boolean forReplication, @Nullable Map<String, String> options) {
 
         SSLConfig sslConfig = this.configuration.getSslConfig();
+        ConnectionSettings connectionSettings = this.configuration.getConnectionSettings();
         Predicate<Throwable> isAuthSpecificationError = e -> e instanceof ExceptionFactory.PostgresqlAuthenticationFailure;
-        return this.tryConnectWithConfig(sslConfig, options)
+        return this.tryConnectWithConfig(connectionSettings, options)
             .onErrorResume(
                 isAuthSpecificationError.and(e -> sslConfig.getSslMode() == SSLMode.ALLOW),
-                e -> this.tryConnectWithConfig(sslConfig.mutateMode(SSLMode.REQUIRE), options)
+                e -> this.tryConnectWithConfig(connectionSettings.mutate(builder -> builder.sslConfig(sslConfig.mutateMode(SSLMode.REQUIRE))), options)
                     .onErrorResume(sslAuthError -> {
                         e.addSuppressed(sslAuthError);
                         return Mono.error(e);
@@ -155,7 +156,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
             )
             .onErrorResume(
                 isAuthSpecificationError.and(e -> sslConfig.getSslMode() == SSLMode.PREFER),
-                e -> this.tryConnectWithConfig(sslConfig.mutateMode(SSLMode.DISABLE), options)
+                e -> this.tryConnectWithConfig(connectionSettings.mutate(builder -> builder.sslConfig(sslConfig.mutateMode(SSLMode.DISABLE))), options)
                     .onErrorResume(sslAuthError -> {
                         e.addSuppressed(sslAuthError);
                         return Mono.error(e);
@@ -189,8 +190,8 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
         return options != null && REPLICATION_DATABASE.equalsIgnoreCase(options.get(REPLICATION_OPTION));
     }
 
-    private Mono<Client> tryConnectWithConfig(SSLConfig sslConfig, @Nullable Map<String, String> options) {
-        return this.clientFactory.apply(sslConfig)
+    private Mono<Client> tryConnectWithConfig(ConnectionSettings settings, @Nullable Map<String, String> options) {
+        return this.clientFactory.apply(settings)
             .delayUntil(client -> StartupMessageFlow
                 .exchange(this.configuration.getApplicationName(), this::getAuthenticationHandler, client, this.configuration.getDatabase(), this.configuration.getUsername(),
                     options)

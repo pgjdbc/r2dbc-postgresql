@@ -20,11 +20,13 @@ import io.netty.handler.ssl.SslContextBuilder;
 import io.r2dbc.postgresql.client.DefaultHostnameVerifier;
 import io.r2dbc.postgresql.client.SSLMode;
 import io.r2dbc.postgresql.util.Assert;
+import io.r2dbc.postgresql.util.LogLevel;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.ConnectionFactoryProvider;
 import io.r2dbc.spi.Option;
 
 import javax.net.ssl.HostnameVerifier;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -53,6 +55,11 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<Boolean> AUTODETECT_EXTENSIONS = Option.valueOf("autodetectExtensions");
 
     /**
+     * Error Response Log Level.
+     */
+    public static final Option<LogLevel> ERROR_RESPONSE_LOG_LEVEL = Option.valueOf("errorResponseLogLevel");
+
+    /**
      * Fetch Size.
      */
     public static final Option<Integer> FETCH_SIZE = Option.valueOf("fetchSize");
@@ -61,6 +68,11 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
      * Force binary transfer.
      */
     public static final Option<Boolean> FORCE_BINARY = Option.valueOf("forceBinary");
+
+    /**
+     * Notice Response Log Level.
+     */
+    public static final Option<LogLevel> NOTICE_LOG_LEVEL = Option.valueOf("noticeLogLevel");
 
     /**
      * Driver option value.
@@ -227,6 +239,10 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         return value instanceof Boolean ? (boolean) value : Boolean.parseBoolean(value.toString());
     }
 
+    private static <T extends Enum<T>> T convertToEnum(Object value, Class<T> enumType) {
+        return enumType.isInstance(value) ? enumType.cast(value) : Enum.valueOf(enumType, value.toString().toUpperCase(Locale.US));
+    }
+
     private static int convertToInt(Object value) {
         return value instanceof Integer ? (int) value : Integer.parseInt(value.toString());
     }
@@ -265,6 +281,11 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
             builder.port(port);
         }
 
+        Object errorResponseLogLevel = connectionFactoryOptions.getValue(ERROR_RESPONSE_LOG_LEVEL);
+        if (errorResponseLogLevel != null) {
+            builder.errorResponseLogLevel(convertToEnum(errorResponseLogLevel, LogLevel.class));
+        }
+
         Object fetchSize = connectionFactoryOptions.getValue(FETCH_SIZE);
         if (fetchSize != null) {
             builder.fetchSize(convertToInt(fetchSize));
@@ -273,6 +294,11 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         Object forceBinary = connectionFactoryOptions.getValue(FORCE_BINARY);
         if (forceBinary != null) {
             builder.forceBinary(convertToBoolean(forceBinary));
+        }
+
+        Object noticeLogLevel = connectionFactoryOptions.getValue(NOTICE_LOG_LEVEL);
+        if (noticeLogLevel != null) {
+            builder.noticeLogLevel(convertToEnum(noticeLogLevel, LogLevel.class));
         }
 
         Object preparedStatementCacheQueries = connectionFactoryOptions.getValue(PREPARED_STATEMENT_CACHE_QUERIES);
