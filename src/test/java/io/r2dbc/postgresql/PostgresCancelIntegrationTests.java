@@ -118,8 +118,8 @@ class PostgresCancelIntegrationTests extends AbstractIntegrationTests {
     }
 
     @Test
-    void cancelQueryRequest() {
-        Mono<Void> cancel = this.connection.cancelRunningQuery()
+    void cancelRequest() {
+        Mono<Void> cancel = this.connection.cancelRequest()
             .delaySubscription(Duration.ofSeconds(1));
 
         this.connection.createStatement("SELECT pg_sleep(1000)")
@@ -127,6 +127,7 @@ class PostgresCancelIntegrationTests extends AbstractIntegrationTests {
             .flatMap(PostgresqlResult::getRowsUpdated)
             .mergeWith(cancel.then(Mono.empty()))
             .as(StepVerifier::create)
-            .verifyErrorMatches(e -> e instanceof R2dbcNonTransientResourceException && e.getMessage().equals("canceling statement due to user request"));
+            .expectErrorMatches(e -> e instanceof R2dbcNonTransientResourceException && e.getMessage().equals("canceling statement due to user request"))
+            .verify(Duration.ofSeconds(5));
     }
 }

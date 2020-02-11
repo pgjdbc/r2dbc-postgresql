@@ -104,12 +104,9 @@ public final class ReactorNettyClient implements Client {
 
     private final ByteBufAllocator byteBufAllocator;
 
-    @Nullable
-    private final Duration connectTimeout;
+    private final ConnectionResources connectionResources;
 
     private final Connection connection;
-
-    private final ConnectionProvider connectionProvider;
 
     private final EmitterProcessor<Publisher<FrontendMessage>> requestProcessor = EmitterProcessor.create(false);
 
@@ -120,10 +117,6 @@ public final class ReactorNettyClient implements Client {
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
     private final BackendMessageSubscriber messageSubscriber = new BackendMessageSubscriber();
-
-    private final SocketAddress socketAddress;
-
-    private final SSLConfig sslConfig;
 
     private volatile Integer processId;
 
@@ -136,19 +129,13 @@ public final class ReactorNettyClient implements Client {
     /**
      * Creates a new frame processor connected to a given TCP connection.
      *
-     * @param connection         the TCP connection
-     * @param connectionProvider the connection provider resources
-     * @param socketAddress      the socketAddress to connect to
-     * @param connectTimeout     connect timeout
-     * @param sslConfig          SSL configuration
+     * @param connection          the TCP connection
+     * @param connectionResources the resource configuration to open new connections
      * @throws IllegalArgumentException if {@code connection} is {@code null}
      */
-    private ReactorNettyClient(Connection connection, ConnectionProvider connectionProvider, SocketAddress socketAddress, @Nullable Duration connectTimeout, SSLConfig sslConfig) {
+    private ReactorNettyClient(Connection connection, ConnectionResources connectionResources) {
         Assert.requireNonNull(connection, "Connection must not be null");
-        this.connectionProvider = Assert.requireNonNull(connectionProvider, "connectionProvider must not be null");
-        this.socketAddress = Assert.requireNonNull(socketAddress, "socketAddress must not be null");
-        this.sslConfig = Assert.requireNonNull(sslConfig, "sslConfig must not be null");
-        this.connectTimeout = connectTimeout;
+        this.connectionResources = Assert.requireNonNull(connectionResources, "connectionProvider must not be null");
 
         connection.addHandler(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE - 5, 1, 4, -4, 0));
         connection.addHandler(new EnsureSubscribersCompleteChannelHandler(this.requestProcessor));
@@ -203,8 +190,7 @@ public final class ReactorNettyClient implements Client {
             if (this.isClosed.compareAndSet(false, true)) {
 
                 if (!connected || this.processId == null) {
-                    this.connection.dispose();
-                    return this.connection.onDispose();
+                    return closeConnection();
                 }
 
                 return Flux.just(Terminate.INSTANCE)
@@ -217,6 +203,11 @@ public final class ReactorNettyClient implements Client {
 
             return Mono.empty();
         });
+    }
+
+    private Mono<? extends Void> closeConnection() {
+        this.connection.dispose();
+        return this.connection.onDispose();
     }
 
     @Override
@@ -380,7 +371,7 @@ public final class ReactorNettyClient implements Client {
                     new LoggingHandler(ReactorNettyClient.class, LogLevel.TRACE));
             }
 
-            return registerSslHandler(sslConfig, it).thenReturn(new ReactorNettyClient(it, connectionProvider, socketAddress, connectTimeout, sslConfig));
+            return registerSslHandler(sslConfig, it).thenReturn(new ReactorNettyClient(it, new ConnectionResources(connectTimeout, connectionProvider, sslConfig)));
         });
     }
 
@@ -445,14 +436,15 @@ public final class ReactorNettyClient implements Client {
     }
 
     @Override
-    public Mono<Void> cancelRunningQuery() {
+    public Mono<Void> cancelRequest() {
         return Mono.defer(() -> {
             int processId = this.getProcessId().orElseThrow(() -> new IllegalStateException("Connection does not yet have a processId"));
             int secretKey = this.getSecretKey().orElseThrow(() -> new IllegalStateException("Connection does not yet have a secretKey"));
 
-            return ReactorNettyClient.connect(this.connectionProvider, this.socketAddress, this.connectTimeout, this.sslConfig)
-                .flatMap(client -> CancelRequestMessageFlow.exchange(client, processId, secretKey))
-                .onErrorResume(e -> e instanceof PostgresConnectionClosedException && e.getMessage().equals("Connection unexpectedly closed"), e -> Mono.empty());
+            return ReactorNettyClient.connect(this.connectionResources.getConnectionProvider(), this.connection.channel().remoteAddress(), this.connectionResources.getConnectTimeout(),
+                this.connectionResources.getSslConfig())
+                .flatMap(client -> CancelRequestMessageFlow.exchange(client, processId, secretKey).then(Mono.defer(client::closeConnection))
+                    .onErrorResume(PostgresConnectionClosedException.class::isInstance, e -> Mono.empty()));
         });
     }
 
@@ -939,6 +931,35 @@ public final class ReactorNettyClient implements Client {
             } else {
                 return Context.empty();
             }
+        }
+    }
+
+    static class ConnectionResources {
+
+        @Nullable
+        private final Duration connectTimeout;
+
+        private final ConnectionProvider connectionProvider;
+
+        private final SSLConfig sslConfig;
+
+        public ConnectionResources(@Nullable Duration connectTimeout, ConnectionProvider connectionProvider, SSLConfig sslConfig) {
+            this.connectTimeout = connectTimeout;
+            this.connectionProvider = connectionProvider;
+            this.sslConfig = sslConfig;
+        }
+
+        @Nullable
+        public Duration getConnectTimeout() {
+            return this.connectTimeout;
+        }
+
+        public ConnectionProvider getConnectionProvider() {
+            return this.connectionProvider;
+        }
+
+        public SSLConfig getSslConfig() {
+            return this.sslConfig;
         }
     }
 }

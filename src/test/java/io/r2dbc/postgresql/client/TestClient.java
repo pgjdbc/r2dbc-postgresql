@@ -155,7 +155,7 @@ public final class TestClient implements Client {
     }
 
     @Override
-    public Mono<Void> cancelRunningQuery() {
+    public Mono<Void> cancelRequest() {
         return Mono.empty();
     }
 
