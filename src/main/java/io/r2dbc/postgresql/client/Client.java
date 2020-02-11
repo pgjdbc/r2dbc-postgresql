@@ -143,8 +143,9 @@ public interface Client {
     /**
      * Cancel currently running query by sending {@link CancelRequest} to a server.
      *
-     * @return a {@link Mono} that indicates that a cancel frame was delivered to backend
+     * @return a {@link Mono} that indicates that a cancel frame was delivered to the backend
+     * @since 0.9
      */
-    Mono<Void> cancelRunningQuery();
+    Mono<Void> cancelRequest();
 
 }

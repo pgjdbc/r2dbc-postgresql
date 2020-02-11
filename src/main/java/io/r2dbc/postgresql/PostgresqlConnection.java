@@ -105,8 +105,8 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
     }
 
     @Override
-    public Mono<Void> cancelRunningQuery() {
-        return this.client.cancelRunningQuery();
+    public Mono<Void> cancelRequest() {
+        return this.client.cancelRequest();
     }
 
     @Override
