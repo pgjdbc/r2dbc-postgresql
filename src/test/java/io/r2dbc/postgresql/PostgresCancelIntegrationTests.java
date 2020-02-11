@@ -16,12 +16,17 @@
 
 package io.r2dbc.postgresql;
 
+import io.r2dbc.postgresql.api.PostgresqlResult;
+import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+
+import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -110,5 +115,19 @@ class PostgresCancelIntegrationTests extends AbstractIntegrationTests {
             .expectNextCount(1)
             .thenCancel()
             .verify();
+    }
+
+    @Test
+    void cancelRequest() {
+        Mono<Void> cancel = this.connection.cancelRequest()
+            .delaySubscription(Duration.ofSeconds(1));
+
+        this.connection.createStatement("SELECT pg_sleep(1000)")
+            .execute()
+            .flatMap(PostgresqlResult::getRowsUpdated)
+            .mergeWith(cancel.then(Mono.empty()))
+            .as(StepVerifier::create)
+            .expectErrorMatches(e -> e instanceof R2dbcNonTransientResourceException && e.getMessage().equals("canceling statement due to user request"))
+            .verify(Duration.ofSeconds(5));
     }
 }

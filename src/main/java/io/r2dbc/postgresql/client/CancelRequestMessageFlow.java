@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,12 @@
 
 package io.r2dbc.postgresql.client;
 
-import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.frontend.CancelRequest;
 import io.r2dbc.postgresql.util.Assert;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * A utility class that encapsulates the <a href="https://www.postgresql.org/docs/10/static/protocol-flow.html#idm46428663888448">Cancel Request</a> message flow.
+ * A utility class that encapsulates the <a href="https://www.postgresql.org/docs/current/protocol-flow.html#id-1.10.5.7.9">Cancel Request</a> message flow.
  */
 public final class CancelRequestMessageFlow {
 
@@ -31,19 +29,16 @@ public final class CancelRequestMessageFlow {
     }
 
     /**
-     * Execute the <a href="https://www.postgresql.org/docs/10/static/protocol-flow.html#idm46428663888448">Cancel Request</a> message flow.
+     * Execute the <a href="https://www.postgresql.org/docs/current/protocol-flow.html#id-1.10.5.7.9">Cancel Request</a> message flow.
      *
      * @param client the {@link Client} to exchange messages with
      * @return the messages received after authentication is complete, in response to this exchange
      * @throws IllegalArgumentException if {@code Client} is {@code null}
      */
-    public static Flux<BackendMessage> exchange(Client client) {
+    public static Mono<Void> exchange(Client client, int processId, int secretKey) {
         Assert.requireNonNull(client, "client must not be null");
 
-        int processId = client.getProcessId().orElseThrow(() -> new IllegalStateException("Connection does not yet have a processId"));
-        int secretKey = client.getSecretKey().orElseThrow(() -> new IllegalStateException("Connection does not yet have a secretKey"));
-
-        return client.exchange(Mono.just(new CancelRequest(processId, secretKey)));
+        return client.exchange(Mono.just(new CancelRequest(processId, secretKey))).then();
     }
 
 }

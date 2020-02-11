@@ -114,6 +114,11 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
     }
 
     @Override
+    public Mono<Void> cancelRequest() {
+        return this.client.cancelRequest();
+    }
+
+    @Override
     public Mono<Void> commitTransaction() {
         return useTransactionStatus(transactionStatus -> {
             if (OPEN == transactionStatus) {

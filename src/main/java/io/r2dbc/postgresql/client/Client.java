@@ -20,6 +20,7 @@ import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.NotificationResponse;
 import io.r2dbc.postgresql.message.backend.ReadyForQuery;
+import io.r2dbc.postgresql.message.frontend.CancelRequest;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.reactivestreams.Publisher;
@@ -138,5 +139,13 @@ public interface Client {
      * @return {@literal true} if the client is connected to a server.
      */
     boolean isConnected();
+
+    /**
+     * Cancel currently running query by sending {@link CancelRequest} to a server.
+     *
+     * @return a {@link Mono} that indicates that a cancel frame was delivered to the backend
+     * @since 0.9
+     */
+    Mono<Void> cancelRequest();
 
 }

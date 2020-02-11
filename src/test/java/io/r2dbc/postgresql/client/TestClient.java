@@ -155,6 +155,11 @@ public final class TestClient implements Client {
     }
 
     @Override
+    public Mono<Void> cancelRequest() {
+        return Mono.empty();
+    }
+
+    @Override
     public void send(FrontendMessage message) {
         this.requests.next(message);
     }

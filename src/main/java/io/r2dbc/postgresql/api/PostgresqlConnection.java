@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql.api;
 
+import io.r2dbc.postgresql.message.frontend.CancelRequest;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.IsolationLevel;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
@@ -73,6 +74,14 @@ public interface PostgresqlConnection extends Connection {
      * @return a hot {@link Flux} of {@link Notification Notifications}.
      */
     Flux<Notification> getNotifications();
+
+    /**
+     * Cancel currently running query by sending {@link CancelRequest} to a server.
+     *
+     * @return a {@link Mono} that indicates that a cancel frame was delivered to the backend
+     * @since 0.9
+     */
+    Mono<Void> cancelRequest();
 
     /**
      * {@inheritDoc}
