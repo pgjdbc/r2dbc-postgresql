@@ -69,7 +69,7 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
     private volatile IsolationLevel isolationLevel;
 
     PostgresqlConnection(Client client, Codecs codecs, PortalNameSupplier portalNameSupplier, StatementCache statementCache, IsolationLevel isolationLevel, boolean forceBinary) {
-        this.context = new ConnectionContext(client, codecs, this, statementCache, forceBinary, portalNameSupplier);
+        this.context = new ConnectionContext(client, codecs, this, forceBinary, portalNameSupplier, statementCache);
         this.client = Assert.requireNonNull(client, "client must not be null");
         this.codecs = Assert.requireNonNull(codecs, "codecs must not be null");
         this.isolationLevel = Assert.requireNonNull(isolationLevel, "isolationLevel must not be null");

@@ -46,6 +46,7 @@ import reactor.core.publisher.SynchronousSink;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import static io.r2dbc.postgresql.message.frontend.Execute.NO_LIMIT;
@@ -61,6 +62,8 @@ public final class ExtendedQueryMessageFlow {
      */
     public static final Pattern PARAMETER_SYMBOL = Pattern.compile("\\$([\\d]+)", Pattern.DOTALL);
 
+    private static final Predicate<BackendMessage> PARSE_TAKE_UNTIL = message -> message instanceof ParseComplete || message instanceof ReadyForQuery;
+
     private ExtendedQueryMessageFlow() {
     }
 
@@ -73,6 +76,8 @@ public final class ExtendedQueryMessageFlow {
      * @param statementName      the name of the statementName to execute
      * @param query              the query to execute
      * @param forceBinary        force backend to return column data values in binary format for all columns
+     * @param fetchSize          the fetch size to apply. Use a single {@link Execute} with fetch all if {@code fetchSize} is zero. Otherwise, perform multiple roundtrips with smaller
+     *                           {@link Execute} sizes.
      * @return the messages received in response to the exchange
      * @throws IllegalArgumentException if {@code bindings}, {@code client}, {@code portalNameSupplier}, or {@code statementName} is {@code null}
      */
@@ -82,49 +87,74 @@ public final class ExtendedQueryMessageFlow {
         Assert.requireNonNull(client, "client must not be null");
         Assert.requireNonNull(portalNameSupplier, "portalNameSupplier must not be null");
         Assert.requireNonNull(statementName, "statementName must not be null");
-        if (fetchSize == NO_LIMIT) {
-            return Flux.defer(() -> {
-                String portal = portalNameSupplier.get();
-                Flux<FrontendMessage> bindFlow = toBindFlow(binding, portal, statementName, query, forceBinary, fetchSize)
-                    .concatWithValues(new Close(portal, PORTAL), Sync.INSTANCE);
-                return client.exchange(bindFlow)
-                    .as(Operators::discardOnCancel)
-                    .doOnDiscard(ReferenceCounted.class, ReferenceCountUtil::release);
-            });
-        }
+
+        String portal = portalNameSupplier.get();
+
         return Flux.defer(() -> {
-            String portal = portalNameSupplier.get();
-            Flux<FrontendMessage> bindFlow = toBindFlow(binding, portal, statementName, query, forceBinary, fetchSize).concatWithValues(Flush.INSTANCE);
-            DirectProcessor<FrontendMessage> requestsProcessor = DirectProcessor.create();
-            FluxSink<FrontendMessage> requestsSink = requestsProcessor.sink();
-            AtomicBoolean isCanceled = new AtomicBoolean(false);
-            return client.exchange(bindFlow.concatWith(requestsProcessor))
-                .handle((BackendMessage message, SynchronousSink<BackendMessage> sink) -> {
-                    if (message instanceof CommandComplete) {
+
+            Flux<FrontendMessage> bindFlow = toBindFlow(binding, portal, statementName, query, forceBinary);
+
+            if (fetchSize == NO_LIMIT) {
+                return fetchAll(bindFlow, client, portal);
+            }
+
+            return fetchCursored(bindFlow, client, portal, fetchSize);
+        }).doOnDiscard(ReferenceCounted.class, ReferenceCountUtil::release);
+    }
+
+    /**
+     * Execute the query and indicate to fetch all rows with the {@link Execute} message.
+     *
+     * @param bindFlow the initial bind flow
+     * @param client   client to use
+     * @param portal   the portal
+     * @return the resulting message stream
+     */
+    private static Flux<BackendMessage> fetchAll(Flux<FrontendMessage> bindFlow, Client client, String portal) {
+        return client.exchange(bindFlow.concatWithValues(new Execute(portal, NO_LIMIT), new Close(portal, PORTAL), Sync.INSTANCE))
+            .as(Operators::discardOnCancel);
+    }
+
+    /**
+     * Execute the query and indicate to fetch rows in chunks with the {@link Execute} message.
+     *
+     * @param bindFlow  the initial bind flow
+     * @param client    client to use
+     * @param portal    the portal
+     * @param fetchSize fetch size per roundtrip
+     * @return the resulting message stream
+     */
+    private static Flux<BackendMessage> fetchCursored(Flux<FrontendMessage> bindFlow, Client client, String portal, int fetchSize) {
+
+        DirectProcessor<FrontendMessage> requestsProcessor = DirectProcessor.create();
+        FluxSink<FrontendMessage> requestsSink = requestsProcessor.sink();
+        AtomicBoolean isCanceled = new AtomicBoolean(false);
+
+        return client.exchange(bindFlow.concatWithValues(new Execute(portal, fetchSize), Flush.INSTANCE).concatWith(requestsProcessor))
+            .handle((BackendMessage message, SynchronousSink<BackendMessage> sink) -> {
+                if (message instanceof CommandComplete) {
+                    requestsSink.next(new Close(portal, PORTAL));
+                    requestsSink.next(Sync.INSTANCE);
+                    requestsSink.complete();
+                    sink.next(message);
+                } else if (message instanceof ErrorResponse) {
+                    requestsSink.next(Sync.INSTANCE);
+                    requestsSink.complete();
+                    sink.next(message);
+                } else if (message instanceof PortalSuspended) {
+                    if (isCanceled.get()) {
                         requestsSink.next(new Close(portal, PORTAL));
                         requestsSink.next(Sync.INSTANCE);
                         requestsSink.complete();
-                        sink.next(message);
-                    } else if (message instanceof ErrorResponse) {
-                        requestsSink.next(Sync.INSTANCE);
-                        requestsSink.complete();
-                        sink.next(message);
-                    } else if (message instanceof PortalSuspended) {
-                        if (isCanceled.get()) {
-                            requestsSink.next(new Close(portal, PORTAL));
-                            requestsSink.next(Sync.INSTANCE);
-                            requestsSink.complete();
-                        } else {
-                            requestsSink.next(new Execute(portal, fetchSize));
-                            requestsSink.next(Flush.INSTANCE);
-                        }
                     } else {
-                        sink.next(message);
+                        requestsSink.next(new Execute(portal, fetchSize));
+                        requestsSink.next(Flush.INSTANCE);
                     }
-                })
-                .as(flux -> Operators.discardOnCancel(flux, () -> isCanceled.set(true)))
-                .doOnDiscard(ReferenceCounted.class, ReferenceCountUtil::release);
-        });
+                } else {
+                    sink.next(message);
+                }
+            })
+            .as(flux -> Operators.discardOnCancel(flux, () -> isCanceled.set(true)));
     }
 
     /**
@@ -147,7 +177,7 @@ public final class ExtendedQueryMessageFlow {
          ParseComplete will be received if parse was successful
          ReadyForQuery will be received as a response to Sync, which was send in case of error in parsing
          */
-        return client.exchange(message -> message instanceof ParseComplete || message instanceof ReadyForQuery, Flux.just(new Parse(name, types, query), Flush.INSTANCE))
+        return client.exchange(PARSE_TAKE_UNTIL, Flux.just(new Parse(name, types, query), Flush.INSTANCE))
             .doOnNext(message -> {
                 if (message instanceof ErrorResponse) {
                     /*
@@ -175,15 +205,7 @@ public final class ExtendedQueryMessageFlow {
             .takeUntil(CloseComplete.class::isInstance);
     }
 
-    private static Collection<Format> resultFormat(boolean forceBinary) {
-        if (forceBinary) {
-            return Format.binary();
-        } else {
-            return Collections.emptyList();
-        }
-    }
-
-    private static Flux<FrontendMessage> toBindFlow(Binding binding, String portal, String statementName, String query, boolean forceBinary, int fetchSize) {
+    private static Flux<FrontendMessage> toBindFlow(Binding binding, String portal, String statementName, String query, boolean forceBinary) {
 
         return Flux.fromIterable(binding.getParameterValues())
             .flatMap(f -> {
@@ -198,7 +220,15 @@ public final class ExtendedQueryMessageFlow {
             .flatMapMany(values -> {
                 Bind bind = new Bind(portal, binding.getParameterFormats(), values, resultFormat(forceBinary), statementName);
 
-                return Flux.<FrontendMessage>just(bind, new Describe(portal, PORTAL), new Execute(portal, fetchSize));
+                return Flux.<FrontendMessage>just(bind, new Describe(portal, PORTAL));
             }).doOnSubscribe(ignore -> QueryLogger.logQuery(query));
+    }
+
+    private static Collection<Format> resultFormat(boolean forceBinary) {
+        if (forceBinary) {
+            return Format.binary();
+        } else {
+            return Collections.emptyList();
+        }
     }
 }

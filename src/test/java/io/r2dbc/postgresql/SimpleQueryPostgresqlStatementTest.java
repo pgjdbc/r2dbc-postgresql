@@ -83,13 +83,13 @@ final class SimpleQueryPostgresqlStatementTest {
     @Test
     void negativeFetchSize() {
         assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> new SimpleQueryPostgresqlStatement(MockContext.empty(), "test-query").fetchSize(-1))
-            .withMessage("fetch size must be greater or equal zero");
+            .withMessage("Fetch size must be greater or equal zero");
     }
 
     @Test
     void fetchSizeWithMultipleQueries() {
         assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> new SimpleQueryPostgresqlStatement(MockContext.empty(), "test-query;test-query").fetchSize(1))
-            .withMessage("fetch size can be used with one query sql only");
+            .withMessage("Fetch size can only be used with a single SQL statement");
     }
 
     @Test
