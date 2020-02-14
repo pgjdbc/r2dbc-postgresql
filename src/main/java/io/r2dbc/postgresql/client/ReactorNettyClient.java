@@ -916,6 +916,7 @@ public final class ReactorNettyClient implements Client {
          */
         public void close(Supplier<? extends Throwable> supplier) {
 
+            this.terminated = true;
             Conversation receiver;
 
             while ((receiver = this.conversations.poll()) != null) {
