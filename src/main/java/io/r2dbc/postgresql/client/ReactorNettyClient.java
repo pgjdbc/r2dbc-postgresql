@@ -471,11 +471,8 @@ public final class ReactorNettyClient implements Client {
     }
 
     private void drainError(Supplier<? extends Throwable> supplier) {
-        Conversation receiver;
 
-        while ((receiver = this.messageSubscriber.conversations.poll()) != null) {
-            receiver.onError(supplier.get());
-        }
+        this.messageSubscriber.close(supplier);
 
         if (!this.notificationProcessor.isTerminated()) {
             this.notificationProcessor.onError(supplier.get());
@@ -930,6 +927,24 @@ public final class ReactorNettyClient implements Client {
                 return receiver.sink.currentContext();
             } else {
                 return Context.empty();
+            }
+        }
+
+        /**
+         * Cleanup the subscriber by terminating all {@link Conversation}s and purging the data buffer.
+         *
+         * @param supplier
+         */
+        public void close(Supplier<? extends Throwable> supplier) {
+
+            Conversation receiver;
+
+            while ((receiver = this.conversations.poll()) != null) {
+                receiver.onError(supplier.get());
+            }
+
+            while (!this.buffer.isEmpty()) {
+                ReferenceCountUtil.release(this.buffer.poll());
             }
         }
     }
