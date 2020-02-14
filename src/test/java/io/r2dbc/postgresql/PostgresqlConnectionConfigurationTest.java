@@ -35,9 +35,9 @@ final class PostgresqlConnectionConfigurationTest {
     }
 
     @Test
-    void builderNoHostAndSocket() {
+    void builderNoHostConfiguration() {
         assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().build())
-            .withMessage("host or socket must not be null");
+            .withMessage("Either multiple hosts configuration or single host configuration should be provided");
     }
 
     @Test
@@ -74,10 +74,10 @@ final class PostgresqlConnectionConfigurationTest {
             .hasFieldOrPropertyWithValue("applicationName", "test-application-name")
             .hasFieldOrPropertyWithValue("connectTimeout", Duration.ofMillis(1000))
             .hasFieldOrPropertyWithValue("database", "test-database")
-            .hasFieldOrPropertyWithValue("host", "test-host")
+            .hasFieldOrPropertyWithValue("singleHostConfiguration.host", "test-host")
+            .hasFieldOrPropertyWithValue("singleHostConfiguration.port", 100)
             .hasFieldOrPropertyWithValue("options", options)
             .hasFieldOrPropertyWithValue("password", null)
-            .hasFieldOrPropertyWithValue("port", 100)
             .hasFieldOrPropertyWithValue("schema", "test-schema")
             .hasFieldOrPropertyWithValue("username", "test-username")
             .hasFieldOrProperty("sslConfig");
@@ -96,9 +96,9 @@ final class PostgresqlConnectionConfigurationTest {
         assertThat(configuration)
             .hasFieldOrPropertyWithValue("applicationName", "r2dbc-postgresql")
             .hasFieldOrPropertyWithValue("database", "test-database")
-            .hasFieldOrPropertyWithValue("host", "test-host")
+            .hasFieldOrPropertyWithValue("singleHostConfiguration.host", "test-host")
+            .hasFieldOrPropertyWithValue("singleHostConfiguration.port", 5432)
             .hasFieldOrPropertyWithValue("password", "test-password")
-            .hasFieldOrPropertyWithValue("port", 5432)
             .hasFieldOrPropertyWithValue("schema", "test-schema")
             .hasFieldOrPropertyWithValue("username", "test-username")
             .hasFieldOrProperty("sslConfig");
