@@ -16,10 +16,18 @@
 
 package io.r2dbc.postgresql;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import reactor.test.StepVerifier;
 
 public class FetchSizeIntegrationTests extends AbstractIntegrationTests {
+
+    @Override
+    @BeforeEach
+    void setUp() {
+        super.setUp();
+        System.gc();
+    }
 
     @Test
     void exchangeWithFetchSize() {

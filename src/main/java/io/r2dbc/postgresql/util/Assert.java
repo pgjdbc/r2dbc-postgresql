@@ -134,7 +134,7 @@ public final class Assert {
     }
 
     /**
-     * Assert a boolean expression, throwing an {@code IllegalArgumentException}
+     * Assert a boolean expression, throwing an {@link IllegalArgumentException}
      * if the expression evaluates to {@code false}.
      *
      * @param expression a boolean expression

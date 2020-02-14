@@ -24,6 +24,7 @@ import io.r2dbc.postgresql.message.backend.BindComplete;
 import io.r2dbc.postgresql.message.backend.NoData;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.GeneratedValuesUtils;
+import io.r2dbc.spi.Statement;
 import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
@@ -39,9 +40,12 @@ import static io.r2dbc.postgresql.message.frontend.Execute.NO_LIMIT;
 import static io.r2dbc.postgresql.util.PredicateUtils.not;
 import static io.r2dbc.postgresql.util.PredicateUtils.or;
 
+/**
+ * {@link Statement} using the  <a href="https://www.postgresql.org/docs/current/static/protocol-flow.html#PROTOCOL-FLOW-EXT-QUERY">Extended Query Flow</a>.
+ */
 final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
 
-    private static final Predicate<BackendMessage> RESULT_FRAME_FILTER = not(or(BindComplete.class::isInstance, NoData.class::isInstance));
+    static final Predicate<BackendMessage> RESULT_FRAME_FILTER = not(or(BindComplete.class::isInstance, NoData.class::isInstance));
 
     private final Bindings bindings;
 
@@ -97,12 +101,6 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
         Assert.requireNonNull(type, "type must not be null");
 
         this.bindings.getCurrent().add(index, this.context.getCodecs().encodeNull(type));
-        return this;
-    }
-
-    ExtendedQueryPostgresqlStatement bindEmpty() {
-        this.bindings.empty();
-
         return this;
     }
 
@@ -178,12 +176,16 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
         ExceptionFactory factory = ExceptionFactory.withSql(sql);
         return this.context.getStatementCache().getName(this.bindings.first(), sql)
             .flatMapMany(name -> Flux.fromIterable(this.bindings.bindings).map(binding -> {
-                Flux<BackendMessage> messages = ExtendedQueryMessageFlow
-                    .execute(binding, this.context.getClient(), this.context.getPortalNameSupplier(), name, sql, this.context.isForceBinary(), this.fetchSize)
-                    .filter(RESULT_FRAME_FILTER);
-                return PostgresqlResult.toResult(this.context, messages, factory);
+                return createPostgresqlResult(sql, factory, name, binding, this.context, this.fetchSize);
             }))
             .cast(io.r2dbc.postgresql.api.PostgresqlResult.class);
+    }
+
+    static PostgresqlResult createPostgresqlResult(String sql, ExceptionFactory factory, String statementName, Binding binding, ConnectionContext context, int fetchSize) {
+        Flux<BackendMessage> messages = ExtendedQueryMessageFlow
+            .execute(binding, context.getClient(), context.getPortalNameSupplier(), statementName, sql, context.isForceBinary(), fetchSize)
+            .filter(RESULT_FRAME_FILTER);
+        return PostgresqlResult.toResult(context, messages, factory);
     }
 
     private int getIndex(String identifier) {
@@ -238,13 +240,6 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
             }
 
             return this.current;
-        }
-
-        private void empty() {
-            Assert.isTrue(this.expectedSize == 0, "Empty binding can be used only with no params query");
-
-            this.bindings.clear();
-            this.bindings.add(Binding.EMPTY);
         }
     }
 

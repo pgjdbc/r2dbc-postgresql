@@ -53,7 +53,7 @@ final class MockContext {
         }
 
         public ConnectionContext build() {
-            return new ConnectionContext(this.client, this.codecs, this.connection, statementCache, forceBinary, portalNameSupplier);
+            return new ConnectionContext(this.client, this.codecs, this.connection, forceBinary, portalNameSupplier, statementCache);
         }
 
         public Builder codecs(Codecs codecs) {
