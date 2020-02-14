@@ -19,19 +19,30 @@ package io.r2dbc.postgresql;
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.client.Client;
+import io.r2dbc.postgresql.client.PortalNameSupplier;
 import io.r2dbc.postgresql.client.TestClient;
 import io.r2dbc.postgresql.codec.MockCodecs;
+import io.r2dbc.postgresql.message.backend.BindComplete;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.DataRow;
 import io.r2dbc.postgresql.message.backend.EmptyQueryResponse;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
+import io.r2dbc.postgresql.message.backend.NoData;
 import io.r2dbc.postgresql.message.backend.RowDescription;
+import io.r2dbc.postgresql.message.frontend.Bind;
+import io.r2dbc.postgresql.message.frontend.Describe;
+import io.r2dbc.postgresql.message.frontend.Execute;
+import io.r2dbc.postgresql.message.frontend.ExecutionType;
+import io.r2dbc.postgresql.message.frontend.Flush;
 import io.r2dbc.postgresql.message.frontend.Query;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
@@ -39,6 +50,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 final class SimpleQueryPostgresqlStatementTest {
 
@@ -67,6 +80,27 @@ final class SimpleQueryPostgresqlStatementTest {
             .withMessage("Binding parameters is not supported for the statement 'test-query'");
     }
 
+    @Test
+    void negativeFetchSize() {
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> new SimpleQueryPostgresqlStatement(MockContext.empty(), "test-query").fetchSize(-1))
+            .withMessage("Fetch size must be greater or equal zero");
+    }
+
+    @Test
+    void fetchSizeWithMultipleQueries() {
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> new SimpleQueryPostgresqlStatement(MockContext.empty(), "test-query;test-query").fetchSize(1))
+            .withMessage("Fetch size can only be used with a single SQL statement");
+    }
+
+    @Test
+    void defaultFetchSizeWithMultipleQueries() {
+        new SimpleQueryPostgresqlStatement(MockContext.empty(), "test-query;test-query").fetchSize(Execute.NO_LIMIT);
+    }
+
+    @Test
+    void fetchSizeWithOneQuery() {
+        new SimpleQueryPostgresqlStatement(MockContext.empty(), "test-query").fetchSize(10);
+    }
 
     @Test
     void constructorNoContext() {
@@ -223,6 +257,32 @@ final class SimpleQueryPostgresqlStatementTest {
 
         new SimpleQueryPostgresqlStatement(MockContext.builder().client(client).build(), "INSERT test-query")
             .returnGeneratedValues()
+            .execute()
+            .flatMap(result -> result.map((row, rowMetadata) -> row))
+            .as(StepVerifier::create)
+            .verifyComplete();
+    }
+
+
+    @Test
+    void executeWithFetchSize() {
+        Client client = TestClient.builder()
+            .expectRequest(
+                new Bind("B_0", Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), "test-name"),
+                new Describe("B_0", ExecutionType.PORTAL),
+                new Execute("B_0", 1),
+                Flush.INSTANCE)
+            .thenRespond(BindComplete.INSTANCE, NoData.INSTANCE, new CommandComplete("test", null, null))
+            .build();
+
+        MockCodecs codecs = MockCodecs.empty();
+        PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
+        ConnectionContext context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
+
+        when(context.getStatementCache().getName(any(), any())).thenReturn(Mono.just("test-name"));
+
+        new SimpleQueryPostgresqlStatement(context, "SELECT test-query")
+            .fetchSize(1)
             .execute()
             .flatMap(result -> result.map((row, rowMetadata) -> row))
             .as(StepVerifier::create)

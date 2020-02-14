@@ -133,4 +133,17 @@ public final class Assert {
         return file;
     }
 
+    /**
+     * Assert a boolean expression, throwing an {@link IllegalArgumentException}
+     * if the expression evaluates to {@code false}.
+     *
+     * @param expression a boolean expression
+     * @param message    the exception message to use if the assertion fails
+     * @throws IllegalArgumentException if {@code expression} is {@code false}
+     */
+    public static void isTrue(boolean expression, String message) {
+        if (!expression) {
+            throw new IllegalArgumentException(message);
+        }
+    }
 }

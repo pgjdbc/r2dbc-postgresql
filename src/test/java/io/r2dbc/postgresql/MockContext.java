@@ -18,8 +18,12 @@ package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.api.PostgresqlConnection;
 import io.r2dbc.postgresql.client.Client;
+import io.r2dbc.postgresql.client.PortalNameSupplier;
 import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.codec.MockCodecs;
+
+import static org.mockito.Mockito.RETURNS_SMART_NULLS;
+import static org.mockito.Mockito.mock;
 
 final class MockContext {
 
@@ -39,12 +43,17 @@ final class MockContext {
 
         private PostgresqlConnection connection;
 
+        private StatementCache statementCache = mock(StatementCache.class, RETURNS_SMART_NULLS);
+
+        private boolean forceBinary = false;
+
+        private PortalNameSupplier portalNameSupplier = () -> "";
 
         private Builder() {
         }
 
         public ConnectionContext build() {
-            return new ConnectionContext(this.client, this.codecs, this.connection);
+            return new ConnectionContext(this.client, this.codecs, this.connection, forceBinary, portalNameSupplier, statementCache);
         }
 
         public Builder codecs(Codecs codecs) {
@@ -62,6 +71,20 @@ final class MockContext {
             return this;
         }
 
+        public Builder statementCache(StatementCache statementCache) {
+            this.statementCache = statementCache;
+            return this;
+        }
+
+        public Builder forceBinary(boolean forceBinary) {
+            this.forceBinary = forceBinary;
+            return this;
+        }
+
+        public Builder portalNameSupplier(PortalNameSupplier portalNameSupplier) {
+            this.portalNameSupplier = portalNameSupplier;
+            return this;
+        }
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,9 @@ package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.api.PostgresqlConnection;
 import io.r2dbc.postgresql.client.Client;
+import io.r2dbc.postgresql.client.PortalNameSupplier;
 import io.r2dbc.postgresql.codec.Codecs;
+import io.r2dbc.postgresql.util.Assert;
 
 /**
  * Value object capturing contextual connection resources such as {@link Client}, {@link Codecs} and the {@link PostgresqlConnection connection facade}.
@@ -31,10 +33,19 @@ final class ConnectionContext {
 
     private final PostgresqlConnection connection;
 
-    ConnectionContext(Client client, Codecs codecs, PostgresqlConnection connection) {
+    private final boolean forceBinary;
+
+    private final StatementCache statementCache;
+
+    private final PortalNameSupplier portalNameSupplier;
+
+    ConnectionContext(Client client, Codecs codecs, PostgresqlConnection connection, boolean forceBinary, PortalNameSupplier portalNameSupplier, StatementCache statementCache) {
         this.client = client;
         this.codecs = codecs;
         this.connection = connection;
+        this.forceBinary = forceBinary;
+        this.portalNameSupplier = Assert.requireNonNull(portalNameSupplier, "portalNameSupplier must not be null");
+        this.statementCache = Assert.requireNonNull(statementCache, "statementCache must not be null");
     }
 
     public Client getClient() {
@@ -49,12 +60,27 @@ final class ConnectionContext {
         return this.connection;
     }
 
+    public boolean isForceBinary() {
+        return this.forceBinary;
+    }
+
+    public PortalNameSupplier getPortalNameSupplier() {
+        return this.portalNameSupplier;
+    }
+
+    public StatementCache getStatementCache() {
+        return this.statementCache;
+    }
+
     @Override
     public String toString() {
         return "ConnectionContext{" +
             "client=" + this.client +
             ", codecs=" + this.codecs +
             ", connection=" + this.connection +
+            ", forceBinary=" + this.forceBinary +
+            ", portalNameSupplier=" + this.portalNameSupplier +
+            ", statementCache=" + this.statementCache +
             '}';
     }
 }

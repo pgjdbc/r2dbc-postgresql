@@ -62,12 +62,6 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
 
     private final Codecs codecs;
 
-    private final boolean forceBinary;
-
-    private final PortalNameSupplier portalNameSupplier;
-
-    private final StatementCache statementCache;
-
     private final Flux<Integer> validationQuery;
 
     private final AtomicReference<NotificationAdapter> notificationAdapter = new AtomicReference<>();
@@ -75,12 +69,9 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
     private volatile IsolationLevel isolationLevel;
 
     PostgresqlConnection(Client client, Codecs codecs, PortalNameSupplier portalNameSupplier, StatementCache statementCache, IsolationLevel isolationLevel, boolean forceBinary) {
-        this.context = new ConnectionContext(client, codecs, this);
+        this.context = new ConnectionContext(client, codecs, this, forceBinary, portalNameSupplier, statementCache);
         this.client = Assert.requireNonNull(client, "client must not be null");
         this.codecs = Assert.requireNonNull(codecs, "codecs must not be null");
-        this.portalNameSupplier = Assert.requireNonNull(portalNameSupplier, "portalNameSupplier must not be null");
-        this.statementCache = Assert.requireNonNull(statementCache, "statementCache must not be null");
-        this.forceBinary = forceBinary;
         this.isolationLevel = Assert.requireNonNull(isolationLevel, "isolationLevel must not be null");
         this.validationQuery = new SimpleQueryPostgresqlStatement(this.context, "SELECT 1").fetchSize(0).execute().flatMap(PostgresqlResult::getRowsUpdated);
     }
@@ -157,7 +148,7 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
         if (SimpleQueryPostgresqlStatement.supports(sql)) {
             return new SimpleQueryPostgresqlStatement(this.context, sql);
         } else if (ExtendedQueryPostgresqlStatement.supports(sql)) {
-            return new ExtendedQueryPostgresqlStatement(this.context, this.portalNameSupplier, sql, this.statementCache, this.forceBinary);
+            return new ExtendedQueryPostgresqlStatement(this.context, sql);
         } else {
             throw new IllegalArgumentException(String.format("Statement '%s' cannot be created. This is often due to the presence of both multiple statements and parameters at the same time.", sql));
         }
@@ -287,9 +278,6 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
         return "PostgresqlConnection{" +
             "client=" + this.client +
             ", codecs=" + this.codecs +
-            ", forceBinary=" + this.forceBinary +
-            ", portalNameSupplier=" + this.portalNameSupplier +
-            ", statementCache=" + this.statementCache +
             '}';
     }
 
