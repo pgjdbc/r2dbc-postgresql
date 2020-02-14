@@ -3,6 +3,7 @@ package io.r2dbc.postgresql.client;
 import io.r2dbc.postgresql.TargetServerType;
 import io.r2dbc.postgresql.util.Assert;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,20 +13,20 @@ public class MultipleHostsConfiguration {
 
     private final List<ServerHost> hosts;
 
-    private final int hostRecheckTime;
+    private final Duration hostRecheckTime;
 
     private final boolean loadBalanceHosts;
 
     private final TargetServerType targetServerType;
 
-    public MultipleHostsConfiguration(List<ServerHost> hosts, int hostRecheckTime, boolean loadBalanceHosts, TargetServerType targetServerType) {
+    public MultipleHostsConfiguration(List<ServerHost> hosts, Duration hostRecheckTime, boolean loadBalanceHosts, TargetServerType targetServerType) {
         this.hosts = hosts;
         this.hostRecheckTime = hostRecheckTime;
         this.loadBalanceHosts = loadBalanceHosts;
         this.targetServerType = targetServerType;
     }
 
-    public int getHostRecheckTime() {
+    public Duration getHostRecheckTime() {
         return hostRecheckTime;
     }
 
@@ -95,7 +96,7 @@ public class MultipleHostsConfiguration {
      */
     public static class Builder {
 
-        private int hostRecheckTime = 10000;
+        private Duration hostRecheckTime = Duration.ofMillis(10000);
 
         private List<ServerHost> hosts = new ArrayList<>();
 
@@ -124,7 +125,7 @@ public class MultipleHostsConfiguration {
          * @param hostRecheckTime host recheck time in milliseconds
          * @return this {@link Builder}
          */
-        public Builder hostRecheckTime(int hostRecheckTime) {
+        public Builder hostRecheckTime(Duration hostRecheckTime) {
             this.hostRecheckTime = hostRecheckTime;
             return this;
         }

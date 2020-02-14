@@ -25,6 +25,7 @@ import io.r2dbc.spi.ConnectionFactoryProvider;
 import io.r2dbc.spi.Option;
 
 import javax.net.ssl.HostnameVerifier;
+import java.time.Duration;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -232,6 +233,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
 
         if (isUsingTcp(connectionFactoryOptions)) {
             setupSsl(builder, connectionFactoryOptions);
+            setupFailover(builder, connectionFactoryOptions);
         } else {
             builder.socket(connectionFactoryOptions.getRequiredValue(SOCKET));
         }
@@ -263,27 +265,11 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         }
     }
 
-    private static void setupSsl(PostgresqlConnectionConfiguration.Builder builder, ConnectionFactoryOptions connectionFactoryOptions) {
-        Boolean ssl = connectionFactoryOptions.getValue(SSL);
-        if (ssl != null && ssl) {
-            builder.enableSsl();
-        }
-
-        Object sslMode = connectionFactoryOptions.getValue(SSL_MODE);
-        if (sslMode != null) {
-            if (sslMode instanceof String) {
-                builder.sslMode(SSLMode.fromValue(sslMode.toString()));
-            } else {
-                builder.sslMode((SSLMode) sslMode);
-            }
-        }
-
-        builder.connectTimeout(connectionFactoryOptions.getValue(CONNECT_TIMEOUT));
-        builder.database(connectionFactoryOptions.getValue(DATABASE));
-
+    private static void setupFailover(PostgresqlConnectionConfiguration.Builder builder, ConnectionFactoryOptions connectionFactoryOptions) {
         if (FAILOVER_PROTOCOL.equals(connectionFactoryOptions.getValue(PROTOCOL))) {
             if (connectionFactoryOptions.hasOption(HOST_RECHECK_TIME)) {
-                builder.hostRecheckTime(connectionFactoryOptions.getRequiredValue(HOST_RECHECK_TIME));
+                Duration hostRecheckTime = Duration.ofMillis(connectionFactoryOptions.getRequiredValue(HOST_RECHECK_TIME));
+                builder.hostRecheckTime(hostRecheckTime);
             }
             if (connectionFactoryOptions.hasOption(LOAD_BALANCE_HOSTS)) {
                 Object loadBalanceHosts = connectionFactoryOptions.getRequiredValue(LOAD_BALANCE_HOSTS);
@@ -323,11 +309,22 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
                 builder.port(port);
             }
         }
+    }
 
+    private static void setupSsl(PostgresqlConnectionConfiguration.Builder builder, ConnectionFactoryOptions connectionFactoryOptions) {
+        Boolean ssl = connectionFactoryOptions.getValue(SSL);
+        if (ssl != null && ssl) {
+            builder.enableSsl();
+        }
 
-        builder.password(connectionFactoryOptions.getValue(PASSWORD));
-        builder.schema(connectionFactoryOptions.getValue(SCHEMA));
-        builder.username(connectionFactoryOptions.getRequiredValue(USER));
+        Object sslMode = connectionFactoryOptions.getValue(SSL_MODE);
+        if (sslMode != null) {
+            if (sslMode instanceof String) {
+                builder.sslMode(SSLMode.fromValue(sslMode.toString()));
+            } else {
+                builder.sslMode((SSLMode) sslMode);
+            }
+        }
 
         String sslRootCert = connectionFactoryOptions.getValue(SSL_ROOT_CERT);
         if (sslRootCert != null) {

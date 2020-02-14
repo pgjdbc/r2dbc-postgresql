@@ -23,6 +23,7 @@ import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.Option;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -297,7 +298,7 @@ final class PostgresqlConnectionFactoryProviderTest {
 
         assertThat(factory.getConfiguration().getSingleHostConfiguration()).isNull();
         assertThat(factory.getConfiguration().getMultipleHostsConfiguration().isLoadBalanceHosts()).isEqualTo(true);
-        assertThat(factory.getConfiguration().getMultipleHostsConfiguration().getHostRecheckTime()).isEqualTo(20000);
+        assertThat(factory.getConfiguration().getMultipleHostsConfiguration().getHostRecheckTime()).isEqualTo(Duration.ofMillis(20000));
         assertThat(factory.getConfiguration().getMultipleHostsConfiguration().getTargetServerType()).isEqualTo(TargetServerType.SECONDARY);
         List<MultipleHostsConfiguration.ServerHost> hosts = factory.getConfiguration().getMultipleHostsConfiguration().getHosts();
         assertThat(hosts).hasSize(3);

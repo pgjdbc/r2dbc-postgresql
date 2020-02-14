@@ -11,6 +11,7 @@ import reactor.core.publisher.Mono;
 import javax.annotation.Nullable;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -115,7 +116,9 @@ class MultipleHostsClientFactory extends ClientFactoryBase {
             int counter = 0;
             for (SocketAddress address : addresses) {
                 HostSpecStatus currentStatus = this.statusMap.get(address);
-                if (currentStatus == null || now > currentStatus.updated + this.configuration.getHostRecheckTime()) {
+                Duration hostRecheckDuration = this.configuration.getHostRecheckTime();
+                boolean recheck = currentStatus == null || hostRecheckDuration.plusMillis(currentStatus.updated).toMillis() < now;
+                if (recheck) {
                     sink.next(address);
                     counter++;
                 } else if (targetServerType.allowStatus(currentStatus.hostStatus)) {

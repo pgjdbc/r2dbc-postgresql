@@ -598,12 +598,12 @@ public final class PostgresqlConnectionConfiguration {
         }
 
         /**
-         * Controls how long in seconds the knowledge about a host state is cached connection factory. The default value is 10000 milliseconds.
+         * Controls how long in milliseconds the knowledge about a host state is cached connection factory. The default value is 10000 milliseconds.
          *
          * @param hostRecheckTime host recheck time in milliseconds
          * @return this {@link Builder}
          */
-        public Builder hostRecheckTime(int hostRecheckTime) {
+        public Builder hostRecheckTime(@Nullable Duration hostRecheckTime) {
             if (this.multipleHostsConfiguration == null) {
                 this.multipleHostsConfiguration = MultipleHostsConfiguration.builder();
             }
