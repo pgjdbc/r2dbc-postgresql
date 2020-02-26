@@ -26,6 +26,7 @@ import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,7 +35,7 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.BYTEA;
 
 abstract class AbstractBinaryCodec<T> extends AbstractCodec<T> {
 
-    private static final Pattern BLOB_PATTERN = Pattern.compile("\\\\x([\\p{XDigit}]+)");
+    private static final Pattern BLOB_PATTERN = Pattern.compile("\\\\x([\\p{XDigit}]+)?");
 
     private final ByteBufAllocator byteBufAllocator;
 
@@ -64,7 +65,9 @@ abstract class AbstractBinaryCodec<T> extends AbstractCodec<T> {
             if (!matcher.find()) {
                 throw new IllegalStateException("ByteBuf does not contain BYTEA hex format");
             }
-            decoded = ByteBufUtil.decodeHexDump(matcher.group(1));
+
+            String bytesHex = Objects.toString(matcher.group(1), "");
+            decoded = ByteBufUtil.decodeHexDump(bytesHex);
         } else {
             decoded = new byte[byteBuf.readableBytes()];
             byteBuf.readBytes(decoded);
