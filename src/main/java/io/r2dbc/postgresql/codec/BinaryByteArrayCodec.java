@@ -42,7 +42,7 @@ final class BinaryByteArrayCodec extends AbstractBinaryCodec<byte[]> {
     Parameter doEncode(byte[] value) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return create(BYTEA, FORMAT_TEXT, () -> toHexFormat(Unpooled.wrappedBuffer(value)));
+        return create(BYTEA, FORMAT_TEXT, () -> encodeToHex(Unpooled.wrappedBuffer(value)));
     }
 
 }
