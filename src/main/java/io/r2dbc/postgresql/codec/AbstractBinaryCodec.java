@@ -86,6 +86,9 @@ abstract class AbstractBinaryCodec<T> extends AbstractCodec<T> {
             value.skipBytes(chunkSize);
         }
 
+        // release value after encoding as it is consumed.
+        value.release();
+
         return buf;
     }
 

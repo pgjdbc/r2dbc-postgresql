@@ -117,14 +117,22 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     @Test
     void blob() {
         BiConsumer<Blob, Blob> equality = (actual, expected) -> Flux.zip(
-                Flux.from(actual.stream()).reduce(TEST.heapBuffer(), ByteBuf::writeBytes),
-                Flux.from(expected.stream()).reduce(TEST.heapBuffer(), ByteBuf::writeBytes)
+            Flux.from(actual.stream()).reduce(TEST.heapBuffer(), ByteBuf::writeBytes),
+            Flux.from(expected.stream()).reduce(TEST.heapBuffer(), ByteBuf::writeBytes)
         )
-                .as(StepVerifier::create)
-                .assertNext(t -> assertThat(t.getT1()).isEqualTo(t.getT2()))
-                .verifyComplete();
+            .as(StepVerifier::create)
+            .assertNext(t -> {
+                try {
+                    assertThat(t.getT1()).isEqualTo(t.getT2());
+                } finally {
+                    t.getT1().release();
+                    t.getT2().release();
+                }
+            })
+            .verifyComplete();
 
         Function<byte[], Blob> byteToBlob = (bytes) -> new Blob() {
+
             @Override
             public Publisher<Void> discard() {
                 return Mono.empty();
@@ -133,7 +141,8 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
             @Override
             public Publisher<ByteBuffer> stream() {
                 return Mono.just(ByteBuffer.wrap(bytes));
-            }};
+            }
+        };
 
         testCodec(Blob.class, byteToBlob.apply(new byte[]{1, 2, 3, 4}), equality, "BYTEA");
         testCodec(Blob.class, byteToBlob.apply(new byte[]{}), equality, "BYTEA");
