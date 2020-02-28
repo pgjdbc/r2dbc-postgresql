@@ -58,37 +58,46 @@ abstract class AbstractBinaryCodec<T> extends AbstractCodec<T> {
     }
 
     byte[] decode(Format format, ByteBuf byteBuf) {
-        byte[] decoded;
         if (format == FORMAT_TEXT) {
-            Matcher matcher = BLOB_PATTERN.matcher(ByteBufUtils.decode(byteBuf));
-
-            if (!matcher.find()) {
-                throw new IllegalStateException("ByteBuf does not contain BYTEA hex format");
-            }
-
-            String bytesHex = Objects.toString(matcher.group(1), "");
-            decoded = ByteBufUtil.decodeHexDump(bytesHex);
-        } else {
-            decoded = new byte[byteBuf.readableBytes()];
-            byteBuf.readBytes(decoded);
+            return decodeFromHex(byteBuf);
         }
+
+        byte[] decoded = new byte[byteBuf.readableBytes()];
+        byteBuf.readBytes(decoded);
+
         return decoded;
     }
 
-    ByteBuf toHexFormat(ByteBuf b) {
-        int blobSize = b.readableBytes();
-        ByteBuf buf = this.byteBufAllocator.buffer(2 + blobSize * 2);
+    ByteBuf encodeToHex(ByteBuf value) {
+        return encodeToHex(value, this.byteBufAllocator);
+    }
+
+    static ByteBuf encodeToHex(ByteBuf value, ByteBufAllocator byteBufAllocator) {
+
+        int blobSize = value.readableBytes();
+        ByteBuf buf = byteBufAllocator.buffer(2 + blobSize * 2);
         buf.writeByte('\\').writeByte('x');
 
         int chunkSize = 1024;
 
-        while (b.isReadable()) {
-            chunkSize = Math.min(chunkSize, b.readableBytes());
-            buf.writeCharSequence(ByteBufUtil.hexDump(b, b.readerIndex(), chunkSize), StandardCharsets.US_ASCII);
-            b.skipBytes(chunkSize);
+        while (value.isReadable()) {
+            chunkSize = Math.min(chunkSize, value.readableBytes());
+            buf.writeCharSequence(ByteBufUtil.hexDump(value, value.readerIndex(), chunkSize), StandardCharsets.US_ASCII);
+            value.skipBytes(chunkSize);
         }
 
         return buf;
+    }
+
+    static byte[] decodeFromHex(ByteBuf byteBuf) {
+        Matcher matcher = BLOB_PATTERN.matcher(ByteBufUtils.decode(byteBuf));
+
+        if (!matcher.find()) {
+            throw new IllegalStateException("ByteBuf does not contain BYTEA hex format");
+        }
+
+        String bytesHex = Objects.toString(matcher.group(1), "");
+        return ByteBufUtil.decodeHexDump(bytesHex);
     }
 
 }
