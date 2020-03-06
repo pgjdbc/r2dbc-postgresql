@@ -397,33 +397,6 @@
         </resources>
     </build>
 
-    <repositories>
-        <repository>
-            <id>spring-releases</id>
-            <name>Spring Releases</name>
-            <url>https://repo.spring.io/release</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>spring-milestones</id>
-            <name>Spring Milestones</name>
-            <url>https://repo.spring.io/milestone</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>spring-snapshots</id>
-            <name>Spring Snapshots</name>
-            <url>https://repo.spring.io/snapshot</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-
     <profiles>
 
         <profile>
@@ -640,7 +613,100 @@
                 </repository>
             </repositories>
         </profile>
+
+		<profile>
+			<id>central</id>
+			<build>
+				<pluginManagement>
+					<plugins>
+
+						<!-- Sign JARs -->
+
+						<plugin>
+							<groupId>org.apache.maven.plugins</groupId>
+							<artifactId>maven-gpg-plugin</artifactId>
+							<version>1.6</version>
+							<executions>
+								<execution>
+									<id>sign-artifacts</id>
+									<phase>verify</phase>
+									<goals>
+										<goal>sign</goal>
+									</goals>
+									<configuration>
+										<gpgArguments>
+											<arg>--pinentry-mode</arg>
+											<arg>loopback</arg>
+										</gpgArguments>
+									</configuration>
+								</execution>
+							</executions>
+						</plugin>
+
+						<!-- Deploy to Sonatype OSS Nexus -->
+
+						<plugin>
+							<groupId>org.sonatype.plugins</groupId>
+							<artifactId>nexus-staging-maven-plugin</artifactId>
+							<version>1.6.8</version>
+							<extensions>true</extensions>
+							<configuration>
+								<serverId>sonatype</serverId>
+								<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+								<autoReleaseAfterClose>false</autoReleaseAfterClose>
+								<keepStagingRepositoryOnFailure>true</keepStagingRepositoryOnFailure>
+								<skipStagingRepositoryClose>true</skipStagingRepositoryClose>
+							</configuration>
+						</plugin>
+					</plugins>
+
+				</pluginManagement>
+
+				<plugins>
+
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+					</plugin>
+
+					<plugin>
+						<groupId>org.sonatype.plugins</groupId>
+						<artifactId>nexus-staging-maven-plugin</artifactId>
+					</plugin>
+
+				</plugins>
+
+			</build>
+
+			<distributionManagement>
+				<repository>
+					<id>sonatype</id>
+					<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+				</repository>
+			</distributionManagement>
+
+		</profile>
+
     </profiles>
+
+    <repositories>
+        <repository>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>https://repo.spring.io/milestone</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>spring-snapshots</id>
+            <name>Spring Snapshots</name>
+            <url>https://repo.spring.io/snapshot</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 
     <pluginRepositories>
         <pluginRepository>
