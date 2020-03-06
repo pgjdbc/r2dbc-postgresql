@@ -1,0 +1,23 @@
+= Continuous Integration
+
+== Running CI tasks locally
+
+Since this pipeline is purely Docker-based, it's easy to:
+
+* Debug what went wrong on your local machine.
+* Test out a a tweak to your test routine before sending it out.
+* Experiment against a new image before submitting your pull request.
+
+All of these use cases are great reasons to essentially run what the CI server does on your local machine.
+
+IMPORTANT: To do this you must have Docker installed on your machine.
+
+1. `docker run -it -u 1001:1001 --mount type=bind,source="$(pwd)",target=/r2dbc-h2-github springci/r2dbc-openjdk8-with-gpg:latest /bin/bash`
++
+This will launch the Docker image and mount your source code at `r2dbc-h2-github`.
++
+2. `cd r2dbc-h2-github
+
+You're all set! Since the container is binding to your source, you can make edits from your IDE and continue to run build jobs.
+
+NOTE: Docker containers can eat up disk space fast! From time to time, run `docker system prune` to clean out old images.
