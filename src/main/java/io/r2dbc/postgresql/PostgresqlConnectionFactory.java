@@ -168,7 +168,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
 
                 // early connection object to retrieve initialization details
                 PostgresqlConnection earlyConnection = new PostgresqlConnection(client, codecs, DefaultPortalNameSupplier.INSTANCE, statementCache, IsolationLevel.READ_COMMITTED,
-                    this.configuration.isForceBinary());
+                    this.configuration);
 
                 Mono<IsolationLevel> isolationLevelMono = Mono.just(IsolationLevel.READ_COMMITTED);
                 if (!forReplication) {
@@ -176,7 +176,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
                 }
                 return isolationLevelMono
                     // actual connection to be used
-                    .map(isolationLevel -> new PostgresqlConnection(client, codecs, DefaultPortalNameSupplier.INSTANCE, new IndefiniteStatementCache(client), isolationLevel, this.configuration.isForceBinary()))
+                    .map(isolationLevel -> new PostgresqlConnection(client, codecs, DefaultPortalNameSupplier.INSTANCE, new IndefiniteStatementCache(client), isolationLevel, this.configuration))
                     .delayUntil(connection -> {
                         return prepareConnection(connection, client.getByteBufAllocator(), codecs);
                     })

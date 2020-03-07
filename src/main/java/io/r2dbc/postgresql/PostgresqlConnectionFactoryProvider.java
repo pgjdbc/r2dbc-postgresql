@@ -52,6 +52,11 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<Boolean> AUTODETECT_EXTENSIONS = Option.valueOf("autodetectExtensions");
 
     /**
+     * Fetch Size.
+     */
+    public static final Option<Integer> FETCH_SIZE = Option.valueOf("fetchSize");
+
+    /**
      * Force binary transfer.
      */
     public static final Option<Boolean> FORCE_BINARY = Option.valueOf("forceBinary");
@@ -156,6 +161,12 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
             builder.port(port);
         }
 
+        Object fetchSize = connectionFactoryOptions.getValue(FETCH_SIZE);
+        if (fetchSize != null) {
+            builder.fetchSize(convertToInt(fetchSize));
+        }
+
+
         Object forceBinary = connectionFactoryOptions.getValue(FORCE_BINARY);
 
         if (forceBinary != null) {
@@ -243,5 +254,9 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
 
     private static boolean convertToBoolean(Object value) {
         return value instanceof Boolean ? (boolean) value : Boolean.parseBoolean(value.toString());
+    }
+
+    private static int convertToInt(Object value) {
+        return value instanceof Integer ? (int) value : Integer.parseInt(value.toString());
     }
 }

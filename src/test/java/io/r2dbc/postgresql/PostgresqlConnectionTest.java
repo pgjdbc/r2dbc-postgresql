@@ -150,7 +150,7 @@ final class PostgresqlConnectionTest {
 
     @Test
     void constructorNoPortalNameSupplier() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), null, this.statementCache, IsolationLevel.READ_COMMITTED, false))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlConnection(NO_OP, MockCodecs.empty(), null, this.statementCache, IsolationLevel.READ_COMMITTED, null))
             .withMessage("portalNameSupplier must not be null");
     }
 
@@ -473,6 +473,11 @@ final class PostgresqlConnectionTest {
     }
 
     private PostgresqlConnection createConnection(Client client, MockCodecs codecs, StatementCache cache) {
-        return new PostgresqlConnection(client, codecs, () -> "", cache, IsolationLevel.READ_COMMITTED, false);
+        PostgresqlConnectionConfiguration configuration = PostgresqlConnectionConfiguration.builder()
+                .host("127.0.0.1")
+                .username("admin")
+                .password("password")
+                .build();
+        return new PostgresqlConnection(client, codecs, () -> "", cache, IsolationLevel.READ_COMMITTED, configuration);
     }
 }
