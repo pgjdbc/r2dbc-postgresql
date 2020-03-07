@@ -25,6 +25,7 @@ import io.r2dbc.postgresql.codec.Codec;
 import io.r2dbc.postgresql.extension.CodecRegistrar;
 import io.r2dbc.postgresql.extension.Extension;
 import io.r2dbc.postgresql.util.Assert;
+import io.r2dbc.spi.Statement;
 import reactor.netty.tcp.SslProvider;
 import reactor.util.annotation.Nullable;
 
@@ -38,6 +39,7 @@ import java.util.ServiceLoader;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static io.r2dbc.postgresql.message.frontend.Execute.NO_LIMIT;
 import static reactor.netty.tcp.SslProvider.DefaultConfigurationType.TCP;
 
 /**
@@ -60,6 +62,8 @@ public final class PostgresqlConnectionConfiguration {
 
     private final List<Extension> extensions;
 
+    private final int fetchSize;
+
     private final boolean forceBinary;
 
     private final String host;
@@ -81,7 +85,7 @@ public final class PostgresqlConnectionConfiguration {
     private final int preparedStatementCacheQueries;
 
     private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions,
-                                              @Nullable Duration connectTimeout, @Nullable String database, List<Extension> extensions, boolean forceBinary, @Nullable String host,
+                                              @Nullable Duration connectTimeout, @Nullable String database, List<Extension> extensions, int fetchSize, boolean forceBinary, @Nullable String host,
                                               @Nullable Map<String, String> options, @Nullable CharSequence password, int port, @Nullable String schema, @Nullable String socket, String username,
                                               SSLConfig sslConfig, int preparedStatementCacheQueries) {
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
@@ -89,6 +93,7 @@ public final class PostgresqlConnectionConfiguration {
         this.connectTimeout = connectTimeout;
         this.extensions = Assert.requireNonNull(extensions, "extensions must not be null");
         this.database = database;
+        this.fetchSize = fetchSize;
         this.forceBinary = forceBinary;
         this.host = host;
         this.options = options;
@@ -119,6 +124,7 @@ public final class PostgresqlConnectionConfiguration {
             ", connectTimeout=" + this.connectTimeout +
             ", database='" + this.database + '\'' +
             ", extensions=" + this.extensions +
+            ", fetchSize=" + this.fetchSize +
             ", forceBinary='" + this.forceBinary + '\'' +
             ", host='" + this.host + '\'' +
             ", options='" + this.options + '\'' +
@@ -145,6 +151,10 @@ public final class PostgresqlConnectionConfiguration {
 
     List<Extension> getExtensions() {
         return this.extensions;
+    }
+
+    int getFetchSize() {
+        return this.fetchSize;
     }
 
     @Nullable
@@ -252,6 +262,8 @@ public final class PostgresqlConnectionConfiguration {
 
         private List<Extension> extensions = new ArrayList<>();
 
+        private int fetchSize = NO_LIMIT;
+
         private boolean forceBinary = false;
 
         @Nullable
@@ -338,7 +350,7 @@ public final class PostgresqlConnectionConfiguration {
                 throw new IllegalArgumentException("username must not be null");
             }
 
-            return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.connectTimeout, this.database, this.extensions, this.forceBinary, this.host,
+            return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.connectTimeout, this.database, this.extensions, this.fetchSize, this.forceBinary, this.host,
                 this.options, this.password, this.port, this.schema, this.socket, this.username, this.createSslConfig(), this.preparedStatementCacheQueries);
         }
 
@@ -391,6 +403,18 @@ public final class PostgresqlConnectionConfiguration {
          */
         public Builder extendWith(Extension extension) {
             this.extensions.add(Assert.requireNonNull(extension, "extension must not be null"));
+            return this;
+        }
+
+        /**
+         * Set the default number of rows to return when fetching results from a query instead deriving fetch size from
+         * back pressure. If the value specified is zero, then the hint is ignored.
+         *
+         * @param fetchSize the number of rows to fetch
+         * @return this {@code Builder}
+         */
+        public Builder fetchSize(int fetchSize) {
+            this.fetchSize = fetchSize;
             return this;
         }
 

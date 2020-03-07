@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.AUTODETECT_EXTENSIONS;
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.FETCH_SIZE;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.FORCE_BINARY;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.LEGACY_POSTGRESQL_DRIVER;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.OPTIONS;
@@ -150,6 +151,19 @@ final class PostgresqlConnectionFactoryProviderTest {
             .option(HOST, "test-host")
             .option(USER, "test-user")
             .build())).isNotNull();
+    }
+
+    @Test
+    void providerShouldConsiderFetchSize() {
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+                .option(DRIVER, LEGACY_POSTGRESQL_DRIVER)
+                .option(HOST, "test-host")
+                .option(PASSWORD, "test-password")
+                .option(USER, "test-user")
+                .option(FETCH_SIZE, 100)
+                .build());
+
+        assertThat(factory.getConfiguration().getFetchSize()).isEqualTo(100);
     }
 
     @Test

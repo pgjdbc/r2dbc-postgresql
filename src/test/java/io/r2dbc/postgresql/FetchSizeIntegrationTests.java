@@ -29,6 +29,22 @@ public class FetchSizeIntegrationTests extends AbstractIntegrationTests {
         System.gc();
     }
 
+    @Override
+    protected void customize(PostgresqlConnectionConfiguration.Builder builder) {
+        builder.fetchSize(100);
+    }
+
+    @Test
+    void exchangeWithDefaultFetchSize() {
+        this.connection.createStatement("SELECT * FROM generate_series(1,20) WHERE $1 = $1")
+                .bind(0, 1)
+                .execute()
+                .flatMap(r -> r.map((row, meta) -> row.get(0, Integer.class)))
+                .as(StepVerifier::create)
+                .expectNextCount(20)
+                .verifyComplete();
+    }
+
     @Test
     void exchangeWithFetchSize() {
         this.connection.createStatement("SELECT * FROM generate_series(1,20) WHERE $1 = $1")

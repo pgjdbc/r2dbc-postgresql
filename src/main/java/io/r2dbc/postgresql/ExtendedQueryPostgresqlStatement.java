@@ -61,6 +61,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
         this.context = Assert.requireNonNull(context, "context must not be null");
         this.sql = Assert.requireNonNull(sql, "sql must not be null");
         this.bindings = new Bindings(expectedSize(sql));
+        fetchSize(this.context.getConfiguration().getFetchSize());
     }
 
     @Override
@@ -183,7 +184,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
 
     static PostgresqlResult createPostgresqlResult(String sql, ExceptionFactory factory, String statementName, Binding binding, ConnectionContext context, int fetchSize) {
         Flux<BackendMessage> messages = ExtendedQueryMessageFlow
-            .execute(binding, context.getClient(), context.getPortalNameSupplier(), statementName, sql, context.isForceBinary(), fetchSize)
+            .execute(binding, context.getClient(), context.getPortalNameSupplier(), statementName, sql, context.getConfiguration().isForceBinary(), fetchSize)
             .filter(RESULT_FRAME_FILTER);
         return PostgresqlResult.toResult(context, messages, factory);
     }

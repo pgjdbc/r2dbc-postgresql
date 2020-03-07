@@ -56,6 +56,7 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
     SimpleQueryPostgresqlStatement(ConnectionContext context, String sql) {
         this.context = Assert.requireNonNull(context, "context must not be null");
         this.sql = Assert.requireNonNull(sql, "sql must not be null");
+        fetchSize(this.context.getConfiguration().getFetchSize());
     }
 
     @Override

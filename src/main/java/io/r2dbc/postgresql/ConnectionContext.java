@@ -33,17 +33,17 @@ final class ConnectionContext {
 
     private final PostgresqlConnection connection;
 
-    private final boolean forceBinary;
+    private final PostgresqlConnectionConfiguration configuration;
 
     private final StatementCache statementCache;
 
     private final PortalNameSupplier portalNameSupplier;
 
-    ConnectionContext(Client client, Codecs codecs, PostgresqlConnection connection, boolean forceBinary, PortalNameSupplier portalNameSupplier, StatementCache statementCache) {
+    ConnectionContext(Client client, Codecs codecs, PostgresqlConnection connection, PostgresqlConnectionConfiguration configuration, PortalNameSupplier portalNameSupplier, StatementCache statementCache) {
         this.client = client;
         this.codecs = codecs;
         this.connection = connection;
-        this.forceBinary = forceBinary;
+        this.configuration = configuration;
         this.portalNameSupplier = Assert.requireNonNull(portalNameSupplier, "portalNameSupplier must not be null");
         this.statementCache = Assert.requireNonNull(statementCache, "statementCache must not be null");
     }
@@ -60,8 +60,8 @@ final class ConnectionContext {
         return this.connection;
     }
 
-    public boolean isForceBinary() {
-        return this.forceBinary;
+    public PostgresqlConnectionConfiguration getConfiguration() {
+        return this.configuration;
     }
 
     public PortalNameSupplier getPortalNameSupplier() {
@@ -78,7 +78,7 @@ final class ConnectionContext {
             "client=" + this.client +
             ", codecs=" + this.codecs +
             ", connection=" + this.connection +
-            ", forceBinary=" + this.forceBinary +
+            ", configuration=" + this.configuration +
             ", portalNameSupplier=" + this.portalNameSupplier +
             ", statementCache=" + this.statementCache +
             '}';
