@@ -53,6 +53,11 @@ final class PostgresqlConnectionConfigurationTest {
     }
 
     @Test
+    void builderNegativeFetchSize() {
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().fetchSize(-1))
+            .withMessage("fetch size must be greater or equal zero");
+    }
+    @Test
     void configuration() {
         Map<String, String> options = new HashMap<>();
         options.put("lock_timeout", "10s");

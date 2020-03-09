@@ -167,6 +167,19 @@ final class PostgresqlConnectionFactoryProviderTest {
     }
 
     @Test
+    void providerShouldConsiderFetchSizeAsString() {
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+                .option(DRIVER, LEGACY_POSTGRESQL_DRIVER)
+                .option(HOST, "test-host")
+                .option(PASSWORD, "test-password")
+                .option(USER, "test-user")
+                .option(Option.valueOf("fetchSize"), "100")
+                .build());
+
+        assertThat(factory.getConfiguration().getFetchSize()).isEqualTo(100);
+    }
+
+    @Test
     void providerShouldConsiderBinaryTransfer() {
         PostgresqlConnectionFactory factory = this.provider.create(builder()
             .option(DRIVER, LEGACY_POSTGRESQL_DRIVER)

@@ -25,7 +25,6 @@ import io.r2dbc.postgresql.codec.Codec;
 import io.r2dbc.postgresql.extension.CodecRegistrar;
 import io.r2dbc.postgresql.extension.Extension;
 import io.r2dbc.postgresql.util.Assert;
-import io.r2dbc.spi.Statement;
 import reactor.netty.tcp.SslProvider;
 import reactor.util.annotation.Nullable;
 
@@ -414,6 +413,7 @@ public final class PostgresqlConnectionConfiguration {
          * @return this {@code Builder}
          */
         public Builder fetchSize(int fetchSize) {
+            Assert.isTrue(fetchSize >= 0, "fetch size must be greater or equal zero");
             this.fetchSize = fetchSize;
             return this;
         }

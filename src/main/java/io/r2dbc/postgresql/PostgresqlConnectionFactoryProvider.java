@@ -265,9 +265,9 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
             builder.port(port);
         }
 
-        Integer fetchSize = connectionFactoryOptions.getValue(FETCH_SIZE);
+        Object fetchSize = connectionFactoryOptions.getValue(FETCH_SIZE);
         if (fetchSize != null) {
-            builder.fetchSize(fetchSize);
+            builder.fetchSize(convertToInt(fetchSize));
         }
 
         Object forceBinary = connectionFactoryOptions.getValue(FORCE_BINARY);
