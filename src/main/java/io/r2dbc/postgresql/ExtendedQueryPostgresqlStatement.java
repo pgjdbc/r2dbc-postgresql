@@ -61,7 +61,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
         this.context = Assert.requireNonNull(context, "context must not be null");
         this.sql = Assert.requireNonNull(sql, "sql must not be null");
         this.bindings = new Bindings(expectedSize(sql));
-        fetchSize(this.context.getConfiguration().getFetchSize());
+        fetchSize(this.context.getConfiguration().getFetchSize(sql));
     }
 
     @Override

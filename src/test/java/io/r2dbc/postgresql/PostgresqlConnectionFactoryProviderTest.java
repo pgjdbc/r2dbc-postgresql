@@ -163,7 +163,7 @@ final class PostgresqlConnectionFactoryProviderTest {
                 .option(FETCH_SIZE, 100)
                 .build());
 
-        assertThat(factory.getConfiguration().getFetchSize()).isEqualTo(100);
+        assertThat(factory.getConfiguration().getFetchSize().applyAsInt("")).isEqualTo(100);
     }
 
     @Test
@@ -176,7 +176,7 @@ final class PostgresqlConnectionFactoryProviderTest {
                 .option(Option.valueOf("fetchSize"), "100")
                 .build());
 
-        assertThat(factory.getConfiguration().getFetchSize()).isEqualTo(100);
+        assertThat(factory.getConfiguration().getFetchSize().applyAsInt("")).isEqualTo(100);
     }
 
     @Test

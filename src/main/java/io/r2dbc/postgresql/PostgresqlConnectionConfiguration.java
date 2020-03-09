@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.function.ToIntFunction;
 
 import static io.r2dbc.postgresql.message.frontend.Execute.NO_LIMIT;
 import static reactor.netty.tcp.SslProvider.DefaultConfigurationType.TCP;
@@ -61,7 +62,7 @@ public final class PostgresqlConnectionConfiguration {
 
     private final List<Extension> extensions;
 
-    private final int fetchSize;
+    private final ToIntFunction<String> fetchSize;
 
     private final boolean forceBinary;
 
@@ -84,7 +85,7 @@ public final class PostgresqlConnectionConfiguration {
     private final int preparedStatementCacheQueries;
 
     private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions,
-                                              @Nullable Duration connectTimeout, @Nullable String database, List<Extension> extensions, int fetchSize, boolean forceBinary, @Nullable String host,
+                                              @Nullable Duration connectTimeout, @Nullable String database, List<Extension> extensions, ToIntFunction<String> fetchSize, boolean forceBinary, @Nullable String host,
                                               @Nullable Map<String, String> options, @Nullable CharSequence password, int port, @Nullable String schema, @Nullable String socket, String username,
                                               SSLConfig sslConfig, int preparedStatementCacheQueries) {
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
@@ -152,8 +153,12 @@ public final class PostgresqlConnectionConfiguration {
         return this.extensions;
     }
 
-    int getFetchSize() {
+    ToIntFunction<String> getFetchSize() {
         return this.fetchSize;
+    }
+
+    int getFetchSize(String sql) {
+        return this.fetchSize != null ? this.fetchSize.applyAsInt(sql) : NO_LIMIT;
     }
 
     @Nullable
@@ -261,7 +266,8 @@ public final class PostgresqlConnectionConfiguration {
 
         private List<Extension> extensions = new ArrayList<>();
 
-        private int fetchSize = NO_LIMIT;
+        @Nullable
+        private ToIntFunction<String> fetchSize;
 
         private boolean forceBinary = false;
 
@@ -414,7 +420,19 @@ public final class PostgresqlConnectionConfiguration {
          */
         public Builder fetchSize(int fetchSize) {
             Assert.isTrue(fetchSize >= 0, "fetch size must be greater or equal zero");
-            this.fetchSize = fetchSize;
+            this.fetchSize = sql -> fetchSize;
+            return this;
+        }
+
+        /**
+         * Set a function that maps a SQL query to the number of rows to return when fetching results for that query.
+         *
+         * @param fetchSizeFunction a function that maps the number of rows to fetch
+         * @return this {@code Builder}
+         */
+        public Builder fetchSize(ToIntFunction<String> fetchSizeFunction) {
+            Assert.requireNonNull(fetchSizeFunction, "fetch size function must be non null");
+            this.fetchSize = fetchSizeFunction;
             return this;
         }
 
