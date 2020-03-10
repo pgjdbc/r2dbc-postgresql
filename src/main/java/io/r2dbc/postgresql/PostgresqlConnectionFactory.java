@@ -176,7 +176,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
                 }
                 return isolationLevelMono
                     // actual connection to be used
-                    .map(isolationLevel -> new PostgresqlConnection(client, codecs, DefaultPortalNameSupplier.INSTANCE, new IndefiniteStatementCache(client), isolationLevel, this.configuration))
+                    .map(isolationLevel -> new PostgresqlConnection(client, codecs, DefaultPortalNameSupplier.INSTANCE, statementCache, isolationLevel, this.configuration))
                     .delayUntil(connection -> {
                         return prepareConnection(connection, client.getByteBufAllocator(), codecs);
                     })

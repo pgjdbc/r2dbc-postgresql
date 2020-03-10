@@ -16,18 +16,14 @@
 
 package io.r2dbc.postgresql;
 
-import org.junit.jupiter.api.BeforeEach;
+import io.r2dbc.spi.Statement;
 import org.junit.jupiter.api.Test;
 import reactor.test.StepVerifier;
 
-public class FetchSizeIntegrationTests extends AbstractIntegrationTests {
-
-    @Override
-    @BeforeEach
-    void setUp() {
-        super.setUp();
-        System.gc();
-    }
+/**
+ * Integration tests for {@link Statement#fetchSize(int)}.
+ */
+final class FetchSizeIntegrationTests extends AbstractIntegrationTests {
 
     @Override
     protected void customize(PostgresqlConnectionConfiguration.Builder builder) {
@@ -37,12 +33,12 @@ public class FetchSizeIntegrationTests extends AbstractIntegrationTests {
     @Test
     void exchangeWithDefaultFetchSize() {
         this.connection.createStatement("SELECT * FROM generate_series(1,20) WHERE $1 = $1")
-                .bind(0, 1)
-                .execute()
-                .flatMap(r -> r.map((row, meta) -> row.get(0, Integer.class)))
-                .as(StepVerifier::create)
-                .expectNextCount(20)
-                .verifyComplete();
+            .bind(0, 1)
+            .execute()
+            .flatMap(r -> r.map((row, meta) -> row.get(0, Integer.class)))
+            .as(StepVerifier::create)
+            .expectNextCount(20)
+            .verifyComplete();
     }
 
     @Test
