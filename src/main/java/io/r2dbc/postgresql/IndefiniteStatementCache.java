@@ -87,7 +87,7 @@ final class IndefiniteStatementCache implements StatementCache {
     private Mono<String> parse(String sql, int[] types) {
         String name = "S_" + this.counter.getAndIncrement();
 
-        ExceptionFactory factory = ExceptionFactory.withSql(name);
+        ExceptionFactory factory = ExceptionFactory.withSql(sql);
         return ExtendedQueryMessageFlow
             .parse(this.client, name, sql, types)
             .handle(factory::handleErrorResponse)

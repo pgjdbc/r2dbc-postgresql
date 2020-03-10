@@ -85,7 +85,8 @@ public final class PostgresqlConnectionConfiguration {
     private final int preparedStatementCacheQueries;
 
     private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions,
-                                              @Nullable Duration connectTimeout, @Nullable String database, List<Extension> extensions, ToIntFunction<String> fetchSize, boolean forceBinary, @Nullable String host,
+                                              @Nullable Duration connectTimeout, @Nullable String database, List<Extension> extensions, ToIntFunction<String> fetchSize, boolean forceBinary,
+                                              @Nullable String host,
                                               @Nullable Map<String, String> options, @Nullable CharSequence password, int port, @Nullable String schema, @Nullable String socket, String username,
                                               SSLConfig sslConfig, int preparedStatementCacheQueries) {
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
@@ -158,7 +159,7 @@ public final class PostgresqlConnectionConfiguration {
     }
 
     int getFetchSize(String sql) {
-        return this.fetchSize != null ? this.fetchSize.applyAsInt(sql) : NO_LIMIT;
+        return this.fetchSize.applyAsInt(sql);
     }
 
     @Nullable
@@ -266,8 +267,7 @@ public final class PostgresqlConnectionConfiguration {
 
         private List<Extension> extensions = new ArrayList<>();
 
-        @Nullable
-        private ToIntFunction<String> fetchSize;
+        private ToIntFunction<String> fetchSize = sql -> NO_LIMIT;
 
         private boolean forceBinary = false;
 
@@ -355,7 +355,8 @@ public final class PostgresqlConnectionConfiguration {
                 throw new IllegalArgumentException("username must not be null");
             }
 
-            return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.connectTimeout, this.database, this.extensions, this.fetchSize, this.forceBinary, this.host,
+            return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.connectTimeout, this.database, this.extensions, this.fetchSize, this.forceBinary,
+                this.host,
                 this.options, this.password, this.port, this.schema, this.socket, this.username, this.createSslConfig(), this.preparedStatementCacheQueries);
         }
 
@@ -412,16 +413,16 @@ public final class PostgresqlConnectionConfiguration {
         }
 
         /**
-         * Set the default number of rows to return when fetching results from a query instead deriving fetch size from
-         * back pressure. If the value specified is zero, then the hint is ignored.
+         * Set the default number of rows to return when fetching results from a query. If the value specified is zero, then the hint is ignored and queries request all rows when running a statement.
          *
          * @param fetchSize the number of rows to fetch
          * @return this {@code Builder}
+         * @throws IllegalArgumentException if {@code fetchSize} is {@code negative}
+         * @since 0.9
          */
         public Builder fetchSize(int fetchSize) {
             Assert.isTrue(fetchSize >= 0, "fetch size must be greater or equal zero");
-            this.fetchSize = sql -> fetchSize;
-            return this;
+            return fetchSize(new FixedFetchSize(fetchSize));
         }
 
         /**
@@ -429,6 +430,8 @@ public final class PostgresqlConnectionConfiguration {
          *
          * @param fetchSizeFunction a function that maps the number of rows to fetch
          * @return this {@code Builder}
+         * @throws IllegalArgumentException if {@code fetchSizeFunction} is {@code null}
+         * @since 0.9
          */
         public Builder fetchSize(ToIntFunction<String> fetchSizeFunction) {
             Assert.requireNonNull(fetchSizeFunction, "fetch size function must be non null");
@@ -641,6 +644,7 @@ public final class PostgresqlConnectionConfiguration {
                 ", connectTimeout='" + this.connectTimeout + '\'' +
                 ", database='" + this.database + '\'' +
                 ", extensions='" + this.extensions + '\'' +
+                ", fetchSize='" + this.fetchSize + '\'' +
                 ", forceBinary='" + this.forceBinary + '\'' +
                 ", host='" + this.host + '\'' +
                 ", parameters='" + this.options + '\'' +
@@ -714,6 +718,25 @@ public final class PostgresqlConnectionConfiguration {
                 .sslContext(this.sslContextBuilderCustomizer.apply(sslContextBuilder))
                 .defaultConfiguration(TCP)
                 .build();
+        }
+    }
+
+    static class FixedFetchSize implements ToIntFunction<String> {
+
+        private final int fetchSize;
+
+        public FixedFetchSize(int fetchSize) {
+            this.fetchSize = fetchSize;
+        }
+
+        @Override
+        public int applyAsInt(String value) {
+            return this.fetchSize;
+        }
+
+        @Override
+        public String toString() {
+            return "" + this.fetchSize;
         }
     }
 }

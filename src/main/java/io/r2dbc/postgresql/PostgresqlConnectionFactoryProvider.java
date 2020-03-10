@@ -157,10 +157,6 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         return driver != null && (driver.equals(POSTGRESQL_DRIVER) || driver.equals(LEGACY_POSTGRESQL_DRIVER));
     }
 
-    private static int convertToInt(Object value) {
-        return value instanceof Integer ? (int) value : Integer.parseInt(value.toString());
-    }
-
     private static void setupSsl(PostgresqlConnectionConfiguration.Builder builder, ConnectionFactoryOptions connectionFactoryOptions) {
         Boolean ssl = connectionFactoryOptions.getValue(SSL);
         if (ssl != null && ssl) {
@@ -229,6 +225,10 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
 
     private static boolean convertToBoolean(Object value) {
         return value instanceof Boolean ? (boolean) value : Boolean.parseBoolean(value.toString());
+    }
+
+    private static int convertToInt(Object value) {
+        return value instanceof Integer ? (int) value : Integer.parseInt(value.toString());
     }
 
     /**

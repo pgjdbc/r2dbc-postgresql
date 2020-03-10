@@ -36,7 +36,6 @@ import java.util.function.Predicate;
 import java.util.regex.Matcher;
 
 import static io.r2dbc.postgresql.client.ExtendedQueryMessageFlow.PARAMETER_SYMBOL;
-import static io.r2dbc.postgresql.message.frontend.Execute.NO_LIMIT;
 import static io.r2dbc.postgresql.util.PredicateUtils.not;
 import static io.r2dbc.postgresql.util.PredicateUtils.or;
 
@@ -53,7 +52,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
 
     private final String sql;
 
-    private int fetchSize = NO_LIMIT;
+    private int fetchSize;
 
     private String[] generatedColumns;
 

@@ -51,12 +51,16 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
 
     private String[] generatedColumns;
 
-    private int fetchSize = NO_LIMIT;
+    private int fetchSize;
 
     SimpleQueryPostgresqlStatement(ConnectionContext context, String sql) {
         this.context = Assert.requireNonNull(context, "context must not be null");
         this.sql = Assert.requireNonNull(sql, "sql must not be null");
-        fetchSize(this.context.getConfiguration().getFetchSize(sql));
+        fetchSize(isBatch() ? NO_LIMIT : this.context.getConfiguration().getFetchSize(sql));
+    }
+
+    private boolean isBatch() {
+        return this.sql.contains(";");
     }
 
     @Override
@@ -96,8 +100,9 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
     @Override
     public SimpleQueryPostgresqlStatement fetchSize(int rows) {
         Assert.isTrue(rows >= 0, "Fetch size must be greater or equal zero");
+
         if (rows != NO_LIMIT) {
-            Assert.isTrue(!this.sql.contains(";"), "Fetch size can only be used with a single SQL statement");
+            Assert.isTrue(!isBatch(), "Fetch size can only be used with a single SQL statement");
             this.fetchSize = rows;
         }
 
