@@ -32,6 +32,7 @@ pipeline {
 					branch '0.8.x'
 					branch 'release-0.x'
 				}
+				not { triggeredBy 'UpstreamCause' }
 			}
 			agent {
 				docker {
