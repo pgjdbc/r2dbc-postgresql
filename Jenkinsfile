@@ -32,6 +32,7 @@ pipeline {
 					branch 'master'
 					branch 'release'
 				}
+				not { triggeredBy 'UpstreamCause' }
 			}
 			agent {
 				docker {
