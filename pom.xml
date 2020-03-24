@@ -40,9 +40,9 @@
         <jmh.version>1.22</jmh.version>
         <mbr.version>0.2.0.RELEASE</mbr.version>
         <logback.version>1.2.3</logback.version>
-        <mockito.version>3.1.0</mockito.version>
-        <netty.version>4.1.43.Final</netty.version>
-        <postgresql.version>42.2.8</postgresql.version>
+        <mockito.version>3.2.4</mockito.version>
+        <netty.version>4.1.47.Final</netty.version>
+        <postgresql.version>42.2.9</postgresql.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <r2dbc-spi.version>0.8.1.RELEASE</r2dbc-spi.version>
