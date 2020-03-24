@@ -1,6 +1,17 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+0.8.2.RELEASE
+-----------------------------------------
+* Backport usage of testcontainers 1.13.0 #262
+* Stage releases directly on maven central #260
+* Default fetch size #256
+* IllegalStateException when reading empty byte array #253
+* Fetch size implementation #245
+* Add fast-path emission of incoming frames #243
+* High CPU usage when cancelled query #242
+* Enable consumption of REFCURSOR #173
+
 0.8.1.RELEASE
 -----------------------------------------
 * Upgrade dependencies #238
