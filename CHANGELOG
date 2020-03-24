@@ -3,6 +3,9 @@ R2DBC PostgreSQL Changelog
 
 0.8.2.RELEASE
 -----------------------------------------
+* Upgrade build plugin and test dependencies #266
+* Upgrade to netty 4.1.47.Final #265
+* Upgrade to Reactor Dysprosium-SR6 #264
 * Backport usage of testcontainers 1.13.0 #262
 * Stage releases directly on maven central #260
 * Default fetch size #256

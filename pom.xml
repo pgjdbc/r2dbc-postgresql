@@ -36,13 +36,13 @@
         <hikari-cp.version>3.4.2</hikari-cp.version>
         <java.version>1.8</java.version>
         <jsr305.version>3.0.2</jsr305.version>
-        <junit.version>5.6.0</junit.version>
+        <junit.version>5.6.1</junit.version>
         <jmh.version>1.23</jmh.version>
         <mbr.version>0.2.0.RELEASE</mbr.version>
         <logback.version>1.2.3</logback.version>
-        <mockito.version>3.2.4</mockito.version>
+        <mockito.version>3.3.3</mockito.version>
         <netty.version>4.1.47.Final</netty.version>
-        <postgresql.version>42.2.9</postgresql.version>
+        <postgresql.version>42.2.11</postgresql.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <r2dbc-spi.version>0.8.1.RELEASE</r2dbc-spi.version>
@@ -253,7 +253,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.1.2</version>
+                <version>3.2.0</version>
                 <configuration>
                     <archive>
                         <manifest>
@@ -275,7 +275,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.1.1</version>
+                <version>3.2.0</version>
                 <configuration>
                     <excludePackageNames>
                         io.r2dbc.postgresql.authentication,io.r2dbc.postgresql.client,io.r2dbc.postgresql.message,io.r2dbc.postgresql.util
@@ -298,7 +298,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>3.2.1</version>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
@@ -352,7 +352,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>
-                <version>1.1.0</version>
+                <version>1.2.1</version>
                 <executions>
                     <execution>
                         <id>flatten</id>
@@ -549,7 +549,7 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>build-helper-maven-plugin</artifactId>
-                        <version>3.0.0</version>
+                        <version>3.1.0</version>
                         <executions>
                             <execution>
                                 <id>add-source</id>
