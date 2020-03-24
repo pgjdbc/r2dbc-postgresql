@@ -46,7 +46,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <r2dbc-spi.version>0.8.1.RELEASE</r2dbc-spi.version>
-        <reactor.version>Dysprosium-SR2</reactor.version>
+        <reactor.version>Dysprosium-SR6</reactor.version>
         <scram-client.version>2.1</scram-client.version>
         <spring-framework.version>5.2.1.RELEASE</spring-framework.version>
         <testcontainers.version>1.13.0</testcontainers.version>
