@@ -1,4 +1,4 @@
-# Reactive Relational Database Connectivity PostgreSQL Implementation [![Concourse CI](https://ci.spring.io/api/v1/teams/r2dbc/pipelines/r2dbc/jobs/r2dbc-postgresql/badge)](https://ci.spring.io/teams/r2dbc/pipelines/r2dbc/jobs/r2dbc-postgresql/) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.r2dbc/r2dbc-postgresql/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.r2dbc/r2dbc-postgresql)
+# Reactive Relational Database Connectivity PostgreSQL Implementation [![Build Status](https://travis-ci.org/r2dbc/r2dbc-postgresql.svg?branch=master)](https://travis-ci.org/r2dbc/r2dbc-postgresql) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.r2dbc/r2dbc-postgresql/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.r2dbc/r2dbc-postgresql)
 
 This project contains the [PostgreSQL][p] implementation of the [R2DBC SPI][r].  This implementation is not intended to be used directly, but rather to be used as the backing implementation for a humane client library to delegate to.
 
@@ -96,7 +96,7 @@ Mono<Connection> connectionMono = Mono.from(connectionFactory.create());
 Map<String, String> options = new HashMap<>();
 options.put("lock_timeout", "10s");
 
-ConnectionFactory connectionFactory = new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
+PostgresqlConnectionFactory connectionFactory = new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
     .host("...")
     .port(5432)  // optional, defaults to 5432
     .username("...")
@@ -135,7 +135,7 @@ Artifacts can be found on [Maven Central](https://search.maven.org/search?q=r2db
 <dependency>
   <groupId>io.r2dbc</groupId>
   <artifactId>r2dbc-postgresql</artifactId>
-  <version>0.8.0.RELEASE</version>
+  <version>${version}</version>
 </dependency>
 ```
 
