@@ -1,4 +1,4 @@
-# Reactive Relational Database Connectivity PostgreSQL Implementation
+# Reactive Relational Database Connectivity PostgreSQL Implementation [![Build Status](https://travis-ci.org/r2dbc/r2dbc-postgresql.svg?branch=0.8.x)](https://travis-ci.org/r2dbc/r2dbc-postgresql) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.r2dbc/r2dbc-postgresql/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.r2dbc/r2dbc-postgresql)
 
 This project contains the [PostgreSQL][p] implementation of the [R2DBC SPI][r].  This implementation is not intended to be used directly, but rather to be used as the backing implementation for a humane client library to delegate to.
 
@@ -94,7 +94,7 @@ Mono<Connection> connectionMono = Mono.from(connectionFactory.create());
 Map<String, String> options = new HashMap<>();
 options.put("lock_timeout", "10s");
 
-ConnectionFactory connectionFactory = new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
+PostgresqlConnectionFactory connectionFactory = new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
     .host("...")
     .port(5432)  // optional, defaults to 5432
     .username("...")
@@ -127,20 +127,14 @@ Binding also allowed positional index (zero-based) references.  The parameter in
 
 ### Maven configuration
 
-Add the Maven dependency and use our Maven milestone repository:
+Artifacts can be found on [Maven Central](https://search.maven.org/search?q=r2dbc-postgresql).
 
 ```xml
 <dependency>
   <groupId>io.r2dbc</groupId>
   <artifactId>r2dbc-postgresql</artifactId>
-  <version>0.8.0.RC1</version>
+  <version>${version}</version>
 </dependency>
-
-<repository>
-    <id>spring-milestones</id>
-    <name>Spring Milestones</name>
-    <url>https://repo.spring.io/milestone</url>
-</repository>
 ```
 
 If you'd rather like the latest snapshots of the upcoming major version, use our Maven snapshot repository and declare the appropriate dependency version.
