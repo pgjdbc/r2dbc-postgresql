@@ -27,6 +27,7 @@ import io.r2dbc.postgresql.client.SSLConfig;
 import io.r2dbc.postgresql.client.SSLMode;
 import io.r2dbc.postgresql.client.StartupMessageFlow;
 import io.r2dbc.postgresql.codec.DefaultCodecs;
+import io.r2dbc.postgresql.codec.DynamicCodecs;
 import io.r2dbc.postgresql.extension.CodecRegistrar;
 import io.r2dbc.postgresql.message.backend.AuthenticationMessage;
 import io.r2dbc.postgresql.util.Assert;
@@ -202,6 +203,8 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
 
         List<Publisher<?>> publishers = new ArrayList<>();
         publishers.add(setSchema(connection));
+
+        publishers.add(new DynamicCodecs().register(connection, byteBufAllocator, codecs));
 
         this.extensions.forEach(CodecRegistrar.class, it -> {
             publishers.add(it.register(connection, byteBufAllocator, codecs));
