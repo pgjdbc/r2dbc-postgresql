@@ -36,7 +36,7 @@ Here is a quick teaser of how to use R2DBC PostgreSQL in Java:
 **URL Connection Factory Discovery**
 
 ```java
-ConnectionFactory connectionFactory = ConnectionFactories.get("r2dbc:postgres://<host>:5432/<database>");
+ConnectionFactory connectionFactory = ConnectionFactories.get("r2dbc:postgresql://<host>:5432/<database>");
 
 Publisher<? extends Connection> connectionPublisher = connectionFactory.create();
 ```
