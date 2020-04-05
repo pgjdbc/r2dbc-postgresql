@@ -73,9 +73,14 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final String LEGACY_POSTGRESQL_DRIVER = "postgres";
 
     /**
-     * Schema.
+     * Schema search path (alias for "currentSchema").
      */
     public static final Option<String> SCHEMA = Option.valueOf("schema");
+
+    /**
+     * Schema search path.
+     */
+    public static final Option<String> CURRENT_SCHEMA = Option.valueOf("currentSchema");
 
     /**
      * Unix domain socket.
@@ -247,7 +252,13 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         builder.connectTimeout(connectionFactoryOptions.getValue(CONNECT_TIMEOUT));
         builder.database(connectionFactoryOptions.getValue(DATABASE));
         builder.password(connectionFactoryOptions.getValue(PASSWORD));
-        builder.schema(connectionFactoryOptions.getValue(SCHEMA));
+
+        if (connectionFactoryOptions.getValue(CURRENT_SCHEMA) != null) {
+            builder.schema(connectionFactoryOptions.getValue(CURRENT_SCHEMA));
+        } else {
+            builder.schema(connectionFactoryOptions.getValue(SCHEMA));
+        }
+
         builder.username(connectionFactoryOptions.getRequiredValue(USER));
 
         String applicationName = connectionFactoryOptions.getValue(APPLICATION_NAME);

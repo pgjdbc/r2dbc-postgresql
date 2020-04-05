@@ -201,7 +201,6 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
     private Publisher<?> prepareConnection(PostgresqlConnection connection, ByteBufAllocator byteBufAllocator, DefaultCodecs codecs) {
 
         List<Publisher<?>> publishers = new ArrayList<>();
-        publishers.add(setSchema(connection));
 
         this.extensions.forEach(CodecRegistrar.class, it -> {
             publishers.add(it.register(connection, byteBufAllocator, codecs));
@@ -267,16 +266,6 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
 
                 return IsolationLevel.valueOf(level.toUpperCase(Locale.US));
             })).defaultIfEmpty(IsolationLevel.READ_COMMITTED).last();
-    }
-
-    private Mono<Void> setSchema(PostgresqlConnection connection) {
-        if (this.configuration.getSchema() == null) {
-            return Mono.empty();
-        }
-
-        return connection.createStatement(String.format("SET SCHEMA '%s'", this.configuration.getSchema()))
-            .execute()
-            .then();
     }
 
     static class PostgresConnectionException extends R2dbcNonTransientResourceException {
