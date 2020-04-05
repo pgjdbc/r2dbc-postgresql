@@ -80,7 +80,7 @@ Mono<Connection> connectionMono = Mono.from(connectionFactory.create());
 | `fetchSize`       | The default number of rows to return when fetching results. Defaults to `0` for unlimited. _(Optional)_
 | `forceBinary`     | Whether to force binary transfer.  Defaults to `false`. _(Optional)_
 | `options`         | A `Map<String, String>` of connection parameters. These are applied to each database connection created by the `ConnectionFactory`. Useful for setting generic [PostgreSQL connection parameters][psql-runtime-config]. _(Optional)_
-| `schema`          | The schema to set. _(Optional)_
+| `schema`          | The search path to set. _(Optional)_
 | `sslMode`         | SSL mode to use, see `SSLMode` enum. Supported values: `DISABLE`, `ALLOW`, `PREFER`, `REQUIRE`, `VERIFY_CA`, `VERIFY_FULL`. _(Optional)_
 | `sslRootCert`     | Path to SSL CA certificate in PEM format. _(Optional)_
 | `sslKey`          | Path to SSL key for TLS authentication in PEM format. _(Optional)_

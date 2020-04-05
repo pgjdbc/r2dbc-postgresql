@@ -80,12 +80,16 @@ final class PostgresqlConnectionConfigurationTest {
             .hasFieldOrPropertyWithValue("connectTimeout", Duration.ofMillis(1000))
             .hasFieldOrPropertyWithValue("database", "test-database")
             .hasFieldOrPropertyWithValue("host", "test-host")
-            .hasFieldOrPropertyWithValue("options", options)
+            .hasFieldOrProperty("options")
             .hasFieldOrPropertyWithValue("password", null)
             .hasFieldOrPropertyWithValue("port", 100)
-            .hasFieldOrPropertyWithValue("schema", "test-schema")
             .hasFieldOrPropertyWithValue("username", "test-username")
             .hasFieldOrProperty("sslConfig");
+
+        assertThat(configuration.getOptions())
+                .containsEntry("lock_timeout", "10s")
+                .containsEntry("statement_timeout", "60000")
+                .containsEntry("search_path", "test-schema");
     }
 
     @Test
@@ -104,9 +108,12 @@ final class PostgresqlConnectionConfigurationTest {
             .hasFieldOrPropertyWithValue("host", "test-host")
             .hasFieldOrPropertyWithValue("password", "test-password")
             .hasFieldOrPropertyWithValue("port", 5432)
-            .hasFieldOrPropertyWithValue("schema", "test-schema")
+            .hasFieldOrProperty("options")
             .hasFieldOrPropertyWithValue("username", "test-username")
             .hasFieldOrProperty("sslConfig");
+
+        assertThat(configuration.getOptions())
+                .containsEntry("search_path", "test-schema");
     }
 
     @Test
