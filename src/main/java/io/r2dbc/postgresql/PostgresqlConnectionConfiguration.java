@@ -38,6 +38,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.ServiceLoader;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -82,8 +83,6 @@ public final class PostgresqlConnectionConfiguration {
 
     private final int port;
 
-    private final String schema;
-
     private final String socket;
 
     private final String username;
@@ -108,14 +107,28 @@ public final class PostgresqlConnectionConfiguration {
         this.forceBinary = forceBinary;
         this.noticeLogLevel = noticeLogLevel;
         this.host = host;
-        this.options = options;
+        this.options = initOptions(options);
         this.password = password;
         this.port = port;
-        this.schema = schema;
+        addToOptions(schema);
         this.socket = socket;
         this.username = Assert.requireNonNull(username, "username must not be null");
         this.sslConfig = sslConfig;
         this.preparedStatementCacheQueries = preparedStatementCacheQueries;
+    }
+
+    private Map<String, String> initOptions(@Nullable Map<String, String> options) {
+        if (options == null) {
+            return new HashMap<>();
+        } else {
+            return options;
+        }
+    }
+
+    private void addToOptions(String schema) {
+        if (schema != null && !schema.isEmpty()) {
+            options.put("search_path", schema);
+        }
     }
 
     /**
@@ -143,7 +156,6 @@ public final class PostgresqlConnectionConfiguration {
             ", options='" + this.options + '\'' +
             ", password='" + obfuscate(this.password != null ? this.password.length() : 0) + '\'' +
             ", port=" + this.port +
-            ", schema='" + this.schema + '\'' +
             ", username='" + this.username + '\'' +
             '}';
     }
@@ -202,11 +214,6 @@ public final class PostgresqlConnectionConfiguration {
 
     int getPort() {
         return this.port;
-    }
-
-    @Nullable
-    String getSchema() {
-        return this.schema;
     }
 
     @Nullable
