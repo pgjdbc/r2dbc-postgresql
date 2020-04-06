@@ -28,6 +28,7 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
+import static io.netty.util.CharsetUtil.UTF_8;
 import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 
 @SuppressWarnings("rawtypes")
@@ -156,15 +157,17 @@ final class HStoreCodec implements Codec<Map> {
 
             for (Map.Entry<?, ?> entry : map.entrySet()) {
                 String k = entry.getKey().toString();
-                buffer.writeInt(k.length());
-                buffer.writeCharSequence(k, Charset.defaultCharset());
+                byte[] bytes = k.getBytes(UTF_8);
+                buffer.writeInt(bytes.length);
+                buffer.writeBytes(bytes);
 
                 if (entry.getValue() == null) {
                     buffer.writeInt(-1);
                 } else {
                     String v = entry.getValue().toString();
-                    buffer.writeInt(v.length());
-                    buffer.writeCharSequence(v, Charset.defaultCharset());
+                    bytes = v.getBytes(UTF_8);
+                    buffer.writeInt(bytes.length);
+                    buffer.writeBytes(bytes);
                 }
             }
             return buffer;
