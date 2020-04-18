@@ -26,6 +26,7 @@ import io.r2dbc.spi.ConnectionFactoryProvider;
 import io.r2dbc.spi.Option;
 
 import javax.net.ssl.HostnameVerifier;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
@@ -319,7 +320,14 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
             builder.preparedStatementCacheQueries(convertToInt(preparedStatementCacheQueries));
         }
 
-        Map<String, String> options = connectionFactoryOptions.getValue(OPTIONS);
+        Map<String, String> options;
+        try {
+            options = connectionFactoryOptions.getValue(OPTIONS);
+        } catch (ClassCastException exception) {
+            Option<String> optionsAsString = Option.valueOf("options");
+            options = mapOptionsFromUrlString(connectionFactoryOptions.getValue(optionsAsString));
+        }
+
         if (options != null) {
             builder.options(options);
         }
@@ -332,5 +340,17 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         }
 
         return builder;
+    }
+
+    private static Map<String, String> mapOptionsFromUrlString(String optionsString) {
+        Map<String, String> result = new HashMap<>();
+        for (String pair : optionsString.split(";")) {
+            String[] nameValue = pair.split("=");
+            if (nameValue.length != 2) {
+                throw new IllegalArgumentException(String.format("One of the options, provided via URL is not a valid name=value pair: %s", pair));
+            }
+            result.put(nameValue[0], nameValue[1]);
+        }
+        return result;
     }
 }
