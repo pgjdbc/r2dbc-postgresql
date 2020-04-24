@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,14 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.util.ByteProcessor;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
-import java.nio.charset.Charset;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static io.netty.util.CharsetUtil.UTF_8;
@@ -34,8 +34,27 @@ import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 @SuppressWarnings("rawtypes")
 final class HStoreCodec implements Codec<Map> {
 
+    /**
+     * A {@link ByteProcessor} which finds the first appearance of a specific byte.
+     */
+    static class IndexOfProcessor implements ByteProcessor {
+
+        private final byte byteToFind;
+
+        public IndexOfProcessor(byte byteToFind) {
+            this.byteToFind = byteToFind;
+        }
+
+        @Override
+        public boolean process(byte value) {
+            return value != this.byteToFind;
+        }
+    }
+
     private final ByteBufAllocator byteBufAllocator;
+
     private final Class<Map> type = Map.class;
+
     private final int oid;
 
     /**
@@ -53,7 +72,9 @@ final class HStoreCodec implements Codec<Map> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return dataType == oid && isTypeAssignable(type);
+        Assert.requireNonNull(type, "type must not be null");
+
+        return dataType == this.oid && type.isAssignableFrom(this.type);
     }
 
     @Override
@@ -74,76 +95,97 @@ final class HStoreCodec implements Codec<Map> {
     public Map<String, String> decode(@Nullable ByteBuf buffer, int dataType, Format format, Class<? extends Map> type) {
         if (buffer == null) {
             return null;
-        } else if (format == Format.FORMAT_TEXT) {
-            return doTextDecode(buffer);
         }
-        return doBinaryDecode(buffer);
+
+        if (format == Format.FORMAT_TEXT) {
+            return decodeTextFormat(buffer);
+        }
+
+        return decodeBinaryFormat(buffer);
     }
 
-    private Map<String, String> doBinaryDecode(ByteBuf buffer) {
-        Map<String, String> m = new HashMap<>();
-        int pos = 0;
-        int numElements = buffer.getInt(pos);
-        pos += 4;
+    private static Map<String, String> decodeBinaryFormat(ByteBuf buffer) {
+        Map<String, String> map = new LinkedHashMap<>();
+        if (!buffer.isReadable()) {
+            return map;
+        }
+
+        int numElements = buffer.readInt();
 
         for (int i = 0; i < numElements; ++i) {
-            int keyLen = buffer.getInt(pos);
-            pos += 4;
-            String key = buffer.getCharSequence(pos, keyLen, Charset.defaultCharset()).toString();
-            pos += keyLen;
-            int valLen = buffer.getInt(pos);
-            pos += 4;
-            String val;
-            if (valLen == -1) {
-                val = null;
-            } else {
-                val = buffer.getCharSequence(pos, valLen, Charset.defaultCharset()).toString();
-                pos += valLen;
-            }
-            m.put(key, val);
-        }
-        return m;
-    }
+            int keyLen = buffer.readInt();
+            String key = buffer.readCharSequence(keyLen, UTF_8).toString();
+            int valLen = buffer.readInt();
+            String val = valLen == -1 ? null : buffer.readCharSequence(valLen, UTF_8).toString();
 
-    private Map<String, String> doTextDecode(ByteBuf buffer) {
-        Map<String, String> map = new HashMap<>();
-        int pos = 0;
-        int size = buffer.readableBytes();
-        StringBuilder sb = new StringBuilder();
-
-        while (pos < size) {
-            pos = setString(sb, buffer, pos, size) + 3; // append '=>'
-            String key = sb.toString();
-            String value;
-
-            if ((char) buffer.getByte(pos) == 'N') {
-                value = null;
-                pos += 4; // append 'NULL'
-            } else {
-                pos = setString(sb, buffer, pos, size) + 1;
-                value = sb.toString();
-            }
-            map.put(key, value);
+            map.put(key, val);
         }
         return map;
     }
 
-    private int setString(StringBuilder sb, ByteBuf buffer, int pos, int size) {
-        sb.setLength(0);
-        while (pos < size && buffer.getByte(pos) != '"') {
-            pos++;
+    private static Map<String, String> decodeTextFormat(ByteBuf buffer) {
+        Map<String, String> map = new LinkedHashMap<>();
+        StringBuilder mutableBuffer = new StringBuilder();
+
+        while (buffer.isReadable()) {
+            String key = readString(mutableBuffer, buffer);
+            if (key == null) {
+                break;
+            }
+            buffer.skipBytes(2); // skip '=>'
+            String value;
+
+            if ((char) peekByte(buffer) == 'N') {
+                value = null;
+                buffer.skipBytes(4);// skip 'NULL'.
+            } else {
+                value = readString(mutableBuffer, buffer);
+            }
+            map.put(key, value);
+
+            if (buffer.isReadable()) {
+                buffer.readByte(); // skip ','
+            }
+
         }
-        for (pos += 1; pos < size; pos++) {
-            char c = (char) buffer.getByte(pos);
+        return map;
+    }
+
+    private static byte peekByte(ByteBuf buffer) {
+
+        int readerIndex = buffer.readerIndex();
+        try {
+            return buffer.readByte();
+        } finally {
+            buffer.readerIndex(readerIndex);
+        }
+    }
+
+    @Nullable
+    private static String readString(StringBuilder mutableBuffer, ByteBuf buffer) {
+        mutableBuffer.setLength(0);
+        int position = buffer.forEachByte(new IndexOfProcessor((byte) '"'));
+        if (position > buffer.writerIndex()) {
+            return null;
+        }
+
+        if (position > -1) {
+            buffer.readerIndex(position + 1);
+        }
+
+        while (buffer.isReadable()) {
+            char c = (char) buffer.readByte();
             if (c == '"') {
                 break;
             } else if (c == '\\') {
-                pos++;
-                c = (char) buffer.getByte(pos);
+                c = (char) buffer.readByte();
             }
-            sb.append(c);
+            mutableBuffer.append(c);
         }
-        return pos;
+
+        String result = mutableBuffer.toString();
+        mutableBuffer.setLength(0);
+        return result;
     }
 
     @Override
@@ -151,8 +193,8 @@ final class HStoreCodec implements Codec<Map> {
         Assert.requireNonNull(value, "value must not be null");
         Map<?, ?> map = (Map<?, ?>) value;
 
-        return new Parameter(Format.FORMAT_BINARY, oid, Mono.fromSupplier(() -> {
-            ByteBuf buffer = byteBufAllocator.buffer(4 + 10 * map.size());
+        return new Parameter(Format.FORMAT_BINARY, this.oid, Mono.fromSupplier(() -> {
+            ByteBuf buffer = this.byteBufAllocator.buffer(4 + 10 * map.size());
             buffer.writeInt(map.size());
 
             for (Map.Entry<?, ?> entry : map.entrySet()) {
@@ -176,17 +218,12 @@ final class HStoreCodec implements Codec<Map> {
 
     @Override
     public Parameter encodeNull() {
-        return new Parameter(Format.FORMAT_BINARY, oid, NULL_VALUE);
+        return new Parameter(Format.FORMAT_BINARY, this.oid, NULL_VALUE);
     }
 
     @Override
     public Class<?> type() {
-        return type;
+        return this.type;
     }
 
-    boolean isTypeAssignable(Class<?> type) {
-        Assert.requireNonNull(type, "type must not be null");
-
-        return type.isAssignableFrom(this.type);
-    }
 }

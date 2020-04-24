@@ -292,6 +292,7 @@ This reference table shows the type mapping between [PostgreSQL][p] and Java dat
 | [`circle`][psql-circle-ref]                     | Not yet supported.|
 | [`date`][psql-date-ref]                         | [`LocalDate`][java-ld-ref]|
 | [`double precision`][psql-floating-point-ref]   | [**`Double`**][java-double-ref], [`Float`][java-float-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Integer`][java-integer-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
+| [`hstore`][psql-hstore-ref]                     | [**`Map`**][java-map-ref]|
 | [`inet`][psql-inet-ref]                         | [**`InetAddress`**][java-inet-ref]|
 | [`integer`][psql-integer-ref]                   | [**`Integer`**][java-integer-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
 | [`interval`][psql-interval-ref]                 | Not yet supported.|
@@ -343,6 +344,7 @@ Support for the following single-dimensional arrays (read and write):
 [psql-circle-ref]: https://www.postgresql.org/docs/11/datatype-geometric.html#DATATYPE-CIRCLE
 [psql-date-ref]: https://www.postgresql.org/docs/11/datatype-datetime.html
 [psql-floating-point-ref]: https://www.postgresql.org/docs/11/datatype-numeric.html#DATATYPE-FLOAT
+[psql-hstore-ref]: https://www.postgresql.org/docs/11/hstore.html
 [psql-inet-ref]: https://www.postgresql.org/docs/11/datatype-net-types.html#DATATYPE-INET
 [psql-integer-ref]: https://www.postgresql.org/docs/11/datatype-numeric.html#DATATYPE-INT
 [psql-interval-ref]: https://www.postgresql.org/docs/11/datatype-datetime.html#DATATYPE-INTERVAL-INPUT
@@ -381,6 +383,7 @@ Support for the following single-dimensional arrays (read and write):
 [java-ByteBuffer-ref]: https://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html
 [java-double-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/Double.html
 [java-float-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/Float.html
+[java-map-ref]: https://docs.oracle.com/javase/8/docs/api/java/util/Map.html
 [java-inet-ref]: https://docs.oracle.com/javase/8/docs/api/java/net/InetAddress.html
 [java-inputstream-ref]: https://docs.oracle.com/javase/8/docs/api/java/io/InputStream.html
 [java-instant-ref]: https://docs.oracle.com/javase/8/docs/api/java/time/Instant.html
@@ -403,6 +406,8 @@ This driver accepts the following extensions:
 * `CodecRegistrar` to contribute `Codec`s for PostgreSQL ObjectIDs. 
 
 Extensions can be registered programmatically using `PostgresConnectionConfiguration` or discovered using Java's `ServiceLoader` mechanism (from `META-INF/services/io.r2dbc.postgresql.extension.Extension`).
+
+The driver ships with built-in dynamic codecs (e.g. `hstore`) that are registered during the connection handshake depending on their availability while connecting. Note that Postgres extensions registered after a connection was established require a reconnect to initialize the codec.
 
 ## Logging
 If SL4J is on the classpath, it will be used. Otherwise, there are two possible fallbacks: Console or `java.util.logging.Logger`). By default, the Console fallback is used. To use the JDK loggers, set the `reactor.logging.fallback` System property to `JDK`.
