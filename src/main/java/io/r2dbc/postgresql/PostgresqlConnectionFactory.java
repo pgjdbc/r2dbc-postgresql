@@ -44,7 +44,7 @@ import reactor.util.annotation.Nullable;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -128,13 +128,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
      */
     public Mono<io.r2dbc.postgresql.api.PostgresqlReplicationConnection> replication() {
 
-        Map<String, String> options = this.configuration.getOptions();
-        if (options == null) {
-            options = new HashMap<>();
-        } else {
-            options = new HashMap<>(options);
-        }
-
+        Map<String, String> options = new LinkedHashMap<>(this.configuration.getOptions());
         options.put(REPLICATION_OPTION, REPLICATION_DATABASE);
 
         return doCreateConnection(true, options).map(DefaultPostgresqlReplicationConnection::new);
@@ -187,7 +181,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
 
     private boolean isReplicationConnection() {
         Map<String, String> options = this.configuration.getOptions();
-        return options != null && REPLICATION_DATABASE.equalsIgnoreCase(options.get(REPLICATION_OPTION));
+        return REPLICATION_DATABASE.equalsIgnoreCase(options.get(REPLICATION_OPTION));
     }
 
     private Mono<Client> tryConnectWithConfig(ConnectionSettings settings, @Nullable Map<String, String> options) {

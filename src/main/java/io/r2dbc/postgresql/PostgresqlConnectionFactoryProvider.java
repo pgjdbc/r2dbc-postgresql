@@ -91,6 +91,8 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
 
     /**
      * Schema search path.
+     *
+     * @since 0.9
      */
     public static final Option<String> CURRENT_SCHEMA = Option.valueOf("currentSchema");
 

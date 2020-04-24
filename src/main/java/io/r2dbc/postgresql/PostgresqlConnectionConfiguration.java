@@ -36,9 +36,10 @@ import javax.net.ssl.HostnameVerifier;
 import java.io.File;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.ServiceLoader;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -92,7 +93,8 @@ public final class PostgresqlConnectionConfiguration {
     private final int preparedStatementCacheQueries;
 
     private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions,
-                                              @Nullable Duration connectTimeout, @Nullable String database, LogLevel errorResponseLogLevel, List<Extension> extensions, ToIntFunction<String> fetchSize,boolean forceBinary,
+                                              @Nullable Duration connectTimeout, @Nullable String database, LogLevel errorResponseLogLevel, List<Extension> extensions,
+                                              ToIntFunction<String> fetchSize, boolean forceBinary,
                                               LogLevel noticeLogLevel, @Nullable String host,
                                               @Nullable Map<String, String> options, @Nullable CharSequence password, int port, @Nullable String schema,
                                               @Nullable String socket, String username,
@@ -107,28 +109,18 @@ public final class PostgresqlConnectionConfiguration {
         this.forceBinary = forceBinary;
         this.noticeLogLevel = noticeLogLevel;
         this.host = host;
-        this.options = initOptions(options);
+        this.options = options == null ? new LinkedHashMap<>() : new LinkedHashMap<>(options);
+
+        if (schema != null && !schema.isEmpty()) {
+            this.options.put("search_path", schema);
+        }
+
         this.password = password;
         this.port = port;
-        addToOptions(schema);
         this.socket = socket;
         this.username = Assert.requireNonNull(username, "username must not be null");
         this.sslConfig = sslConfig;
         this.preparedStatementCacheQueries = preparedStatementCacheQueries;
-    }
-
-    private Map<String, String> initOptions(@Nullable Map<String, String> options) {
-        if (options == null) {
-            return new HashMap<>();
-        } else {
-            return options;
-        }
-    }
-
-    private void addToOptions(String schema) {
-        if (schema != null && !schema.isEmpty()) {
-            options.put("search_path", schema);
-        }
     }
 
     /**
@@ -202,9 +194,8 @@ public final class PostgresqlConnectionConfiguration {
         return host;
     }
 
-    @Nullable
     Map<String, String> getOptions() {
-        return this.options;
+        return Collections.unmodifiableMap(this.options);
     }
 
     @Nullable
@@ -388,7 +379,7 @@ public final class PostgresqlConnectionConfiguration {
             }
 
             return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.connectTimeout, this.database, this.errorResponseLogLevel, this.extensions,
-               this.fetchSize, this.forceBinary, this.noticeLogLevel, this.host, this.options, this.password, this.port, this.schema, this.socket, this.username, this.createSslConfig(),
+                this.fetchSize, this.forceBinary, this.noticeLogLevel, this.host, this.options, this.password, this.port, this.schema, this.socket, this.username, this.createSslConfig(),
                 this.preparedStatementCacheQueries);
         }
 
