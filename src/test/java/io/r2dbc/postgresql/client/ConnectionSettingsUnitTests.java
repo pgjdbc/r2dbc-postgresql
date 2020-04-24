@@ -68,7 +68,7 @@ final class ConnectionSettingsUnitTests {
     @Test
     void mutate() {
 
-        ConnectionProvider foo = ConnectionProvider.elastic("foo");
+        ConnectionProvider foo = ConnectionProvider.builder("foo").build();
         ConnectionSettings connectionSettings =
             ConnectionSettings.builder().connectionProvider(ConnectionProvider.newConnection()).errorResponseLogLevel(LogLevel.OFF).noticeLogLevel(LogLevel.ERROR).sslConfig(new SSLConfig(SSLMode.DISABLE, null, null)).build();
 
