@@ -52,6 +52,8 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -196,6 +198,16 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(Float.class, 100.1f, "DECIMAL");
         testCodec(Float.class, 100.1f, "FLOAT4");
         testCodec(Float.class, 100.1f, "FLOAT8");
+    }
+
+    @Test
+    void hstore() {
+        SERVER.getJdbcOperations().execute("CREATE EXTENSION IF NOT EXISTS hstore");
+        Map<String, String> hstore = new LinkedHashMap<>();
+        hstore.put("hello", "world");
+        hstore.put("key\"with quote", "value\" with quote");
+        hstore.put("null-value", null);
+        testCodec(Map.class, hstore, "HSTORE");
     }
 
     @Test

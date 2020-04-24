@@ -28,7 +28,6 @@ import io.r2dbc.postgresql.client.SSLConfig;
 import io.r2dbc.postgresql.client.SSLMode;
 import io.r2dbc.postgresql.client.StartupMessageFlow;
 import io.r2dbc.postgresql.codec.DefaultCodecs;
-import io.r2dbc.postgresql.codec.DynamicCodecs;
 import io.r2dbc.postgresql.extension.CodecRegistrar;
 import io.r2dbc.postgresql.message.backend.AuthenticationMessage;
 import io.r2dbc.postgresql.util.Assert;
@@ -180,7 +179,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
                     // actual connection to be used
                     .map(isolationLevel -> new PostgresqlConnection(client, codecs, DefaultPortalNameSupplier.INSTANCE, statementCache, isolationLevel, this.configuration))
                     .delayUntil(connection -> {
-                        return prepareConnection(connection, client.getByteBufAllocator(), codecs);
+                        return prepareConnection(connection, client.getByteBufAllocator(), codecs, forReplication);
                     })
                     .onErrorResume(throwable -> this.closeWithError(client, throwable));
             }).onErrorMap(this::cannotConnect);
@@ -200,16 +199,16 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
             .cast(Client.class);
     }
 
-    private Publisher<?> prepareConnection(PostgresqlConnection connection, ByteBufAllocator byteBufAllocator, DefaultCodecs codecs) {
+    private Publisher<?> prepareConnection(PostgresqlConnection connection, ByteBufAllocator byteBufAllocator, DefaultCodecs codecs, boolean forReplication) {
 
         List<Publisher<?>> publishers = new ArrayList<>();
         publishers.add(setSchema(connection));
 
-        publishers.add(new DynamicCodecs().register(connection, byteBufAllocator, codecs));
-
-        this.extensions.forEach(CodecRegistrar.class, it -> {
-            publishers.add(it.register(connection, byteBufAllocator, codecs));
-        });
+        if (!forReplication) {
+            this.extensions.forEach(CodecRegistrar.class, it -> {
+                publishers.add(it.register(connection, byteBufAllocator, codecs));
+            });
+        }
 
         return Flux.concat(publishers).then();
     }

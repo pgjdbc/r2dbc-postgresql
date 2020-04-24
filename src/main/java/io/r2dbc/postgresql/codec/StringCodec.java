@@ -28,6 +28,7 @@ import reactor.util.annotation.Nullable;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.CHAR;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.NAME;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.UNKNOWN;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
@@ -51,7 +52,7 @@ final class StringCodec extends AbstractCodec<String> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return BPCHAR == type || CHAR == type || TEXT == type || UNKNOWN == type || VARCHAR == type;
+        return BPCHAR == type || CHAR == type || TEXT == type || UNKNOWN == type || VARCHAR == type || NAME == type;
     }
 
     @Override
