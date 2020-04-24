@@ -78,6 +78,8 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
 
     /**
      * Schema search path.
+     *
+     * @since 0.8.3
      */
     public static final Option<String> CURRENT_SCHEMA = Option.valueOf("currentSchema");
 
@@ -158,13 +160,13 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
             builder.host(connectionFactoryOptions.getRequiredValue(HOST));
         }
         builder.password(connectionFactoryOptions.getValue(PASSWORD));
-        
+
         if (connectionFactoryOptions.getValue(CURRENT_SCHEMA) != null) {
             builder.schema(connectionFactoryOptions.getValue(CURRENT_SCHEMA));
         } else {
             builder.schema(connectionFactoryOptions.getValue(SCHEMA));
         }
-        
+
         builder.username(connectionFactoryOptions.getRequiredValue(USER));
 
         Integer port = connectionFactoryOptions.getValue(PORT);
