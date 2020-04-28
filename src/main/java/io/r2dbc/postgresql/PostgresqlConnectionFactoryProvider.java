@@ -320,13 +320,12 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
             builder.preparedStatementCacheQueries(convertToInt(preparedStatementCacheQueries));
         }
 
-        Map<String, String> options;
-        try {
-            options = connectionFactoryOptions.getValue(OPTIONS);
-        } catch (ClassCastException exception) {
-            Option<String> optionsAsString = Option.valueOf("options");
-            options = mapOptionsFromUrlString(connectionFactoryOptions.getValue(optionsAsString));
-        }
+        Option<Object> optionsAsObject = Option.valueOf("options");
+        Object optionsObject = connectionFactoryOptions.getValue(optionsAsObject);
+
+        Map<String, String> options = optionsObject instanceof String
+            ? mapOptionsFromUrlString((String) optionsObject)
+            : connectionFactoryOptions.getValue(OPTIONS);
 
         if (options != null) {
             builder.options(options);

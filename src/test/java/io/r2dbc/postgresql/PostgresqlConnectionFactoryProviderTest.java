@@ -23,6 +23,7 @@ import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.Option;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -321,4 +322,38 @@ final class PostgresqlConnectionFactoryProviderTest {
         assertThat(factory.getConfiguration().getRequiredSocket()).isEqualTo("/tmp/.s.PGSQL.5432");
     }
 
+    @Test
+    void shouldParseOptionsProvidedAsString() {
+        final Option<String> options = Option.valueOf("options");
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(options, "search_path=public,private;default_tablespace=unknown")
+            .build());
+
+        assertThat(factory.getConfiguration().getOptions().get("search_path")).isEqualTo("public,private");
+        assertThat(factory.getConfiguration().getOptions().get("default_tablespace")).isEqualTo("unknown");
+    }
+
+    @Test
+    void shouldParseOptionsProvidedAsMap() {
+        final Option<Map<String, String>> options = Option.valueOf("options");
+
+        Map<String, String> optionsMap = new HashMap<>();
+        optionsMap.put("search_path", "public,private");
+        optionsMap.put("default_tablespace", "unknown");
+
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(options, optionsMap)
+            .build());
+
+        assertThat(factory.getConfiguration().getOptions().get("search_path")).isEqualTo("public,private");
+        assertThat(factory.getConfiguration().getOptions().get("default_tablespace")).isEqualTo("unknown");
+    }
 }
