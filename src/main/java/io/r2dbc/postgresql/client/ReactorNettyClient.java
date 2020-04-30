@@ -57,6 +57,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Operators;
+import reactor.core.scheduler.Schedulers;
 import reactor.netty.Connection;
 import reactor.netty.resources.LoopResources;
 import reactor.netty.tcp.TcpClient;
@@ -124,6 +125,12 @@ public final class ReactorNettyClient implements Client {
     private volatile TransactionStatus transactionStatus = IDLE;
 
     private volatile Version version = new Version("", 0);
+
+    static {
+
+        // eagerly initialize the scheduler to avoid blocking calls due to TimeZoneDB retrieval
+        Schedulers.boundedElastic();
+    }
 
     /**
      * Creates a new frame processor connected to a given TCP connection.
@@ -380,10 +387,19 @@ public final class ReactorNettyClient implements Client {
 
     private static Mono<? extends Void> registerSslHandler(SSLConfig sslConfig, Connection it) {
 
-        if (sslConfig.getSslMode().startSsl()) {
-            SSLSessionHandlerAdapter sslSessionHandlerAdapter = new SSLSessionHandlerAdapter(it.outbound().alloc(), sslConfig);
-            it.addHandlerFirst(sslSessionHandlerAdapter);
-            return sslSessionHandlerAdapter.getHandshake();
+        try {
+            if (sslConfig.getSslMode().startSsl()) {
+
+                return Mono.defer(() -> {
+                    SSLSessionHandlerAdapter sslSessionHandlerAdapter = new SSLSessionHandlerAdapter(it.outbound().alloc(), sslConfig);
+                    it.addHandlerFirst(sslSessionHandlerAdapter);
+                    return sslSessionHandlerAdapter.getHandshake();
+
+                }).subscribeOn(Schedulers.boundedElastic());
+            }
+        } catch (Throwable e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
         }
 
         return Mono.empty();
