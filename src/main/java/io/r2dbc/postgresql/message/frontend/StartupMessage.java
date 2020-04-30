@@ -24,9 +24,9 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
-import java.time.ZoneId;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TimeZone;
 
 import static io.netty.util.CharsetUtil.UTF_8;
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeByte;
@@ -55,7 +55,7 @@ public final class StartupMessage implements FrontendMessage {
 
     private static final ByteBuf NUMERAL_2 = Unpooled.copiedBuffer("2", UTF_8).asReadOnly();
 
-    private static final ByteBuf SYSTEM_TIME_ZONE = Unpooled.copiedBuffer(ZoneId.systemDefault().toString(), UTF_8).asReadOnly();
+    private static final ByteBuf SYSTEM_TIME_ZONE = Unpooled.copiedBuffer(TimeZone.getDefault().getID(), UTF_8).asReadOnly();
 
     private static final ByteBuf TIMEZONE = Unpooled.copiedBuffer("TimeZone", UTF_8).asReadOnly();
 
