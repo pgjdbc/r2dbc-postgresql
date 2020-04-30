@@ -26,6 +26,7 @@ import io.r2dbc.spi.ConnectionFactoryProvider;
 import io.r2dbc.spi.Option;
 
 import javax.net.ssl.HostnameVerifier;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
@@ -319,9 +320,9 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
             builder.preparedStatementCacheQueries(convertToInt(preparedStatementCacheQueries));
         }
 
-        Map<String, String> options = connectionFactoryOptions.getValue(OPTIONS);
+        Object options = connectionFactoryOptions.getValue(Option.valueOf("options"));
         if (options != null) {
-            builder.options(options);
+            builder.options(convertToMap(options));
         }
 
         if (isUsingTcp(connectionFactoryOptions)) {
@@ -332,5 +333,23 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         }
 
         return builder;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, String> convertToMap(Object options) {
+        if (options instanceof Map) {
+            return Map.class.cast(options);
+        }
+
+        Map<String, String> result = new LinkedHashMap<>();
+        for (String pair : options.toString().split(";")) {
+            String[] items = pair.split("=");
+            if (items.length != 2) {
+                throw new IllegalArgumentException(String.format("Provided options pair is not a valid name=value pair: %s", pair));
+            }
+            result.put(items[0], items[1]);
+        }
+
+        return result;
     }
 }

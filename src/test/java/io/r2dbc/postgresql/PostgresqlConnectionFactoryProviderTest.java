@@ -158,12 +158,12 @@ final class PostgresqlConnectionFactoryProviderTest {
     @Test
     void providerShouldConsiderFetchSize() {
         PostgresqlConnectionFactory factory = this.provider.create(builder()
-                .option(DRIVER, LEGACY_POSTGRESQL_DRIVER)
-                .option(HOST, "test-host")
-                .option(PASSWORD, "test-password")
-                .option(USER, "test-user")
-                .option(FETCH_SIZE, 100)
-                .build());
+            .option(DRIVER, LEGACY_POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(FETCH_SIZE, 100)
+            .build());
 
         assertThat(factory.getConfiguration().getFetchSize().applyAsInt("")).isEqualTo(100);
     }
@@ -171,12 +171,12 @@ final class PostgresqlConnectionFactoryProviderTest {
     @Test
     void providerShouldConsiderFetchSizeAsString() {
         PostgresqlConnectionFactory factory = this.provider.create(builder()
-                .option(DRIVER, LEGACY_POSTGRESQL_DRIVER)
-                .option(HOST, "test-host")
-                .option(PASSWORD, "test-password")
-                .option(USER, "test-user")
-                .option(Option.valueOf("fetchSize"), "100")
-                .build());
+            .option(DRIVER, LEGACY_POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(Option.valueOf("fetchSize"), "100")
+            .build());
 
         assertThat(factory.getConfiguration().getFetchSize().applyAsInt("")).isEqualTo(100);
     }
@@ -321,4 +321,38 @@ final class PostgresqlConnectionFactoryProviderTest {
         assertThat(factory.getConfiguration().getRequiredSocket()).isEqualTo("/tmp/.s.PGSQL.5432");
     }
 
+    @Test
+    void shouldParseOptionsProvidedAsString() {
+        Option<String> options = Option.valueOf("options");
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(options, "search_path=public,private;default_tablespace=unknown")
+            .build());
+
+        assertThat(factory.getConfiguration().getOptions().get("search_path")).isEqualTo("public,private");
+        assertThat(factory.getConfiguration().getOptions().get("default_tablespace")).isEqualTo("unknown");
+    }
+
+    @Test
+    void shouldParseOptionsProvidedAsMap() {
+        Option<Map<String, String>> options = Option.valueOf("options");
+
+        Map<String, String> optionsMap = new HashMap<>();
+        optionsMap.put("search_path", "public,private");
+        optionsMap.put("default_tablespace", "unknown");
+
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(options, optionsMap)
+            .build());
+
+        assertThat(factory.getConfiguration().getOptions().get("search_path")).isEqualTo("public,private");
+        assertThat(factory.getConfiguration().getOptions().get("default_tablespace")).isEqualTo("unknown");
+    }
 }
