@@ -22,7 +22,6 @@ import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.Option;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -156,12 +155,12 @@ final class PostgresqlConnectionFactoryProviderTest {
     @Test
     void providerShouldConsiderFetchSize() {
         PostgresqlConnectionFactory factory = this.provider.create(builder()
-                .option(DRIVER, LEGACY_POSTGRESQL_DRIVER)
-                .option(HOST, "test-host")
-                .option(PASSWORD, "test-password")
-                .option(USER, "test-user")
-                .option(FETCH_SIZE, 100)
-                .build());
+            .option(DRIVER, LEGACY_POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(FETCH_SIZE, 100)
+            .build());
 
         assertThat(factory.getConfiguration().getFetchSize().applyAsInt("")).isEqualTo(100);
     }
@@ -169,12 +168,12 @@ final class PostgresqlConnectionFactoryProviderTest {
     @Test
     void providerShouldConsiderFetchSizeAsString() {
         PostgresqlConnectionFactory factory = this.provider.create(builder()
-                .option(DRIVER, LEGACY_POSTGRESQL_DRIVER)
-                .option(HOST, "test-host")
-                .option(PASSWORD, "test-password")
-                .option(USER, "test-user")
-                .option(Option.valueOf("fetchSize"), "100")
-                .build());
+            .option(DRIVER, LEGACY_POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(Option.valueOf("fetchSize"), "100")
+            .build());
 
         assertThat(factory.getConfiguration().getFetchSize().applyAsInt("")).isEqualTo(100);
     }
@@ -279,7 +278,7 @@ final class PostgresqlConnectionFactoryProviderTest {
 
     @Test
     void shouldParseOptionsProvidedAsString() {
-        final Option<String> options = Option.valueOf("options");
+        Option<String> options = Option.valueOf("options");
         PostgresqlConnectionFactory factory = this.provider.create(builder()
             .option(DRIVER, POSTGRESQL_DRIVER)
             .option(HOST, "test-host")
@@ -294,7 +293,7 @@ final class PostgresqlConnectionFactoryProviderTest {
 
     @Test
     void shouldParseOptionsProvidedAsMap() {
-        final Option<Map<String, String>> options = Option.valueOf("options");
+        Option<Map<String, String>> options = Option.valueOf("options");
 
         Map<String, String> optionsMap = new HashMap<>();
         optionsMap.put("search_path", "public,private");
