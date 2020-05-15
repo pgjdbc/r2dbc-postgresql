@@ -26,6 +26,7 @@ import io.r2dbc.spi.Option;
 
 import javax.net.ssl.HostnameVerifier;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -136,133 +137,20 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
      */
     public static final Option<Map<String, String>> OPTIONS = Option.valueOf("options");
 
-    @Override
-    public PostgresqlConnectionFactory create(ConnectionFactoryOptions connectionFactoryOptions) {
-        return new PostgresqlConnectionFactory(createConfiguration(connectionFactoryOptions));
+    /**
+     * Returns a new {@link PostgresqlConnectionConfiguration.Builder} configured with the given {@link ConnectionFactoryOptions}.
+     *
+     * @param connectionFactoryOptions {@link ConnectionFactoryOptions} used to initialize the {@link PostgresqlConnectionConfiguration.Builder}.
+     * @return a {@link PostgresqlConnectionConfiguration.Builder}
+     * @since 0.8.3
+     */
+    public static PostgresqlConnectionConfiguration.Builder builder(ConnectionFactoryOptions connectionFactoryOptions) {
+        return fromConnectionFactoryOptions(connectionFactoryOptions);
     }
 
-    private static PostgresqlConnectionConfiguration createConfiguration(ConnectionFactoryOptions connectionFactoryOptions) {
-        Assert.requireNonNull(connectionFactoryOptions, "connectionFactoryOptions must not be null");
-
-        boolean tcp;
-        PostgresqlConnectionConfiguration.Builder builder = PostgresqlConnectionConfiguration.builder();
-
-        String applicationName = connectionFactoryOptions.getValue(APPLICATION_NAME);
-        if (applicationName != null) {
-            builder.applicationName(applicationName);
-        }
-
-        Object autodetectExtensions = connectionFactoryOptions.getValue(AUTODETECT_EXTENSIONS);
-        if (autodetectExtensions != null) {
-            builder.autodetectExtensions(convertToBoolean(autodetectExtensions));
-        }
-
-        builder.connectTimeout(connectionFactoryOptions.getValue(CONNECT_TIMEOUT));
-        builder.database(connectionFactoryOptions.getValue(DATABASE));
-
-        if (connectionFactoryOptions.hasOption(SOCKET)) {
-            tcp = false;
-            builder.socket(connectionFactoryOptions.getRequiredValue(SOCKET));
-        } else {
-            tcp = true;
-            builder.host(connectionFactoryOptions.getRequiredValue(HOST));
-        }
-        builder.password(connectionFactoryOptions.getValue(PASSWORD));
-
-        if (connectionFactoryOptions.getValue(CURRENT_SCHEMA) != null) {
-            builder.schema(connectionFactoryOptions.getValue(CURRENT_SCHEMA));
-        } else {
-            builder.schema(connectionFactoryOptions.getValue(SCHEMA));
-        }
-
-        builder.username(connectionFactoryOptions.getRequiredValue(USER));
-
-        Integer port = connectionFactoryOptions.getValue(PORT);
-        if (port != null) {
-            builder.port(port);
-        }
-
-        Object fetchSize = connectionFactoryOptions.getValue(FETCH_SIZE);
-        if (fetchSize != null) {
-            builder.fetchSize(convertToInt(fetchSize));
-        }
-
-
-        Object forceBinary = connectionFactoryOptions.getValue(FORCE_BINARY);
-
-        if (forceBinary != null) {
-            builder.forceBinary(convertToBoolean(forceBinary));
-        }
-
-        Object preparedStatementCacheQueries = connectionFactoryOptions.getValue(PREPARED_STATEMENT_CACHE_QUERIES);
-        if (preparedStatementCacheQueries != null) {
-            builder.preparedStatementCacheQueries(convertToInt(preparedStatementCacheQueries));
-        }
-
-        Object options = connectionFactoryOptions.getValue(Option.valueOf("options"));
-        if (options != null) {
-            builder.options(convertToMap(options));
-        }
-
-        if (tcp) {
-            Boolean ssl = connectionFactoryOptions.getValue(SSL);
-            if (ssl != null && ssl) {
-                builder.enableSsl();
-            }
-
-            Object sslMode = connectionFactoryOptions.getValue(SSL_MODE);
-            if (sslMode != null) {
-                if (sslMode instanceof String) {
-                    builder.sslMode(SSLMode.fromValue(sslMode.toString()));
-                } else {
-                    builder.sslMode((SSLMode) sslMode);
-                }
-            }
-
-            String sslRootCert = connectionFactoryOptions.getValue(SSL_ROOT_CERT);
-            if (sslRootCert != null) {
-                builder.sslRootCert(sslRootCert);
-            }
-
-            String sslCert = connectionFactoryOptions.getValue(SSL_CERT);
-            if (sslCert != null) {
-                builder.sslCert(sslCert);
-            }
-
-            String sslKey = connectionFactoryOptions.getValue(SSL_KEY);
-            if (sslKey != null) {
-                builder.sslKey(sslKey);
-            }
-
-            String sslPassword = connectionFactoryOptions.getValue(SSL_PASSWORD);
-            if (sslPassword != null) {
-                builder.sslPassword(sslPassword);
-            }
-
-            Object sslHostnameVerifier = connectionFactoryOptions.getValue(SSL_HOSTNAME_VERIFIER);
-            if (sslHostnameVerifier != null) {
-
-                if (sslHostnameVerifier instanceof String) {
-
-                    try {
-                        Class<?> verifierClass = Class.forName((String) sslHostnameVerifier);
-                        Object verifier = verifierClass.getConstructor().newInstance();
-
-                        builder.sslHostnameVerifier((HostnameVerifier) verifier);
-                    } catch (ReflectiveOperationException e) {
-                        throw new IllegalStateException("Cannot instantiate " + sslHostnameVerifier, e);
-                    }
-                } else {
-                    builder.sslHostnameVerifier((HostnameVerifier) sslHostnameVerifier);
-                }
-            }
-
-            if (connectionFactoryOptions.hasOption(SSL_CONTEXT_BUILDER_CUSTOMIZER)) {
-                builder.sslContextBuilderCustomizer(connectionFactoryOptions.getRequiredValue(SSL_CONTEXT_BUILDER_CUSTOMIZER));
-            }
-        }
-
-        return builder.build();
+    @Override
+    public PostgresqlConnectionFactory create(ConnectionFactoryOptions connectionFactoryOptions) {
+        return new PostgresqlConnectionFactory(builder(connectionFactoryOptions).build());
     }
 
     @Override
@@ -278,12 +166,152 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         return driver != null && (driver.equals(POSTGRESQL_DRIVER) || driver.equals(LEGACY_POSTGRESQL_DRIVER));
     }
 
+    private static void setupSsl(PostgresqlConnectionConfiguration.Builder builder, ConnectionFactoryOptions connectionFactoryOptions) {
+        Boolean ssl = connectionFactoryOptions.getValue(SSL);
+        if (ssl != null && ssl) {
+            builder.enableSsl();
+        }
+
+        Object sslMode = connectionFactoryOptions.getValue(SSL_MODE);
+        if (sslMode != null) {
+            if (sslMode instanceof String) {
+                builder.sslMode(SSLMode.fromValue(sslMode.toString()));
+            } else {
+                builder.sslMode((SSLMode) sslMode);
+            }
+        }
+
+        String sslRootCert = connectionFactoryOptions.getValue(SSL_ROOT_CERT);
+        if (sslRootCert != null) {
+            builder.sslRootCert(sslRootCert);
+        }
+
+        String sslCert = connectionFactoryOptions.getValue(SSL_CERT);
+        if (sslCert != null) {
+            builder.sslCert(sslCert);
+        }
+
+        String sslKey = connectionFactoryOptions.getValue(SSL_KEY);
+        if (sslKey != null) {
+            builder.sslKey(sslKey);
+        }
+
+        String sslPassword = connectionFactoryOptions.getValue(SSL_PASSWORD);
+        if (sslPassword != null) {
+            builder.sslPassword(sslPassword);
+        }
+
+        if (connectionFactoryOptions.hasOption(SSL_CONTEXT_BUILDER_CUSTOMIZER)) {
+            builder.sslContextBuilderCustomizer(connectionFactoryOptions.getRequiredValue(SSL_CONTEXT_BUILDER_CUSTOMIZER));
+        }
+
+        setSslHostnameVerifier(builder, connectionFactoryOptions);
+    }
+
+    private static void setSslHostnameVerifier(PostgresqlConnectionConfiguration.Builder builder, ConnectionFactoryOptions connectionFactoryOptions) {
+        Object sslHostnameVerifier = connectionFactoryOptions.getValue(SSL_HOSTNAME_VERIFIER);
+        if (sslHostnameVerifier != null) {
+
+            if (sslHostnameVerifier instanceof String) {
+
+                try {
+                    Class<?> verifierClass = Class.forName((String) sslHostnameVerifier);
+                    Object verifier = verifierClass.getConstructor().newInstance();
+
+                    builder.sslHostnameVerifier((HostnameVerifier) verifier);
+                } catch (ReflectiveOperationException e) {
+                    throw new IllegalStateException("Cannot instantiate " + sslHostnameVerifier, e);
+                }
+            } else {
+                builder.sslHostnameVerifier((HostnameVerifier) sslHostnameVerifier);
+            }
+        }
+    }
+
+    private static boolean isUsingTcp(ConnectionFactoryOptions connectionFactoryOptions) {
+        return !connectionFactoryOptions.hasOption(SOCKET);
+    }
+
     private static boolean convertToBoolean(Object value) {
         return value instanceof Boolean ? (boolean) value : Boolean.parseBoolean(value.toString());
     }
 
+    private static <T extends Enum<T>> T convertToEnum(Object value, Class<T> enumType) {
+        return enumType.isInstance(value) ? enumType.cast(value) : Enum.valueOf(enumType, value.toString().toUpperCase(Locale.US));
+    }
+
     private static int convertToInt(Object value) {
         return value instanceof Integer ? (int) value : Integer.parseInt(value.toString());
+    }
+
+    /**
+     * Configure the builder with the given {@link ConnectionFactoryOptions}.
+     *
+     * @param connectionFactoryOptions {@link ConnectionFactoryOptions}
+     * @return this {@link PostgresqlConnectionConfiguration.Builder}
+     * @throws IllegalArgumentException if {@code connectionFactoryOptions} is {@code null}
+     */
+    private static PostgresqlConnectionConfiguration.Builder fromConnectionFactoryOptions(ConnectionFactoryOptions connectionFactoryOptions) {
+
+        Assert.requireNonNull(connectionFactoryOptions, "connectionFactoryOptions must not be null");
+
+        PostgresqlConnectionConfiguration.Builder builder = PostgresqlConnectionConfiguration.builder();
+
+        builder.connectTimeout(connectionFactoryOptions.getValue(CONNECT_TIMEOUT));
+        builder.database(connectionFactoryOptions.getValue(DATABASE));
+        builder.password(connectionFactoryOptions.getValue(PASSWORD));
+
+        if (connectionFactoryOptions.getValue(CURRENT_SCHEMA) != null) {
+            builder.schema(connectionFactoryOptions.getValue(CURRENT_SCHEMA));
+        } else {
+            builder.schema(connectionFactoryOptions.getValue(SCHEMA));
+        }
+
+        builder.username(connectionFactoryOptions.getRequiredValue(USER));
+
+        String applicationName = connectionFactoryOptions.getValue(APPLICATION_NAME);
+        if (applicationName != null) {
+            builder.applicationName(applicationName);
+        }
+
+        Object autodetectExtensions = connectionFactoryOptions.getValue(AUTODETECT_EXTENSIONS);
+        if (autodetectExtensions != null) {
+            builder.autodetectExtensions(convertToBoolean(autodetectExtensions));
+        }
+
+        Integer port = connectionFactoryOptions.getValue(PORT);
+        if (port != null) {
+            builder.port(port);
+        }
+
+        Object fetchSize = connectionFactoryOptions.getValue(FETCH_SIZE);
+        if (fetchSize != null) {
+            builder.fetchSize(convertToInt(fetchSize));
+        }
+
+        Object forceBinary = connectionFactoryOptions.getValue(FORCE_BINARY);
+        if (forceBinary != null) {
+            builder.forceBinary(convertToBoolean(forceBinary));
+        }
+
+        Object preparedStatementCacheQueries = connectionFactoryOptions.getValue(PREPARED_STATEMENT_CACHE_QUERIES);
+        if (preparedStatementCacheQueries != null) {
+            builder.preparedStatementCacheQueries(convertToInt(preparedStatementCacheQueries));
+        }
+
+        Object options = connectionFactoryOptions.getValue(Option.valueOf("options"));
+        if (options != null) {
+            builder.options(convertToMap(options));
+        }
+
+        if (isUsingTcp(connectionFactoryOptions)) {
+            builder.host(connectionFactoryOptions.getRequiredValue(HOST));
+            setupSsl(builder, connectionFactoryOptions);
+        } else {
+            builder.socket(connectionFactoryOptions.getRequiredValue(SOCKET));
+        }
+
+        return builder;
     }
 
     @SuppressWarnings("unchecked")
