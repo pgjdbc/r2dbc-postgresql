@@ -23,6 +23,7 @@ import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.postgresql.codec.EnumCodec;
 import io.r2dbc.postgresql.codec.Json;
+import io.r2dbc.postgresql.codec.Point;
 import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.Clob;
 import io.r2dbc.spi.Connection;
@@ -358,6 +359,11 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     @Test
     void offsetDateTime() {
         testCodec(OffsetDateTime.class, OffsetDateTime.now(), (actual, expected) -> assertThat(actual.isEqual(expected)).isTrue(), "TIMESTAMP WITH TIME ZONE");
+    }
+
+    @Test
+    void point() {
+        testCodec(Point.class, new Point(1.12, 2.12), "POINT");
     }
 
     @Test

@@ -92,7 +92,9 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
             new ShortArrayCodec(byteBufAllocator),
             new StringArrayCodec(byteBufAllocator),
             new IntegerArrayCodec(byteBufAllocator),
-            new LongArrayCodec(byteBufAllocator)
+            new LongArrayCodec(byteBufAllocator),
+
+            new PointCodec(byteBufAllocator)
         ));
     }
 
