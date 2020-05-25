@@ -350,6 +350,7 @@ public final class ReactorNettyClient implements Client {
      * @param sslConfig          SSL configuration
      * @throws IllegalArgumentException if {@code host} is {@code null}
      */
+    @SuppressWarnings("deprecation")
     public static Mono<ReactorNettyClient> connect(ConnectionProvider connectionProvider, SocketAddress socketAddress, @Nullable Duration connectTimeout, SSLConfig sslConfig) {
         Assert.requireNonNull(connectionProvider, "connectionProvider must not be null");
         Assert.requireNonNull(socketAddress, "socketAddress must not be null");

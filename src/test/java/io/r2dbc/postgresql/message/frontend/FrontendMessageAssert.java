@@ -19,11 +19,11 @@ package io.r2dbc.postgresql.message.frontend;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import org.assertj.core.api.AbstractObjectAssert;
-import org.assertj.core.util.Objects;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.Objects;
 import java.util.function.Function;
 
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
@@ -73,7 +73,7 @@ final class FrontendMessageAssert extends AbstractObjectAssert<FrontendMessageAs
                 .consumeNextWith(actual -> {
                     ByteBuf expected = encoded.apply(TEST.buffer());
 
-                    if (!Objects.areEqual(actual, expected)) {
+                    if (!Objects.deepEquals(actual, expected)) {
                         failWithMessage("\nExpected:\n%s\nActual:\n%s", ByteBufUtil.prettyHexDump(expected), ByteBufUtil.prettyHexDump(actual));
                     }
                 })

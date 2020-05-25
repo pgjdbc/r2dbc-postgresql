@@ -63,15 +63,15 @@ final class IntegerArrayCodecTest {
 
     @Test
     void decodeItem() {
-        assertThat(new IntegerArrayCodec(TEST).decode(SINGLE_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Integer[].class)).isEqualTo(new int[]{100, 200});
+        assertThat(new IntegerArrayCodec(TEST).decode(SINGLE_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Integer[].class)).isEqualTo(new Integer[]{100, 200});
         assertThat(new IntegerArrayCodec(TEST).decode(encode(TEST, "{100,200}"), dataType, FORMAT_TEXT, Integer[].class))
-            .isEqualTo(new int[]{100, 200});
+            .isEqualTo(new Integer[]{100, 200});
     }
 
     @Test
     void decodeItem_emptyArray() {
         assertThat(new IntegerArrayCodec(TEST).decode(encode(TEST, "{}"), dataType, FORMAT_TEXT, Integer[][].class))
-            .isEqualTo(new int[][]{});
+            .isEqualTo(new Integer[][]{});
     }
 
     @Test
@@ -82,7 +82,7 @@ final class IntegerArrayCodecTest {
             .writeInt(0)
             .writeInt(23);
 
-        assertThat(new IntegerArrayCodec(TEST).decode(buf, dataType, FORMAT_BINARY, Integer[][].class)).isEqualTo(new int[][]{});
+        assertThat(new IntegerArrayCodec(TEST).decode(buf, dataType, FORMAT_BINARY, Integer[][].class)).isEqualTo(new Integer[][]{});
     }
 
     @Test
@@ -130,8 +130,8 @@ final class IntegerArrayCodecTest {
         Codec codec = new IntegerArrayCodec(TEST);
         codec.canDecode(PostgresqlObjectId.INT4_ARRAY.getObjectId(), FORMAT_TEXT, Object.class);
 
-        assertThat(codec.decode(SINGLE_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Object.class)).isEqualTo(new int[]{100, 200});
-        assertThat(codec.decode(encode(TEST, "{100,200}"), dataType, FORMAT_TEXT, Object.class)).isEqualTo(new int[]{100, 200});
+        assertThat(codec.decode(SINGLE_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Object.class)).isEqualTo(new Integer[]{100, 200});
+        assertThat(codec.decode(encode(TEST, "{100,200}"), dataType, FORMAT_TEXT, Object.class)).isEqualTo(new Integer[]{100, 200});
     }
 
     @Test
