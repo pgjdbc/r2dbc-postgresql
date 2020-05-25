@@ -33,8 +33,6 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 
 final class LongArrayCodecTest {
 
-    private static final int dataType = INT8_ARRAY.getObjectId();
-
     private final ByteBuf BINARY_ARRAY = TEST
         .buffer()
         .writeInt(1)
@@ -49,17 +47,17 @@ final class LongArrayCodecTest {
 
     @Test
     void decodeItem() {
-        assertThat(new LongArrayCodec(TEST).decode(BINARY_ARRAY, 0, FORMAT_BINARY, Long[].class)).isEqualTo(new long[]{100, 200});
-        assertThat(new LongArrayCodec(TEST).decode(TEST.buffer(), 0, FORMAT_BINARY, Long[].class)).isEqualTo(new long[]{});
-        assertThat(new LongArrayCodec(TEST).decode(encode(TEST, "{100,200}"), 0, FORMAT_TEXT, Long[].class)).isEqualTo(new long[]{100, 200});
-        assertThat(new LongArrayCodec(TEST).decode(encode(TEST, "{}"), 0, FORMAT_TEXT, Long[].class)).isEqualTo(new long[]{});
+        assertThat(new LongArrayCodec(TEST).decode(BINARY_ARRAY, 0, FORMAT_BINARY, Long[].class)).isEqualTo(new Long[]{100L, 200L});
+        assertThat(new LongArrayCodec(TEST).decode(TEST.buffer(), 0, FORMAT_BINARY, Long[].class)).isEqualTo(new Long[]{});
+        assertThat(new LongArrayCodec(TEST).decode(encode(TEST, "{100,200}"), 0, FORMAT_TEXT, Long[].class)).isEqualTo(new Long[]{100L, 200L});
+        assertThat(new LongArrayCodec(TEST).decode(encode(TEST, "{}"), 0, FORMAT_TEXT, Long[].class)).isEqualTo(new Long[]{});
     }
 
     @Test
     @SuppressWarnings({"rawtypes", "unchecked"})
     void decodeObject() {
-        assertThat(((Codec) new LongArrayCodec(TEST)).decode(BINARY_ARRAY, 0, FORMAT_BINARY, Object.class)).isEqualTo(new long[]{100, 200});
-        assertThat(((Codec) new LongArrayCodec(TEST)).decode(encode(TEST, "{100,200}"), 0, FORMAT_TEXT, Object.class)).isEqualTo(new long[]{100, 200});
+        assertThat(((Codec) new LongArrayCodec(TEST)).decode(BINARY_ARRAY, 0, FORMAT_BINARY, Object.class)).isEqualTo(new Long[]{100L, 200L});
+        assertThat(((Codec) new LongArrayCodec(TEST)).decode(encode(TEST, "{100,200}"), 0, FORMAT_TEXT, Object.class)).isEqualTo(new Long[]{100L, 200L});
     }
 
     @Test

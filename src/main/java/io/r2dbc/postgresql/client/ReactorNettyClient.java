@@ -357,6 +357,7 @@ public final class ReactorNettyClient implements Client {
      * @param settings      the connection settings
      * @throws IllegalArgumentException if {@code socketAddress} or {@code settings} is {@code null}
      */
+    @SuppressWarnings("deprecation")
     public static Mono<ReactorNettyClient> connect(SocketAddress socketAddress, ConnectionSettings settings) {
         Assert.requireNonNull(socketAddress, "socketAddress must not be null");
         Assert.requireNonNull(settings, "settings must not be null");

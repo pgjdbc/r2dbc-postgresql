@@ -49,15 +49,15 @@ final class ShortArrayCodecTest {
 
     @Test
     void decodeItem() {
-        assertThat(new ShortArrayCodec(TEST).decode(BINARY_ARRAY, dataType, FORMAT_BINARY, Short[].class)).isEqualTo(new short[]{100, 200});
-        assertThat(new ShortArrayCodec(TEST).decode(encode(TEST, "{100,200}"), dataType, FORMAT_TEXT, Short[].class)).isEqualTo(new short[]{100, 200});
+        assertThat(new ShortArrayCodec(TEST).decode(BINARY_ARRAY, dataType, FORMAT_BINARY, Short[].class)).isEqualTo(new Short[]{100, 200});
+        assertThat(new ShortArrayCodec(TEST).decode(encode(TEST, "{100,200}"), dataType, FORMAT_TEXT, Short[].class)).isEqualTo(new Short[]{100, 200});
     }
 
     @Test
     @SuppressWarnings({"rawtypes", "unchecked"})
     void decodeObject() {
-        assertThat(((Codec) new ShortArrayCodec(TEST)).decode(BINARY_ARRAY, dataType, FORMAT_BINARY, Object.class)).isEqualTo(new short[]{100, 200});
-        assertThat(((Codec) new ShortArrayCodec(TEST)).decode(encode(TEST, "{100,200}"), dataType, FORMAT_TEXT, Object.class)).isEqualTo(new short[]{100, 200});
+        assertThat(((Codec) new ShortArrayCodec(TEST)).decode(BINARY_ARRAY, dataType, FORMAT_BINARY, Object.class)).isEqualTo(new Short[]{100, 200});
+        assertThat(((Codec) new ShortArrayCodec(TEST)).decode(encode(TEST, "{100,200}"), dataType, FORMAT_TEXT, Object.class)).isEqualTo(new Short[]{100, 200});
     }
 
     @Test
