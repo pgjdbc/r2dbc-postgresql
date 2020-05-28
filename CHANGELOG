@@ -1,6 +1,18 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+0.8.3.RELEASE
+-----------------------------------------
+* Upgrade dependencies #281
+* Introduce OptionMapper for option mapping #279
+* Add BlockHound to integration tests #276
+* Static initializers of StartupMessage cause blocking calls #275
+* Adds capability to specify connections options via URL #273
+* Add support for providing "search_path" connection option #271
+* Support hstore as default codec #268
+* Capability to disable prepared statement caching #223
+* Simplify factory provider #210
+
 0.8.2.RELEASE
 -----------------------------------------
 * Upgrade build plugin and test dependencies #266
