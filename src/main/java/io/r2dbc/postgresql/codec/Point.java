@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,103 +17,81 @@
 package io.r2dbc.postgresql.codec;
 
 /**
- * <p>It maps to the point datatype in org.postgresql.</p>
- *
- * <p> It uses double to represent the coordinates.</p>
+ * Value object that maps to the {@code point} datatype in Postgres.
+ * <p>
+ * Uses {@code double} to represent the coordinates.
  */
-public class Point {
+public final class Point {
 
     private final double x;
 
     private final double y;
 
-    /**
-     * @param x coordinate
-     * @param y coordinate
-     */
-    public Point(double x, double y) {
+    private Point(double x, double y) {
         this.x = x;
         this.y = y;
     }
 
+    /**
+     * Create a new {@link Point} given {@code x} and {@code y} coordinates.
+     *
+     * @param x the x axis coordinate
+     * @param y the y axis coordinate
+     * @return the new {@link Point} object
+     */
+    public static Point of(double x, double y) {
+        return new Point(x, y);
+    }
+
     public double getX() {
-        return x;
+        return this.x;
     }
 
     public double getY() {
-        return y;
+        return this.y;
     }
 
     /**
-     * Translate the point by the supplied amount.
+     * Translate the point by the supplied amount by adding {@code x} and {@code y} offsets.
      *
      * @param x integer amount to add on the x axis
      * @param y integer amount to add on the y axis
-     * @return - new point with translated values
+     * @return new {@link Point} with translated values
      */
     public Point translate(int x, int y) {
         return translate((double) x, (double) y);
     }
 
     /**
-     * Translate the point by the supplied amount.
+     * Translate the point by the supplied amount by adding {@code x} and {@code y} offsets.
      *
      * @param x double amount to add on the x axis
      * @param y double amount to add on the y axis
-     * @return - new point with translated values
+     * @return new {@link Point} with translated values
      */
     public Point translate(double x, double y) {
         return new Point(this.x + x, this.y + y);
     }
 
-    /**
-     * Moves the point to the supplied coordinates.
-     *
-     * @param x integer coordinate
-     * @param y integer coordinate
-     */
-    public Point move(int x, int y) {
-        return setLocation(x, y);
-    }
-
-    /**
-     * Moves the point to the supplied coordinates.
-     *
-     * @param x double coordinate
-     * @param y double coordinate
-     * @return - new point with provided coordinates
-     */
-    public Point move(double x, double y) {
-        return new Point(x, y);
-    }
-
-    /**
-     * Moves the point to the supplied coordinates.
-     *
-     * @param x integer coordinate
-     * @param y integer coordinate
-     * @return - return new Point with these coordinates
-     */
-    public Point setLocation(int x, int y) {
-        return move((double) x, (double) y);
-    }
-
+    @Override
     public boolean equals(Object obj) {
         if (obj instanceof Point) {
             Point p = (Point) obj;
-            return x == p.x && y == p.y;
+            return this.x == p.x && this.y == p.y;
         }
         return false;
     }
 
+    @Override
     public int hashCode() {
-        long v1 = Double.doubleToLongBits(x);
-        long v2 = Double.doubleToLongBits(y);
+        long v1 = Double.doubleToLongBits(this.x);
+        long v2 = Double.doubleToLongBits(this.y);
         return (int) (v1 ^ v2 ^ (v1 >>> 32) ^ (v2 >>> 32));
     }
 
+    @Override
     public String toString() {
-        return "(" + x + "," + y + ")";
+        return "(" + this.x + "," + this.y + ")";
     }
 
 }

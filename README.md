@@ -360,7 +360,7 @@ This reference table shows the type mapping between [PostgreSQL][p] and Java dat
 | [`oid`][psql-oid-ref]                           | [**`Integer`**][java-integer-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
 | [`path`][psql-path-ref]                         | Not yet supported.|
 | [`pg_lsn`][psql-pg_lsn-ref]                     | Not yet supported.|
-| [`point`][psql-point-ref]                       | Not yet supported.|
+| [`point`][psql-point-ref]                       | **`Point`**|
 | [`polygon`][psql-polygon-ref]                   | Not yet supported.|
 | [`real`][psql-real-ref]                         | [**`Float`**][java-float-ref], [`Double`][java-double-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Integer`][java-integer-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
 | [`smallint`][psql-smallint-ref]                 | [**`Short`**][java-short-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Integer`][java-integer-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
