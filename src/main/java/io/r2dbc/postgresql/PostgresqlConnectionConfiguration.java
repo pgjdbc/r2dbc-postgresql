@@ -396,6 +396,7 @@ public final class PostgresqlConnectionConfiguration {
 
         /**
          * Register a {@link CodecRegistrar} that can contribute extension {@link Codec}s.
+         * Calling this method adds a {@link CodecRegistrar} and does not replace existing {@link Extension}s.
          *
          * @param codecRegistrar registrar to contribute codecs
          * @return this {@link Builder}
@@ -426,6 +427,7 @@ public final class PostgresqlConnectionConfiguration {
 
         /**
          * Registers a {@link Extension} to extend driver functionality.
+         * Calling this method adds a {@link Extension} and does not replace existing {@link Extension}s.
          *
          * @param extension extension to extend driver functionality
          * @return this {@link Builder}

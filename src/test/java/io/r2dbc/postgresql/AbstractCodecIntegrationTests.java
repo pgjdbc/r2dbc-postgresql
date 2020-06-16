@@ -21,6 +21,7 @@ import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
+import io.r2dbc.postgresql.codec.EnumCodec;
 import io.r2dbc.postgresql.codec.Json;
 import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.Clob;
@@ -28,6 +29,7 @@ import io.r2dbc.spi.Connection;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 import org.reactivestreams.Publisher;
+import org.springframework.dao.DataAccessException;
 import org.springframework.util.StreamUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -63,6 +65,16 @@ import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
+
+    @Override
+    protected void customize(PostgresqlConnectionConfiguration.Builder builder) {
+        try {
+            SERVER.getJdbcOperations().execute("CREATE TYPE my_enum AS ENUM ('HELLO', 'WORLD')");
+        } catch (DataAccessException e) {
+            // ignore duplicate types
+        }
+        builder.codecRegistrar(EnumCodec.builder().withEnum("my_enum", MyEnum.class).build());
+    }
 
     @Test
     void bigDecimal() {
@@ -188,6 +200,11 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(Double.class, 100.1, "DECIMAL");
         testCodec(Double.class, 100.1, "FLOAT4");
         testCodec(Double.class, 100.1, "FLOAT8");
+    }
+
+    @Test
+    void simpleMappedEnum() {
+        testCodec(MyEnum.class, MyEnum.HELLO, "my_enum");
     }
 
     @Test
@@ -565,6 +582,11 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         } finally {
             SERVER.getJdbcOperations().execute("DROP TABLE test");
         }
+    }
+
+
+    enum MyEnum {
+        HELLO, WORLD,
     }
 
 }
