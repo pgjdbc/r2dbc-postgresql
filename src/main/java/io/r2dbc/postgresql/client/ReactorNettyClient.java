@@ -799,9 +799,7 @@ public final class ReactorNettyClient implements Client {
         public void onRequest(Conversation conversation, long n) {
             conversation.incrementDemand(n);
 
-            while (hasBufferedItems() && hasDownstreamDemand()) {
-                drainLoop();
-            }
+            tryDrainLoop();
         }
 
         private void demandMore() {
@@ -852,45 +850,57 @@ public final class ReactorNettyClient implements Client {
                 return;
             }
 
+            tryDrainLoop();
+        }
+
+        private void tryDrainLoop() {
             while (hasBufferedItems() && hasDownstreamDemand()) {
-                this.drainLoop();
+                if (!this.drainLoop()) {
+                    return;
+                }
             }
         }
 
-        private void drainLoop() {
+        private boolean drainLoop() {
+
+            if (!this.drain.compareAndSet(false, true)) {
+                return false;
+            }
 
             Conversation lastConversation = null;
 
-            if (this.drain.compareAndSet(false, true)) {
+            try {
 
-                try {
-                    while (hasBufferedItems()) {
+                while (hasBufferedItems()) {
 
-                        Conversation conversation = this.conversations.peek();
-                        lastConversation = conversation;
-                        if (conversation == null) {
-                            break;
-                        }
-
-                        if (conversation.hasDemand()) {
-
-                            BackendMessage item = this.buffer.poll();
-
-                            if (item == null) {
-                                break;
-                            }
-
-                            emit(conversation, item);
-                        } else {
-                            break;
-                        }
+                    Conversation conversation = this.conversations.peek();
+                    lastConversation = conversation;
+                    if (conversation == null) {
+                        break;
                     }
-                } finally {
-                    this.drain.compareAndSet(true, false);
+
+                    if (conversation.hasDemand()) {
+
+                        BackendMessage item = this.buffer.poll();
+
+                        if (item == null) {
+                            break;
+                        }
+
+                        emit(conversation, item);
+                    } else {
+                        break;
+                    }
                 }
+
+            } finally {
+                this.drain.compareAndSet(true, false);
             }
 
             potentiallyDemandMore(lastConversation);
+
+            return true;
+
         }
 
         private void potentiallyDemandMore(@Nullable Conversation lastConversation) {
