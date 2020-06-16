@@ -201,7 +201,8 @@ CREATE TABLE my_table (my_json JSON);
 ```java
 connection.createStatement("INSERT INTO my_table (my_json) VALUES($1)")
             .bind("$1", Json.of("{\"hello\": \"world\"}")).execute();
-```		
+```
+
 **Consume JSON**
 
 ```java
@@ -215,7 +216,7 @@ connection.createStatement("SELECT my_json FROM my_table")
 ```java
 connection.createStatement("INSERT INTO my_table (my_json) VALUES($1::JSON)")
     .bind("$1", "{\"hello\": \"world\"}").execute();
-```		
+```
 
 **Consume JSON as scalar type**
 
@@ -251,7 +252,6 @@ On application shutdown, `close()` the `ReplicationStream`.
 Note that a connection is busy once the replication is active and a connection can have at most one active replication stream.  
 
 ```java
-
 Mono<PostgresqlReplicationConnection> replicationMono = connectionFactory.replication();
 
 // later:
@@ -275,6 +275,35 @@ Flux<T> replicationStream = replicationConnection.startReplication(replicationRe
 });
 ```
 
+## Postgres Enum Types
+
+Applications may make use of Postgres enumerated types by using `EnumCodec` to map custom types to Java `enum` types. 
+`EnumCodec` requires the Postgres OID and the Java to map enum values to the Postgres protocol and to materialize Enum instances from Postgres results. 
+You can configure a `CodecRegistrar` through `EnumCodec.builder()` for one or more enumeration type mappings. Make sure to use different Java enum types otherwise the driver is not able to distinguish between Postgres OIDs. 
+
+Example:
+
+**SQL:**
+
+```sql
+CREATE TYPE my_enum AS ENUM ('FIRST', 'SECOND');
+``` 
+
+**Java Model:**
+
+```java
+enum MyEnumType {
+  FIRST, SECOND;
+}
+```
+
+**Codec Registration:**
+
+```java
+PostgresqlConnectionConfiguration.builder()
+  .codecRegistrar(EnumCodec.builder().withEnum("my_enum", MyEnumType.class).build());
+```
+
 ## Data Type Mapping
 
 This reference table shows the type mapping between [PostgreSQL][p] and Java data types:
@@ -293,6 +322,7 @@ This reference table shows the type mapping between [PostgreSQL][p] and Java dat
 | [`circle`][psql-circle-ref]                     | Not yet supported.|
 | [`date`][psql-date-ref]                         | [`LocalDate`][java-ld-ref]|
 | [`double precision`][psql-floating-point-ref]   | [**`Double`**][java-double-ref], [`Float`][java-float-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Integer`][java-integer-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
+| [enumerated types][psql-enum-ref]               | Client code `Enum` types through `EnumCodec`|
 | [`hstore`][psql-hstore-ref]                     | [**`Map`**][java-map-ref]|
 | [`inet`][psql-inet-ref]                         | [**`InetAddress`**][java-inet-ref]|
 | [`integer`][psql-integer-ref]                   | [**`Integer`**][java-integer-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
@@ -345,6 +375,7 @@ Support for the following single-dimensional arrays (read and write):
 [psql-circle-ref]: https://www.postgresql.org/docs/current/datatype-geometric.html#DATATYPE-CIRCLE
 [psql-date-ref]: https://www.postgresql.org/docs/current/datatype-datetime.html
 [psql-floating-point-ref]: https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-FLOAT
+[psql-enum-ref]: https://www.postgresql.org/docs/current/datatype-enum.html
 [psql-hstore-ref]: https://www.postgresql.org/docs/current/hstore.html
 [psql-inet-ref]: https://www.postgresql.org/docs/current/datatype-net-types.html#DATATYPE-INET
 [psql-integer-ref]: https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-INT
@@ -408,7 +439,7 @@ This driver accepts the following extensions:
 
 Extensions can be registered programmatically using `PostgresConnectionConfiguration` or discovered using Java's `ServiceLoader` mechanism (from `META-INF/services/io.r2dbc.postgresql.extension.Extension`).
 
-The driver ships with built-in dynamic codecs (e.g. `hstore`) that are registered during the connection handshake depending on their availability while connecting. Note that Postgres extensions registered after a connection was established require a reconnect to initialize the codec.
+The driver ships with built-in dynamic codecs (e.g. `hstore`) that are registered during the connection handshake depending on their availability while connecting. Note that Postgres extensions registered after a connection was established require a reconnect to initialize the codec. 
 
 ## Logging
 If SL4J is on the classpath, it will be used. Otherwise, there are two possible fallbacks: Console or `java.util.logging.Logger`). By default, the Console fallback is used. To use the JDK loggers, set the `reactor.logging.fallback` System property to `JDK`.

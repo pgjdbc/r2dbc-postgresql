@@ -20,6 +20,7 @@ final class CodecBinaryFormatIntegrationTests extends AbstractCodecIntegrationTe
 
     @Override
     protected void customize(PostgresqlConnectionConfiguration.Builder builder) {
+        super.customize(builder);
         builder.forceBinary(true);
     }
 
