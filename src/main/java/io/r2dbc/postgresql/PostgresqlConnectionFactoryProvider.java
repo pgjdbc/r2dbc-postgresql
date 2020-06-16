@@ -209,9 +209,9 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
                 return SSLMode.fromValue(it.toString());
             }
 
-            return it;
+            return (SSLMode) it;
 
-        }).to(builder::enableSsl);
+        }).to(builder::sslMode);
 
         mapper.from(SSL_CERT).to(builder::sslCert);
         mapper.from(SSL_CONTEXT_BUILDER_CUSTOMIZER).to(builder::sslContextBuilderCustomizer);
