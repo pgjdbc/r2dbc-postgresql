@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import reactor.util.annotation.Nullable;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.POINT;
 
-public class PointCodec extends AbstractCodec<Point> {
+final class PointCodec extends AbstractCodec<Point> {
 
     private final ByteBufAllocator byteBufAllocator;
 
@@ -53,15 +53,16 @@ public class PointCodec extends AbstractCodec<Point> {
         if (format == FORMAT_BINARY) {
             double x = buffer.readDouble();
             double y = buffer.readDouble();
-            return new Point(x, y);
-        } else {
-            String decodedAsString = ByteBufUtils.decode(buffer);
-            String parenRemovedVal = decodedAsString.replaceAll("[()]", "");
-            String[] coordinatesAsString = parenRemovedVal.split(",");
-            double x = Double.parseDouble(coordinatesAsString[0]);
-            double y = Double.parseDouble(coordinatesAsString[1]);
-            return new Point(x, y);
+            return Point.of(x, y);
         }
+
+
+        String decodedAsString = ByteBufUtils.decode(buffer);
+        String parenRemovedVal = decodedAsString.replaceAll("[()]", "");
+        String[] coordinatesAsString = parenRemovedVal.split(",");
+        double x = Double.parseDouble(coordinatesAsString[0]);
+        double y = Double.parseDouble(coordinatesAsString[1]);
+        return Point.of(x, y);
     }
 
     /**
@@ -79,7 +80,7 @@ public class PointCodec extends AbstractCodec<Point> {
         return createNull(POINT, FORMAT_BINARY);
     }
 
-    public int lengthInBytes() {
+    int lengthInBytes() {
         return 16;
     }
 

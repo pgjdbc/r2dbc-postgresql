@@ -74,7 +74,7 @@ class PointCodecTest {
     @Test
     void doDecode() {
         PointCodec codec = new PointCodec(TEST);
-        Point point = new Point(1.12, 2.12);
+        Point point = Point.of(1.12, 2.12);
         ByteBuf pointAsBinary = TEST.buffer(codec.lengthInBytes()).writeDouble(1.12).writeDouble(2.12);
         assertThat(codec.doDecode(pointAsBinary, POINT, FORMAT_BINARY, Point.class)).isEqualTo(point);
     }
@@ -90,7 +90,7 @@ class PointCodecTest {
         PointCodec codec = new PointCodec(TEST);
         ByteBuf pointAsBinary = TEST.buffer(codec.lengthInBytes()).writeDouble(1.12).writeDouble(2.12);
 
-        ParameterAssert.assertThat(codec.doEncode(new Point(1.12, 2.12)))
+        ParameterAssert.assertThat(codec.doEncode(Point.of(1.12, 2.12)))
             .hasFormat(FORMAT_BINARY)
             .hasType(POINT.getObjectId())
             .hasValue(pointAsBinary);

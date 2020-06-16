@@ -363,7 +363,9 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
 
     @Test
     void point() {
-        testCodec(Point.class, new Point(1.12, 2.12), "POINT");
+        testCodec(Point.class, Point.of(1.12, 2.12), "POINT");
+        testCodec(Point.class, Point.of(Integer.MIN_VALUE, Integer.MAX_VALUE), "POINT");
+        testCodec(Point.class, Point.of(Double.MIN_VALUE, Double.MAX_VALUE), "POINT");
     }
 
     @Test
