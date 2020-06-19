@@ -23,9 +23,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.ServerChannel;
 import io.netty.channel.epoll.Epoll;
-import io.netty.channel.socket.DatagramChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
@@ -357,12 +355,11 @@ public final class ReactorNettyClient implements Client {
      * @param settings      the connection settings
      * @throws IllegalArgumentException if {@code socketAddress} or {@code settings} is {@code null}
      */
-    @SuppressWarnings("deprecation")
     public static Mono<ReactorNettyClient> connect(SocketAddress socketAddress, ConnectionSettings settings) {
         Assert.requireNonNull(socketAddress, "socketAddress must not be null");
         Assert.requireNonNull(settings, "settings must not be null");
 
-        TcpClient tcpClient = TcpClient.create(settings.getConnectionProvider()).addressSupplier(() -> socketAddress);
+        TcpClient tcpClient = TcpClient.create(settings.getConnectionProvider()).remoteAddress(() -> socketAddress);
 
         if (!(socketAddress instanceof InetSocketAddress)) {
             tcpClient = tcpClient.runOn(new SocketLoopResources(), true);
@@ -549,6 +546,7 @@ public final class ReactorNettyClient implements Client {
         }
     }
 
+    @SuppressWarnings({"deprecation"})
     static class SocketLoopResources implements LoopResources {
 
         @Nullable
@@ -612,28 +610,13 @@ public final class ReactorNettyClient implements Client {
         }
 
         @Override
-        public Class<? extends DatagramChannel> onDatagramChannel(EventLoopGroup group) {
-            return this.delegate.onDatagramChannel(group);
-        }
-
-        @Override
         public EventLoopGroup onServer(boolean useNative) {
             return this.delegate.onServer(useNative);
         }
 
         @Override
-        public Class<? extends ServerChannel> onServerChannel(EventLoopGroup group) {
-            return this.delegate.onServerChannel(group);
-        }
-
-        @Override
         public EventLoopGroup onServerSelect(boolean useNative) {
             return this.delegate.onServerSelect(useNative);
-        }
-
-        @Override
-        public boolean preferNative() {
-            return this.delegate.preferNative();
         }
 
         @Override
