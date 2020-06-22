@@ -1,4 +1,4 @@
-# PostgreSQL R2DBC Driver [![Build Status](https://travis-ci.org/r2dbc/r2dbc-postgresql.svg?branch=master)](https://travis-ci.org/r2dbc/r2dbc-postgresql) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.r2dbc/r2dbc-postgresql/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.r2dbc/r2dbc-postgresql)
+# PostgreSQL R2DBC Driver [![Build Status](https://travis-ci.org/r2dbc/r2dbc-postgresql.svg?branch=main)](https://travis-ci.org/r2dbc/r2dbc-postgresql) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.r2dbc/r2dbc-postgresql/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.r2dbc/r2dbc-postgresql)
 
 This project contains the [PostgreSQL][p] implementation of the [R2DBC SPI][r].  This implementation is not intended to be used directly, but rather to be used as the backing implementation for a humane client library to delegate to.
 
