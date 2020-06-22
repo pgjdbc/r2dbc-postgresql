@@ -1,0 +1,7 @@
+contact_links:
+  - name: Questions
+    url: https://stackoverflow.com/questions/tagged/r2dbc
+    about: Please post your longer questions on StackOverflow.
+  - name: Chat
+    url: https://gitter.im/R2DBC/r2dbc
+    about: Chat with us on Gitter.

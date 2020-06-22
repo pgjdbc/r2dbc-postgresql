@@ -27,7 +27,7 @@ Next steps:
 
 ## Code of Conduct
 
-This project is governed by the [Spring Code of Conduct](CODE_OF_CONDUCT.adoc). By participating, you are expected to uphold this code of conduct. Please report unacceptable behavior to [spring-code-of-conduct@pivotal.io](mailto:spring-code-of-conduct@pivotal.io).
+This project is governed by the [Code of Conduct](.github/CODE_OF_CONDUCT.adoc). By participating, you are expected to uphold this code of conduct. Please report unacceptable behavior to [r2dbc@googlegroups.com](mailto:r2dbc@googlegroups.com).
 
 ## Getting Started
 
@@ -135,7 +135,7 @@ Artifacts can be found on [Maven Central](https://search.maven.org/search?q=r2db
 
 ```xml
 <dependency>
-  <groupId>io.r2dbc</groupId>
+  <groupId>org.postgresql</groupId>
   <artifactId>r2dbc-postgresql</artifactId>
   <version>${version}</version>
 </dependency>
@@ -145,16 +145,21 @@ If you'd rather like the latest snapshots of the upcoming major version, use our
 
 ```xml
 <dependency>
-  <groupId>io.r2dbc</groupId>
+  <groupId>org.postgresql</groupId>
   <artifactId>r2dbc-postgresql</artifactId>
   <version>${version}.BUILD-SNAPSHOT</version>
 </dependency>
 
-<repository>
-  <id>spring-libs-snapshot</id>
-  <name>Spring Snapshot Repository</name>
-  <url>https://repo.spring.io/libs-snapshot</url>
-</repository>
+<repositories>
+  <repository>
+    <id>sonatype-snapshots</id>
+    <name>Sonatype Snapshot Repository</name>
+    <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+    <snapshots>
+      <enabled>true</enabled>
+    </snapshots>
+  </repository>
+</repositories>
 ```
 
 ## Listen/Notify
@@ -483,15 +488,15 @@ Having trouble with R2DBC? We'd love to help!
 * Ask a question - we monitor [stackoverflow.com](https://stackoverflow.com) for questions
   tagged with [`r2dbc`](https://stackoverflow.com/tags/r2dbc). 
   You can also chat with the community on [Gitter](https://gitter.im/r2dbc/r2dbc).
-* Report bugs with R2DBC PostgreSQL at [github.com/r2dbc/r2dbc-postgresql/issues](https://github.com/r2dbc/r2dbc-postgresql/issues).
+* Report bugs with R2DBC PostgreSQL at [github.com/pgjdbc/r2dbc-postgresql/issues](https://github.com/pgjdbc/r2dbc-postgresql/issues).
 
 ## Reporting Issues
 
 R2DBC uses GitHub as issue tracking system to record bugs and feature requests. 
 If you want to raise an issue, please follow the recommendations below:
 
-* Before you log a bug, please search the [issue tracker](https://github.com/r2dbc/r2dbc-postgresql/issues) to see if someone has already reported the problem.
-* If the issue doesn't already exist, [create a new issue](https://github.com/r2dbc/r2dbc-postgresql/issues/new).
+* Before you log a bug, please search the [issue tracker](https://github.com/pgjdbc/r2dbc-postgresql/issues) to see if someone has already reported the problem.
+* If the issue doesn't already exist, [create a new issue](https://github.com/pgjdbc/r2dbc-postgresql/issues/new).
 * Please provide as much information as possible with the issue report, we like to know the version of R2DBC PostgreSQL that you are using and JVM version.
 * If you need to paste code, or include a stack trace use Markdown ``` escapes before and after your text.
 * If possible try to create a test-case or project that replicates the issue. 
@@ -508,7 +513,7 @@ You don't need to build from source to use R2DBC PostgreSQL (binaries in Maven C
 
 If you want to build with the regular `mvn` command, you will need [Maven v3.5.0 or above](https://maven.apache.org/run-maven/index.html).
 
-_Also see [CONTRIBUTING.adoc](CONTRIBUTING.adoc) if you wish to submit pull requests, and in particular please sign the [Contributor's Agreement](https://cla.pivotal.io/sign/spring) before your first change, however trivial._
+_Also see [CONTRIBUTING.adoc](.github/CONTRIBUTING.adoc) if you wish to submit pull requests._
 
 ### Running JMH Benchmarks
 

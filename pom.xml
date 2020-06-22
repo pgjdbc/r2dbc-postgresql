@@ -22,14 +22,14 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.r2dbc</groupId>
+    <groupId>org.postgresql</groupId>
     <artifactId>r2dbc-postgresql</artifactId>
     <version>0.9.0.BUILD-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Reactive Relational Database Connectivity - Postgresql</name>
     <description>Reactive Relational Database Connectivity Driver Implementation for Postgresql</description>
-    <url>https://github.com/r2dbc/r2dbc-postgresql</url>
+    <url>https://github.com/pgjdbc/r2dbc-postgresql</url>
 
     <properties>
         <assertj.version>3.16.1</assertj.version>
@@ -62,8 +62,8 @@
     </licenses>
 
     <scm>
-        <connection>scm:git:https://github.com/r2dbc/r2dbc-postgresql</connection>
-        <url>https://github.com/r2dbc/r2dbc-postgresql</url>
+        <connection>scm:git:https://github.com/pgjdbc/r2dbc-postgresql</connection>
+        <url>https://github.com/pgjdbc/r2dbc-postgresql</url>
     </scm>
 
     <developers>
@@ -454,88 +454,6 @@
         </profile>
 
         <profile>
-            <id>milestone</id>
-
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.jfrog.buildinfo</groupId>
-                        <artifactId>artifactory-maven-plugin</artifactId>
-                        <version>2.6.1</version>
-                        <inherited>false</inherited>
-                        <executions>
-                            <execution>
-                                <id>build-info</id>
-                                <goals>
-                                    <goal>publish</goal>
-                                </goals>
-                                <configuration>
-                                    <buildInfo>
-                                        <buildUrl>{{BUILD_URL}}</buildUrl>
-                                    </buildInfo>
-                                    <deployProperties>
-                                        <zip.name>r2dbc-postgresql</zip.name>
-                                        <zip.displayname>r2dbc-postgresql</zip.displayname>
-                                        <zip.deployed>false</zip.deployed>
-                                        <archives>*:*:*:*@zip</archives>
-                                    </deployProperties>
-                                    <publisher>
-                                        <contextUrl>https://repo.spring.io</contextUrl>
-                                        <username>{{ARTIFACTORY_USR}}</username>
-                                        <password>{{ARTIFACTORY_PSW}}</password>
-                                        <repoKey>libs-milestone-local</repoKey>
-                                        <snapshotRepoKey>libs-milestone-local</snapshotRepoKey>
-                                    </publisher>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>release</id>
-
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.jfrog.buildinfo</groupId>
-                        <artifactId>artifactory-maven-plugin</artifactId>
-                        <version>2.6.1</version>
-                        <inherited>false</inherited>
-                        <executions>
-                            <execution>
-                                <id>build-info</id>
-                                <goals>
-                                    <goal>publish</goal>
-                                </goals>
-                                <configuration>
-                                    <buildInfo>
-                                        <buildUrl>{{BUILD_URL}}</buildUrl>
-                                    </buildInfo>
-                                    <deployProperties>
-                                        <zip.name>r2dbc-postgresql</zip.name>
-                                        <zip.displayname>r2dbc-postgresql</zip.displayname>
-                                        <zip.deployed>false</zip.deployed>
-                                        <archives>*:*:*:*@zip</archives>
-                                    </deployProperties>
-                                    <publisher>
-                                        <contextUrl>https://repo.spring.io</contextUrl>
-                                        <username>{{ARTIFACTORY_USR}}</username>
-                                        <password>{{ARTIFACTORY_PSW}}</password>
-                                        <repoKey>libs-release-local</repoKey>
-                                        <snapshotRepoKey>libs-release-local</snapshotRepoKey>
-                                    </publisher>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
             <id>jmh</id>
             <dependencies>
                 <dependency>
@@ -701,31 +619,5 @@
 		</profile>
 
     </profiles>
-
-    <repositories>
-        <repository>
-            <id>spring-milestones</id>
-            <name>Spring Milestones</name>
-            <url>https://repo.spring.io/milestone</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>spring-snapshots</id>
-            <name>Spring Snapshots</name>
-            <url>https://repo.spring.io/snapshot</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-
-    <pluginRepositories>
-        <pluginRepository>
-            <id>spring-plugins-release</id>
-            <url>https://repo.spring.io/plugins-release</url>
-        </pluginRepository>
-    </pluginRepositories>
 
 </project>
