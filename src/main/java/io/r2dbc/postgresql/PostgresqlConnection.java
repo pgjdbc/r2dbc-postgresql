@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql;
 
+import io.r2dbc.postgresql.api.ErrorDetails;
 import io.r2dbc.postgresql.api.Notification;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
@@ -24,6 +25,8 @@ import io.r2dbc.postgresql.client.PortalNameSupplier;
 import io.r2dbc.postgresql.client.SimpleQueryMessageFlow;
 import io.r2dbc.postgresql.client.TransactionStatus;
 import io.r2dbc.postgresql.codec.Codecs;
+import io.r2dbc.postgresql.message.backend.BackendMessage;
+import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.NotificationResponse;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.Operators;
@@ -112,8 +115,26 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
     @Override
     public Mono<Void> commitTransaction() {
         return useTransactionStatus(transactionStatus -> {
-            if (OPEN == transactionStatus) {
-                return exchange("COMMIT");
+            if (IDLE != transactionStatus) {
+                return Flux.from(exchange("COMMIT"))
+                    .filter(CommandComplete.class::isInstance)
+                    .cast(CommandComplete.class)
+                    .<BackendMessage>handle((message, sink) -> {
+
+                        // Certain backend versions (e.g. 12.2, 11.7, 10.12, 9.6.17, 9.5.21, etc)
+                        // silently rollback the transaction in the response to COMMIT statement
+                        // in case the transaction has failed.
+                        // See discussion in pgsql-hackers: https://www.postgresql.org/message-id/b9fb50dc-0f6e-15fb-6555-8ddb86f4aa71%40postgresfriends.org
+
+                        if ("ROLLBACK".equalsIgnoreCase(message.getCommand())) {
+                            sink.error(new ExceptionFactory.PostgresqlRollbackException(ErrorDetails.fromMessage("The database returned ROLLBACK, so the transaction cannot be committed. Transaction" +
+                                " " +
+                                "failure is not known (check server logs?)")));
+                            return;
+                        }
+
+                        sink.next(message);
+                    });
             } else {
                 this.logger.debug("Skipping commit transaction because status is {}", transactionStatus);
                 return Mono.empty();
@@ -341,9 +362,10 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
         return Mono.defer(() -> Mono.just(f.apply(this.client.getTransactionStatus())));
     }
 
-    private Publisher<?> exchange(String sql) {
+    @SuppressWarnings("unchecked")
+    private <T> Publisher<T> exchange(String sql) {
         ExceptionFactory exceptionFactory = ExceptionFactory.withSql(sql);
-        return SimpleQueryMessageFlow.exchange(this.client, sql)
+        return (Publisher<T>) SimpleQueryMessageFlow.exchange(this.client, sql)
             .handle(exceptionFactory::handleErrorResponse)
             .as(Operators::discardOnCancel);
     }

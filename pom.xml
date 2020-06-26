@@ -33,6 +33,7 @@
 
     <properties>
         <assertj.version>3.16.1</assertj.version>
+        <awaitility.version>4.0.3</awaitility.version>
         <blockhound.version>1.0.3.RELEASE</blockhound.version>
         <hikari-cp.version>3.4.5</hikari-cp.version>
         <java.version>1.8</java.version>
@@ -184,6 +185,12 @@
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <version>${assertj.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <version>${awaitility.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
