@@ -251,8 +251,8 @@ public final class ReactorNettyClient implements Client {
      * Consume a {@link BackendMessage}. This method can either fully consume the message or it can signal by returning {@literal false} that the method wasn't able to fully consume the message and
      * that the message needs to be passed to an active {@link Conversation}.
      *
-     * @param message
-     * @return {@literal false} if the message could not be fully consumed and should be propagated to the active {@link Conversation}.
+     * @param message the {@link BackendMessage} to handle
+     * @return {@literal false} if the message could not be fully consumed and should be propagated to the active {@link Conversation}
      */
     private boolean consumeMessage(BackendMessage message) {
 
@@ -658,15 +658,15 @@ public final class ReactorNettyClient implements Client {
             this.takeUntil = takeUntil;
         }
 
-        private long decrementDemand() {
-            return Operators.addCap(DEMAND_UPDATER, this, -1);
+        private void decrementDemand() {
+            Operators.addCap(DEMAND_UPDATER, this, -1);
         }
 
         /**
          * Check whether the {@link BackendMessage} can complete the conversation.
          *
-         * @param item
-         * @return
+         * @param item the message to test whether it can complete the current conversation
+         * @return whether the {@link BackendMessage} can complete the current conversation
          */
         public boolean canComplete(BackendMessage item) {
             return this.takeUntil.test(item);
@@ -675,8 +675,7 @@ public final class ReactorNettyClient implements Client {
         /**
          * Complete the conversation.
          *
-         * @param item
-         * @return
+         * @param item the message completing the conversation
          */
         public void complete(BackendMessage item) {
 
@@ -689,8 +688,7 @@ public final class ReactorNettyClient implements Client {
         /**
          * Emit a {@link BackendMessage}.
          *
-         * @param item
-         * @return
+         * @param item the item to emit
          */
         public void emit(BackendMessage item) {
 
@@ -705,7 +703,7 @@ public final class ReactorNettyClient implements Client {
         /**
          * Notify the conversation about an error. Drops errors silently if the conversation is finished.
          *
-         * @param throwable
+         * @param throwable the error signal
          */
         public void onError(Throwable throwable) {
 
@@ -779,31 +777,35 @@ public final class ReactorNettyClient implements Client {
             });
         }
 
+        /**
+         * {@link Subscription#request(long)} callback. Request more for a {@link Conversation}. Potentially, demands also more upstream elements.
+         *
+         * @param conversation the conversation subject
+         * @param n            number of requested elements
+         */
         public void onRequest(Conversation conversation, long n) {
             conversation.incrementDemand(n);
             demandMore();
             tryDrainLoop();
         }
 
-        private void demandMore() {
-            if (!hasBufferedItems() && this.demand.compareAndSet(0, DEMAND)) {
-                this.upstream.request(DEMAND);
-            }
-        }
-
+        /**
+         * {@link Subscriber#onSubscribe(Subscription)} callback. Registers the {@link Subscription} and potentially requests more upstream elements.
+         *
+         * @param s the subscription
+         */
         @Override
         public void onSubscribe(Subscription s) {
             this.upstream = s;
-            this.demandMore();
+            demandMore();
         }
 
-        private boolean hasDownstreamDemand() {
-
-            Conversation conversation = this.conversations.peek();
-
-            return conversation != null && conversation.hasDemand();
-        }
-
+        /**
+         * {@link Subscriber#onNext(Object)} callback. Decrements upstream demand and attempts to emit {@link BackendMessage} to an active {@link Conversation}. If a conversation has no demand, it
+         * will be buffered.
+         *
+         * @param message the message to emit
+         */
         @Override
         public void onNext(BackendMessage message) {
 
@@ -836,14 +838,63 @@ public final class ReactorNettyClient implements Client {
             tryDrainLoop();
         }
 
+        /**
+         * {@link Subscriber#onError(Throwable)} callback.
+         *
+         * @param throwable the error to emit
+         */
+        @Override
+        public void onError(Throwable throwable) {
+
+            if (this.terminated) {
+                Operators.onErrorDropped(throwable, currentContext());
+                return;
+            }
+
+            handleConnectionError(throwable);
+            ReactorNettyClient.this.requestProcessor.onComplete();
+            this.terminated = true;
+
+            if (isSslException(throwable)) {
+                logger.debug("Connection Error", throwable);
+            } else {
+                logger.error("Connection Error", throwable);
+            }
+
+            ReactorNettyClient.this.close().subscribe();
+        }
+
+        /**
+         * {@link Subscriber#onComplete()} callback.
+         */
+        @Override
+        public void onComplete() {
+            this.terminated = true;
+            ReactorNettyClient.this.handleClose();
+        }
+
+        /**
+         * Context propagation from an active {@link Conversation}.
+         */
+        @Override
+        public Context currentContext() {
+            Conversation receiver = this.conversations.peek();
+            return receiver != null ? receiver.sink.currentContext() : Context.empty();
+        }
+
         private void tryDrainLoop() {
             while (hasBufferedItems() && hasDownstreamDemand()) {
-                if (!this.drainLoop()) {
+                if (!drainLoop()) {
                     return;
                 }
             }
         }
 
+        /**
+         * Drains the buffer. Guarded for single-thread access.
+         *
+         * @return {@code true} if the drain loop was entered successfully. {@code false} otherwise (i.e. a different thread already works on the drain loop).
+         */
         private boolean drainLoop() {
 
             if (!this.drain.compareAndSet(false, true)) {
@@ -883,12 +934,11 @@ public final class ReactorNettyClient implements Client {
             potentiallyDemandMore(lastConversation);
 
             return true;
-
         }
 
         private void potentiallyDemandMore(@Nullable Conversation lastConversation) {
             if (lastConversation == null || lastConversation.hasDemand() || lastConversation.isCancelled()) {
-                this.demandMore();
+                demandMore();
             }
         }
 
@@ -901,51 +951,27 @@ public final class ReactorNettyClient implements Client {
             }
         }
 
+        private void demandMore() {
+            if (!hasBufferedItems() && this.demand.compareAndSet(0, DEMAND)) {
+                this.upstream.request(DEMAND);
+            }
+        }
+
+        private boolean hasDownstreamDemand() {
+
+            Conversation conversation = this.conversations.peek();
+
+            return conversation != null && conversation.hasDemand();
+        }
+
         private boolean hasBufferedItems() {
             return !this.buffer.isEmpty();
         }
 
-        @Override
-        public void onError(Throwable throwable) {
-
-            if (this.terminated) {
-                Operators.onErrorDropped(throwable, currentContext());
-                return;
-            }
-
-            handleConnectionError(throwable);
-            ReactorNettyClient.this.requestProcessor.onComplete();
-            this.terminated = true;
-
-            if (isSslException(throwable)) {
-                logger.debug("Connection Error", throwable);
-            } else {
-                logger.error("Connection Error", throwable);
-            }
-
-            ReactorNettyClient.this.close().subscribe();
-        }
-
-        @Override
-        public void onComplete() {
-            this.terminated = true;
-            ReactorNettyClient.this.handleClose();
-        }
-
-        @Override
-        public Context currentContext() {
-            Conversation receiver = this.conversations.peek();
-            if (receiver != null) {
-                return receiver.sink.currentContext();
-            } else {
-                return Context.empty();
-            }
-        }
-
         /**
-         * Cleanup the subscriber by terminating all {@link Conversation}s and purging the data buffer.
+         * Cleanup the subscriber by terminating all {@link Conversation}s and purging the data buffer. All conversations are completed with an error signal provided by {@code supplier}.
          *
-         * @param supplier
+         * @param supplier the error supplier
          */
         public void close(Supplier<? extends Throwable> supplier) {
 
