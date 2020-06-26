@@ -16,6 +16,11 @@
 
 package io.r2dbc.postgresql;
 
+import io.r2dbc.postgresql.codec.DefaultCodecs;
+
+/**
+ * Integration tests for {@link DefaultCodecs} executed using binary encoding.
+ */
 final class CodecBinaryFormatIntegrationTests extends AbstractCodecIntegrationTests {
 
     @Override

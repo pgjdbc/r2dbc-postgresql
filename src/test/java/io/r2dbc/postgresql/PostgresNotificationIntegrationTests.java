@@ -32,6 +32,9 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Integration tests for {@link Notification} through {@link PostgresqlConnection#getNotifications()}.
+ */
 final class PostgresNotificationIntegrationTests extends AbstractIntegrationTests {
 
     @Test

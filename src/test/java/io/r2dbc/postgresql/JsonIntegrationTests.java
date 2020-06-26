@@ -25,7 +25,10 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.jdbc.core.JdbcOperations;
 import reactor.test.StepVerifier;
 
-class JsonIntegrationTests {
+/**
+ * Integration tests for {@link Json}.
+ */
+final class JsonIntegrationTests {
 
     @RegisterExtension
     static final PostgresqlServerExtension SERVER = new PostgresqlServerExtension();

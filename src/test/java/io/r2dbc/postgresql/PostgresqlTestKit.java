@@ -32,6 +32,9 @@ import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
 import static io.r2dbc.spi.ConnectionFactoryOptions.PORT;
 import static io.r2dbc.spi.ConnectionFactoryOptions.USER;
 
+/**
+ * R2DBC TCK implementation.
+ */
 final class PostgresqlTestKit implements TestKit<String> {
 
     @RegisterExtension

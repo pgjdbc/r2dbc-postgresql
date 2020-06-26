@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 /**
  * Unit tests for {@link EnumCodec}.
  */
-class EnumCodecUnitTests {
+final class EnumCodecUnitTests {
 
     @Test
     void shouldRejectMultipleMappingForJavaType() {

@@ -25,6 +25,9 @@ import reactor.test.StepVerifier;
 
 import java.util.Objects;
 
+/**
+ * Assertion utility for {@link Parameter}.
+ */
 public final class ParameterAssert extends AbstractAssert<ParameterAssert, Parameter> {
 
     private ParameterAssert(Parameter actual) {

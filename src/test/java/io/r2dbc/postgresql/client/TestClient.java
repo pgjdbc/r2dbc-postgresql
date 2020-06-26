@@ -40,6 +40,9 @@ import java.util.function.Predicate;
 
 import static io.r2dbc.postgresql.client.TransactionStatus.IDLE;
 
+/**
+ * Test {@link Client} implementation that allows specification of expectations and assertions.
+ */
 public final class TestClient implements Client {
 
     public static final TestClient NO_OP = new TestClient(false, true, null, null, Flux.empty(), IDLE, new Version("9.4"));

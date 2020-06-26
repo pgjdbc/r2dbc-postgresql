@@ -28,6 +28,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * Mock imoplementation of {@link Codec}.
+ *
+ * @param <T>
+ */
 public final class MockCodec<T> extends AbstractCodec<T> {
 
     private final Set<CanDecode> canDecodes;

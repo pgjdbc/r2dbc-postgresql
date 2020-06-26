@@ -34,6 +34,9 @@ import static io.r2dbc.spi.ConnectionFactoryOptions.PORT;
 import static io.r2dbc.spi.ConnectionFactoryOptions.USER;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
+/**
+ * Integration tests for authentication failures.
+ */
 final class PostgresqlAuthenticationFailureIntegrationTests {
 
     @RegisterExtension

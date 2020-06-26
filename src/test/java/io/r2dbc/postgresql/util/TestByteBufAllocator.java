@@ -19,6 +19,9 @@ package io.r2dbc.postgresql.util;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.UnpooledByteBufAllocator;
 
+/**
+ * {@link ByteBufAllocator} used for tests.
+ */
 public final class TestByteBufAllocator {
 
     public static final ByteBufAllocator TEST = new UnpooledByteBufAllocator(false, true);

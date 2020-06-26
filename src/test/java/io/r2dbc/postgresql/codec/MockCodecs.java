@@ -26,6 +26,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Mock implementation of {@link Codecs}.
+ */
 public final class MockCodecs implements Codecs {
 
     private final Map<Decoding, Object> decodings;

@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Integration tests for cancellation.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class PostgresCancelIntegrationTests extends AbstractIntegrationTests {
+final class PostgresCancelIntegrationTests extends AbstractIntegrationTests {
 
     static final int NUMBER_REPETITIONS = 300;
 

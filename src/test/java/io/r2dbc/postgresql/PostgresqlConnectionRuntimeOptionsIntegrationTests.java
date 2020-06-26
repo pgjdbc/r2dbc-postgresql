@@ -8,6 +8,9 @@ import reactor.test.StepVerifier;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Integration tests for {@link PostgresqlConnection} connection options.
+ */
 final class PostgresqlConnectionRuntimeOptionsIntegrationTests {
 
     @RegisterExtension

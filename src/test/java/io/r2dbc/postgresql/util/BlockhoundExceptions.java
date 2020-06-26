@@ -21,6 +21,9 @@ import reactor.blockhound.integration.BlockHoundIntegration;
 
 import java.security.SecureRandom;
 
+/**
+ * Blockhound configuration. Excludes {@link SecureRandom} to avoid UUID initialization failures.
+ */
 public class BlockhoundExceptions implements BlockHoundIntegration {
 
     @Override
