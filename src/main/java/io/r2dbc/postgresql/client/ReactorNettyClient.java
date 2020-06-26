@@ -781,7 +781,7 @@ public final class ReactorNettyClient implements Client {
 
         public void onRequest(Conversation conversation, long n) {
             conversation.incrementDemand(n);
-
+            demandMore();
             tryDrainLoop();
         }
 

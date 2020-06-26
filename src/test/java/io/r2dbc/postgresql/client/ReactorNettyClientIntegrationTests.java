@@ -45,12 +45,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.util.ReflectionUtils;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.UnicastProcessor;
+import reactor.core.scheduler.Schedulers;
 import reactor.netty.Connection;
 import reactor.test.StepVerifier;
 
@@ -75,6 +77,9 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.Assumptions.assumeThat;
 
+/**
+ * Integration tests for {@link ReactorNettyClient}.
+ */
 final class ReactorNettyClientIntegrationTests {
 
     @RegisterExtension
@@ -91,6 +96,37 @@ final class ReactorNettyClientIntegrationTests {
             .exchange(this.getClass().getName(), m -> new PasswordAuthenticationHandler(SERVER.getPassword(), SERVER.getUsername()), client, SERVER.getDatabase(), SERVER.getUsername(),
                 Collections.emptyMap()))
         .block();
+
+    @BeforeEach
+    void before() {
+        SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS test");
+        SERVER.getJdbcOperations().execute("CREATE TABLE test ( value INTEGER )");
+    }
+
+    @AfterEach
+    void after() {
+        SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS test");
+        this.client.close()
+            .block();
+    }
+
+
+    @Test
+    @Timeout(50)
+    void concurrentConsumptionShouldComplete() {
+
+        IntStream.range(0, 1000)
+            .forEach(i -> SERVER.getJdbcOperations().update("INSERT INTO test VALUES(?),(?),(?),(?),(?),(?),(?),(?),(?),(?)", i, i, i, i, i, i, i, i, i, i));
+
+        this.client
+            .exchange(Mono.just(new Query("SELECT value FROM test")))
+            .limitRate(1)
+            .publishOn(Schedulers.elastic())
+            .doOnNext(ReferenceCountUtil::release)
+            .as(StepVerifier::create)
+            .thenConsumeWhile((t) -> true)
+            .verifyComplete();
+    }
 
     @Test
     void close() {
@@ -158,28 +194,11 @@ final class ReactorNettyClientIntegrationTests {
         }
     }
 
-    @AfterEach
-    void closeClient() {
-        SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS test");
-        this.client.close()
-            .block();
-    }
 
     @Test
     void constructorNoHost() {
         assertThatIllegalArgumentException().isThrownBy(() -> ReactorNettyClient.connect(null, SERVER.getPort()))
             .withMessage("host must not be null");
-    }
-
-    @BeforeEach
-    void createTable() {
-        dropTable();
-        SERVER.getJdbcOperations().execute("CREATE TABLE test ( value INTEGER )");
-    }
-
-    @AfterEach
-    void dropTable() {
-        SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS test");
     }
 
     @Test
