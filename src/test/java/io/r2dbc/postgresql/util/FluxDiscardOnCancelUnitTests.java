@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Unit tests for {@link FluxDiscardOnCancel}.
  */
-class FluxDiscardOnCancelUnitTests {
+final class FluxDiscardOnCancelUnitTests {
 
     @Test
     void shouldEmitAllItemsOnSubscription() {

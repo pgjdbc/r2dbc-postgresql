@@ -65,6 +65,12 @@ import java.util.function.Function;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Integrations tests for our built-in codecs. Executed typicall in text and binary mode.
+ *
+ * @see CodecBinaryFormatIntegrationTests
+ * @see CodecTextFormatIntegrationTests
+ */
 abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
 
     @Override

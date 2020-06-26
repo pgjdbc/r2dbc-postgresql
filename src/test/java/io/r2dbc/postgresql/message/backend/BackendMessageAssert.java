@@ -27,6 +27,9 @@ import java.util.function.Function;
 
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 
+/**
+ * Assertions for {@link BackendMessage}.
+ */
 final class BackendMessageAssert extends AbstractObjectAssert<BackendMessageAssert, Class<? extends BackendMessage>> {
 
     private BackendMessageAssert(Class<? extends BackendMessage> actual) {

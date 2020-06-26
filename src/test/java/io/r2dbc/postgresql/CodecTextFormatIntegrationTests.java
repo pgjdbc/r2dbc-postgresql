@@ -16,6 +16,9 @@
 
 package io.r2dbc.postgresql;
 
+/**
+ * Integration tests for {@link DefaultCodecs} executed using text encoding.
+ */
 final class CodecTextFormatIntegrationTests extends AbstractCodecIntegrationTests {
 
 }

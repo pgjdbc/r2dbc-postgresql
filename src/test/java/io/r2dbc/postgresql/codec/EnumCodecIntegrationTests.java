@@ -26,7 +26,7 @@ import reactor.test.StepVerifier;
 /**
  * Integration tests for {@link EnumCodec}.
  */
-class EnumCodecIntegrationTests extends AbstractIntegrationTests {
+final class EnumCodecIntegrationTests extends AbstractIntegrationTests {
 
     @Test
     void shouldReportUnresolvableTypes() {

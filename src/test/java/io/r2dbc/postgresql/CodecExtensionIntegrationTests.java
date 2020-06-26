@@ -35,7 +35,10 @@ import reactor.test.StepVerifier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class CodecExtensionIntegrationTests extends AbstractIntegrationTests {
+/**
+ * Integration tests for {@link CodecRegistrar}.
+ */
+final class CodecExtensionIntegrationTests extends AbstractIntegrationTests {
 
     @BeforeEach
     void setUp() {

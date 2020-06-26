@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql;
 
+import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.spi.R2dbcDataIntegrityViolationException;
 import io.r2dbc.spi.Result;
 import org.junit.jupiter.api.AfterEach;
@@ -24,6 +25,9 @@ import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
+/**
+ * Integration tests for various error cases using {@link PostgresqlStatement}.
+ */
 final class PostgresqlStatementErrorsIntegrationTests extends AbstractIntegrationTests {
 
     @BeforeEach

@@ -33,6 +33,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Integration tests for logical decode.
+ */
 final class LogicalDecodeIntegrationTests {
 
     @RegisterExtension
