@@ -63,7 +63,6 @@ final class CodecExtensionIntegrationTests extends AbstractIntegrationTests {
             .execute().flatMap(PostgresqlResult::getRowsUpdated).then()
             .as(StepVerifier::create).verifyComplete();
 
-
         this.connection.createStatement("SELECT * FROM codec_json_test")
             .execute()
             .flatMap(it -> it.map((row, rowMetadata) -> row.get(0)))
@@ -94,6 +93,7 @@ final class CodecExtensionIntegrationTests extends AbstractIntegrationTests {
 
             return Mono.fromRunnable(() -> registry.addFirst(JsonToTextCodec.INSTANCE));
         }
+
     }
 
     enum JsonToTextCodec implements Codec<Json> {
@@ -146,5 +146,7 @@ final class CodecExtensionIntegrationTests extends AbstractIntegrationTests {
         Json(String data) {
             this.data = data;
         }
+
     }
+
 }

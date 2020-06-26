@@ -85,6 +85,7 @@ public class StagedResultSizeBenchmarks extends BenchmarkSettings {
                 throw new RuntimeException(e);
             }
         }
+
     }
 
     @Benchmark

@@ -54,11 +54,11 @@ final class MockContext {
 
         public ConnectionContext build() {
             PostgresqlConnectionConfiguration configuration = PostgresqlConnectionConfiguration.builder()
-                    .host("localhost")
-                    .username("admin")
-                    .password("password")
-                    .forceBinary(forceBinary)
-                    .build();
+                .host("localhost")
+                .username("admin")
+                .password("password")
+                .forceBinary(forceBinary)
+                .build();
             return new ConnectionContext(this.client, this.codecs, this.connection, configuration, portalNameSupplier, statementCache);
         }
 
@@ -91,6 +91,7 @@ final class MockContext {
             this.portalNameSupplier = portalNameSupplier;
             return this;
         }
+
     }
 
 }

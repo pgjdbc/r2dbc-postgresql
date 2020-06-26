@@ -62,4 +62,5 @@ final class BigDecimalCodec extends AbstractNumericCodec<BigDecimal> {
     PostgresqlObjectId getDefaultType() {
         return NUMERIC;
     }
+
 }

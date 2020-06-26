@@ -110,7 +110,6 @@ final class ReactorNettyClientIntegrationTests {
             .block();
     }
 
-
     @Test
     @Timeout(50)
     void concurrentConsumptionShouldComplete() {
@@ -193,7 +192,6 @@ final class ReactorNettyClientIntegrationTests {
             assertThat(e).hasCauseInstanceOf(ReactorNettyClient.PostgresConnectionClosedException.class);
         }
     }
-
 
     @Test
     void constructorNoHost() {
@@ -399,6 +397,7 @@ final class ReactorNettyClientIntegrationTests {
         public boolean verify(String s, SSLSession sslSession) {
             return false;
         }
+
     }
 
     public static class NoVerification implements HostnameVerifier {
@@ -407,8 +406,8 @@ final class ReactorNettyClientIntegrationTests {
         public boolean verify(String s, SSLSession sslSession) {
             return true;
         }
-    }
 
+    }
 
     @Nested
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -441,6 +440,7 @@ final class ReactorNettyClientIntegrationTests {
                 .applicationName(ReactorNettyClientIntegrationTests.class.getName())
                 .build());
         }
+
     }
 
     @Nested
@@ -813,7 +813,9 @@ final class ReactorNettyClientIntegrationTests {
                         .as(StepVerifier::create)
                         .verifyError(R2dbcPermissionDeniedException.class));
             }
+
         }
+
     }
 
     @Test
@@ -876,4 +878,5 @@ final class ReactorNettyClientIntegrationTests {
             ReferenceCountUtil.release(message);
         }, sink::error, sink::complete));
     }
+
 }

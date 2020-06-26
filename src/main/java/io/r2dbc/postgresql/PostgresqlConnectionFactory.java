@@ -270,6 +270,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
         public PostgresConnectionException(String msg, @Nullable Throwable cause) {
             super(msg, cause);
         }
+
     }
 
 }

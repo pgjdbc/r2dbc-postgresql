@@ -63,4 +63,5 @@ final class ZoneIdCodec extends AbstractCodec<ZoneId> {
 
         return this.delegate.doEncode(value.getId());
     }
+
 }

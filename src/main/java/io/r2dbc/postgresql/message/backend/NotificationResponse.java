@@ -71,7 +71,6 @@ public final class NotificationResponse implements BackendMessage {
         return this.name;
     }
 
-
     /**
      * Returns the “payload” string passed from the notifying process.
      *

@@ -49,6 +49,7 @@ final class HStoreCodec implements Codec<Map> {
         public boolean process(byte value) {
             return value != this.byteToFind;
         }
+
     }
 
     private final ByteBufAllocator byteBufAllocator;

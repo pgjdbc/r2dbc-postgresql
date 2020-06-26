@@ -91,6 +91,7 @@ final class RefCursorCodec extends AbstractCodec<RefCursor> {
                 "portal='" + this.portal + '\'' +
                 '}';
         }
+
     }
 
 }

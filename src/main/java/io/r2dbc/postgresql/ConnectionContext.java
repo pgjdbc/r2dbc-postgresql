@@ -39,7 +39,8 @@ final class ConnectionContext {
 
     private final PortalNameSupplier portalNameSupplier;
 
-    ConnectionContext(Client client, Codecs codecs, PostgresqlConnection connection, PostgresqlConnectionConfiguration configuration, PortalNameSupplier portalNameSupplier, StatementCache statementCache) {
+    ConnectionContext(Client client, Codecs codecs, PostgresqlConnection connection, PostgresqlConnectionConfiguration configuration, PortalNameSupplier portalNameSupplier,
+                      StatementCache statementCache) {
         this.client = client;
         this.codecs = codecs;
         this.connection = connection;
@@ -83,4 +84,5 @@ final class ConnectionContext {
             ", statementCache=" + this.statementCache +
             '}';
     }
+
 }

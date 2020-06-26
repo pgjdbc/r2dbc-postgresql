@@ -44,4 +44,5 @@ final class CancelRequestMessageFlowUnitTests {
         assertThatIllegalArgumentException().isThrownBy(() -> CancelRequestMessageFlow.exchange(null, 100, 200))
             .withMessage("client must not be null");
     }
+
 }

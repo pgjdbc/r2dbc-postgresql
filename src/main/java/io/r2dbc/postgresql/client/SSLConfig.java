@@ -16,7 +16,6 @@
 
 package io.r2dbc.postgresql.client;
 
-
 import io.r2dbc.postgresql.util.Assert;
 import reactor.netty.tcp.SslProvider;
 import reactor.util.annotation.Nullable;
@@ -72,4 +71,5 @@ public final class SSLConfig {
             this.hostnameVerifier
         );
     }
+
 }

@@ -42,7 +42,6 @@ public class SASLAuthenticationHandler implements AuthenticationHandler {
         this.username = Assert.requireNonNull(username, "username must not be null");
     }
 
-
     /**
      * Returns whether this {@link AuthenticationHandler} can support authentication for a given authentication message response.
      *

@@ -373,4 +373,5 @@ final class PostgresqlConnectionFactoryProviderUnitTests {
         assertThat(factory.getConfiguration().getOptions().get("search_path")).isEqualTo("public,private");
         assertThat(factory.getConfiguration().getOptions().get("default_tablespace")).isEqualTo("unknown");
     }
+
 }

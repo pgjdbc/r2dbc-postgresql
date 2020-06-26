@@ -29,4 +29,5 @@ final class QueryLogger {
     static void logQuery(String query) {
         QUERY_LOGGER.debug("Executing query: {}", query);
     }
+
 }

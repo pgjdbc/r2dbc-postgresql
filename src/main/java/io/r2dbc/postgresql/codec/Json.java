@@ -172,6 +172,7 @@ public abstract class Json {
         JsonInput(T value) {
             this.value = value;
         }
+
     }
 
     /**
@@ -217,6 +218,7 @@ public abstract class Json {
                 asString() +
                 '}';
         }
+
     }
 
     /**
@@ -262,6 +264,7 @@ public abstract class Json {
                 asString() +
                 '}';
         }
+
     }
 
     /**
@@ -321,6 +324,7 @@ public abstract class Json {
         public String asString() {
             return new String(asArray(), StandardCharsets.UTF_8);
         }
+
     }
 
     /**
@@ -411,6 +415,7 @@ public abstract class Json {
                 + "}";
 
         }
+
     }
 
 }

@@ -33,4 +33,5 @@ interface StatementCache {
         }
         return new BoundedStatementCache(client, preparedStatementCacheQueries);
     }
+
 }

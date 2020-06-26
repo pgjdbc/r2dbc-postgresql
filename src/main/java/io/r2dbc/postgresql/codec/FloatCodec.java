@@ -60,4 +60,5 @@ final class FloatCodec extends AbstractNumericCodec<Float> {
     PostgresqlObjectId getDefaultType() {
         return FLOAT4;
     }
+
 }

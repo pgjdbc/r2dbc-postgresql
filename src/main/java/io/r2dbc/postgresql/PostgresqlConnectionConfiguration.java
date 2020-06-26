@@ -770,6 +770,7 @@ public final class PostgresqlConnectionConfiguration {
                 .defaultConfiguration(TCP)
                 .build();
         }
+
     }
 
     static class FixedFetchSize implements ToIntFunction<String> {
@@ -789,5 +790,7 @@ public final class PostgresqlConnectionConfiguration {
         public String toString() {
             return "" + this.fetchSize;
         }
+
     }
+
 }

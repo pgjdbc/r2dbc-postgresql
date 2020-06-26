@@ -88,7 +88,6 @@ public final class ErrorDetails {
 
     private final String where;
 
-
     /**
      * Create new {@link ErrorDetails} from {@link List} of {@link Field fields}.
      *

@@ -72,4 +72,5 @@ final class LocalDateTimeCodec extends AbstractTemporalCodec<LocalDateTime> {
     PostgresqlObjectId getDefaultType() {
         return TIMESTAMP;
     }
+
 }

@@ -155,6 +155,7 @@ public final class MockCodec<T> extends AbstractCodec<T> {
                 ", type=" + this.type +
                 '}';
         }
+
     }
 
     private static final class CanDecode {

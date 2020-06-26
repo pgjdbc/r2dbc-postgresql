@@ -447,4 +447,5 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
     void supportsSimple() {
         assertThat(ExtendedQueryPostgresqlStatement.supports("test-query")).isFalse();
     }
+
 }

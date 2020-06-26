@@ -50,7 +50,6 @@ final class RefCursorIntegrationTests extends AbstractIntegrationTests {
             "    END;\n" +
             "    $$ LANGUAGE plpgsql;");
 
-
         SERVER.getJdbcOperations().execute("CREATE OR REPLACE FUNCTION show_cities_multiple() RETURNS SETOF refcursor AS $$\n" +
             "    DECLARE\n" +
             "      ref1 refcursor;           -- Declare cursor variables\n" +

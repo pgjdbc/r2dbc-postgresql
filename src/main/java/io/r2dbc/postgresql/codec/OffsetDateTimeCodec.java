@@ -62,4 +62,5 @@ final class OffsetDateTimeCodec extends AbstractTemporalCodec<OffsetDateTime> {
     PostgresqlObjectId getDefaultType() {
         return TIMESTAMPTZ;
     }
+
 }

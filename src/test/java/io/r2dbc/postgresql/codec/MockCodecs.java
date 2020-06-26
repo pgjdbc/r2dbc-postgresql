@@ -157,6 +157,7 @@ public final class MockCodecs implements Codecs {
                 ", preferredTypes=" + this.preferredTypes +
                 '}';
         }
+
     }
 
     private static final class Decoding {
@@ -244,6 +245,7 @@ public final class MockCodecs implements Codecs {
                 ", format=" + this.format +
                 '}';
         }
+
     }
 
 }

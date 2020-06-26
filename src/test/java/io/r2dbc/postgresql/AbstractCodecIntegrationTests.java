@@ -510,7 +510,6 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
                 .expectNext(1)
                 .verifyComplete();
 
-
             if (value instanceof Buffer) {
                 ((Buffer) value).rewind();
             }
@@ -597,7 +596,6 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
             SERVER.getJdbcOperations().execute("DROP TABLE test");
         }
     }
-
 
     enum MyEnum {
         HELLO, WORLD,

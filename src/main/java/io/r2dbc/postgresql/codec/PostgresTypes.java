@@ -243,5 +243,7 @@ public class PostgresTypes {
                 ", category='" + this.category + '\'' +
                 '}';
         }
+
     }
+
 }

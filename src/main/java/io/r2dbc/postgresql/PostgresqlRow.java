@@ -217,6 +217,7 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
                 ", context=" + this.context +
                 '}';
         }
+
     }
 
 }

@@ -96,4 +96,5 @@ final class ShortCodecUnitTests {
         assertThat(new ShortCodec(TEST).encodeNull())
             .isEqualTo(new Parameter(FORMAT_BINARY, INT2.getObjectId(), NULL_VALUE));
     }
+
 }

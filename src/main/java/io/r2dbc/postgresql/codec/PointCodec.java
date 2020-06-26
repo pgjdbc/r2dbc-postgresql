@@ -56,7 +56,6 @@ final class PointCodec extends AbstractCodec<Point> {
             return Point.of(x, y);
         }
 
-
         String decodedAsString = ByteBufUtils.decode(buffer);
         String parenRemovedVal = decodedAsString.replaceAll("[()]", "");
         String[] coordinatesAsString = parenRemovedVal.split(",");

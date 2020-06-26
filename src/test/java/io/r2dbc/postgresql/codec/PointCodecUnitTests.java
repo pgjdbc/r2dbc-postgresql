@@ -104,4 +104,5 @@ final class PointCodecUnitTests {
         ParameterAssert.assertThat(new PointCodec(TEST).encodeNull())
             .isEqualTo(new Parameter(FORMAT_BINARY, POINT.getObjectId(), NULL_VALUE));
     }
+
 }

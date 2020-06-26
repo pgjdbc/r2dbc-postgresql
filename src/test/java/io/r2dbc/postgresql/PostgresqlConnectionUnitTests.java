@@ -477,10 +477,11 @@ final class PostgresqlConnectionUnitTests {
 
     private PostgresqlConnection createConnection(Client client, MockCodecs codecs, StatementCache cache) {
         PostgresqlConnectionConfiguration configuration = PostgresqlConnectionConfiguration.builder()
-                .host("127.0.0.1")
-                .username("admin")
-                .password("password")
-                .build();
+            .host("127.0.0.1")
+            .username("admin")
+            .password("password")
+            .build();
         return new PostgresqlConnection(client, codecs, () -> "", cache, IsolationLevel.READ_COMMITTED, configuration);
     }
+
 }

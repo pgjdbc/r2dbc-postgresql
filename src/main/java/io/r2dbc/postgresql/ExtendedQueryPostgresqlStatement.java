@@ -241,6 +241,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
 
             return this.current;
         }
+
     }
 
 }

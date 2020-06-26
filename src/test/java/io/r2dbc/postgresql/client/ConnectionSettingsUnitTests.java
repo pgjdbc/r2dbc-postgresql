@@ -80,4 +80,5 @@ final class ConnectionSettingsUnitTests {
             .hasFieldOrPropertyWithValue("noticeLogLevel", LogLevel.ERROR)
             .hasFieldOrProperty("sslConfig");
     }
+
 }

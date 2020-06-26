@@ -160,6 +160,7 @@ final class OptionMapper {
          * @param consumer the runnable that should be invoked.
          */
         Otherwise to(Runnable consumer);
+
     }
 
     public interface Otherwise {
@@ -170,6 +171,7 @@ final class OptionMapper {
          * @param consumer the runnable that should be invoked.
          */
         void otherwise(Runnable consumer);
+
     }
 
     private enum Otherwises implements Otherwise {
@@ -186,7 +188,6 @@ final class OptionMapper {
             }
         }
     }
-
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private enum NullSource implements Source<Object> {
@@ -267,5 +268,7 @@ final class OptionMapper {
         public Otherwise to(Runnable consumer) {
             return to(ignore -> consumer.run());
         }
+
     }
+
 }

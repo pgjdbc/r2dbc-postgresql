@@ -195,6 +195,7 @@ public final class ConnectionSettings {
             this.sslConfig = Assert.requireNonNull(sslConfig, "sslConfig must not be null");
             return this;
         }
+
     }
 
 }

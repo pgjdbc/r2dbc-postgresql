@@ -30,4 +30,5 @@ public class BlockhoundExceptions implements BlockHoundIntegration {
     public void applyTo(BlockHound.Builder builder) {
         builder.allowBlockingCallsInside(SecureRandom.class.getName(), "next");
     }
+
 }

@@ -40,4 +40,5 @@ public interface PostgresqlResult extends Result {
      */
     @Override
     <T> Flux<T> map(BiFunction<Row, RowMetadata, ? extends T> mappingFunction);
+
 }

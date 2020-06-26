@@ -77,4 +77,5 @@ final class InstantCodec extends AbstractTemporalCodec<Instant> {
     PostgresqlObjectId getDefaultType() {
         return null;
     }
+
 }
