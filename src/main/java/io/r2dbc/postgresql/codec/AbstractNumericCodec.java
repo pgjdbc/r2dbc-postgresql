@@ -200,4 +200,5 @@ abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> {
             return new BigDecimal("-" + builder.toString());
         }
     }
+
 }

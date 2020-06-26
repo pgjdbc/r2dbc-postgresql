@@ -60,6 +60,7 @@ final class PostgresqlConnectionConfigurationUnitTests {
         assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().fetchSize(-1))
             .withMessage("fetch size must be greater or equal zero");
     }
+
     @Test
     void configuration() {
         Map<String, String> options = new HashMap<>();
@@ -90,9 +91,9 @@ final class PostgresqlConnectionConfigurationUnitTests {
             .hasFieldOrProperty("sslConfig");
 
         assertThat(configuration.getOptions())
-                .containsEntry("lock_timeout", "10s")
-                .containsEntry("statement_timeout", "60000")
-                .containsEntry("search_path", "test-schema");
+            .containsEntry("lock_timeout", "10s")
+            .containsEntry("statement_timeout", "60000")
+            .containsEntry("search_path", "test-schema");
     }
 
     @Test
@@ -116,7 +117,7 @@ final class PostgresqlConnectionConfigurationUnitTests {
             .hasFieldOrProperty("sslConfig");
 
         assertThat(configuration.getOptions())
-                .containsEntry("search_path", "test-schema");
+            .containsEntry("search_path", "test-schema");
     }
 
     @Test

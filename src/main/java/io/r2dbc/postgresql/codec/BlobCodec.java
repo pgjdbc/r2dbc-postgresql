@@ -105,6 +105,7 @@ final class BlobCodec extends AbstractCodec<Blob> {
                 return ByteBuffer.wrap(AbstractBinaryCodec.decodeFromHex(this.byteBuf));
             }).doAfterTerminate(this.byteBuf::release);
         }
+
     }
 
 }

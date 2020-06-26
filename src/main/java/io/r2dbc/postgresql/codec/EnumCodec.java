@@ -180,5 +180,7 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
                     }).then();
             };
         }
+
     }
+
 }

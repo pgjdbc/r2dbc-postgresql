@@ -16,8 +16,6 @@
 
 package io.r2dbc.postgresql;
 
-import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
-import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.postgresql.api.ErrorDetails;
 import io.r2dbc.postgresql.api.PostgresqlException;
 import io.r2dbc.postgresql.util.PgBouncer;
@@ -113,4 +111,5 @@ final class PgBouncerIntegrationTests {
             .applicationName(getClass().getName())
             .build());
     }
+
 }

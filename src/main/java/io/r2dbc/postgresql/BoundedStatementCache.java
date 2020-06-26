@@ -79,7 +79,6 @@ final class BoundedStatementCache implements StatementCache {
             .doOnNext(preparedName -> put(key, preparedName));
     }
 
-
     /**
      * Synchronized cache access: Return all statement names.
      *
@@ -195,5 +194,7 @@ final class BoundedStatementCache implements StatementCache {
             result = 31 * result + Arrays.hashCode(this.parameterTypes);
             return result;
         }
+
     }
+
 }

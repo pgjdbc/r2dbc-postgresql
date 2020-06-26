@@ -135,5 +135,4 @@ final class PostgresqlRowMetadata implements io.r2dbc.postgresql.api.PostgresqlR
         return columnNames;
     }
 
-
 }

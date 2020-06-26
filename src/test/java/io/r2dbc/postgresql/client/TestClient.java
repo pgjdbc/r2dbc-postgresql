@@ -246,6 +246,7 @@ public final class TestClient implements Client {
             this.version = version;
             return this;
         }
+
     }
 
     private static final class Exchange {

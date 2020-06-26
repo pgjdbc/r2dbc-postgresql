@@ -86,4 +86,5 @@ final class PostgresNotificationIntegrationTests extends AbstractIntegrationTest
             })
             .verifyError(R2dbcNonTransientResourceException.class);
     }
+
 }

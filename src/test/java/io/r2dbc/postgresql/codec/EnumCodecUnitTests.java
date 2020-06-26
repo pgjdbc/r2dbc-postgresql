@@ -47,4 +47,5 @@ final class EnumCodecUnitTests {
     enum MyOtherEnum {
         INSTANCE;
     }
+
 }

@@ -37,4 +37,5 @@ final class PostgresqlConnectionFactoryMetadata implements ConnectionFactoryMeta
     public String getName() {
         return NAME;
     }
+
 }

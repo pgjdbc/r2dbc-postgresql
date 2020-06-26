@@ -63,7 +63,6 @@ final class PostgresCancelIntegrationTests extends AbstractIntegrationTests {
             .thenCancel()
             .verify();
 
-
         // await completion
         Thread.sleep(100);
 
@@ -111,4 +110,5 @@ final class PostgresCancelIntegrationTests extends AbstractIntegrationTests {
             .thenCancel()
             .verify();
     }
+
 }

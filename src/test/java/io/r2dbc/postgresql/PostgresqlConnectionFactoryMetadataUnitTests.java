@@ -29,4 +29,5 @@ final class PostgresqlConnectionFactoryMetadataUnitTests {
     void name() {
         assertThat(PostgresqlConnectionFactoryMetadata.INSTANCE.getName()).isEqualTo(PostgresqlConnectionFactoryMetadata.NAME);
     }
+
 }

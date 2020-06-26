@@ -36,7 +36,6 @@ final class PostgresqlStatementErrorsIntegrationTests extends AbstractIntegratio
         SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS test");
     }
 
-
     @AfterEach
     void tearDown() {
         super.tearDown();

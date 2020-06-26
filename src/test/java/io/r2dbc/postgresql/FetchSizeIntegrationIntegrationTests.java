@@ -93,4 +93,5 @@ final class FetchSizeIntegrationIntegrationTests extends AbstractIntegrationTest
             .expectNextCount(20)
             .verifyComplete();
     }
+
 }

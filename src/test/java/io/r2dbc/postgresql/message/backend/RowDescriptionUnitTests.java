@@ -58,7 +58,6 @@ final class RowDescriptionUnitTests {
             .isEqualTo(new RowDescription(Collections.singletonList(new RowDescription.Field((short) 100, 200, 300, (short) 400, FORMAT_BINARY, "test-name", 500))));
     }
 
-
     @Test
     void fiedlConstructorNoFormat() {
         assertThatIllegalArgumentException().isThrownBy(() -> new RowDescription.Field((short) 100, 200, 300, (short) 400, null, "test-name", 500))

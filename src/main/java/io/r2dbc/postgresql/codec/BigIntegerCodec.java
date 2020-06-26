@@ -65,4 +65,5 @@ public class BigIntegerCodec extends AbstractNumericCodec<BigInteger> {
     PostgresqlObjectId getDefaultType() {
         return NUMERIC;
     }
+
 }

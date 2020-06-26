@@ -476,7 +476,6 @@ public final class ReactorNettyClient implements Client {
         }
     }
 
-
     private final class EnsureSubscribersCompleteChannelHandler extends ChannelDuplexHandler {
 
         private final EmitterProcessor<Publisher<FrontendMessage>> requestProcessor;
@@ -497,6 +496,7 @@ public final class ReactorNettyClient implements Client {
             this.requestProcessor.onComplete();
             handleClose();
         }
+
     }
 
     static class PostgresConnectionClosedException extends R2dbcNonTransientResourceException {
@@ -504,6 +504,7 @@ public final class ReactorNettyClient implements Client {
         public PostgresConnectionClosedException(String reason) {
             super(reason);
         }
+
     }
 
     static class PostgresConnectionException extends R2dbcNonTransientResourceException {
@@ -511,6 +512,7 @@ public final class ReactorNettyClient implements Client {
         public PostgresConnectionException(Throwable cause) {
             super(cause);
         }
+
     }
 
     static class RequestQueueException extends R2dbcTransientResourceException {
@@ -518,6 +520,7 @@ public final class ReactorNettyClient implements Client {
         public RequestQueueException(String message) {
             super(message);
         }
+
     }
 
     static class ResponseQueueException extends R2dbcNonTransientResourceException {
@@ -525,6 +528,7 @@ public final class ReactorNettyClient implements Client {
         public ResponseQueueException(String message) {
             super(message);
         }
+
     }
 
     @SuppressWarnings({"deprecation"})
@@ -614,8 +618,8 @@ public final class ReactorNettyClient implements Client {
         public Mono<Void> disposeLater() {
             return this.delegate.disposeLater();
         }
-    }
 
+    }
 
     /**
      * Value object representing a single conversation. The driver permits a single conversation at a time to ensure that request messages get routed to the proper response receiver and do not leak
@@ -704,6 +708,7 @@ public final class ReactorNettyClient implements Client {
         public void incrementDemand(long n) {
             Operators.addCap(DEMAND_UPDATER, this, n);
         }
+
     }
 
     /**
@@ -967,5 +972,7 @@ public final class ReactorNettyClient implements Client {
                 ReferenceCountUtil.release(this.buffer.poll());
             }
         }
+
     }
+
 }

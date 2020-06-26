@@ -244,6 +244,7 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
         String getPassword();
 
         String getNetworkAlias();
+
     }
 
     /**
@@ -340,5 +341,7 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
         public String getNetworkAlias() {
             return "r2dbc-postgres";
         }
+
     }
+
 }

@@ -55,4 +55,5 @@ public final class PgBouncer implements AutoCloseable {
     public int getPort() {
         return this.container.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT);
     }
+
 }

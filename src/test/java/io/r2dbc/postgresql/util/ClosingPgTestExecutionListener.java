@@ -14,4 +14,5 @@ public class ClosingPgTestExecutionListener implements TestExecutionListener {
             PostgresqlServerExtension.containerNetwork.close();
         }
     }
+
 }

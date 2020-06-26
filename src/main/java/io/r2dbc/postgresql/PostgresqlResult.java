@@ -110,7 +110,6 @@ final class PostgresqlResult extends AbstractReferenceCounted implements io.r2db
                     if (message instanceof DataRow) {
                         PostgresqlRow row = PostgresqlRow.toRow(this.context, (DataRow) message, this.rowDescription);
 
-
                         sink.next(f.apply(row, this.metadata));
                     }
 

@@ -129,9 +129,10 @@ final class SSLSessionHandlerAdapter extends ChannelInboundHandlerAdapter implem
      */
     static final class PostgresqlSslException extends R2dbcPermissionDeniedException {
 
-
         PostgresqlSslException(String msg) {
             super(msg);
         }
+
     }
+
 }

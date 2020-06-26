@@ -37,4 +37,5 @@ final class ByteBufUtilsUnitTests {
 
         assertThat(byteBuffer).isEqualTo(ByteBuffer.wrap("hello-world".getBytes()));
     }
+
 }

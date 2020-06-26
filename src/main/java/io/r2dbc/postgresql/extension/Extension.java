@@ -16,7 +16,6 @@
 
 package io.r2dbc.postgresql.extension;
 
-
 /**
  * Marker interface for all extensions.
  *

@@ -33,6 +33,7 @@ import java.util.function.Function;
  * A collection of {@link Parameter}s for a single bind invocation of an {@link ExtendedQueryMessageFlow}.
  */
 public final class Binding {
+
     public static final Binding EMPTY = new Binding(0);
 
     private static final Parameter UNSPECIFIED = new Parameter(Format.FORMAT_BINARY, -1, Mono.never());
@@ -180,7 +181,6 @@ public final class Binding {
 
                 transformed = new ArrayList<>(this.parameters.size());
             }
-
 
             transformed.add(transformer.apply(parameter));
         }

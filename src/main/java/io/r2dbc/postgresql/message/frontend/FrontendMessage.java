@@ -34,7 +34,6 @@ public interface FrontendMessage {
      */
     Publisher<ByteBuf> encode(ByteBufAllocator byteBufAllocator);
 
-
     /**
      * Interface for messages that can be directly encoded without producing a {@link Publisher} first.
      */
@@ -46,6 +45,7 @@ public interface FrontendMessage {
          * @param byteBuf the target {@link ByteBuf} to write into
          */
         void encode(ByteBuf byteBuf);
+
     }
 
 }

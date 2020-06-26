@@ -55,4 +55,5 @@ final class PostgresqlConnectionRuntimeOptionsIntegrationTests {
 
         connection.close().block();
     }
+
 }

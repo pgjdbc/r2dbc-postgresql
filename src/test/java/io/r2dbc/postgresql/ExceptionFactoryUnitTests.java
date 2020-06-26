@@ -108,4 +108,5 @@ final class ExceptionFactoryUnitTests {
     private SynchronousSink<BackendMessage> createSinkMock() {
         return mock(SynchronousSink.class);
     }
+
 }

@@ -17,12 +17,10 @@
 package io.r2dbc.postgresql;
 
 import io.netty.buffer.ByteBuf;
-import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.message.backend.DataRow;
 import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Row;
-import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
 import java.util.ArrayList;

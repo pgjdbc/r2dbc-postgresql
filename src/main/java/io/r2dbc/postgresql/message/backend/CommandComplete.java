@@ -24,7 +24,6 @@ import java.util.Objects;
 
 import static io.r2dbc.postgresql.message.backend.BackendMessageUtils.readCStringUTF8;
 
-
 /**
  * The CommandComplete message.
  */

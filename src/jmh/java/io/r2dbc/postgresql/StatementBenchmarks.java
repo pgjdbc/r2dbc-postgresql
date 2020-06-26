@@ -76,6 +76,7 @@ public class StatementBenchmarks {
                 throw new RuntimeException(e);
             }
         }
+
     }
 
     @Benchmark

@@ -16,7 +16,6 @@
 
 package io.r2dbc.postgresql.type;
 
-
 /**
  * Object IDs for well know PostgreSQL data types.
  * <p>Extension Object IDs that are provided by Postgres extensions such as PostGIS are not constants of this enumeration and must be looked up from {@code pg_type}.

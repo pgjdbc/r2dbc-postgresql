@@ -40,7 +40,6 @@ final class EnumCodecIntegrationTests extends AbstractIntegrationTests {
             .codecRegistrar(EnumCodec.builder().withEnum("do_not_exist", MyEnum.class).build())
             .build();
 
-
         PostgresqlConnectionFactory connectionFactory = new PostgresqlConnectionFactory(configuration);
         connectionFactory.create().flatMap(PostgresqlConnection::close).as(StepVerifier::create).verifyComplete();
 
@@ -50,4 +49,5 @@ final class EnumCodecIntegrationTests extends AbstractIntegrationTests {
     enum MyEnum {
         HELLO;
     }
+
 }

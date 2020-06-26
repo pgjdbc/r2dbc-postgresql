@@ -95,4 +95,5 @@ public class BuiltinDynamicCodecs implements CodecRegistrar {
     private static String getPlaceholders() {
         return Arrays.stream(BuiltinCodec.values()).map(s -> "'" + s.getName() + "'").collect(Collectors.joining(","));
     }
+
 }

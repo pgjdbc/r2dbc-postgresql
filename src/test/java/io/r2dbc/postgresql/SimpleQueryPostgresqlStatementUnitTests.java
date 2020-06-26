@@ -70,7 +70,6 @@ final class SimpleQueryPostgresqlStatementUnitTests {
             .withMessage("Binding parameters is not supported for the statement 'test-query'");
     }
 
-
     @Test
     void bindNull() {
         assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> new SimpleQueryPostgresqlStatement(MockContext.empty(), "test-query").bindNull(null, null))
@@ -265,7 +264,6 @@ final class SimpleQueryPostgresqlStatementUnitTests {
             .as(StepVerifier::create)
             .verifyComplete();
     }
-
 
     @Test
     void executeWithFetchSize() {

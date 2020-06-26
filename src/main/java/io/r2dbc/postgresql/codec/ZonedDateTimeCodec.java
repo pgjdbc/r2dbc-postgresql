@@ -62,4 +62,5 @@ final class ZonedDateTimeCodec extends AbstractTemporalCodec<ZonedDateTime> {
     PostgresqlObjectId getDefaultType() {
         return null;
     }
+
 }

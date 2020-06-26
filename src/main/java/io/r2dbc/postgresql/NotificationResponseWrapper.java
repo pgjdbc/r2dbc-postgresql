@@ -53,4 +53,5 @@ final class NotificationResponseWrapper implements Notification {
             "parameter=" + getParameter() +
             '}';
     }
+
 }
