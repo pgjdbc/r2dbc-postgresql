@@ -107,7 +107,7 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
     @Override
     public Mono<Void> commitTransaction() {
         return useTransactionStatus(transactionStatus -> {
-            if (OPEN == transactionStatus) {
+            if (IDLE != transactionStatus) {
                 return exchange("COMMIT");
             } else {
                 this.logger.debug("Skipping commit transaction because status is {}", transactionStatus);
@@ -336,9 +336,10 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
         return Mono.defer(() -> Mono.just(f.apply(this.client.getTransactionStatus())));
     }
 
-    private Publisher<?> exchange(String sql) {
+    @SuppressWarnings("unchecked")
+    private <T> Publisher<T> exchange(String sql) {
         ExceptionFactory exceptionFactory = ExceptionFactory.withSql(sql);
-        return SimpleQueryMessageFlow.exchange(this.client, sql)
+        return (Publisher<T>) SimpleQueryMessageFlow.exchange(this.client, sql)
             .handle(exceptionFactory::handleErrorResponse)
             .as(Operators::discardOnCancel);
     }

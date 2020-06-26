@@ -21,6 +21,7 @@ import io.r2dbc.postgresql.message.backend.Field;
 import io.r2dbc.postgresql.message.backend.Field.FieldType;
 import io.r2dbc.postgresql.util.Assert;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -89,7 +90,7 @@ public final class ErrorDetails {
 
 
     /**
-     * Creates a new exception.
+     * Create new {@link ErrorDetails} from {@link List} of {@link Field fields}.
      *
      * @param fields the fields to be used to populate the exception
      * @throws IllegalArgumentException if {@code fields} is {@code null}
@@ -118,6 +119,16 @@ public final class ErrorDetails {
         this.severityNonLocalized = fields.get(SEVERITY_NON_LOCALIZED);
         this.tableName = fields.get(TABLE_NAME);
         this.where = fields.get(WHERE);
+    }
+
+    /**
+     * Create a new {@link ErrorDetails}
+     *
+     * @param message the error message
+     * @return the {@link ErrorDetails} object
+     */
+    public static ErrorDetails fromMessage(String message) {
+        return new ErrorDetails(Collections.singletonMap(MESSAGE, message));
     }
 
     @Override
