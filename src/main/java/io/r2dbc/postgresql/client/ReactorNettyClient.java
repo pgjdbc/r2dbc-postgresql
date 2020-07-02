@@ -336,30 +336,34 @@ public final class ReactorNettyClient implements Client {
      * @throws IllegalArgumentException if {@code host} is {@code null}
      */
     public static Mono<ReactorNettyClient> connect(String host, int port, @Nullable Duration connectTimeout, SSLConfig sslConfig) {
-        return connect(ConnectionProvider.newConnection(), InetSocketAddress.createUnresolved(host, port), connectTimeout, sslConfig);
+        return connect(ConnectionProvider.newConnection(), InetSocketAddress.createUnresolved(host, port), new ConnectionSettings(connectTimeout, false, false), sslConfig);
     }
 
     /**
-     * Creates a new frame processor connected to a given host.
+     * Creates a new frame processor connected to a given {@link SocketAddress}.
      *
      * @param connectionProvider the connection provider resources
      * @param socketAddress      the socketAddress to connect to
-     * @param connectTimeout     connect timeout
+     * @param connectionSettings channel options
      * @param sslConfig          SSL configuration
      * @throws IllegalArgumentException if {@code host} is {@code null}
      */
-    public static Mono<ReactorNettyClient> connect(ConnectionProvider connectionProvider, SocketAddress socketAddress, @Nullable Duration connectTimeout, SSLConfig sslConfig) {
+    public static Mono<ReactorNettyClient> connect(ConnectionProvider connectionProvider, SocketAddress socketAddress, ConnectionSettings connectionSettings, SSLConfig sslConfig) {
         Assert.requireNonNull(connectionProvider, "connectionProvider must not be null");
         Assert.requireNonNull(socketAddress, "socketAddress must not be null");
+        Assert.requireNonNull(connectionSettings, "channelOptions must not be null");
 
         TcpClient tcpClient = TcpClient.create(connectionProvider).remoteAddress(() -> socketAddress);
 
         if (!(socketAddress instanceof InetSocketAddress)) {
             tcpClient = tcpClient.runOn(new SocketLoopResources(), true);
+        } else {
+            tcpClient = tcpClient.option(ChannelOption.SO_KEEPALIVE, connectionSettings.isTcpKeepAlive());
+            tcpClient = tcpClient.option(ChannelOption.TCP_NODELAY, connectionSettings.isTcpNoDelay());
         }
 
-        if (connectTimeout != null) {
-            tcpClient = tcpClient.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Math.toIntExact(connectTimeout.toMillis()));
+        if (connectionSettings.getConnectTimeout() != null) {
+            tcpClient = tcpClient.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Math.toIntExact(connectionSettings.getConnectTimeout().toMillis()));
         }
 
         return tcpClient.connect().flatMap(it -> {

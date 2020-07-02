@@ -35,6 +35,8 @@ import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.PREPARED_S
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SOCKET;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_CONTEXT_BUILDER_CUSTOMIZER;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_MODE;
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.TCP_KEEPALIVE;
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.TCP_NODELAY;
 import static io.r2dbc.spi.ConnectionFactoryOptions.DRIVER;
 import static io.r2dbc.spi.ConnectionFactoryOptions.HOST;
 import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
@@ -306,6 +308,34 @@ final class PostgresqlConnectionFactoryProviderUnitTests {
             .build());
 
         assertThatIllegalStateException().isThrownBy(() -> factory.getConfiguration().getSslConfig().getSslProvider().get()).withMessageContaining("Works!");
+    }
+
+    @Test
+    void shouldConfigureTcpKeepAlive() {
+
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(TCP_KEEPALIVE, true)
+            .build());
+
+        assertThat(factory.getConfiguration().isTcpKeepAlive()).isTrue();
+    }
+
+    @Test
+    void shouldConfigureTcpNoDelay() {
+
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(TCP_NODELAY, true)
+            .build());
+
+        assertThat(factory.getConfiguration().isTcpNoDelay()).isTrue();
     }
 
     @Test

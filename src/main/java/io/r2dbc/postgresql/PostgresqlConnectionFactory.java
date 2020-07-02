@@ -21,6 +21,7 @@ import io.netty.channel.unix.DomainSocketAddress;
 import io.r2dbc.postgresql.authentication.AuthenticationHandler;
 import io.r2dbc.postgresql.authentication.PasswordAuthenticationHandler;
 import io.r2dbc.postgresql.authentication.SASLAuthenticationHandler;
+import io.r2dbc.postgresql.client.ConnectionSettings;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.ReactorNettyClient;
 import io.r2dbc.postgresql.client.SSLConfig;
@@ -77,7 +78,9 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
     public PostgresqlConnectionFactory(PostgresqlConnectionConfiguration configuration) {
         this.configuration = Assert.requireNonNull(configuration, "configuration must not be null");
         this.endpoint = createSocketAddress(configuration);
-        this.clientFactory = sslConfig -> ReactorNettyClient.connect(ConnectionProvider.newConnection(), this.endpoint, configuration.getConnectTimeout(), sslConfig).cast(Client.class);
+
+        ConnectionSettings options = new ConnectionSettings(configuration.getConnectTimeout(), configuration.isTcpKeepAlive(), configuration.isTcpNoDelay());
+        this.clientFactory = sslConfig -> ReactorNettyClient.connect(ConnectionProvider.newConnection(), this.endpoint, options, sslConfig).cast(Client.class);
         this.extensions = getExtensions(configuration);
     }
 
