@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql.client;
 
+import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.NoticeResponse;
 import io.r2dbc.postgresql.util.Assert;
@@ -23,6 +24,7 @@ import io.r2dbc.postgresql.util.LogLevel;
 import reactor.netty.resources.ConnectionProvider;
 import reactor.util.annotation.Nullable;
 
+import java.net.Socket;
 import java.time.Duration;
 import java.util.function.Consumer;
 
@@ -40,14 +42,21 @@ public final class ConnectionSettings {
 
     private final SSLConfig sslConfig;
 
+    private final boolean tcpKeepAlive;
+
+    private final boolean tcpNoDelay;
+
     private final LogLevel errorResponseLogLevel;
 
     private final LogLevel noticeLogLevel;
 
-    ConnectionSettings(@Nullable Duration connectTimeout, ConnectionProvider connectionProvider, SSLConfig sslConfig, LogLevel errorResponseLogLevel, LogLevel noticeLogLevel) {
+    ConnectionSettings(@Nullable Duration connectTimeout, ConnectionProvider connectionProvider, SSLConfig sslConfig, boolean tcpKeepAlive, boolean tcpNoDelay, LogLevel errorResponseLogLevel,
+                       LogLevel noticeLogLevel) {
         this.connectTimeout = connectTimeout;
         this.connectionProvider = connectionProvider;
         this.sslConfig = sslConfig;
+        this.tcpKeepAlive = tcpKeepAlive;
+        this.tcpNoDelay = tcpNoDelay;
         this.errorResponseLogLevel = errorResponseLogLevel;
         this.noticeLogLevel = noticeLogLevel;
     }
@@ -103,6 +112,14 @@ public final class ConnectionSettings {
         return this.sslConfig;
     }
 
+    boolean isTcpKeepAlive() {
+        return this.tcpKeepAlive;
+    }
+
+    boolean isTcpNoDelay() {
+        return this.tcpNoDelay;
+    }
+
     LogLevel getErrorResponseLogLevel() {
         return this.errorResponseLogLevel;
     }
@@ -128,6 +145,10 @@ public final class ConnectionSettings {
 
         private SSLConfig sslConfig = new SSLConfig(SSLMode.DISABLE, null, null);
 
+        private boolean tcpKeepAlive;
+
+        private boolean tcpNoDelay;
+
         private Builder() {
         }
 
@@ -137,7 +158,7 @@ public final class ConnectionSettings {
          * @return a configured {@link ConnectionSettings}
          */
         public ConnectionSettings build() {
-            return new ConnectionSettings(this.connectTimeout, this.connectionProvider, this.sslConfig, this.errorResponseLogLevel, this.noticeLogLevel);
+            return new ConnectionSettings(this.connectTimeout, this.connectionProvider, this.sslConfig, this.tcpKeepAlive, this.tcpNoDelay, this.errorResponseLogLevel, this.noticeLogLevel);
         }
 
         /**
@@ -193,6 +214,30 @@ public final class ConnectionSettings {
          */
         public Builder sslConfig(SSLConfig sslConfig) {
             this.sslConfig = Assert.requireNonNull(sslConfig, "sslConfig must not be null");
+            return this;
+        }
+
+        /**
+         * Configure TCP KeepAlive.
+         *
+         * @param enabled whether to enable TCP KeepAlive
+         * @return this {@link PostgresqlConnectionConfiguration.Builder}
+         * @see Socket#setKeepAlive(boolean)
+         */
+        public Builder tcpKeepAlive(boolean enabled) {
+            this.tcpKeepAlive = enabled;
+            return this;
+        }
+
+        /**
+         * Configure TCP NoDelay.
+         *
+         * @param enabled whether to enable TCP NoDelay
+         * @return this {@link PostgresqlConnectionConfiguration.Builder}
+         * @see Socket#setTcpNoDelay(boolean)
+         */
+        public Builder tcpNoDelay(boolean enabled) {
+            this.tcpNoDelay = enabled;
             return this;
         }
 

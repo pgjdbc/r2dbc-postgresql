@@ -34,6 +34,7 @@ import reactor.util.annotation.Nullable;
 
 import javax.net.ssl.HostnameVerifier;
 import java.io.File;
+import java.net.Socket;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -90,15 +91,19 @@ public final class PostgresqlConnectionConfiguration {
 
     private final SSLConfig sslConfig;
 
+    private final boolean tcpKeepAlive;
+
+    private final boolean tcpNoDelay;
+
     private final int preparedStatementCacheQueries;
 
-    private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions,
-                                              @Nullable Duration connectTimeout, @Nullable String database, LogLevel errorResponseLogLevel, List<Extension> extensions,
+    private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions, @Nullable Duration connectTimeout, @Nullable String database, LogLevel errorResponseLogLevel,
+                                              List<Extension> extensions,
                                               ToIntFunction<String> fetchSize, boolean forceBinary,
                                               LogLevel noticeLogLevel, @Nullable String host,
                                               @Nullable Map<String, String> options, @Nullable CharSequence password, int port, @Nullable String schema,
-                                              @Nullable String socket, String username,
-                                              SSLConfig sslConfig, int preparedStatementCacheQueries) {
+                                              @Nullable String socket, boolean tcpKeepAlive, boolean tcpNoDelay, String username, SSLConfig sslConfig,
+                                              int preparedStatementCacheQueries) {
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
         this.autodetectExtensions = autodetectExtensions;
         this.connectTimeout = connectTimeout;
@@ -120,6 +125,8 @@ public final class PostgresqlConnectionConfiguration {
         this.socket = socket;
         this.username = Assert.requireNonNull(username, "username must not be null");
         this.sslConfig = sslConfig;
+        this.tcpKeepAlive = tcpKeepAlive;
+        this.tcpNoDelay = tcpNoDelay;
         this.preparedStatementCacheQueries = preparedStatementCacheQueries;
     }
 
@@ -148,6 +155,8 @@ public final class PostgresqlConnectionConfiguration {
             ", options='" + this.options + '\'' +
             ", password='" + obfuscate(this.password != null ? this.password.length() : 0) + '\'' +
             ", port=" + this.port +
+            ", tcpKeepAlive=" + this.tcpKeepAlive +
+            ", tcpNoDelay=" + this.tcpNoDelay +
             ", username='" + this.username + '\'' +
             '}';
     }
@@ -235,6 +244,14 @@ public final class PostgresqlConnectionConfiguration {
         return this.forceBinary;
     }
 
+    boolean isTcpKeepAlive() {
+        return this.tcpKeepAlive;
+    }
+
+    boolean isTcpNoDelay() {
+        return this.tcpNoDelay;
+    }
+
     boolean isUseSocket() {
         return getSocket() != null;
     }
@@ -249,6 +266,8 @@ public final class PostgresqlConnectionConfiguration {
             .errorResponseLogLevel(this.errorResponseLogLevel)
             .noticeLogLevel(this.noticeLogLevel)
             .sslConfig(getSslConfig())
+            .tcpKeepAlive(isTcpKeepAlive())
+            .tcpNoDelay(isTcpNoDelay())
             .build();
     }
 
@@ -328,6 +347,10 @@ public final class PostgresqlConnectionConfiguration {
 
         private Function<SslContextBuilder, SslContextBuilder> sslContextBuilderCustomizer = Function.identity();
 
+        private boolean tcpKeepAlive;
+
+        private boolean tcpNoDelay;
+
         @Nullable
         private String username;
 
@@ -379,7 +402,8 @@ public final class PostgresqlConnectionConfiguration {
             }
 
             return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.connectTimeout, this.database, this.errorResponseLogLevel, this.extensions,
-                this.fetchSize, this.forceBinary, this.noticeLogLevel, this.host, this.options, this.password, this.port, this.schema, this.socket, this.username, this.createSslConfig(),
+                this.fetchSize, this.forceBinary, this.noticeLogLevel, this.host, this.options, this.password, this.port, this.schema, this.socket, this.tcpKeepAlive, this.tcpNoDelay, this.username
+                , this.createSslConfig(),
                 this.preparedStatementCacheQueries);
         }
 
@@ -661,6 +685,32 @@ public final class PostgresqlConnectionConfiguration {
         }
 
         /**
+         * Configure TCP KeepAlive.
+         *
+         * @param enabled whether to enable TCP KeepAlive
+         * @return this {@link Builder}
+         * @see Socket#setKeepAlive(boolean)
+         * @since 0.8.4
+         */
+        public Builder tcpKeepAlive(boolean enabled) {
+            this.tcpKeepAlive = enabled;
+            return this;
+        }
+
+        /**
+         * Configure TCP NoDelay.
+         *
+         * @param enabled whether to enable TCP NoDelay
+         * @return this {@link Builder}
+         * @see Socket#setTcpNoDelay(boolean)
+         * @since 0.8.4
+         */
+        public Builder tcpNoDelay(boolean enabled) {
+            this.tcpNoDelay = enabled;
+            return this;
+        }
+
+        /**
          * Configure the username.
          *
          * @param username the username
@@ -710,6 +760,8 @@ public final class PostgresqlConnectionConfiguration {
                 ", sslCert='" + this.sslCert + '\'' +
                 ", sslKey='" + this.sslKey + '\'' +
                 ", sslHostnameVerifier='" + this.sslHostnameVerifier + '\'' +
+                ", tcpKeepAlive='" + this.tcpKeepAlive + '\'' +
+                ", tcpNoDelay='" + this.tcpNoDelay + '\'' +
                 ", preparedStatementCacheQueries='" + this.preparedStatementCacheQueries + '\'' +
                 '}';
         }

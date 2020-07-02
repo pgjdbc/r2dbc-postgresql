@@ -363,6 +363,9 @@ public final class ReactorNettyClient implements Client {
 
         if (!(socketAddress instanceof InetSocketAddress)) {
             tcpClient = tcpClient.runOn(new SocketLoopResources(), true);
+        } else {
+            tcpClient = tcpClient.option(ChannelOption.SO_KEEPALIVE, settings.isTcpKeepAlive());
+            tcpClient = tcpClient.option(ChannelOption.TCP_NODELAY, settings.isTcpNoDelay());
         }
 
         if (settings.hasConnectionTimeout()) {

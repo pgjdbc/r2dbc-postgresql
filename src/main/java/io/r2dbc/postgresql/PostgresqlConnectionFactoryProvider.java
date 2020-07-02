@@ -137,6 +137,20 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<String> SSL_ROOT_CERT = Option.valueOf("sslRootCert");
 
     /**
+     * Enable TCP KeepAlive.
+     *
+     * @since 0.8.4
+     */
+    public static final Option<Boolean> TCP_KEEPALIVE = Option.valueOf("tcpKeepAlive");
+
+    /**
+     * Enable TCP NoDelay.
+     *
+     * @since 0.8.4
+     */
+    public static final Option<Boolean> TCP_NODELAY = Option.valueOf("tcpNoDelay");
+
+    /**
      * Determine the number of queries that are cached in each connection.
      * The default is {@code -1}, meaning there's no limit. The value of {@code 0} disables the cache. Any other value specifies the cache size.
      */
@@ -208,6 +222,8 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
             builder.host(options.getRequiredValue(HOST));
             setupSsl(builder, mapper);
         });
+        mapper.from(TCP_KEEPALIVE).map(OptionMapper::toBoolean).to(builder::tcpKeepAlive);
+        mapper.from(TCP_NODELAY).map(OptionMapper::toBoolean).to(builder::tcpNoDelay);
         builder.username(options.getRequiredValue(USER));
 
         return builder;
