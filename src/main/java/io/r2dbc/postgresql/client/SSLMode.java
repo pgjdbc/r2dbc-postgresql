@@ -45,7 +45,12 @@ public enum SSLMode {
     /**
      * I want my data encrypted, and I accept the overhead. I want to be sure that I connect to a server I trust, and that it's the one I specify.
      */
-    VERIFY_FULL("verify-full");
+    VERIFY_FULL("verify-full"),
+
+    /**
+     * I want to use a SSL tunnel instead of following Postgres SSL handshake protocol.
+     */
+    TUNNEL("tunnel");
 
     private final String value;
 

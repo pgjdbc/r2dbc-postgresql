@@ -18,42 +18,30 @@ package io.r2dbc.postgresql.client;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.handler.ssl.SslHandler;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
 import io.r2dbc.postgresql.message.frontend.SSLRequest;
-import io.r2dbc.spi.R2dbcPermissionDeniedException;
 import reactor.core.publisher.Mono;
 
-import javax.net.ssl.SSLEngine;
-import java.net.InetSocketAddress;
-import java.util.concurrent.CompletableFuture;
-
-// https://www.postgresql.org/docs/current/protocol-flow.html#id-1.10.5.7.11
-final class SSLSessionHandlerAdapter extends ChannelInboundHandlerAdapter implements GenericFutureListener<Future<Channel>> {
+/**
+ * SSL handler assuming the endpoint a Postgres endpoint following the {@link SSLRequest} flow.
+ *
+ * @see <a href="https://www.postgresql.org/docs/current/protocol-flow.html#id-1.10.5.7.11">https://www.postgresql.org/docs/current/protocol-flow.html#id-1.10.5.7.11</a>
+ */
+final class SSLSessionHandlerAdapter extends AbstractPostgresSSLHandlerAdapter {
 
     private final ByteBufAllocator alloc;
 
     private final SSLConfig sslConfig;
 
-    private final SSLEngine sslEngine;
-
-    private final SslHandler sslHandler;
-
-    private final CompletableFuture<Void> handshakeFuture;
-
     SSLSessionHandlerAdapter(ByteBufAllocator alloc, SSLConfig sslConfig) {
+        super(alloc, sslConfig);
         this.alloc = alloc;
         this.sslConfig = sslConfig;
-        this.sslEngine = sslConfig.getSslProvider().get()
-            .getSslContext()
-            .newEngine(alloc);
-        this.handshakeFuture = new CompletableFuture<>();
-        this.sslHandler = new SslHandler(this.sslEngine);
-        this.sslHandler.handshakeFuture().addListener(this);
+    }
+
+    @Override
+    public void handlerAdded(ChannelHandlerContext ctx) {
+        Mono.from(SSLRequest.INSTANCE.encode(this.alloc)).subscribe(ctx::writeAndFlush);
     }
 
     @Override
@@ -72,33 +60,13 @@ final class SSLSessionHandlerAdapter extends ChannelInboundHandlerAdapter implem
         }
     }
 
-    @Override
-    public void operationComplete(Future<Channel> future) throws Exception {
-        if (!future.isSuccess()) {
-            this.handshakeFuture.completeExceptionally(future.cause());
-            return;
-        }
-        if (this.sslConfig.getSslMode() != SSLMode.VERIFY_FULL) {
-            this.handshakeFuture.complete(null);
-            return;
-        }
-        Channel channel = future.get();
-        InetSocketAddress socketAddress = (InetSocketAddress) channel.remoteAddress();
-        String hostName = socketAddress.getHostName();
-        if (this.sslConfig.getHostnameVerifier().verify(hostName, this.sslEngine.getSession())) {
-            this.handshakeFuture.complete(null);
-        } else {
-            this.handshakeFuture.completeExceptionally(new PostgresqlSslException(String.format("The hostname '%s' could not be verified.", socketAddress.getAddress().toString())));
-        }
-    }
-
     private void processSslDisabled(ChannelHandlerContext ctx, Object msg) {
         if (this.sslConfig.getSslMode().requireSsl()) {
             PostgresqlSslException e =
                 new PostgresqlSslException("Server support for SSL connection is disabled, but client was configured with SSL mode " + this.sslConfig.getSslMode());
-            this.handshakeFuture.completeExceptionally(e);
+            completeHandshakeExceptionally(e);
         } else {
-            this.handshakeFuture.complete(null);
+            completeHandshake();
         }
     }
 
@@ -106,33 +74,13 @@ final class SSLSessionHandlerAdapter extends ChannelInboundHandlerAdapter implem
         if (this.sslConfig.getSslMode() == SSLMode.DISABLE) {
 
             PostgresqlSslException e = new PostgresqlSslException("Server requires SSL handshake, but client was configured with SSL mode DISABLE");
-            this.handshakeFuture.completeExceptionally(e);
+            completeHandshakeExceptionally(e);
             return;
         }
         ctx.channel().pipeline()
-            .addFirst(this.sslHandler)
+            .addFirst(this.getSslHandler())
             .remove(this);
         ctx.fireChannelRead(msg);
-    }
-
-    @Override
-    public void handlerAdded(ChannelHandlerContext ctx) {
-        Mono.from(SSLRequest.INSTANCE.encode(this.alloc)).subscribe(ctx::writeAndFlush);
-    }
-
-    Mono<Void> getHandshake() {
-        return Mono.fromFuture(this.handshakeFuture);
-    }
-
-    /**
-     * Postgres-specific {@link R2dbcPermissionDeniedException}.
-     */
-    static final class PostgresqlSslException extends R2dbcPermissionDeniedException {
-
-        PostgresqlSslException(String msg) {
-            super(msg);
-        }
-
     }
 
 }

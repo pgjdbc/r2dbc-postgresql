@@ -392,14 +392,19 @@ public final class ReactorNettyClient implements Client {
             if (sslConfig.getSslMode().startSsl()) {
 
                 return Mono.defer(() -> {
-                    SSLSessionHandlerAdapter sslSessionHandlerAdapter = new SSLSessionHandlerAdapter(it.outbound().alloc(), sslConfig);
-                    it.addHandlerFirst(sslSessionHandlerAdapter);
-                    return sslSessionHandlerAdapter.getHandshake();
+                    AbstractPostgresSSLHandlerAdapter sslAdapter;
+                    if (sslConfig.getSslMode() == SSLMode.TUNNEL) {
+                        sslAdapter = new SSLTunnelHandlerAdapter(it.outbound().alloc(), sslConfig);
+                    } else {
+                        sslAdapter = new SSLSessionHandlerAdapter(it.outbound().alloc(), sslConfig);
+                    }
+
+                    it.addHandlerFirst(sslAdapter);
+                    return sslAdapter.getHandshake();
 
                 }).subscribeOn(Schedulers.boundedElastic());
             }
         } catch (Throwable e) {
-            e.printStackTrace();
             throw new RuntimeException(e);
         }
 
