@@ -77,6 +77,8 @@ public final class PostgresqlConnectionConfiguration {
 
     private final int port;
 
+    private final int preparedStatementCacheQueries;
+
     private final String socket;
 
     private final String username;
@@ -87,12 +89,10 @@ public final class PostgresqlConnectionConfiguration {
 
     private final boolean tcpNoDelay;
 
-    private final int preparedStatementCacheQueries;
-
     private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions, @Nullable Duration connectTimeout, @Nullable String database, List<Extension> extensions,
                                               ToIntFunction<String> fetchSize, boolean forceBinary, @Nullable String host, @Nullable Map<String, String> options, @Nullable CharSequence password,
-                                              int port, @Nullable String schema, @Nullable String socket, boolean tcpKeepAlive, boolean tcpNoDelay, String username, SSLConfig sslConfig,
-                                              int preparedStatementCacheQueries) {
+                                              int port, int preparedStatementCacheQueries, @Nullable String schema, @Nullable String socket, boolean tcpKeepAlive, boolean tcpNoDelay,
+                                              String username, SSLConfig sslConfig) {
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
         this.autodetectExtensions = autodetectExtensions;
         this.connectTimeout = connectTimeout;
@@ -109,12 +109,12 @@ public final class PostgresqlConnectionConfiguration {
 
         this.password = password;
         this.port = port;
+        this.preparedStatementCacheQueries = preparedStatementCacheQueries;
         this.socket = socket;
         this.username = Assert.requireNonNull(username, "username must not be null");
         this.sslConfig = sslConfig;
         this.tcpKeepAlive = tcpKeepAlive;
         this.tcpNoDelay = tcpNoDelay;
-        this.preparedStatementCacheQueries = preparedStatementCacheQueries;
     }
 
     /**
@@ -201,6 +201,10 @@ public final class PostgresqlConnectionConfiguration {
         return this.port;
     }
 
+    int getPreparedStatementCacheQueries() {
+        return this.preparedStatementCacheQueries;
+    }
+
     @Nullable
     String getSocket() {
         return this.socket;
@@ -240,13 +244,8 @@ public final class PostgresqlConnectionConfiguration {
     boolean isUseSocket() {
         return getSocket() != null;
     }
-
     SSLConfig getSslConfig() {
         return this.sslConfig;
-    }
-
-    int getPreparedStatementCacheQueries() {
-        return this.preparedStatementCacheQueries;
     }
 
     private static String obfuscate(int length) {
@@ -293,6 +292,8 @@ public final class PostgresqlConnectionConfiguration {
 
         private int port = DEFAULT_PORT;
 
+        private int preparedStatementCacheQueries = -1;
+
         @Nullable
         private String schema;
 
@@ -323,8 +324,6 @@ public final class PostgresqlConnectionConfiguration {
 
         @Nullable
         private String username;
-
-        private int preparedStatementCacheQueries = -1;
 
         private Builder() {
         }
@@ -372,8 +371,9 @@ public final class PostgresqlConnectionConfiguration {
             }
 
             return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.connectTimeout, this.database, this.extensions, this.fetchSize, this.forceBinary,
-                this.host, this.options, this.password, this.port, this.schema, this.socket, this.tcpKeepAlive, this.tcpNoDelay, this.username, this.createSslConfig(),
-                this.preparedStatementCacheQueries);
+                this.host, this.options, this.password, this.port, this.preparedStatementCacheQueries, this.schema, this.socket, this.tcpKeepAlive, this.tcpNoDelay, this.username,
+                this.createSslConfig()
+            );
         }
 
         /**
@@ -526,6 +526,19 @@ public final class PostgresqlConnectionConfiguration {
         }
 
         /**
+         * Configure the preparedStatementCacheQueries. The default is {@code -1}, meaning there's no limit. The value of {@code 0} disables the cache. Any other value specifies the cache size.
+         *
+         * @param preparedStatementCacheQueries the preparedStatementCacheQueries
+         * @return this {@link Builder}
+         * @throws IllegalArgumentException if {@code username} is {@code null}
+         * @since 0.8.1
+         */
+        public Builder preparedStatementCacheQueries(int preparedStatementCacheQueries) {
+            this.preparedStatementCacheQueries = preparedStatementCacheQueries;
+            return this;
+        }
+
+        /**
          * Configure the schema.
          *
          * @param schema the schema
@@ -667,19 +680,6 @@ public final class PostgresqlConnectionConfiguration {
             return this;
         }
 
-        /**
-         * Configure the preparedStatementCacheQueries. The default is {@code -1}, meaning there's no limit. The value of {@code 0} disables the cache. Any other value specifies the cache size.
-         *
-         * @param preparedStatementCacheQueries the preparedStatementCacheQueries
-         * @return this {@link Builder}
-         * @throws IllegalArgumentException if {@code username} is {@code null}
-         * @since 0.8.1
-         */
-        public Builder preparedStatementCacheQueries(int preparedStatementCacheQueries) {
-            this.preparedStatementCacheQueries = preparedStatementCacheQueries;
-            return this;
-        }
-
         @Override
         public String toString() {
             return "Builder{" +
@@ -694,8 +694,8 @@ public final class PostgresqlConnectionConfiguration {
                 ", parameters='" + this.options + '\'' +
                 ", password='" + obfuscate(this.password != null ? this.password.length() : 0) + '\'' +
                 ", port=" + this.port +
+                ", preparedStatementCacheQueries='" + this.preparedStatementCacheQueries + '\'' +
                 ", schema='" + this.schema + '\'' +
-                ", username='" + this.username + '\'' +
                 ", socket='" + this.socket + '\'' +
                 ", sslContextBuilderCustomizer='" + this.sslContextBuilderCustomizer + '\'' +
                 ", sslMode='" + this.sslMode + '\'' +
@@ -705,7 +705,7 @@ public final class PostgresqlConnectionConfiguration {
                 ", sslHostnameVerifier='" + this.sslHostnameVerifier + '\'' +
                 ", tcpKeepAlive='" + this.tcpKeepAlive + '\'' +
                 ", tcpNoDelay='" + this.tcpNoDelay + '\'' +
-                ", preparedStatementCacheQueries='" + this.preparedStatementCacheQueries + '\'' +
+                ", username='" + this.username + '\'' +
                 '}';
         }
 
