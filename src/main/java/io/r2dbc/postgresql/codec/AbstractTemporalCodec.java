@@ -27,6 +27,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.Temporal;
 import java.util.EnumSet;
@@ -38,6 +40,7 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.DATE;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIME;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMP;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMPTZ;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMETZ;
 
 /**
  * Codec to decode all known temporal types.
@@ -46,7 +49,7 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMPTZ;
  */
 abstract class AbstractTemporalCodec<T extends Temporal> extends AbstractCodec<T> {
 
-    private static final Set<PostgresqlObjectId> SUPPORTED_TYPES = EnumSet.of(DATE, TIMESTAMP, TIMESTAMPTZ, TIME);
+    private static final Set<PostgresqlObjectId> SUPPORTED_TYPES = EnumSet.of(DATE, TIMESTAMP, TIMESTAMPTZ, TIME, TIMETZ);
 
     /**
      * Creates a new {@link AbstractTemporalCodec}.
@@ -130,6 +133,14 @@ abstract class AbstractTemporalCodec<T extends Temporal> extends AbstractCodec<T
                 }
 
                 return PostgresqlDateTimeFormatter.INSTANCE.parse(ByteBufUtils.decode(buffer), ZonedDateTime::from);
+            case TIMETZ:
+                if (FORMAT_BINARY == format) {
+                    long timeNano = buffer.readLong() * 1000;
+                    int offsetSec = -buffer.readInt();
+                    return OffsetTime.of(LocalTime.ofNanoOfDay(timeNano), ZoneOffset.ofTotalSeconds(offsetSec));
+                }
+
+                return PostgresqlTimeFormatter.INSTANCE.parse(ByteBufUtils.decode(buffer), OffsetTime::from);
         }
 
         throw new UnsupportedOperationException(String.format("Cannot decode value for type %s, format %s", dataType, format));
