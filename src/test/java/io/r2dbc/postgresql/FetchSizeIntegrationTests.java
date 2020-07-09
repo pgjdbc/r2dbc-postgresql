@@ -23,7 +23,7 @@ import reactor.test.StepVerifier;
 /**
  * Integration tests for {@link Statement#fetchSize(int)}.
  */
-final class FetchSizeIntegrationIntegrationTests extends AbstractIntegrationTests {
+final class FetchSizeIntegrationTests extends AbstractIntegrationTests {
 
     @Override
     protected void customize(PostgresqlConnectionConfiguration.Builder builder) {
