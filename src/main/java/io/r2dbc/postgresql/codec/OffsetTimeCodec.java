@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import java.time.OffsetTime;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMETZ;
 
-public class OffsetTimeCodec extends AbstractTemporalCodec<OffsetTime> {
+final class OffsetTimeCodec extends AbstractTemporalCodec<OffsetTime> {
 
     private final ByteBufAllocator byteBufAllocator;
 

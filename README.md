@@ -348,7 +348,7 @@ This reference table shows the type mapping between [PostgreSQL][p] and Java dat
 | [`serial`][psql-serial-ref]                     | [**`Long`**][java-long-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Integer`][java-integer-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
 | [`text`][psql-text-ref]                         | [**`String`**][java-string-ref], [`Clob`][r2dbc-clob-ref]|
 | [`time [without time zone]`][psql-time-ref]     | [`LocalTime`][java-lt-ref]|
-| [`time [with time zone]`][psql-time-ref]        | Not yet supported.|
+| [`time [with time zone]`][psql-time-ref]        | [`OffsetTime`][java-ot-ref]|
 | [`timestamp [without time zone]`][psql-time-ref]|[**`LocalDateTime`**][java-ldt-ref], [`LocalTime`][java-lt-ref], [`LocalDate`][java-ld-ref], [`java.util.Date`][java-legacy-date-ref]|
 | [`timestamp [with time zone]`][psql-time-ref]   | [**`OffsetDatetime`**][java-odt-ref], [`ZonedDateTime`][java-zdt-ref], [`Instant`][java-instant-ref]|
 | [`tsquery`][psql-tsquery-ref]                   | Not yet supported.|
@@ -428,6 +428,7 @@ Support for the following single-dimensional arrays (read and write):
 [java-lt-ref]: https://docs.oracle.com/javase/8/docs/api/java/time/LocalTime.html
 [java-legacy-date-ref]: https://docs.oracle.com/javase/8/docs/api/java/util/Date.html
 [java-odt-ref]: https://docs.oracle.com/javase/8/docs/api/java/time/OffsetDateTime.html
+[java-ot-ref]: https://docs.oracle.com/javase/8/docs/api/java/time/OffsetTime.html
 [java-primitive-ref]: https://docs.oracle.com/javase/tutorial/java/nutsandbolts/datatypes.html
 [java-short-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/Short.html
 [java-string-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/String.html

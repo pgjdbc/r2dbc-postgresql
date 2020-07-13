@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 
 package io.r2dbc.postgresql.codec;
 
-import java.time.OffsetTime;
-
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.client.ParameterAssert;
 import org.junit.jupiter.api.Test;
+
+import java.time.OffsetTime;
 
 import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
