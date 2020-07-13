@@ -66,6 +66,7 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
             new LocalTimeCodec(byteBufAllocator),
             new LongCodec(byteBufAllocator),
             new OffsetDateTimeCodec(byteBufAllocator),
+            new OffsetTimeCodec(byteBufAllocator),
             new ShortCodec(byteBufAllocator),
             new UriCodec(byteBufAllocator),
             new UrlCodec(byteBufAllocator),

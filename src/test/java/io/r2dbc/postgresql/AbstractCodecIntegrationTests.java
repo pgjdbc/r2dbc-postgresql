@@ -52,7 +52,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
+import java.time.OffsetTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -443,6 +445,13 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(ZonedDateTime.class, ZonedDateTime.now(), (actual, expected) -> {
             assertThat(actual.toLocalDateTime()).isEqualTo(expected.toLocalDateTime());
         }, "TIMESTAMP WITH TIME ZONE");
+    }
+
+    @Test
+    void offsetTime() {
+        testCodec(OffsetTime.class, OffsetTime.of(LocalTime.now(), ZoneOffset.UTC), "TIMETZ");
+        testCodec(OffsetTime.class, OffsetTime.of(LocalTime.now(), ZoneOffset.ofHoursMinutes(1, 30)), "TIMETZ");
+        testCodec(OffsetTime.class, OffsetTime.of(LocalTime.now(), ZoneOffset.ofHoursMinutes(-3, -30)), "TIMETZ");
     }
 
     private static <T> Mono<T> close(Connection connection) {
