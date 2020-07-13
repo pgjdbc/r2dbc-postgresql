@@ -1,6 +1,21 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+0.8.4.RELEASE
+-----------------------------------------
+* Ensure no snapshots get referenced in release builds #299
+* Add config options for TCP nodelay and keepalive #296
+* Add support for SSL tunnels #295
+* Support for "time with time zone" type #294
+* Query doesn't complete #292
+* Upgrade to Reactor Dysprosium SR9 #291
+* Upgrade to Reactor Dysprosium SR8 #289
+* SSL Mode configuration is not working anymore with v0.8.3.RELEASE #286
+* Infinite drainLoop call in BackendMessageSubscriber #285
+* Add support for point type #283
+* Connection in unstable state when rollback after a failed commit #274
+* Add codec for Postgres enumerated types #244
+
 0.8.3.RELEASE
 -----------------------------------------
 * Upgrade dependencies #281
