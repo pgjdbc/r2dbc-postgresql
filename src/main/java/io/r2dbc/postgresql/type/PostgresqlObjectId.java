@@ -78,6 +78,11 @@ public enum PostgresqlObjectId {
     CHAR_ARRAY(1002),
 
     /**
+     * The circle object id
+     */
+    CIRCLE(718),
+
+    /**
      * The date object id.
      */
     DATE(1082),
@@ -178,6 +183,16 @@ public enum PostgresqlObjectId {
     JSONB_ARRAY(3807),
 
     /**
+     * The line object id
+     */
+    LINE(628),
+
+    /**
+     * The line segment object id
+     */
+    LINE_SEGMENT(601),
+
+    /**
      * The money object id.
      */
     MONEY(790),
@@ -218,6 +233,11 @@ public enum PostgresqlObjectId {
     OID_ARRAY(1028),
 
     /**
+     * the path object id
+     */
+    PATH(602),
+
+    /**
      * The point object id.
      */
     POINT(600),
@@ -226,6 +246,11 @@ public enum PostgresqlObjectId {
      * The point array object id.
      */
     POINT_ARRAY(1017),
+
+    /**
+     * the polygon object id
+     */
+    POLYGON(604),
 
     /**
      * The ref cursor object id.

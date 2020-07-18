@@ -21,6 +21,7 @@ import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
+import io.r2dbc.postgresql.codec.Circle;
 import io.r2dbc.postgresql.codec.EnumCodec;
 import io.r2dbc.postgresql.codec.Json;
 import io.r2dbc.postgresql.codec.Point;
@@ -169,6 +170,12 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
 
         testCodec(Blob.class, byteToBlob.apply(new byte[]{1, 2, 3, 4}), equality, "BYTEA");
         testCodec(Blob.class, byteToBlob.apply(new byte[]{}), equality, "BYTEA");
+    }
+
+    @Test
+    void circle() {
+        testCodec(Circle.class, new Circle(Point.of(1.12, 2.12), 3.12), "CIRCLE");
+        testCodec(Circle.class, new Circle(Point.of(Double.MIN_VALUE, Double.MIN_VALUE), Double.MAX_VALUE), "CIRCLE");
     }
 
     @Test
