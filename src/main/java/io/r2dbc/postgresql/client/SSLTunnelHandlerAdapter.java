@@ -24,10 +24,11 @@ import io.netty.channel.ChannelHandlerContext;
  */
 final class SSLTunnelHandlerAdapter extends AbstractPostgresSSLHandlerAdapter {
 
-    private SSLConfig sslConfig;
+    private final SSLConfig sslConfig;
 
     SSLTunnelHandlerAdapter(ByteBufAllocator alloc, SSLConfig sslConfig) {
         super(alloc, sslConfig);
+        this.sslConfig = sslConfig;
     }
 
     @Override
