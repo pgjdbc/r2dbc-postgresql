@@ -74,9 +74,9 @@ final class CircleCodec extends AbstractCodec<Circle> {
         Assert.requireNonNull(value, "value must not be null");
         Point center = value.getCenter();
         return create(CIRCLE, FORMAT_BINARY, () -> this.byteBufAllocator.buffer(lengthInBytes())
-                .writeDouble(center.getX())
-                .writeDouble(center.getY())
-                .writeDouble(value.getRadius()));
+            .writeDouble(center.getX())
+            .writeDouble(center.getY())
+            .writeDouble(value.getRadius()));
     }
 
     @Override

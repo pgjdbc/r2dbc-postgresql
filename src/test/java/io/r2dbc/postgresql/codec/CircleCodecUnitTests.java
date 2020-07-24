@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,13 +38,13 @@ final class CircleCodecUnitTests {
     @Test
     void constructorNoByteBufAllocator() {
         assertThatIllegalArgumentException().isThrownBy(() -> new CircleCodec(null))
-                .withMessage("byteBufAllocator must not be null");
+            .withMessage("byteBufAllocator must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
         assertThatIllegalArgumentException().isThrownBy(() -> new CircleCodec(TEST).doCanDecode(null, FORMAT_BINARY))
-                .withMessage("type must not be null");
+            .withMessage("type must not be null");
     }
 
     @Test
@@ -59,19 +59,19 @@ final class CircleCodecUnitTests {
     @Test
     void doDecodeNoByteBuf() {
         assertThatIllegalArgumentException().isThrownBy(() -> new CircleCodec(TEST).doDecode(null, CIRCLE, FORMAT_BINARY, Circle.class))
-                .withMessage("byteBuf must not be null");
+            .withMessage("byteBuf must not be null");
     }
 
     @Test
     void doDecodeNoType() {
         assertThatIllegalArgumentException().isThrownBy(() -> new CircleCodec(TEST).doDecode(TEST.buffer(), CIRCLE, FORMAT_BINARY, null))
-                .withMessage("type must not be null");
+            .withMessage("type must not be null");
     }
 
     @Test
     void doDecodeNoFormat() {
         assertThatIllegalArgumentException().isThrownBy(() -> new CircleCodec(TEST).doDecode(TEST.buffer(), CIRCLE, null, Circle.class))
-                .withMessage("format must not be null");
+            .withMessage("format must not be null");
     }
 
     @Test
@@ -86,7 +86,7 @@ final class CircleCodecUnitTests {
     @Test
     void doEncodeNoValue() {
         assertThatIllegalArgumentException().isThrownBy(() -> new CircleCodec(TEST).doEncode(null))
-                .withMessage("value must not be null");
+            .withMessage("value must not be null");
     }
 
     @Test
@@ -95,15 +95,15 @@ final class CircleCodecUnitTests {
         ByteBuf circleAsBinary = TEST.buffer(codec.lengthInBytes()).writeDouble(1.12).writeDouble(2.12).writeDouble(3.12);
 
         ParameterAssert.assertThat(codec.doEncode(new Circle(Point.of(1.12, 2.12), 3.12)))
-                .hasFormat(FORMAT_BINARY)
-                .hasType(CIRCLE.getObjectId())
-                .hasValue(circleAsBinary);
+            .hasFormat(FORMAT_BINARY)
+            .hasType(CIRCLE.getObjectId())
+            .hasValue(circleAsBinary);
     }
 
     @Test
     void encodeNull() {
         ParameterAssert.assertThat(new CircleCodec(TEST).encodeNull())
-                .isEqualTo(new Parameter(FORMAT_BINARY, CIRCLE.getObjectId(), NULL_VALUE));
+            .isEqualTo(new Parameter(FORMAT_BINARY, CIRCLE.getObjectId(), NULL_VALUE));
     }
 
 }
