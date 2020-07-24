@@ -16,12 +16,21 @@
 
 package io.r2dbc.postgresql.codec;
 
+import io.r2dbc.postgresql.util.Assert;
+
+/**
+ * Value object that maps to the {@code circle} datatype in Postgres.
+ * <p>
+ * Uses {@code double} to represent the coordinates.
+ */
 public final class Circle {
+
     private final Point center;
+
     private final double radius;
 
     public Circle(Point center, double radius) {
-        this.center = center;
+        this.center = Assert.requireNonNull(center, "center must not be null");
         this.radius = radius;
     }
 
@@ -45,20 +54,20 @@ public final class Circle {
     public boolean equals(Object obj) {
         if (obj instanceof Circle) {
             Circle circle = (Circle) obj;
-            return circle.center.equals(center) && circle.radius == radius;
+            return circle.center.equals(this.center) && circle.radius == this.radius;
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        long v = Double.doubleToLongBits(radius);
-        return (int) (center.hashCode() ^ v ^ (v >>> 32));
+        long v = Double.doubleToLongBits(this.radius);
+        return (int) (this.center.hashCode() ^ v ^ (v >>> 32));
     }
 
     @Override
     public String toString() {
-        return "<" + center.toString() + "," + radius + ">";
+        return "<" + this.center.toString() + "," + this.radius + ">";
     }
 
 }

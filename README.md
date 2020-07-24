@@ -321,7 +321,7 @@ This reference table shows the type mapping between [PostgreSQL][p] and Java dat
 | [`character`][psql-character-ref]               | [`String`][java-string-ref]|
 | [`character varying`][psql-character-ref]       | [`String`][java-string-ref]|
 | [`cidr`][psql-cidr-ref]                         | Not yet supported.|
-| [`circle`][psql-circle-ref]                     | Not yet supported.|
+| [`circle`][psql-circle-ref]                     | **`Circle`**|
 | [`date`][psql-date-ref]                         | [`LocalDate`][java-ld-ref]|
 | [`double precision`][psql-floating-point-ref]   | [**`Double`**][java-double-ref], [`Float`][java-float-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Integer`][java-integer-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
 | [enumerated types][psql-enum-ref]               | Client code `Enum` types through `EnumCodec`|
