@@ -24,6 +24,7 @@ import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.postgresql.codec.Circle;
 import io.r2dbc.postgresql.codec.EnumCodec;
 import io.r2dbc.postgresql.codec.Json;
+import io.r2dbc.postgresql.codec.LineSegment;
 import io.r2dbc.postgresql.codec.Point;
 import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.Clob;
@@ -332,6 +333,12 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
                 e.printStackTrace();
             }
         }, "JSONB");
+    }
+
+    @Test
+    void lineSegment() {
+        testCodec(LineSegment.class, new LineSegment(Point.of(1.12, 2.12), Point.of(3.12, 4.12)), "LSEG");
+        testCodec(LineSegment.class, new LineSegment(Point.of(Double.MIN_VALUE, Double.MIN_VALUE), Point.of(Double.MAX_VALUE, Double.MAX_VALUE)), "LSEG");
     }
 
     @Test
