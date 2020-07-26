@@ -190,7 +190,7 @@ public enum PostgresqlObjectId {
     /**
      * The line segment object id
      */
-    LINE_SEGMENT(601),
+    LSEG(601),
 
     /**
      * The money object id.
