@@ -316,7 +316,7 @@ This reference table shows the type mapping between [PostgreSQL][p] and Java dat
 | [`bit`][psql-bit-ref]                           | Not yet supported.|
 | [`bit varying`][psql-bit-ref]                   | Not yet supported.|
 | [`boolean or bool`][psql-boolean-ref]           | [`Boolean`][java-boolean-ref]|
-| [`box`][psql-box-ref]                           | Not yet supported.|
+| [`box`][psql-box-ref]                           | **`Box`**|
 | [`bytea`][psql-bytea-ref]                       | [**`ByteBuffer`**][java-ByteBuffer-ref], [`byte[]`][java-byte-ref], [`Blob`][r2dbc-blob-ref]|
 | [`character`][psql-character-ref]               | [`String`][java-string-ref]|
 | [`character varying`][psql-character-ref]       | [`String`][java-string-ref]|
@@ -331,17 +331,17 @@ This reference table shows the type mapping between [PostgreSQL][p] and Java dat
 | [`interval`][psql-interval-ref]                 | Not yet supported.|
 | [`json`][psql-json-ref]                         | **`Json`**, [`String`][java-string-ref]. Reading: `ByteBuf`[`byte[]`][java-primitive-ref], [`ByteBuffer`][java-ByteBuffer-ref], [`String`][java-string-ref], [`InputStream`][java-inputstream-ref]|
 | [`jsonb`][psql-json-ref]                        | **`Json`**, [`String`][java-string-ref]. Reading: `ByteBuf`[`byte[]`][java-primitive-ref], [`ByteBuffer`][java-ByteBuffer-ref], [`String`][java-string-ref], [`InputStream`][java-inputstream-ref]|
-| [`line`][psql-line-ref]                         | Not yet supported.|
-| [`lseg`][psql-lseq-ref]                         | Not yet supported.|
+| [`line`][psql-line-ref]                         | **`Line`**|
+| [`lseg`][psql-lseq-ref]                         | **`Lseg`**|
 | [`macaddr`][psql-macaddr-ref]                   | Not yet supported.|
 | [`macaddr8`][psql-macaddr8-ref]                 | Not yet supported.|
 | [`money`][psql-money-ref]                       | Not yet supported.|
 | [`numeric`][psql-bignumeric-ref]                | [`BigDecimal`][java-bigdecimal-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Integer`][java-integer-ref], [`Long`][java-long-ref], [`BigInteger`][java-biginteger-ref]|
 | [`oid`][psql-oid-ref]                           | [**`Integer`**][java-integer-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
-| [`path`][psql-path-ref]                         | Not yet supported.|
+| [`path`][psql-path-ref]                         | **`Path`**|
 | [`pg_lsn`][psql-pg_lsn-ref]                     | Not yet supported.|
 | [`point`][psql-point-ref]                       | **`Point`**|
-| [`polygon`][psql-polygon-ref]                   | Not yet supported.|
+| [`polygon`][psql-polygon-ref]                   | **`Polygon`**|
 | [`real`][psql-real-ref]                         | [**`Float`**][java-float-ref], [`Double`][java-double-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Integer`][java-integer-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
 | [`smallint`][psql-smallint-ref]                 | [**`Short`**][java-short-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Integer`][java-integer-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
 | [`smallserial`][psql-smallserial-ref]           | [**`Integer`**][java-integer-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|

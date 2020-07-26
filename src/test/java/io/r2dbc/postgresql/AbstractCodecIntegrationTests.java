@@ -21,10 +21,15 @@ import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
+import io.r2dbc.postgresql.codec.Box;
 import io.r2dbc.postgresql.codec.Circle;
 import io.r2dbc.postgresql.codec.EnumCodec;
 import io.r2dbc.postgresql.codec.Json;
+import io.r2dbc.postgresql.codec.Line;
+import io.r2dbc.postgresql.codec.Lseg;
+import io.r2dbc.postgresql.codec.Path;
 import io.r2dbc.postgresql.codec.Point;
+import io.r2dbc.postgresql.codec.Polygon;
 import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.Clob;
 import io.r2dbc.spi.Connection;
@@ -459,6 +464,37 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(OffsetTime.class, OffsetTime.of(LocalTime.now(), ZoneOffset.UTC), "TIMETZ");
         testCodec(OffsetTime.class, OffsetTime.of(LocalTime.now(), ZoneOffset.ofHoursMinutes(1, 30)), "TIMETZ");
         testCodec(OffsetTime.class, OffsetTime.of(LocalTime.now(), ZoneOffset.ofHoursMinutes(-3, -30)), "TIMETZ");
+    }
+
+    @Test
+    void box() {
+        testCodec(Box.class, Box.of(Point.of(1.9, 2.8), Point.of(3.7, 4.6)), "BOX");
+        testCodec(Box.class, Box.of(Point.of(1.5, 3.3), Point.of(5., 7.)), "BOX");
+    }
+
+    @Test
+    void line() {
+        testCodec(Line.class, Line.of(1., 2., 4.), "LINE");
+        testCodec(Line.class, Line.of(-10.42, 3.14, 5.24), "LINE");
+    }
+
+    @Test
+    void lseg() {
+        testCodec(Lseg.class, Lseg.of(Point.of(1.11, 2.22), Point.of(3.33, 4.44)), "LSEG");
+    }
+
+    @Test
+    void path() {
+        testCodec(Path.class, Path.of(false, Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(.42, 5.3)), "PATH");
+        testCodec(Path.class, Path.of(true, Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(.42, 5.3)), "PATH");
+        testCodec(Path.class, Path.of(false, Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(.42, 5.3), Point.of(-3.5, 0.)), "PATH");
+        testCodec(Path.class, Path.of(true, Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(.42, 5.3), Point.of(-3.5, 0.)), "PATH");
+    }
+
+    @Test
+    void polygon() {
+        testCodec(Polygon.class, Polygon.of(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(.42, 5.3)), "POLYGON");
+        testCodec(Polygon.class, Polygon.of(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(.42, 5.3), Point.of(-3.5, 0.)), "POLYGON");
     }
 
     private static <T> Mono<T> close(Connection connection) {
