@@ -25,6 +25,7 @@ import io.r2dbc.postgresql.codec.Box;
 import io.r2dbc.postgresql.codec.Circle;
 import io.r2dbc.postgresql.codec.EnumCodec;
 import io.r2dbc.postgresql.codec.Json;
+import io.r2dbc.postgresql.codec.Line;
 import io.r2dbc.postgresql.codec.Point;
 import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.Clob;
@@ -466,6 +467,12 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     void box() {
         testCodec(Box.class, Box.of(Point.of(1.9, 2.8), Point.of(3.7, 4.6)), "BOX");
         testCodec(Box.class, Box.of(Point.of(1.5, 3.3), Point.of(5., 7.)), "BOX");
+    }
+
+    @Test
+    void line() {
+        testCodec(Line.class, Line.of(1., 2., 4.), "LINE");
+        testCodec(Line.class, Line.of(-10.42, 3.14, 5.24), "LINE");
     }
 
     private static <T> Mono<T> close(Connection connection) {

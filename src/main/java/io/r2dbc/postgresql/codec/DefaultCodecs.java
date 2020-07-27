@@ -98,7 +98,8 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
             //Geometry
             new CircleCodec(byteBufAllocator),
             new PointCodec(byteBufAllocator),
-            new BoxCodec(byteBufAllocator)
+            new BoxCodec(byteBufAllocator),
+            new LineCodec(byteBufAllocator)
         ));
     }
 
