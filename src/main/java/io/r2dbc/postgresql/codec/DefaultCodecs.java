@@ -101,7 +101,8 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
             new BoxCodec(byteBufAllocator),
             new LineCodec(byteBufAllocator),
             new LsegCodec(byteBufAllocator),
-            new PathCodec(byteBufAllocator)
+            new PathCodec(byteBufAllocator),
+            new PolygonCodec(byteBufAllocator)
         ));
     }
 
