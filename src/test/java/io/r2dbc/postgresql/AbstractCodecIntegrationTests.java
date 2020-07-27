@@ -27,6 +27,7 @@ import io.r2dbc.postgresql.codec.EnumCodec;
 import io.r2dbc.postgresql.codec.Json;
 import io.r2dbc.postgresql.codec.Line;
 import io.r2dbc.postgresql.codec.Lseg;
+import io.r2dbc.postgresql.codec.Path;
 import io.r2dbc.postgresql.codec.Point;
 import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.Clob;
@@ -479,6 +480,14 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     @Test
     void lseg() {
         testCodec(Lseg.class, Lseg.of(Point.of(1.11, 2.22), Point.of(3.33, 4.44)), "LSEG");
+    }
+
+    @Test
+    void path() {
+        testCodec(Path.class, Path.of(false, Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(.42, 5.3)), "PATH");
+        testCodec(Path.class, Path.of(true, Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(.42, 5.3)), "PATH");
+        testCodec(Path.class, Path.of(false, Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(.42, 5.3), Point.of(-3.5, 0.)), "PATH");
+        testCodec(Path.class, Path.of(true, Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(.42, 5.3), Point.of(-3.5, 0.)), "PATH");
     }
 
     private static <T> Mono<T> close(Connection connection) {
