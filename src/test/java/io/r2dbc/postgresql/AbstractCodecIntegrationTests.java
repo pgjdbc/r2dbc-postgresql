@@ -21,6 +21,7 @@ import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
+import io.r2dbc.postgresql.codec.Box;
 import io.r2dbc.postgresql.codec.Circle;
 import io.r2dbc.postgresql.codec.EnumCodec;
 import io.r2dbc.postgresql.codec.Json;
@@ -459,6 +460,12 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(OffsetTime.class, OffsetTime.of(LocalTime.now(), ZoneOffset.UTC), "TIMETZ");
         testCodec(OffsetTime.class, OffsetTime.of(LocalTime.now(), ZoneOffset.ofHoursMinutes(1, 30)), "TIMETZ");
         testCodec(OffsetTime.class, OffsetTime.of(LocalTime.now(), ZoneOffset.ofHoursMinutes(-3, -30)), "TIMETZ");
+    }
+
+    @Test
+    void box() {
+        testCodec(Box.class, Box.of(Point.of(1.9, 2.8), Point.of(3.7, 4.6)), "BOX");
+        testCodec(Box.class, Box.of(Point.of(1.5, 3.3), Point.of(5., 7.)), "BOX");
     }
 
     private static <T> Mono<T> close(Connection connection) {
