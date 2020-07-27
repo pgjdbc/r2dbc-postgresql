@@ -121,5 +121,5 @@ public class PathCodecUnitTest {
         ParameterAssert.assertThat(new PathCodec(TEST).encodeNull())
             .isEqualTo(new Parameter(FORMAT_BINARY, dataType, NULL_VALUE));
     }
-    
+
 }

@@ -18,70 +18,41 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.Parameter;
-import io.r2dbc.postgresql.message.Format;
-import io.r2dbc.postgresql.type.PostgresqlObjectId;
-import io.r2dbc.postgresql.util.Assert;
-import io.r2dbc.postgresql.util.ByteBufUtils;
 
-import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import java.util.List;
+
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.CIRCLE;
 
-final class CircleCodec extends AbstractCodec<Circle> {
-
-    private final ByteBufAllocator byteBufAllocator;
+final class CircleCodec extends AbstractGeometryCodec<Circle> {
 
     CircleCodec(ByteBufAllocator byteBufAllocator) {
-        super(Circle.class);
-        this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        super(Circle.class, CIRCLE, byteBufAllocator);
     }
 
     @Override
-    boolean doCanDecode(PostgresqlObjectId type, Format format) {
-        Assert.requireNonNull(type, "type must not be null");
-
-        return CIRCLE == type;
-    }
-
-    @Override
-    Circle doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, Class<? extends Circle> type) {
-        Assert.requireNonNull(buffer, "byteBuf must not be null");
-        Assert.requireNonNull(type, "type must not be null");
-        Assert.requireNonNull(format, "format must not be null");
-
-        if (format == FORMAT_BINARY) {
-            double x = buffer.readDouble();
-            double y = buffer.readDouble();
-            double r = buffer.readDouble();
-            return new Circle(Point.of(x, y), r);
-        }
-
-        String decodedAsString = ByteBufUtils.decode(buffer);
-        String parenRemovedVal = decodedAsString.replaceAll("[()<>]", "");
-        String[] coordinatesAsString = parenRemovedVal.split(",");
-        double x = Double.parseDouble(coordinatesAsString[0]);
-        double y = Double.parseDouble(coordinatesAsString[1]);
-        double r = Double.parseDouble(coordinatesAsString[2]);
+    Circle doDecodeBinary(ByteBuf byteBuffer) {
+        double x = byteBuffer.readDouble();
+        double y = byteBuffer.readDouble();
+        double r = byteBuffer.readDouble();
         return new Circle(Point.of(x, y), r);
     }
 
-    /**
-     * @param value the  {@code value}.
-     * @return Circle in string format as understood by Postgresql - &lt(x,y),r&gt
-     */
     @Override
-    Parameter doEncode(Circle value) {
-        Assert.requireNonNull(value, "value must not be null");
-        Point center = value.getCenter();
-        return create(CIRCLE, FORMAT_BINARY, () -> this.byteBufAllocator.buffer(lengthInBytes())
-            .writeDouble(center.getX())
-            .writeDouble(center.getY())
-            .writeDouble(value.getRadius()));
+    Circle doDecodeText(String text) {
+        List<String> tokens = tokenizeTextData(text);
+        double x = Double.parseDouble(tokens.get(0));
+        double y = Double.parseDouble(tokens.get(1));
+        double r = Double.parseDouble(tokens.get(2));
+        return new Circle(Point.of(x, y), r);
     }
 
     @Override
-    public Parameter encodeNull() {
-        return createNull(CIRCLE, FORMAT_BINARY);
+    ByteBuf doEncodeBinary(Circle value) {
+        Point center = value.getCenter();
+        return this.byteBufAllocator.buffer(lengthInBytes())
+            .writeDouble(center.getX())
+            .writeDouble(center.getY())
+            .writeDouble(value.getRadius());
     }
 
     int lengthInBytes() {

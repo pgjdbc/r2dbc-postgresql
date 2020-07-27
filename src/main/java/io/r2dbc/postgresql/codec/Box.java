@@ -6,6 +6,8 @@ import java.util.Objects;
 
 /**
  * Value object that maps to the {@code box} datatype in Postgres.
+ * <p>
+ * Uses {@code double} to represent the coordinates.
  */
 public final class Box {
 

@@ -18,65 +18,36 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.Parameter;
-import io.r2dbc.postgresql.message.Format;
-import io.r2dbc.postgresql.type.PostgresqlObjectId;
-import io.r2dbc.postgresql.util.Assert;
-import io.r2dbc.postgresql.util.ByteBufUtils;
-import reactor.util.annotation.Nullable;
 
-import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import java.util.List;
+
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.POINT;
 
-final class PointCodec extends AbstractCodec<Point> {
-
-    private final ByteBufAllocator byteBufAllocator;
+final class PointCodec extends AbstractGeometryCodec<Point> {
 
     PointCodec(ByteBufAllocator byteBufAllocator) {
-        super(Point.class);
-        this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        super(Point.class, POINT, byteBufAllocator);
     }
 
     @Override
-    boolean doCanDecode(PostgresqlObjectId type, @Nullable Format format) {
-        Assert.requireNonNull(type, "type must not be null");
-
-        return POINT == type;
-    }
-
-    @Override
-    Point doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, Class<? extends Point> type) {
-        Assert.requireNonNull(buffer, "byteBuf must not be null");
-        Assert.requireNonNull(type, "type must not be null");
-        Assert.requireNonNull(format, "format must not be null");
-
-        if (format == FORMAT_BINARY) {
-            double x = buffer.readDouble();
-            double y = buffer.readDouble();
-            return Point.of(x, y);
-        }
-
-        String decodedAsString = ByteBufUtils.decode(buffer);
-        String parenRemovedVal = decodedAsString.replaceAll("[()]", "");
-        String[] coordinatesAsString = parenRemovedVal.split(",");
-        double x = Double.parseDouble(coordinatesAsString[0]);
-        double y = Double.parseDouble(coordinatesAsString[1]);
+    Point doDecodeBinary(ByteBuf byteBuffer) {
+        double x = byteBuffer.readDouble();
+        double y = byteBuffer.readDouble();
         return Point.of(x, y);
     }
 
-    /**
-     * @param value the  {@code value}.
-     * @return Point in String format as understood by postgresql - (x,y)
-     */
     @Override
-    Parameter doEncode(Point value) {
-        Assert.requireNonNull(value, "value must not be null");
-        return create(POINT, FORMAT_BINARY, () -> this.byteBufAllocator.buffer(lengthInBytes()).writeDouble(value.getX()).writeDouble(value.getY()));
+    Point doDecodeText(String text) {
+        List<String> tokens = tokenizeTextData(text);
+        double x = Double.parseDouble(tokens.get(0));
+        double y = Double.parseDouble(tokens.get(1));
+        return Point.of(x, y);
     }
 
     @Override
-    public Parameter encodeNull() {
-        return createNull(POINT, FORMAT_BINARY);
+    ByteBuf doEncodeBinary(Point value) {
+        return this.byteBufAllocator.buffer(lengthInBytes())
+            .writeDouble(value.getX()).writeDouble(value.getY());
     }
 
     int lengthInBytes() {

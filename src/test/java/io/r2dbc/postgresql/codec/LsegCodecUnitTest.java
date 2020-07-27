@@ -94,5 +94,5 @@ public class LsegCodecUnitTest {
         ParameterAssert.assertThat(new LsegCodec(TEST).encodeNull())
             .isEqualTo(new Parameter(FORMAT_BINARY, dataType, NULL_VALUE));
     }
-    
+
 }

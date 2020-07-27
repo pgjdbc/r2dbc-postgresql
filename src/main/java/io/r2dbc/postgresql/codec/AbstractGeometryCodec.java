@@ -38,6 +38,9 @@ abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> {
 
     @Override
     T doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, Class<? extends T> type) {
+        Assert.requireNonNull(buffer, "byteBuf must not be null");
+        Assert.requireNonNull(type, "type must not be null");
+        Assert.requireNonNull(format, "format must not be null");
         if (format == Format.FORMAT_BINARY) {
             return doDecodeBinary(buffer);
         }

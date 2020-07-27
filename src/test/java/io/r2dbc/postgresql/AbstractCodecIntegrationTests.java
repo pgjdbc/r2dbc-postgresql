@@ -494,7 +494,7 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     @Test
     void polygon() {
         testCodec(Polygon.class, Polygon.of(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(.42, 5.3)), "POLYGON");
-        testCodec(Polygon.class, Polygon.of(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(.42, 5.3), Point.of(-3.5, 0.)), "POLYGON");;
+        testCodec(Polygon.class, Polygon.of(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(.42, 5.3), Point.of(-3.5, 0.)), "POLYGON");
     }
 
     private static <T> Mono<T> close(Connection connection) {

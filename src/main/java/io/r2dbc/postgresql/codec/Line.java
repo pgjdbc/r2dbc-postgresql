@@ -10,7 +10,9 @@ import java.util.Objects;
 public final class Line {
 
     private final double a;
+
     private final double b;
+
     private final double c;
 
     private Line(double a, double b, double c) {
@@ -56,7 +58,7 @@ public final class Line {
 
     @Override
     public String toString() {
-        return "{" + this.a + ","+ this.b + "," + this.c + '}';
+        return "{" + this.a + "," + this.b + "," + this.c + '}';
     }
 
 }

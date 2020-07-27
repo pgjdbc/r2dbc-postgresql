@@ -86,5 +86,5 @@ public class PolygonCodecUnitTest {
         ParameterAssert.assertThat(new PolygonCodec(TEST).encodeNull())
             .isEqualTo(new Parameter(FORMAT_BINARY, dataType, NULL_VALUE));
     }
-    
+
 }
