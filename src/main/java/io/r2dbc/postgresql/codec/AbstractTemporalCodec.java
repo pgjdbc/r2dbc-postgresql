@@ -66,7 +66,8 @@ abstract class AbstractTemporalCodec<T extends Temporal> extends AbstractCodec<T
         Assert.requireNonNull(type, "type must not be null");
 
         if (type == Object.class) {
-            if (PostgresqlObjectId.valueOf(dataType) != getDefaultType()) {
+
+            if (!PostgresqlObjectId.isValid(dataType) || PostgresqlObjectId.valueOf(dataType) != getDefaultType()) {
                 return false;
             }
         }
