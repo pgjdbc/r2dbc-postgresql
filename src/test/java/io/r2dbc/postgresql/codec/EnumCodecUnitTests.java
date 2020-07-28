@@ -16,10 +16,27 @@
 
 package io.r2dbc.postgresql.codec;
 
+import io.netty.buffer.ByteBufAllocator;
+import io.r2dbc.postgresql.api.MockPostgresqlConnection;
+import io.r2dbc.postgresql.api.MockPostgresqlResult;
+import io.r2dbc.postgresql.api.MockPostgresqlStatement;
+import io.r2dbc.postgresql.extension.CodecRegistrar;
+import io.r2dbc.spi.test.MockRow;
+import io.r2dbc.spi.test.MockRowMetadata;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.TestByteBufAllocator;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.reactivestreams.Publisher;
+import reactor.test.StepVerifier;
+
+import static io.r2dbc.postgresql.codec.EnumCodec.Builder.RegistrationPriority;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.only;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
@@ -66,6 +83,72 @@ final class EnumCodecUnitTests {
         assertThatIllegalArgumentException().isThrownBy(() -> new EnumCodec<>(
             TestByteBufAllocator.TEST, MyEnum.class, 1).canDecode(1, Format.FORMAT_TEXT, null))
             .withMessage("type must not be null");
+    }
+
+    @Test
+    void shouldRegisterCodecAsFirst() {
+        CodecRegistrar codecRegistrar = EnumCodec
+            .builder()
+            .withRegistrationPriority(RegistrationPriority.FIRST)
+            .withEnum("foo", MyEnum.class)
+            .build();
+
+        ByteBufAllocator mockByteBufAllocator = mock(ByteBufAllocator.class);
+        CodecRegistry mockCodecRegistry = mock(CodecRegistry.class);
+
+        MockPostgresqlStatement mockPostgresqlStatement = MockPostgresqlStatement.builder()
+            .result(MockPostgresqlResult.builder()
+                .rowMetadata(MockRowMetadata.empty())
+                .row(MockRow.builder()
+                    .identified("oid", Integer.class, 42)
+                    .identified("typname", String.class, "foo")
+                    .identified("typcategory", String.class, "E")
+                    .build())
+                .build())
+            .build();
+        MockPostgresqlConnection mockPostgresqlConnection = new MockPostgresqlConnection(mockPostgresqlStatement);
+
+        Publisher<Void> register = codecRegistrar.register(mockPostgresqlConnection, mockByteBufAllocator, mockCodecRegistry);
+        StepVerifier.create(register).verifyComplete();
+
+        verify(mockCodecRegistry, only()).addFirst(any(EnumCodec.class));
+        verify(mockCodecRegistry, never()).addLast(any(EnumCodec.class));
+    }
+
+    @Test
+    void shouldRegisterCodecAsLast() {
+        CodecRegistrar codecRegistrar = EnumCodec
+            .builder()
+            .withRegistrationPriority(RegistrationPriority.LAST)
+            .withEnum("foo", MyEnum.class)
+            .withEnum("bar", MyOtherEnum.class)
+            .build();
+
+        ByteBufAllocator mockByteBufAllocator = mock(ByteBufAllocator.class);
+        CodecRegistry mockCodecRegistry = mock(CodecRegistry.class);
+
+        MockPostgresqlStatement mockPostgresqlStatement = MockPostgresqlStatement.builder()
+            .result(MockPostgresqlResult.builder()
+                .rowMetadata(MockRowMetadata.empty())
+                .row(MockRow.builder()
+                    .identified("oid", Integer.class, 42)
+                    .identified("typname", String.class, "foo")
+                    .identified("typcategory", String.class, "E")
+                    .build())
+                .row(MockRow.builder()
+                    .identified("oid", Integer.class, 43)
+                    .identified("typname", String.class, "bar")
+                    .identified("typcategory", String.class, "E")
+                    .build())
+                .build())
+            .build();
+        MockPostgresqlConnection mockPostgresqlConnection = new MockPostgresqlConnection(mockPostgresqlStatement);
+
+        Publisher<Void> register = codecRegistrar.register(mockPostgresqlConnection, mockByteBufAllocator, mockCodecRegistry);
+        StepVerifier.create(register).verifyComplete();
+
+        verify(mockCodecRegistry, never()).addFirst(any(EnumCodec.class));
+        verify(mockCodecRegistry, times(2)).addLast(any(EnumCodec.class));
     }
 
     enum MyEnum {
