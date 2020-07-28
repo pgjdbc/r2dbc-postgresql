@@ -16,8 +16,20 @@
 
 package io.r2dbc.postgresql.codec;
 
+import io.netty.buffer.ByteBufAllocator;
+import io.r2dbc.postgresql.api.MockPostgresqlConnection;
+import io.r2dbc.postgresql.api.MockPostgresqlResult;
+import io.r2dbc.postgresql.api.MockPostgresqlStatement;
+import io.r2dbc.postgresql.extension.CodecRegistrar;
+import io.r2dbc.spi.test.MockRow;
+import io.r2dbc.spi.test.MockRowMetadata;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.reactivestreams.Publisher;
+import reactor.test.StepVerifier;
+
+import static io.r2dbc.postgresql.codec.EnumCodec.Builder.RegistrationPriority;
 
 /**
  * Unit tests for {@link EnumCodec}.
@@ -38,6 +50,70 @@ final class EnumCodecUnitTests {
         EnumCodec.Builder builder = EnumCodec.builder().withEnum("foo", MyEnum.class);
 
         Assertions.assertThatIllegalArgumentException().isThrownBy(() -> builder.withEnum("foo", MyOtherEnum.class));
+    }
+
+    @Test
+    void shouldRegisterCodecAsFirst() {
+        CodecRegistrar codecRegistrar = EnumCodec
+            .builder()
+            .withEnum("foo", MyEnum.class, RegistrationPriority.FIRST)
+            .build();
+
+        ByteBufAllocator mockByteBufAllocator = Mockito.mock(ByteBufAllocator.class);
+        CodecRegistry mockCodecRegistry = Mockito.mock(CodecRegistry.class);
+
+        MockPostgresqlStatement mockPostgresqlStatement = MockPostgresqlStatement.builder()
+            .result(MockPostgresqlResult.builder()
+                .rowMetadata(MockRowMetadata.empty())
+                .row(MockRow.builder()
+                    .identified("oid", Integer.class, 42)
+                    .identified("typname", String.class, "foo")
+                    .identified("typcategory", String.class, "E")
+                    .build())
+                .build())
+            .build();
+        MockPostgresqlConnection mockPostgresqlConnection = new MockPostgresqlConnection(mockPostgresqlStatement);
+
+        Publisher<Void> register = codecRegistrar.register(mockPostgresqlConnection, mockByteBufAllocator, mockCodecRegistry);
+        StepVerifier.create(register).verifyComplete();
+
+        Mockito.verify(mockCodecRegistry, Mockito.only()).addFirst(Mockito.any(EnumCodec.class));
+        Mockito.verify(mockCodecRegistry, Mockito.never()).addLast(Mockito.any(EnumCodec.class));
+    }
+
+    @Test
+    void shouldRegisterCodecAsLast() {
+        CodecRegistrar codecRegistrar = EnumCodec
+            .builder()
+            .withEnum("foo", MyEnum.class, RegistrationPriority.LAST)
+            .withEnum("bar", MyOtherEnum.class)
+            .build();
+
+        ByteBufAllocator mockByteBufAllocator = Mockito.mock(ByteBufAllocator.class);
+        CodecRegistry mockCodecRegistry = Mockito.mock(CodecRegistry.class);
+
+        MockPostgresqlStatement mockPostgresqlStatement = MockPostgresqlStatement.builder()
+            .result(MockPostgresqlResult.builder()
+                .rowMetadata(MockRowMetadata.empty())
+                .row(MockRow.builder()
+                    .identified("oid", Integer.class, 42)
+                    .identified("typname", String.class, "foo")
+                    .identified("typcategory", String.class, "E")
+                    .build())
+                .row(MockRow.builder()
+                    .identified("oid", Integer.class, 43)
+                    .identified("typname", String.class, "bar")
+                    .identified("typcategory", String.class, "E")
+                    .build())
+                .build())
+            .build();
+        MockPostgresqlConnection mockPostgresqlConnection = new MockPostgresqlConnection(mockPostgresqlStatement);
+
+        Publisher<Void> register = codecRegistrar.register(mockPostgresqlConnection, mockByteBufAllocator, mockCodecRegistry);
+        StepVerifier.create(register).verifyComplete();
+
+        Mockito.verify(mockCodecRegistry, Mockito.never()).addFirst(Mockito.any(EnumCodec.class));
+        Mockito.verify(mockCodecRegistry, Mockito.times(2)).addLast(Mockito.any(EnumCodec.class));
     }
 
     enum MyEnum {
