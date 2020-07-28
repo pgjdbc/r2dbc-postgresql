@@ -121,6 +121,8 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
 
         private final Map<String, Class<? extends Enum<?>>> mapping = new LinkedHashMap<>();
 
+        private RegistrationPriority registrationPriority = RegistrationPriority.LAST;
+
         /**
          * Add a Postgres enum type to {@link Enum} mapping.
          *
@@ -129,6 +131,7 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
          * @return this {@link Builder}
          */
         public Builder withEnum(String name, Class<? extends Enum<?>> enumClass) {
+            Assert.requireNotEmpty(name, "Postgres type name must not be null");
             Assert.requireNonNull(enumClass, "Enum class must not be null");
             Assert.isTrue(enumClass.isEnum(), String.format("Enum class %s must be an enum type", enumClass.getName()));
 
@@ -140,7 +143,18 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
                 throw new IllegalArgumentException(String.format("Builder contains already a mapping for Java type %s", enumClass.getName()));
             }
 
-            this.mapping.put(Assert.requireNotEmpty(name, "Postgres type name must not be null"), enumClass);
+            this.mapping.put(name, enumClass);
+            return this;
+        }
+
+        /**
+         * Configure the codec registration priority. Default {@link RegistrationPriority#LAST}
+         *
+         * @param registrationPriority the registration priority
+         * @return this {@link Builder}
+         */
+        public Builder withRegistrationPriority(RegistrationPriority registrationPriority) {
+            this.registrationPriority = registrationPriority;
             return this;
         }
 
@@ -170,7 +184,11 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
 
                         missing.remove(it.getName());
                         logger.debug(String.format("Registering codec for type '%s' with oid %d using Java enum type '%s'", it.getName(), it.getOid(), enumClass.getName()));
-                        registry.addLast(new EnumCodec(allocator, enumClass, it.getOid()));
+                        if (registrationPriority == RegistrationPriority.LAST) {
+                            registry.addLast(new EnumCodec(allocator, enumClass, it.getOid()));
+                        } else {
+                            registry.addFirst(new EnumCodec(allocator, enumClass, it.getOid()));
+                        }
                     }).doOnComplete(() -> {
 
                         if (!missing.isEmpty()) {
@@ -179,6 +197,14 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
 
                     }).then();
             };
+        }
+
+        /**
+         * An enumeration of codec registration priorities.
+         */
+        public enum RegistrationPriority {
+            FIRST,
+            LAST
         }
 
     }
