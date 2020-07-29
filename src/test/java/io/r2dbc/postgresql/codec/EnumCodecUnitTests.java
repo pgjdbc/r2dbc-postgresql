@@ -16,8 +16,23 @@
 
 package io.r2dbc.postgresql.codec;
 
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.JSON;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.JSONB;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
+import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+
+import java.util.Map;
+
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import io.netty.buffer.AbstractByteBufAllocator;
+import io.netty.buffer.UnpooledByteBufAllocator;
+import io.r2dbc.postgresql.message.Format;
 
 /**
  * Unit tests for {@link EnumCodec}.
@@ -39,7 +54,27 @@ final class EnumCodecUnitTests {
 
         Assertions.assertThatIllegalArgumentException().isThrownBy(() -> builder.withEnum("foo", MyOtherEnum.class));
     }
+    
+    @Test
+    void canDecode() {
+		EnumCodec<EnumCodecUnitTests.MyEnum> codec = 
+				new EnumCodec<EnumCodecUnitTests.MyEnum>(new UnpooledByteBufAllocator(true), MyEnum.class, 1);
+		
+		assertThat(codec.canDecode(1, Format.FORMAT_TEXT, MyEnum.class)).isTrue();
+		assertThat(codec.canDecode(1, FORMAT_BINARY, MyEnum.class)).isTrue();
+		assertThat(codec.canDecode(VARCHAR.getObjectId(), FORMAT_BINARY, MyEnum.class)).isFalse();
+        assertThat(codec.canDecode(JSON.getObjectId(), FORMAT_TEXT, MyEnum.class)).isFalse();
+        assertThat(codec.canDecode(JSONB.getObjectId(), FORMAT_BINARY, MyEnum.class)).isFalse();
+    }
+    
+    @Test
+    void canDecodeNoClass() {
+        assertThatIllegalArgumentException().isThrownBy(() -> new EnumCodec<EnumCodecUnitTests.MyEnum>(
+        		new UnpooledByteBufAllocator(true), MyEnum.class, 1).canDecode(1, Format.FORMAT_TEXT, null))
+            .withMessage("type must not be null");
+    }
 
+    
     enum MyEnum {
         INSTANCE;
     }
