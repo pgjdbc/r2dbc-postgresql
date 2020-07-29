@@ -63,7 +63,7 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
     @Override
     public boolean canDecode(int dataType, Format format, Class<?> type) {
         Assert.requireNonNull(type, "type must not be null");
-        return this.type.equals(type) && dataType == this.oid;
+        return type.isAssignableFrom(this.type) && dataType == this.oid;
     }
 
     @Override
