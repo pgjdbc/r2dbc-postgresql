@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -74,6 +75,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
         Assert.requireNonNull(identifier, "identifier must not be null");
         Assert.requireType(identifier, String.class, "identifier must be a String");
 
+        BindingLogger.logBinding(identifier, Objects.toString(value));
         return bind(getIndex(identifier), value);
     }
 
@@ -81,6 +83,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
     public ExtendedQueryPostgresqlStatement bind(int index, Object value) {
         Assert.requireNonNull(value, "value must not be null");
 
+        BindingLogger.logBinding(index, Objects.toString(value));
         this.bindings.getCurrent().add(index, this.context.getCodecs().encode(value));
 
         return this;
@@ -92,6 +95,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
         Assert.requireType(identifier, String.class, "identifier must be a String");
         Assert.requireNonNull(type, "type must not be null");
 
+        BindingLogger.logBinding(identifier, "null of type " + type.getName());
         bindNull(getIndex(identifier), type);
         return this;
     }
@@ -100,6 +104,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
     public ExtendedQueryPostgresqlStatement bindNull(int index, Class<?> type) {
         Assert.requireNonNull(type, "type must not be null");
 
+        BindingLogger.logBinding(index, "null of type " + type.getName());
         this.bindings.getCurrent().add(index, this.context.getCodecs().encodeNull(type));
         return this;
     }
