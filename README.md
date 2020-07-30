@@ -478,6 +478,7 @@ Logging facilities:
 
 * Driver Logging (`io.r2dbc.postgresql`)
 * Query Logging (`io.r2dbc.postgresql.QUERY` on `DEBUG` level)
+* Parameters' values Logging (`io.r2dbc.postgresql.PARAM` on `DEBUG` level)
 * Transport Logging (`io.r2dbc.postgresql.client`)
     * `DEBUG` enables `Message` exchange logging
     * `TRACE` enables traffic logging
