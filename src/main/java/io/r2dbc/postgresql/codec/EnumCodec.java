@@ -21,7 +21,6 @@ import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.extension.CodecRegistrar;
 import io.r2dbc.postgresql.message.Format;
-import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.core.publisher.Mono;
@@ -64,7 +63,6 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
     @Override
     public boolean canDecode(int dataType, Format format, Class<?> type) {
         Assert.requireNonNull(type, "type must not be null");
-        
         return type.isAssignableFrom(this.type) && dataType == this.oid;
     }
 

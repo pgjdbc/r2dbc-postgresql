@@ -15,24 +15,20 @@
  */
 
 package io.r2dbc.postgresql.codec;
+import io.r2dbc.postgresql.message.Format;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.JSON;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.JSONB;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
-import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
-import java.util.Map;
+import io.netty.buffer.UnpooledByteBufAllocator;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import io.netty.buffer.AbstractByteBufAllocator;
-import io.netty.buffer.UnpooledByteBufAllocator;
-import io.r2dbc.postgresql.message.Format;
 
 /**
  * Unit tests for {@link EnumCodec}.
@@ -41,7 +37,6 @@ final class EnumCodecUnitTests {
 
     @Test
     void shouldRejectMultipleMappingForJavaType() {
-
         EnumCodec.Builder builder = EnumCodec.builder().withEnum("foo", MyEnum.class);
 
         Assertions.assertThatIllegalArgumentException().isThrownBy(() -> builder.withEnum("bar", MyEnum.class));
@@ -49,7 +44,6 @@ final class EnumCodecUnitTests {
 
     @Test
     void shouldRejectMultipleMappingForTypeName() {
-
         EnumCodec.Builder builder = EnumCodec.builder().withEnum("foo", MyEnum.class);
 
         Assertions.assertThatIllegalArgumentException().isThrownBy(() -> builder.withEnum("foo", MyOtherEnum.class));
@@ -62,9 +56,10 @@ final class EnumCodecUnitTests {
 		
 		assertThat(codec.canDecode(1, Format.FORMAT_TEXT, MyEnum.class)).isTrue();
 		assertThat(codec.canDecode(1, FORMAT_BINARY, MyEnum.class)).isTrue();
+		assertThat(codec.canDecode(1, FORMAT_BINARY, Object.class)).isTrue();
 		assertThat(codec.canDecode(VARCHAR.getObjectId(), FORMAT_BINARY, MyEnum.class)).isFalse();
-        assertThat(codec.canDecode(JSON.getObjectId(), FORMAT_TEXT, MyEnum.class)).isFalse();
-        assertThat(codec.canDecode(JSONB.getObjectId(), FORMAT_BINARY, MyEnum.class)).isFalse();
+		assertThat(codec.canDecode(JSON.getObjectId(), FORMAT_TEXT, MyEnum.class)).isFalse();
+		assertThat(codec.canDecode(JSONB.getObjectId(), FORMAT_BINARY, MyEnum.class)).isFalse();
     }
     
     @Test
@@ -74,7 +69,6 @@ final class EnumCodecUnitTests {
             .withMessage("type must not be null");
     }
 
-    
     enum MyEnum {
         INSTANCE;
     }
