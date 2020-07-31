@@ -179,8 +179,8 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
 
     @Test
     void circle() {
-        testCodec(Circle.class, new Circle(Point.of(1.12, 2.12), 3.12), "CIRCLE");
-        testCodec(Circle.class, new Circle(Point.of(Double.MIN_VALUE, Double.MIN_VALUE), Double.MAX_VALUE), "CIRCLE");
+        testCodec(Circle.class, Circle.of(Point.of(1.12, 2.12), 3.12), "CIRCLE");
+        testCodec(Circle.class, Circle.of(Point.of(Double.MIN_VALUE, Double.MIN_VALUE), Double.MAX_VALUE), "CIRCLE");
     }
 
     @Test
@@ -485,10 +485,10 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
 
     @Test
     void path() {
-        testCodec(Path.class, Path.of(false, Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(.42, 5.3)), "PATH");
-        testCodec(Path.class, Path.of(true, Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(.42, 5.3)), "PATH");
-        testCodec(Path.class, Path.of(false, Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(.42, 5.3), Point.of(-3.5, 0.)), "PATH");
-        testCodec(Path.class, Path.of(true, Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(.42, 5.3), Point.of(-3.5, 0.)), "PATH");
+        testCodec(Path.class, Path.closed(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(1.1, 2.2)), "PATH");
+        testCodec(Path.class, Path.open(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(0.42, 5.3)), "PATH");
+        testCodec(Path.class, Path.closed(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(0.42, 5.3), Point.of(1.1, 2.2)), "PATH");
+        testCodec(Path.class, Path.open(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(0.42, 5.3), Point.of(-3.5, 0.0)), "PATH");
     }
 
     @Test

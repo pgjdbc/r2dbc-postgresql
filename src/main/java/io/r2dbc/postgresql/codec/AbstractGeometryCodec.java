@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
@@ -9,6 +25,7 @@ import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> {
@@ -33,7 +50,8 @@ abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> {
     boolean doCanDecode(PostgresqlObjectId type, Format format) {
         Assert.requireNonNull(type, "type must not be null");
         Assert.requireNonNull(format, "format must not be null");
-        return postgresqlObjectId == type;
+
+        return this.postgresqlObjectId == type;
     }
 
     @Override
@@ -41,28 +59,76 @@ abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
         Assert.requireNonNull(type, "type must not be null");
         Assert.requireNonNull(format, "format must not be null");
+
         if (format == Format.FORMAT_BINARY) {
             return doDecodeBinary(buffer);
         }
+
         return doDecodeText(ByteBufUtils.decode(buffer));
     }
 
     @Override
     Parameter doEncode(T value) {
         Assert.requireNonNull(value, "value must not be null");
+
         return create(this.postgresqlObjectId, Format.FORMAT_BINARY, () -> doEncodeBinary(value));
     }
 
     @Override
     public Parameter encodeNull() {
-        return createNull(postgresqlObjectId, Format.FORMAT_BINARY);
+        return createNull(this.postgresqlObjectId, Format.FORMAT_BINARY);
     }
 
-    protected List<String> tokenizeTextData(String string) {
+    /**
+     * Create a {@link TokenStream} given {@code content}.
+     *
+     * @param content the textual representation
+     * @return a {@link TokenStream} providing access to a tokenized form of the data structure.
+     */
+    TokenStream getTokenStream(String content) {
+
+        List<String> tokens = tokenizeTextData(content);
+
+        return new TokenStream() {
+
+            int position = 0;
+
+            @Override
+            public boolean hasNext() {
+                return tokens.size() > this.position;
+            }
+
+            @Override
+            public String next() {
+
+                if (hasNext()) {
+                    return tokens.get(this.position++);
+                }
+
+                throw new IllegalStateException(String.format("No token available at index %d. Current tokens are: %s", this.position, tokens));
+            }
+
+            @Override
+            public double nextDouble() {
+                return Double.parseDouble(next());
+            }
+
+        };
+    }
+
+    /**
+     * Remove token wrappers such as {@code <>}, {@code []}, {@code {}}, {@code ()} and extract tokens into a {@link List}.
+     *
+     * @param content the content to decode.
+     * @return tokenized content.
+     */
+    private static List<String> tokenizeTextData(String content) {
+
         List<String> tokens = new ArrayList<>();
 
-        for (int p = 0, s = 0; p < string.length(); p++) {
-            char c = string.charAt(p);
+        for (int i = 0, s = 0; i < content.length(); i++) {
+
+            char c = content.charAt(i);
 
             if (c == '(' || c == '[' || c == '<' || c == '{') {
                 s++;
@@ -70,9 +136,9 @@ abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> {
             }
 
             if (c == ',' || c == ')' || c == ']' || c == '>' || c == '}') {
-                if (s != p) {
-                    tokens.add(string.substring(s, p));
-                    s = p + 1;
+                if (s != i) {
+                    tokens.add(content.substring(s, i));
+                    s = i + 1;
                 } else {
                     s++;
                 }
@@ -80,6 +146,32 @@ abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> {
         }
 
         return tokens;
+    }
+
+    /**
+     * Stream of tokens that represent individual components of the underlying data structure.
+     */
+    interface TokenStream extends Iterator<String> {
+
+        /**
+         * Advance the stream and return the next token.
+         *
+         * @return the token.
+         * @throws IllegalStateException if the token stream is exhausted.
+         * @see #hasNext()
+         */
+        @Override
+        String next();
+
+        /**
+         * Advance the stream and return the next token as {@code double} value.
+         *
+         * @return the token.
+         * @throws IllegalStateException if the token stream is exhausted.
+         * @see #hasNext()
+         */
+        double nextDouble();
+
     }
 
 }

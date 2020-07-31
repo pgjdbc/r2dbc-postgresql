@@ -78,7 +78,7 @@ final class CircleCodecUnitTests {
     void doDecode() {
         CircleCodec codec = new CircleCodec(TEST);
         Point point = Point.of(1.12, 2.12);
-        Circle circle = new Circle(point, 3.12);
+        Circle circle = Circle.of(point, 3.12);
         ByteBuf circleAsBinary = TEST.buffer(codec.lengthInBytes()).writeDouble(1.12).writeDouble(2.12).writeDouble(3.12);
         assertThat(codec.doDecode(circleAsBinary, CIRCLE, FORMAT_BINARY, Circle.class)).isEqualTo(circle);
     }
@@ -94,7 +94,7 @@ final class CircleCodecUnitTests {
         CircleCodec codec = new CircleCodec(TEST);
         ByteBuf circleAsBinary = TEST.buffer(codec.lengthInBytes()).writeDouble(1.12).writeDouble(2.12).writeDouble(3.12);
 
-        ParameterAssert.assertThat(codec.doEncode(new Circle(Point.of(1.12, 2.12), 3.12)))
+        ParameterAssert.assertThat(codec.doEncode(Circle.of(Point.of(1.12, 2.12), 3.12)))
             .hasFormat(FORMAT_BINARY)
             .hasType(CIRCLE.getObjectId())
             .hasValue(circleAsBinary);

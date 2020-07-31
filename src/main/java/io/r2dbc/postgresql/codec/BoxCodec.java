@@ -1,10 +1,24 @@
+/*
+ * Copyright 2020 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
-
-import java.util.List;
 
 final class BoxCodec extends AbstractGeometryCodec<Box> {
 
@@ -14,20 +28,15 @@ final class BoxCodec extends AbstractGeometryCodec<Box> {
 
     @Override
     Box doDecodeBinary(ByteBuf buffer) {
-        double x1 = buffer.readDouble();
-        double y1 = buffer.readDouble();
-        double x2 = buffer.readDouble();
-        double y2 = buffer.readDouble();
-        return Box.of(Point.of(x1, y1), Point.of(x2, y2));
+        return Box.of(Point.of(buffer.readDouble(), buffer.readDouble()),
+            Point.of(buffer.readDouble(), buffer.readDouble()));
     }
 
     @Override
     Box doDecodeText(String text) {
-        List<String> tokens = tokenizeTextData(text);
-        return Box.of(
-            Point.of(Double.parseDouble(tokens.get(0)), Double.parseDouble(tokens.get(1))),
-            Point.of(Double.parseDouble(tokens.get(2)), Double.parseDouble(tokens.get(3)))
-        );
+        TokenStream tokens = getTokenStream(text);
+        return Box.of(Point.of(tokens.nextDouble(), tokens.nextDouble()),
+            Point.of(tokens.nextDouble(), tokens.nextDouble()));
     }
 
     @Override

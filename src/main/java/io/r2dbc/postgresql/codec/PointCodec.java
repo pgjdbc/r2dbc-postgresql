@@ -19,8 +19,6 @@ package io.r2dbc.postgresql.codec;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 
-import java.util.List;
-
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.POINT;
 
 final class PointCodec extends AbstractGeometryCodec<Point> {
@@ -31,17 +29,13 @@ final class PointCodec extends AbstractGeometryCodec<Point> {
 
     @Override
     Point doDecodeBinary(ByteBuf byteBuffer) {
-        double x = byteBuffer.readDouble();
-        double y = byteBuffer.readDouble();
-        return Point.of(x, y);
+        return Point.of(byteBuffer.readDouble(), byteBuffer.readDouble());
     }
 
     @Override
     Point doDecodeText(String text) {
-        List<String> tokens = tokenizeTextData(text);
-        double x = Double.parseDouble(tokens.get(0));
-        double y = Double.parseDouble(tokens.get(1));
-        return Point.of(x, y);
+        TokenStream stream = getTokenStream(text);
+        return Point.of(stream.nextDouble(), stream.nextDouble());
     }
 
     @Override

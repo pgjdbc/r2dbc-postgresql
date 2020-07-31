@@ -1,9 +1,27 @@
+/*
+ * Copyright 2020 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.client.ParameterAssert;
 import org.junit.jupiter.api.Test;
+
+import java.util.Arrays;
 
 import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
@@ -19,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 /**
  * Unit tests for {@link PathCodec}.
  */
-public class PathCodecUnitTest {
+final class PathCodecUnitTest {
 
     private static final int dataType = PATH.getObjectId();
 
@@ -31,8 +49,8 @@ public class PathCodecUnitTest {
 
     @Test
     void decode() {
-        Path closedPath = Path.of(false, Point.of(-10.42, 3.14), Point.of(10.42, -3.14));
-        Path openPath = Path.of(true, Point.of(-10.42, 3.14), Point.of(10.42, -3.14));
+        Path closedPath = Path.closed(Point.of(-10.42, 3.14), Point.of(10.42, -3.14));
+        Path openPath = Path.open(Point.of(-10.42, 3.14), Point.of(10.42, -3.14));
 
         assertThat(new PathCodec(TEST).decode(encode(TEST, "((-10.42,3.14),(10.42,-3.14))"), dataType, FORMAT_TEXT, Path.class)).isEqualTo(closedPath);
         assertThat(new PathCodec(TEST).decode(encode(TEST, "[(-10.42,3.14),(10.42,-3.14)]"), dataType, FORMAT_TEXT, Path.class)).isEqualTo(openPath);
@@ -83,7 +101,7 @@ public class PathCodecUnitTest {
 
     @Test
     void doEncode() {
-        Path closedPath = Path.of(false, Point.of(-10.42, 3.14), Point.of(10.42, -3.14));
+        Path closedPath = Path.closed(Arrays.asList(Point.of(-10.42, 3.14), Point.of(10.42, -3.14)));
         ParameterAssert.assertThat(new PathCodec(TEST).doEncode(closedPath))
             .hasFormat(FORMAT_BINARY)
             .hasType(dataType)
@@ -96,7 +114,7 @@ public class PathCodecUnitTest {
                 .writeDouble(-3.14)
             );
 
-        Path openPath = Path.of(true, Point.of(-10.42, 3.14), Point.of(10.42, -3.14));
+        Path openPath = Path.open(Arrays.asList(Point.of(-10.42, 3.14), Point.of(10.42, -3.14)));
         ParameterAssert.assertThat(new PathCodec(TEST).doEncode(openPath))
             .hasFormat(FORMAT_BINARY)
             .hasType(dataType)
