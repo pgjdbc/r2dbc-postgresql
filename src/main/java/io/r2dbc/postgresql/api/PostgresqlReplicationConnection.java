@@ -35,7 +35,7 @@ public interface PostgresqlReplicationConnection extends Closeable {
     Mono<Void> close();
 
     /**
-     * Creates a replication slot for logical or physical replication.
+     * Create a replication slot for logical or physical replication.
      *
      * @param request description of the slot to create.
      * @return {@link Mono} emitting {@link ReplicationSlot} information once the slot was created.

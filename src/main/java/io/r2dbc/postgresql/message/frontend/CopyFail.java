@@ -37,7 +37,7 @@ public final class CopyFail implements FrontendMessage {
     private final String message;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param message an error message to report as the cause of failure
      * @throws IllegalArgumentException if {@code message} is {@code null}

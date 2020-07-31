@@ -35,7 +35,7 @@ public final class NotificationResponse implements BackendMessage {
     private final int processId;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param name      the name of the channel that the notify has been raised on
      * @param payload   the “payload” string passed from the notifying process

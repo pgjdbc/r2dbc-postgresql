@@ -72,7 +72,7 @@ public final class StartupMessage implements FrontendMessage {
     private final String username;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param applicationName the name of the application connecting to the database
      * @param database        the database to connect to. Defaults to the user name.

@@ -31,7 +31,7 @@ public final class AuthenticationMD5Password implements AuthenticationMessage {
     private final ByteBuffer salt;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param salt the salt to use when encrypting the password
      * @throws IllegalArgumentException if {@code salt} is {@code null}

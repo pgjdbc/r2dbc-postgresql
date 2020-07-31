@@ -35,7 +35,7 @@ public final class RowDescription implements BackendMessage {
     private final List<Field> fields;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param fields the fields
      * @throws IllegalArgumentException if {@code fields} is {@code null}
@@ -121,7 +121,7 @@ public final class RowDescription implements BackendMessage {
         private final int table;
 
         /**
-         * Creates a new message.
+         * Create a new message.
          *
          * @param column           the attribute number of the column
          * @param dataType         the object ID of the field's data type

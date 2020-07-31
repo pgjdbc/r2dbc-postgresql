@@ -31,7 +31,7 @@ public final class BackendKeyData implements BackendMessage {
     private final int secretKey;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param processId the process ID of this backend
      * @param secretKey the secret key of this backend

@@ -34,7 +34,7 @@ public final class Line {
     }
 
     /**
-     * Creates a new {@link Line} given parameters {@code a}, {@code b} and {@code c} of the linear equation.
+     * Create a new {@link Line} given parameters {@code a}, {@code b} and {@code c} of the linear equation.
      *
      * @param a coefficient of x
      * @param b coefficient of y
@@ -46,7 +46,7 @@ public final class Line {
     }
 
     /**
-     * Creates a new {@link Line} defined by two points.
+     * Create a new {@link Line} defined by two points.
      *
      * @param p1 first point on the line
      * @param p2 second point on the line
@@ -61,7 +61,7 @@ public final class Line {
     }
 
     /**
-     * Creates a new {@link Line} defined by two points.
+     * Create a new {@link Line} defined by two points.
      *
      * @param x1 the x-coordinate of the first point on the line
      * @param y1 the y-coordinate of the first point on the line

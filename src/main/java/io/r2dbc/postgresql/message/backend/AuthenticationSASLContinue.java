@@ -31,7 +31,7 @@ public final class AuthenticationSASLContinue implements AuthenticationMessage {
     private final ByteBuffer data;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param data SASL data, specific to the SASL mechanism being used
      * @throws IllegalArgumentException if {@code data} is {@code null}

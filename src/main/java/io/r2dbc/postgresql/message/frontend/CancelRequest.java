@@ -40,7 +40,7 @@ public final class CancelRequest implements FrontendMessage {
     private final int secretKey;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param processId the process id of the target backend
      * @param secretKey the secret key for the target backend

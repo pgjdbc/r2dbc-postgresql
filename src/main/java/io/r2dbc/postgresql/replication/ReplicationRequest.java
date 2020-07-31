@@ -45,7 +45,7 @@ public abstract class ReplicationRequest {
     }
 
     /**
-     * Creates a new builder to configure a logical {@link ReplicationRequest}.
+     * Create a new builder to configure a logical {@link ReplicationRequest}.
      *
      * @return a new builder to configure a logical {@link ReplicationRequest}.
      */
@@ -54,7 +54,7 @@ public abstract class ReplicationRequest {
     }
 
     /**
-     * Creates a new builder to configure a physical {@link ReplicationRequest}.
+     * Create a new builder to configure a physical {@link ReplicationRequest}.
      *
      * @return a new builder to configure a physical {@link ReplicationRequest}.
      */
@@ -63,7 +63,7 @@ public abstract class ReplicationRequest {
     }
 
     /**
-     * Creates a new builder to configure a logical {@link ReplicationRequest} from {@link ReplicationSlot}.
+     * Create a new builder to configure a logical {@link ReplicationRequest} from {@link ReplicationSlot}.
      *
      * @param replicationSlot the replication slot to initialize {@link LogicalReplicationRequestBuilder}.
      * @return a new builder to configure a logical {@link ReplicationRequest} from {@link ReplicationSlot}.

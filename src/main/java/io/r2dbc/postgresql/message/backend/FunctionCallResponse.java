@@ -34,7 +34,7 @@ public final class FunctionCallResponse implements BackendMessage {
     private final ByteBuffer value;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param value the value of the function result, in the format indicated by the associated format code.
      */

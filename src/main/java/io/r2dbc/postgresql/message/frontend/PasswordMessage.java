@@ -37,7 +37,7 @@ public final class PasswordMessage implements FrontendMessage {
     private final CharSequence password;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param password the password (encrypted, if requested)
      * @throws IllegalArgumentException if {@code password} is {@code null}

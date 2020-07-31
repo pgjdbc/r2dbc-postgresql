@@ -41,7 +41,7 @@ abstract class AbstractCodec<T> implements Codec<T> {
     private final Class<T> type;
 
     /**
-     * Creates a new {@link AbstractCodec}.
+     * Create a new {@link AbstractCodec}.
      *
      * @param type the type handled by this codec
      */

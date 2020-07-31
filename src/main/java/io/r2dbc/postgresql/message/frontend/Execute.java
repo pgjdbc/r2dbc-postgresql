@@ -50,7 +50,7 @@ public final class Execute implements FrontendMessage, FrontendMessage.DirectEnc
     private final int rows;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param name the name of the portal to execute (an empty string selects the unnamed portal)
      * @param rows maximum number of rows to return, if portal contains a query that returns rows (ignored otherwise). Zero denotes “no limit”.

@@ -33,7 +33,7 @@ public final class PasswordAuthenticationHandler implements AuthenticationHandle
     private final String username;
 
     /**
-     * Creates a new handler.
+     * Create a new handler.
      *
      * @param password the password to use for authentication
      * @param username the username to use for authentication

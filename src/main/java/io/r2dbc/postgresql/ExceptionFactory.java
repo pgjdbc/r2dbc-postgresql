@@ -43,7 +43,7 @@ final class ExceptionFactory {
     }
 
     /**
-     * Creates a {@link ExceptionFactory} associated with a SQL query.
+     * Create a {@link ExceptionFactory} associated with a SQL query.
      *
      * @param sql
      * @return
@@ -53,7 +53,7 @@ final class ExceptionFactory {
     }
 
     /**
-     * Creates a {@link R2dbcException} from an {@link ErrorResponse}.
+     * Create a {@link R2dbcException} from an {@link ErrorResponse}.
      *
      * @param response the response that contains the error details.
      * @param sql      underlying SQL.

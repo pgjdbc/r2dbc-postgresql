@@ -44,7 +44,7 @@ public final class Describe implements FrontendMessage, FrontendMessage.DirectEn
     private final ExecutionType type;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param name The name of the prepared statement or portal to describe (an empty string selects the unnamed prepared statement or portal)
      * @param type the type to close

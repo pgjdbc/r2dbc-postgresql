@@ -29,7 +29,7 @@ public final class ReadyForQuery implements BackendMessage {
     private final TransactionStatus transactionStatus;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param transactionStatus the current backend transaction status
      * @throws IllegalArgumentException if {@code transactionStatus} is {@code null}

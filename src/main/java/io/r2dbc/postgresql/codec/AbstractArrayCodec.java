@@ -54,7 +54,7 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
     private final Class<T> componentType;
 
     /**
-     * Creates a new {@link AbstractArrayCodec}.
+     * Create a new {@link AbstractArrayCodec}.
      *
      * @param byteBufAllocator the buffer allocator
      * @param componentType    the type handled by this codec

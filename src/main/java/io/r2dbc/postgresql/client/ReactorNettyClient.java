@@ -131,7 +131,7 @@ public final class ReactorNettyClient implements Client {
     }
 
     /**
-     * Creates a new frame processor connected to a given TCP connection.
+     * Create a new frame processor connected to a given TCP connection.
      *
      * @param connection the TCP connection
      * @param settings   the connection settings
@@ -318,7 +318,7 @@ public final class ReactorNettyClient implements Client {
     }
 
     /**
-     * Creates a new frame processor connected to a given host.
+     * Create a new frame processor connected to a given host.
      *
      * @param host the host to connect to
      * @param port the port to connect to
@@ -331,7 +331,7 @@ public final class ReactorNettyClient implements Client {
     }
 
     /**
-     * Creates a new frame processor connected to a given host.
+     * Create a new frame processor connected to a given host.
      *
      * @param host           the host to connect to
      * @param port           the port to connect to
@@ -349,7 +349,7 @@ public final class ReactorNettyClient implements Client {
     }
 
     /**
-     * Creates a new frame processor connected to a given {@link SocketAddress}.
+     * Create a new frame processor connected to a given {@link SocketAddress}.
      *
      * @param socketAddress the socketAddress to connect to
      * @param settings      the connection settings

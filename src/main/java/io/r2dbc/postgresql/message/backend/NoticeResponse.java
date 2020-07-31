@@ -30,7 +30,7 @@ public final class NoticeResponse implements BackendMessage {
     private final List<Field> fields;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param fields the fields
      * @throws IllegalArgumentException if {@code fields} is {@code null}

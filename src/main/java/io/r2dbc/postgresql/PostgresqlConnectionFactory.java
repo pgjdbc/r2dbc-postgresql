@@ -69,7 +69,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
     private final Extensions extensions;
 
     /**
-     * Creates a new connection factory.
+     * Create a new connection factory.
      *
      * @param configuration the configuration to use connections
      * @throws IllegalArgumentException if {@code configuration} is {@code null}
@@ -122,7 +122,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
     }
 
     /**
-     * Creates a new {@link io.r2dbc.postgresql.api.PostgresqlReplicationConnection} for interaction with replication streams.
+     * Create a new {@link io.r2dbc.postgresql.api.PostgresqlReplicationConnection} for interaction with replication streams.
      *
      * @return a new {@link io.r2dbc.postgresql.api.PostgresqlReplicationConnection} for interaction with replication streams.
      */

@@ -47,7 +47,7 @@ abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> {
     private static final Set<PostgresqlObjectId> SUPPORTED_TYPES = EnumSet.of(INT2, INT4, INT8, FLOAT4, FLOAT8, NUMERIC, OID);
 
     /**
-     * Creates a new {@link AbstractCodec}.
+     * Create a new {@link AbstractCodec}.
      *
      * @param type the type handled by this codec
      */

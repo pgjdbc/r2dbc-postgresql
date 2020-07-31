@@ -44,7 +44,7 @@ public final class Close implements FrontendMessage, FrontendMessage.DirectEncod
     private final ExecutionType type;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param name the name of the prepared statement or portal to close (an empty string selects the unnamed prepared statement or portal)
      * @param type the type to close

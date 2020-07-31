@@ -31,7 +31,7 @@ public final class AuthenticationGSSContinue implements AuthenticationMessage {
     private final ByteBuffer authenticationData;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param authenticationData GSSAPI or SSPI authentication data
      * @throws IllegalArgumentException if {@code authenticationData} is {@code null}

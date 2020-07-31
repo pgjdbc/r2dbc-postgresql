@@ -31,7 +31,7 @@ public final class AuthenticationSASLFinal implements AuthenticationMessage {
     private final ByteBuffer additionalData;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param additionalData SASL outcome "additional data", specific to the SASL mechanism being used
      * @throws IllegalArgumentException if {@code additionalData} is {@code null}
