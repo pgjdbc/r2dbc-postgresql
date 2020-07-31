@@ -19,8 +19,6 @@ package io.r2dbc.postgresql.codec;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 
-import java.util.List;
-
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.CIRCLE;
 
 final class CircleCodec extends AbstractGeometryCodec<Circle> {
@@ -31,19 +29,13 @@ final class CircleCodec extends AbstractGeometryCodec<Circle> {
 
     @Override
     Circle doDecodeBinary(ByteBuf byteBuffer) {
-        double x = byteBuffer.readDouble();
-        double y = byteBuffer.readDouble();
-        double r = byteBuffer.readDouble();
-        return new Circle(Point.of(x, y), r);
+        return Circle.of(Point.of(byteBuffer.readDouble(), byteBuffer.readDouble()), byteBuffer.readDouble());
     }
 
     @Override
     Circle doDecodeText(String text) {
-        List<String> tokens = tokenizeTextData(text);
-        double x = Double.parseDouble(tokens.get(0));
-        double y = Double.parseDouble(tokens.get(1));
-        double r = Double.parseDouble(tokens.get(2));
-        return new Circle(Point.of(x, y), r);
+        TokenStream stream = getTokenStream(text);
+        return Circle.of(Point.of(stream.nextDouble(), stream.nextDouble()), stream.nextDouble());
     }
 
     @Override

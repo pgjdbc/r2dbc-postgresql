@@ -1,5 +1,7 @@
 package io.r2dbc.postgresql.codec;
 
+import io.r2dbc.postgresql.util.Assert;
+
 import java.util.Objects;
 
 /**
@@ -49,8 +51,12 @@ public final class Line {
      * @param p1 first point on the line
      * @param p2 second point on the line
      * @return the new {@link Line} object
+     * @throws IllegalArgumentException if {@code p1} or {@code p2} is {@code null}
      */
     public static Line of(Point p1, Point p2) {
+        Assert.requireNonNull(p1, "p1 must not be null");
+        Assert.requireNonNull(p2, "p2 must not be null");
+
         return of(p1.getX(), p1.getY(), p2.getX(), p2.getY());
     }
 
@@ -64,7 +70,9 @@ public final class Line {
      * @return the new {@link Line} object
      */
     public static Line of(double x1, double y1, double x2, double y2) {
+
         double a, b, c;
+
         if (x1 == x2) {
             a = -1;
             b = 0;
@@ -73,6 +81,7 @@ public final class Line {
             b = -1;
         }
         c = y1 - a * x1;
+
         return of(a, b, c);
     }
 
@@ -109,7 +118,7 @@ public final class Line {
 
     @Override
     public String toString() {
-        return "{" + this.a + "," + this.b + "," + this.c + '}';
+        return String.format("{%s,%s,%s}", this.a, this.b, this.c);
     }
 
 }

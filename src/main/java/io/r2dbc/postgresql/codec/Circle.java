@@ -22,6 +22,8 @@ import io.r2dbc.postgresql.util.Assert;
  * Value object that maps to the {@code circle} datatype in Postgres.
  * <p>
  * Uses {@code double} to represent the coordinates.
+ *
+ * @since 0.8.5
  */
 public final class Circle {
 
@@ -29,13 +31,33 @@ public final class Circle {
 
     private final double radius;
 
-    public Circle(Point center, double radius) {
+    private Circle(Point center, double radius) {
         this.center = Assert.requireNonNull(center, "center must not be null");
         this.radius = radius;
     }
 
-    public Circle(double x, double y, double r) {
-        this(Point.of(x, y), r);
+    /**
+     * Create a new {@link Circle} given {@link Point center} and {@code radius}.
+     *
+     * @param center the center point
+     * @param radius the radius
+     * @return the new {@link Circle} object
+     * @throws IllegalArgumentException if {@code radius} is {@code null}
+     */
+    public static Circle of(Point center, double radius) {
+        return new Circle(center, radius);
+    }
+
+    /**
+     * Create a new {@link Circle} given center coordinates {@code x/y} and {@code radius}.
+     *
+     * @param x      the x center coordinate
+     * @param y      the y center coordinate
+     * @param radius the radius
+     * @return the new {@link Circle} object
+     */
+    public static Circle of(double x, double y, double radius) {
+        return new Circle(Point.of(x, y), radius);
     }
 
     public Point getCenter() {
@@ -67,7 +89,7 @@ public final class Circle {
 
     @Override
     public String toString() {
-        return "<" + this.center.toString() + "," + this.radius + ">";
+        return String.format("<%s,%s>", this.center.toString(), this.radius);
     }
 
 }

@@ -20,6 +20,8 @@ package io.r2dbc.postgresql.codec;
  * Value object that maps to the {@code point} datatype in Postgres.
  * <p>
  * Uses {@code double} to represent the coordinates.
+ *
+ * @since 0.8.4
  */
 public final class Point {
 
@@ -91,7 +93,7 @@ public final class Point {
 
     @Override
     public String toString() {
-        return "(" + this.x + "," + this.y + ")";
+        return String.format("(%s,%s)", this.x, this.y);
     }
 
 }

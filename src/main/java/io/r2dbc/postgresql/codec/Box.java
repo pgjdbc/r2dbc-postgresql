@@ -8,11 +8,19 @@ import java.util.Objects;
  * Value object that maps to the {@code box} datatype in Postgres.
  * <p>
  * Uses {@code double} to represent the coordinates.
+ *
+ * @since 0.8.5
  */
 public final class Box {
 
+    /**
+     * Typically upper right corner.
+     */
     private final Point a;
 
+    /**
+     * Typically lower left corner.
+     */
     private final Point b;
 
     private Box(Point a, Point b) {
@@ -20,6 +28,15 @@ public final class Box {
         this.b = Assert.requireNonNull(b, "point B must not be null");
     }
 
+    /**
+     * Create a new {@link Box} given parameters {@link Point points }{@code a} and {@code b}.
+     * <p>Any two opposite corners can be supplied on input, but the values will be reordered as needed to store the upper right and lower left corners, in that order.
+     *
+     * @param a first corner
+     * @param b second corner
+     * @return the new {@link Box} object
+     * @throws IllegalArgumentException if {@code a} or {@code b} is {@code null}
+     */
     public static Box of(Point a, Point b) {
         return new Box(a, b);
     }
@@ -52,7 +69,7 @@ public final class Box {
 
     @Override
     public String toString() {
-        return "(" + this.a + "," + this.b + ')';
+        return String.format("(%s,%s)", this.a, this.b);
     }
 
 }
