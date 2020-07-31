@@ -42,7 +42,7 @@ final class Extensions {
     }
 
     /**
-     * Creates a new {@link Extensions} object.
+     * Create a new {@link Extensions} object.
      *
      * @param extensions the extensions to hold.
      * @return a new {@link Extensions} object.

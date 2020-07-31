@@ -54,7 +54,7 @@ public final class Parse implements FrontendMessage {
     private final String query;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param name       the name of the destination prepared statement (an empty string selects the unnamed prepared statement)
      * @param parameters the object IDs of the parameter data types. Placing a zero here is equivalent to leaving the type unspecified.

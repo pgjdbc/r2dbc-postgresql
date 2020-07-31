@@ -37,7 +37,7 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
     private final List<Codec<?>> codecs;
 
     /**
-     * Creates a new instance of {@link DefaultCodecs}.
+     * Create a new instance of {@link DefaultCodecs}.
      *
      * @param byteBufAllocator the {@link ByteBufAllocator} to use for encoding
      */

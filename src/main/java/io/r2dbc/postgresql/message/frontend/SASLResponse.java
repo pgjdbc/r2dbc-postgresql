@@ -39,7 +39,7 @@ public final class SASLResponse implements FrontendMessage {
     private final ByteBuffer data;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param data SASL mechanism specific message data
      * @throws IllegalArgumentException if {@code data} is {@code null}

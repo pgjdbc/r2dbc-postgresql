@@ -49,7 +49,7 @@ public final class Operators {
      * <p>
      * Draining data is required to complete a particular request/response window and clear the protocol state as client code expects to start a request/response conversation without leaving
      * previous frames on the stack.
-     * <p>Propagates the {@link Subscription#cancel()}  signal to a {@link Runnable consumer}.
+     * <p>Propagate the {@link Subscription#cancel()}  signal to a {@link Runnable consumer}.
      *
      * @param source         the source to decorate.
      * @param cancelConsumer {@link Runnable} notified when the resulting {@link Flux} receives a {@link Subscription#cancel() cancel} signal.

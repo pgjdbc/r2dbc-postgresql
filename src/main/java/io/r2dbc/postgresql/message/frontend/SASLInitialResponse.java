@@ -43,7 +43,7 @@ public final class SASLInitialResponse implements FrontendMessage {
     private final String name;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param initialResponse SASL mechanism specific "Initial Response"
      * @param name            name of the SASL authentication mechanism that the client selected

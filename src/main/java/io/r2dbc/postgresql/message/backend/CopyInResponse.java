@@ -28,7 +28,7 @@ import java.util.Collection;
 public final class CopyInResponse extends AbstractCopyResponse {
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param columnFormats the column formats
      * @param overallFormat the overall format

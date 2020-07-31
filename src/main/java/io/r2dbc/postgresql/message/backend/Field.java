@@ -35,7 +35,7 @@ public final class Field {
     private final String value;
 
     /**
-     * Creates a new field.
+     * Create a new field.
      *
      * @param type  the type
      * @param value the value

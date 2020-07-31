@@ -31,7 +31,7 @@ public final class ParameterDescription implements BackendMessage {
     private final List<Integer> parameters;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param parameters the object IDs of the parameter data types
      * @throws IllegalArgumentException if {@code parameters} is {@code null}

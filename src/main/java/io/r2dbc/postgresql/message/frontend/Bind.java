@@ -69,7 +69,7 @@ public final class Bind implements FrontendMessage, FrontendMessage.DirectEncode
     private final String source;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param name             the name of the destination portal (an empty string selects the unnamed portal)
      * @param parameterFormats the parameter formats

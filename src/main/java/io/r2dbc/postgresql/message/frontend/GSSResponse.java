@@ -39,7 +39,7 @@ public final class GSSResponse implements FrontendMessage {
     private final ByteBuffer data;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param data GSSAPI/SSPI specific message data
      * @throws IllegalArgumentException if {@code data} is {@code null}

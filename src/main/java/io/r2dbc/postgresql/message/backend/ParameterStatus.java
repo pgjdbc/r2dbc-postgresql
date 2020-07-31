@@ -33,7 +33,7 @@ public final class ParameterStatus implements BackendMessage {
     private final String value;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param name  the name of the run-time parameter being reported
      * @param value the current value of the parameter

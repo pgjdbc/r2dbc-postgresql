@@ -54,7 +54,7 @@ public abstract class Json {
     }
 
     /**
-     * Creates a {@link Json} object from a {@link ByteBuffer}.
+     * Create a {@link Json} object from a {@link ByteBuffer}.
      *
      * @param buffer the JSON value as {@link ByteBuffer}
      * @return {@link Json} object from a {@link ByteBuffer}.
@@ -65,7 +65,7 @@ public abstract class Json {
     }
 
     /**
-     * Creates a {@link Json} object from a {@link ByteBuf}.
+     * Create a {@link Json} object from a {@link ByteBuf}.
      * <p>The {@link ByteBuf} is released after encoding the value.
      *
      * @param buffer the JSON value as {@link ByteBuf}
@@ -77,7 +77,7 @@ public abstract class Json {
     }
 
     /**
-     * Creates a {@link Json} object from a {@link InputStream}.
+     * Create a {@link Json} object from a {@link InputStream}.
      * <p>The {@link InputStream} is {@link InputStream#close() closed} after encoding the value.
      *
      * @param inputStream the JSON value as {@link InputStream}
@@ -89,7 +89,7 @@ public abstract class Json {
     }
 
     /**
-     * Creates a {@link Json} object from a {@code byte[] value}.
+     * Create a {@link Json} object from a {@code byte[] value}.
      *
      * @param value the JSON value as {@code byte[]}
      * @return {@link Json} object from a {@code byte[] value}.
@@ -100,7 +100,7 @@ public abstract class Json {
     }
 
     /**
-     * Creates a {@link Json} object from a {@link String}. Uses UTF-8 encoding to convert the value into its binary representation.
+     * Create a {@link Json} object from a {@link String}. Uses UTF-8 encoding to convert the value into its binary representation.
      *
      * @param value the JSON value as {@link String}
      * @return {@link Json} object from a {@link String}.

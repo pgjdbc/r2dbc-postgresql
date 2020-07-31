@@ -49,7 +49,7 @@ public final class FunctionCall implements FrontendMessage {
     private final Format resultFormat;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param argumentFormats the argument formats
      * @param arguments       the value of the arguments, in the format indicated by the associated format

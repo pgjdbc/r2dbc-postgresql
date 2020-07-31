@@ -33,7 +33,7 @@ public final class DataRow extends AbstractReferenceCounted implements BackendMe
     private final ByteBuf[] columns;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param columns the values of the columns
      * @throws IllegalArgumentException if {@code columns} is {@code null}

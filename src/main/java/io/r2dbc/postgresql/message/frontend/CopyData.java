@@ -39,7 +39,7 @@ public final class CopyData extends AbstractReferenceCounted implements Frontend
     private final ByteBuf data;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param data data that forms part of a {@code COPY} data stream
      * @throws IllegalArgumentException if {@code data} is {@code null}

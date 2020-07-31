@@ -35,7 +35,7 @@ public final class AuthenticationSASL implements AuthenticationMessage {
     private final List<String> authenticationMechanisms;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param authenticationMechanisms the names of SASL authentication mechanisms
      * @throws IllegalArgumentException if {@code authenticationMechanisms} is {@code null}

@@ -38,7 +38,7 @@ public final class Parameter {
     private final Publisher<? extends ByteBuf> value;
 
     /**
-     * Creates a new instance.
+     * Create a new instance.
      *
      * @param format the {@link Format} of the parameter
      * @param type   the type of the parameter

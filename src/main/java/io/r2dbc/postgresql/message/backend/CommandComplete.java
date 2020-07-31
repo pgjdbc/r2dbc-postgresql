@@ -38,7 +38,7 @@ public final class CommandComplete implements BackendMessage {
     private final Integer rows;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param command the command that was completed
      * @param rowId   the object ID of the inserted row

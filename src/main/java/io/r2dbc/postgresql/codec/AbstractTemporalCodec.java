@@ -52,7 +52,7 @@ abstract class AbstractTemporalCodec<T extends Temporal> extends AbstractCodec<T
     private static final Set<PostgresqlObjectId> SUPPORTED_TYPES = EnumSet.of(DATE, TIMESTAMP, TIMESTAMPTZ, TIME, TIMETZ);
 
     /**
-     * Creates a new {@link AbstractTemporalCodec}.
+     * Create a new {@link AbstractTemporalCodec}.
      *
      * @param type the type handled by this codec
      */

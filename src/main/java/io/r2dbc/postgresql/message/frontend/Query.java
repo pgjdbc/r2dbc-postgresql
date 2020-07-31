@@ -37,7 +37,7 @@ public final class Query implements FrontendMessage {
     private final String query;
 
     /**
-     * Creates a new message.
+     * Create a new message.
      *
      * @param query the query string
      * @throws IllegalArgumentException if {@code query} is {@code null}

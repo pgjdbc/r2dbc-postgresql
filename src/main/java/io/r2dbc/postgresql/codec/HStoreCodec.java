@@ -59,7 +59,7 @@ final class HStoreCodec implements Codec<Map> {
     private final int oid;
 
     /**
-     * Creates a new {@link HStoreCodec}.
+     * Create a new {@link HStoreCodec}.
      *
      * @param byteBufAllocator the type handled by this codec
      */
