@@ -15,7 +15,11 @@
  */
 
 package io.r2dbc.postgresql.codec;
+
 import io.r2dbc.postgresql.message.Format;
+import io.r2dbc.postgresql.util.TestByteBufAllocator;
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
@@ -24,11 +28,6 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.JSONB;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-
-import io.netty.buffer.UnpooledByteBufAllocator;
-
-import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for {@link EnumCodec}.
@@ -48,24 +47,24 @@ final class EnumCodecUnitTests {
 
         Assertions.assertThatIllegalArgumentException().isThrownBy(() -> builder.withEnum("foo", MyOtherEnum.class));
     }
-    
+
     @Test
     void canDecode() {
-		EnumCodec<EnumCodecUnitTests.MyEnum> codec = 
-				new EnumCodec<EnumCodecUnitTests.MyEnum>(new UnpooledByteBufAllocator(true), MyEnum.class, 1);
-		
-		assertThat(codec.canDecode(1, Format.FORMAT_TEXT, MyEnum.class)).isTrue();
-		assertThat(codec.canDecode(1, FORMAT_BINARY, MyEnum.class)).isTrue();
-		assertThat(codec.canDecode(1, FORMAT_BINARY, Object.class)).isTrue();
-		assertThat(codec.canDecode(VARCHAR.getObjectId(), FORMAT_BINARY, MyEnum.class)).isFalse();
-		assertThat(codec.canDecode(JSON.getObjectId(), FORMAT_TEXT, MyEnum.class)).isFalse();
-		assertThat(codec.canDecode(JSONB.getObjectId(), FORMAT_BINARY, MyEnum.class)).isFalse();
+        EnumCodec<EnumCodecUnitTests.MyEnum> codec =
+            new EnumCodec<>(TestByteBufAllocator.TEST, MyEnum.class, 1);
+
+        assertThat(codec.canDecode(1, Format.FORMAT_TEXT, MyEnum.class)).isTrue();
+        assertThat(codec.canDecode(1, FORMAT_BINARY, MyEnum.class)).isTrue();
+        assertThat(codec.canDecode(1, FORMAT_BINARY, Object.class)).isTrue();
+        assertThat(codec.canDecode(VARCHAR.getObjectId(), FORMAT_BINARY, MyEnum.class)).isFalse();
+        assertThat(codec.canDecode(JSON.getObjectId(), FORMAT_TEXT, MyEnum.class)).isFalse();
+        assertThat(codec.canDecode(JSONB.getObjectId(), FORMAT_BINARY, MyEnum.class)).isFalse();
     }
-    
+
     @Test
-    void canDecodeNoClass() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new EnumCodec<EnumCodecUnitTests.MyEnum>(
-        		new UnpooledByteBufAllocator(true), MyEnum.class, 1).canDecode(1, Format.FORMAT_TEXT, null))
+    void canDecodeWithoutClassShouldThrowException() {
+        assertThatIllegalArgumentException().isThrownBy(() -> new EnumCodec<>(
+            TestByteBufAllocator.TEST, MyEnum.class, 1).canDecode(1, Format.FORMAT_TEXT, null))
             .withMessage("type must not be null");
     }
 
