@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 
-public class MockPostgresqlResult implements PostgresqlResult {
+public final class MockPostgresqlResult implements PostgresqlResult {
 
     private final Mono<RowMetadata> rowMetadata;
 

@@ -21,7 +21,7 @@ import io.r2dbc.spi.ValidationDepth;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-public class MockPostgresqlConnection implements PostgresqlConnection {
+public final class MockPostgresqlConnection implements PostgresqlConnection {
 
     private final MockPostgresqlStatement statement;
 
@@ -62,11 +62,6 @@ public class MockPostgresqlConnection implements PostgresqlConnection {
     @Override
     public Flux<Notification> getNotifications() {
         return Flux.empty();
-    }
-
-    @Override
-    public Mono<Void> cancelRequest() {
-        return Mono.empty();
     }
 
     @Override

@@ -21,7 +21,7 @@ import reactor.core.publisher.Flux;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MockPostgresqlStatement implements PostgresqlStatement {
+public final class MockPostgresqlStatement implements PostgresqlStatement {
 
     private final Flux<PostgresqlResult> results;
 
