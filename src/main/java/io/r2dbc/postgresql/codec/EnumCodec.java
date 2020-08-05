@@ -148,13 +148,15 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
         }
 
         /**
-         * Configure the codec registration priority. Default {@link RegistrationPriority#LAST}
+         * Configure the codec registration priority. Default {@link RegistrationPriority#LAST}.
          *
          * @param registrationPriority the registration priority
          * @return this {@link Builder}
+         * @throws IllegalArgumentException of {@code registrationPriority} is {@code null}.
+         * @since 0.9
          */
         public Builder withRegistrationPriority(RegistrationPriority registrationPriority) {
-            this.registrationPriority = registrationPriority;
+            this.registrationPriority = Assert.requireNonNull(registrationPriority, "registrationPriority must not be null");
             return this;
         }
 
@@ -184,7 +186,8 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
 
                         missing.remove(it.getName());
                         logger.debug(String.format("Registering codec for type '%s' with oid %d using Java enum type '%s'", it.getName(), it.getOid(), enumClass.getName()));
-                        if (registrationPriority == RegistrationPriority.LAST) {
+
+                        if (this.registrationPriority == RegistrationPriority.LAST) {
                             registry.addLast(new EnumCodec(allocator, enumClass, it.getOid()));
                         } else {
                             registry.addFirst(new EnumCodec(allocator, enumClass, it.getOid()));
@@ -194,7 +197,6 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
                         if (!missing.isEmpty()) {
                             logger.warn(String.format("Could not lookup enum types for: %s", missing));
                         }
-
                     }).then();
             };
         }
