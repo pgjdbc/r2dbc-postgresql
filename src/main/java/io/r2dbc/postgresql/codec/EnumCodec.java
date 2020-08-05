@@ -119,7 +119,9 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
      */
     public static final class Builder {
 
-        private final Map<String, EnumMappingConfig> mapping = new LinkedHashMap<>();
+        private final Map<String, Class<? extends Enum<?>>> mapping = new LinkedHashMap<>();
+
+        private RegistrationPriority registrationPriority = RegistrationPriority.LAST;
 
         /**
          * Add a Postgres enum type to {@link Enum} mapping.
@@ -129,18 +131,6 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
          * @return this {@link Builder}
          */
         public Builder withEnum(String name, Class<? extends Enum<?>> enumClass) {
-            return withEnum(name, enumClass, RegistrationPriority.LAST);
-        }
-
-        /**
-         * Add a Postgres enum type to {@link Enum} mapping.
-         *
-         * @param name      name of the Postgres enum type
-         * @param enumClass the corresponding Java type
-         * @param priority  the codec registration priority
-         * @return this {@link Builder}
-         */
-        public Builder withEnum(String name, Class<? extends Enum<?>> enumClass, RegistrationPriority priority) {
             Assert.requireNotEmpty(name, "Postgres type name must not be null");
             Assert.requireNonNull(enumClass, "Enum class must not be null");
             Assert.isTrue(enumClass.isEnum(), String.format("Enum class %s must be an enum type", enumClass.getName()));
@@ -149,11 +139,22 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
                 throw new IllegalArgumentException(String.format("Builder contains already a mapping for Postgres type %s", name));
             }
 
-            if (this.mapping.values().stream().anyMatch(config -> config.enumClass.equals(enumClass))) {
+            if (this.mapping.containsValue(enumClass)) {
                 throw new IllegalArgumentException(String.format("Builder contains already a mapping for Java type %s", enumClass.getName()));
             }
 
-            this.mapping.put(name, new EnumMappingConfig(enumClass, priority));
+            this.mapping.put(name, enumClass);
+            return this;
+        }
+
+        /**
+         * Configure the codec registration priority. Default {@link RegistrationPriority#LAST}
+         *
+         * @param registrationPriority the registration priority
+         * @return this {@link Builder}
+         */
+        public Builder withRegistrationPriority(RegistrationPriority registrationPriority) {
+            this.registrationPriority = registrationPriority;
             return this;
         }
 
@@ -166,7 +167,7 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
         @SuppressWarnings({"unchecked", "rawtypes"})
         public CodecRegistrar build() {
 
-            Map<String, EnumMappingConfig> mapping = new LinkedHashMap<>(this.mapping);
+            Map<String, Class<? extends Enum<?>>> mapping = new LinkedHashMap<>(this.mapping);
 
             return (connection, allocator, registry) -> {
 
@@ -175,18 +176,18 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
                     .filter(PostgresTypes.PostgresType::isEnum)
                     .doOnNext(it -> {
 
-                        EnumMappingConfig mappingConfig = mapping.get(it.getName());
-                        if (mappingConfig == null) {
+                        Class<? extends Enum<?>> enumClass = mapping.get(it.getName());
+                        if (enumClass == null) {
                             logger.warn(String.format("Cannot find Java type for enum type '%s' with oid %d. Known types are: %s", it.getName(), it.getOid(), mapping));
                             return;
                         }
 
                         missing.remove(it.getName());
-                        logger.debug(String.format("Registering codec for type '%s' with oid %d using Java enum type '%s'", it.getName(), it.getOid(), mappingConfig.getClass().getName()));
-                        if (mappingConfig.registrationPriority == RegistrationPriority.LAST) {
-                            registry.addLast(new EnumCodec(allocator, mappingConfig.getClass(), it.getOid()));
+                        logger.debug(String.format("Registering codec for type '%s' with oid %d using Java enum type '%s'", it.getName(), it.getOid(), enumClass.getName()));
+                        if (registrationPriority == RegistrationPriority.LAST) {
+                            registry.addLast(new EnumCodec(allocator, enumClass, it.getOid()));
                         } else {
-                            registry.addFirst(new EnumCodec(allocator, mappingConfig.getClass(), it.getOid()));
+                            registry.addFirst(new EnumCodec(allocator, enumClass, it.getOid()));
                         }
                     }).doOnComplete(() -> {
 
@@ -204,19 +205,6 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
         public enum RegistrationPriority {
             FIRST,
             LAST
-        }
-
-        private static final class EnumMappingConfig {
-
-            private final Class<? extends Enum<?>> enumClass;
-
-            private final RegistrationPriority registrationPriority;
-
-            EnumMappingConfig(Class<? extends Enum<?>> enumClass, RegistrationPriority registrationPriority) {
-                this.enumClass = enumClass;
-                this.registrationPriority = registrationPriority;
-            }
-
         }
 
     }

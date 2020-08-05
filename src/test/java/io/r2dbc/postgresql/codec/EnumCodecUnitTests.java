@@ -25,11 +25,16 @@ import io.r2dbc.spi.test.MockRow;
 import io.r2dbc.spi.test.MockRowMetadata;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.reactivestreams.Publisher;
 import reactor.test.StepVerifier;
 
 import static io.r2dbc.postgresql.codec.EnumCodec.Builder.RegistrationPriority;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.only;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 /**
  * Unit tests for {@link EnumCodec}.
@@ -56,11 +61,12 @@ final class EnumCodecUnitTests {
     void shouldRegisterCodecAsFirst() {
         CodecRegistrar codecRegistrar = EnumCodec
             .builder()
-            .withEnum("foo", MyEnum.class, RegistrationPriority.FIRST)
+            .withRegistrationPriority(RegistrationPriority.FIRST)
+            .withEnum("foo", MyEnum.class)
             .build();
 
-        ByteBufAllocator mockByteBufAllocator = Mockito.mock(ByteBufAllocator.class);
-        CodecRegistry mockCodecRegistry = Mockito.mock(CodecRegistry.class);
+        ByteBufAllocator mockByteBufAllocator = mock(ByteBufAllocator.class);
+        CodecRegistry mockCodecRegistry = mock(CodecRegistry.class);
 
         MockPostgresqlStatement mockPostgresqlStatement = MockPostgresqlStatement.builder()
             .result(MockPostgresqlResult.builder()
@@ -77,20 +83,21 @@ final class EnumCodecUnitTests {
         Publisher<Void> register = codecRegistrar.register(mockPostgresqlConnection, mockByteBufAllocator, mockCodecRegistry);
         StepVerifier.create(register).verifyComplete();
 
-        Mockito.verify(mockCodecRegistry, Mockito.only()).addFirst(Mockito.any(EnumCodec.class));
-        Mockito.verify(mockCodecRegistry, Mockito.never()).addLast(Mockito.any(EnumCodec.class));
+        verify(mockCodecRegistry, only()).addFirst(any(EnumCodec.class));
+        verify(mockCodecRegistry, never()).addLast(any(EnumCodec.class));
     }
 
     @Test
     void shouldRegisterCodecAsLast() {
         CodecRegistrar codecRegistrar = EnumCodec
             .builder()
-            .withEnum("foo", MyEnum.class, RegistrationPriority.LAST)
+            .withRegistrationPriority(RegistrationPriority.LAST)
+            .withEnum("foo", MyEnum.class)
             .withEnum("bar", MyOtherEnum.class)
             .build();
 
-        ByteBufAllocator mockByteBufAllocator = Mockito.mock(ByteBufAllocator.class);
-        CodecRegistry mockCodecRegistry = Mockito.mock(CodecRegistry.class);
+        ByteBufAllocator mockByteBufAllocator = mock(ByteBufAllocator.class);
+        CodecRegistry mockCodecRegistry = mock(CodecRegistry.class);
 
         MockPostgresqlStatement mockPostgresqlStatement = MockPostgresqlStatement.builder()
             .result(MockPostgresqlResult.builder()
@@ -112,8 +119,8 @@ final class EnumCodecUnitTests {
         Publisher<Void> register = codecRegistrar.register(mockPostgresqlConnection, mockByteBufAllocator, mockCodecRegistry);
         StepVerifier.create(register).verifyComplete();
 
-        Mockito.verify(mockCodecRegistry, Mockito.never()).addFirst(Mockito.any(EnumCodec.class));
-        Mockito.verify(mockCodecRegistry, Mockito.times(2)).addLast(Mockito.any(EnumCodec.class));
+        verify(mockCodecRegistry, never()).addFirst(any(EnumCodec.class));
+        verify(mockCodecRegistry, times(2)).addLast(any(EnumCodec.class));
     }
 
     enum MyEnum {
