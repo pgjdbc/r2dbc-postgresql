@@ -82,6 +82,14 @@ final class InstantCodecUnitTests {
     }
 
     @Test
+    void cannotDecodeCustomDataType() {
+        InstantCodec codec = new InstantCodec(TEST);
+
+        int customDataType = 72093;
+        assertThat(codec.canDecode(customDataType, FORMAT_TEXT, Object.class)).isFalse();
+    }
+
+    @Test
     void doCanDecodeNoFormat() {
         assertThatIllegalArgumentException().isThrownBy(() -> new InstantCodec(TEST).doCanDecode(VARCHAR, null))
             .withMessage("format must not be null");
