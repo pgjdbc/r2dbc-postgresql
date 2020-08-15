@@ -399,7 +399,7 @@ public enum PostgresqlObjectId {
 
         if (objectId >= 0 && objectId < OID_CACHE_SIZE) {
             PostgresqlObjectId oid = CACHE[objectId];
-            return oid == null ? false : true;
+            return oid != null;
         }
 
         try {
