@@ -26,6 +26,7 @@ import io.r2dbc.spi.ConnectionFactoryProvider;
 import io.r2dbc.spi.Option;
 
 import javax.net.ssl.HostnameVerifier;
+import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -107,9 +108,9 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<Function<SslContextBuilder, SslContextBuilder>> SSL_CONTEXT_BUILDER_CUSTOMIZER = Option.valueOf("sslContextBuilderCustomizer");
 
     /**
-     * Full path for the certificate file.
+     * File path for the certificate file.
      */
-    public static final Option<String> SSL_CERT = Option.valueOf("sslCert");
+    public static final Option<URL> SSL_CERT = Option.valueOf("sslCert");
 
     /**
      * Class name of hostname verifier. Defaults to {@link DefaultHostnameVerifier}.
@@ -119,7 +120,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     /**
      * Full path for the key file.
      */
-    public static final Option<String> SSL_KEY = Option.valueOf("sslKey");
+    public static final Option<URL> SSL_KEY = Option.valueOf("sslKey");
 
     /**
      * Ssl mode. Default: disabled
@@ -132,9 +133,9 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<String> SSL_PASSWORD = Option.valueOf("sslPassword");
 
     /**
-     * File name of the SSL root certificate.
+     * File path of the SSL root certificate.
      */
-    public static final Option<String> SSL_ROOT_CERT = Option.valueOf("sslRootCert");
+    public static final Option<URL> SSL_ROOT_CERT = Option.valueOf("sslRootCert");
 
     /**
      * Enable TCP KeepAlive.

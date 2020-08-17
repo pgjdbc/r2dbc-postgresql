@@ -727,8 +727,8 @@ final class ReactorNettyClientIntegrationTests {
             void verifyCaWithCustomizer() {
                 client(
                     c -> c.sslContextBuilderCustomizer(sslContextBuilder -> {
-                        return sslContextBuilder.trustManager(new File(SERVER.getServerCrt()))
-                            .keyManager(new File(SERVER.getClientCrt()), new File(SERVER.getClientKey()));
+                        return sslContextBuilder.trustManager(new File(SERVER.getServerCrt().getFile()))
+                            .keyManager(new File(SERVER.getClientCrt().getFile()), new File(SERVER.getClientKey().getFile()));
                     })
                         .sslMode(SSLMode.VERIFY_CA),
                     c -> c

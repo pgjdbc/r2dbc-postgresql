@@ -33,10 +33,7 @@ import javax.sql.DataSource;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.function.Supplier;
 
@@ -134,12 +131,12 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
         this.jdbcOperations = new JdbcTemplate(this.dataSource);
     }
 
-    public String getClientCrt() {
-        return getResourcePath("client.crt").toAbsolutePath().toString();
+    public URL getClientCrt() {
+        return getResourceUrl("client.crt");
     }
 
-    public String getClientKey() {
-        return getResourcePath("client.key").toAbsolutePath().toString();
+    public URL getClientKey() {
+        return getResourceUrl("client.key");
     }
 
     public PostgresqlConnectionConfiguration.Builder configBuilder() {
@@ -171,12 +168,12 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
         return this.postgres.getPort();
     }
 
-    public String getServerCrt() {
-        return getResourcePath("server.crt").toAbsolutePath().toString();
+    public URL getServerCrt() {
+        return getResourceUrl("server.crt");
     }
 
-    public String getServerKey() {
-        return getResourcePath("server.key").toAbsolutePath().toString();
+    public URL getServerKey() {
+        return getResourceUrl("server.key");
     }
 
     public String getUsername() {
@@ -207,22 +204,18 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
         return container;
     }
 
-    private Path getResourcePath(String name) {
+    private URL getResourceUrl(String name) {
 
         URL resource = getClass().getClassLoader().getResource(name);
         if (resource == null) {
             throw new IllegalStateException("Resource not found: " + name);
         }
 
-        try {
-            return Paths.get(resource.toURI());
-        } catch (URISyntaxException e) {
-            throw new IllegalStateException("Cannot convert to path for: " + name, e);
-        }
+        return resource;
     }
 
     private MountableFile getHostPath(String name, int mode) {
-        return forHostPath(getResourcePath(name), mode);
+        return forHostPath(getResourceUrl(name).getPath(), mode);
     }
 
     /**

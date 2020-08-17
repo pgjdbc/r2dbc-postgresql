@@ -19,6 +19,7 @@ package io.r2dbc.postgresql.util;
 import reactor.util.annotation.Nullable;
 
 import java.io.File;
+import java.net.URL;
 
 /**
  * Assertion library for the implementation.
@@ -145,6 +146,25 @@ public final class Assert {
         if (!expression) {
             throw new IllegalArgumentException(message);
         }
+    }
+
+    /**
+     * Checks that the provided URL exists or null.
+     *
+     * @param url    url to check
+     * @param message the message to use in exception if type is not as required
+     * @return existing url
+     * @throws IllegalArgumentException if {@code value} is not of the required type
+     * @throws IllegalArgumentException if {@code value}, {@code type}, or {@code message} is {@code null}
+     */
+    public static URL requireUrlExistsOrNull(@Nullable URL url, String message) {
+        if (url == null) {
+            throw new IllegalArgumentException(message);
+        }
+        if (!new File(url.getFile()).exists()) {
+            throw new IllegalArgumentException(message);
+        }
+        return url;
     }
 
 }
