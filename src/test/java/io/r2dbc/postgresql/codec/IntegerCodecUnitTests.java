@@ -44,6 +44,11 @@ final class IntegerCodecUnitTests {
     }
 
     @Test
+    void cannotDecodeCustomType() {
+        assertThat(new IntegerCodec(TEST).canDecode(72093, FORMAT_TEXT, Object.class)).isFalse();
+    }
+
+    @Test
     void decode() {
         IntegerCodec codec = new IntegerCodec(TEST);
 
