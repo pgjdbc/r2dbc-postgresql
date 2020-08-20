@@ -24,6 +24,7 @@ import io.r2dbc.postgresql.util.LogLevel;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.ConnectionFactoryProvider;
 import io.r2dbc.spi.Option;
+import reactor.netty.resources.LoopResources;
 
 import javax.net.ssl.HostnameVerifier;
 import java.util.LinkedHashMap;
@@ -151,6 +152,13 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<Boolean> TCP_NODELAY = Option.valueOf("tcpNoDelay");
 
     /**
+     * TCP {@link LoopResources}.
+     *
+     * @since 1.0.0
+     */
+    public static final Option<LoopResources> TCP_LOOP_RESOURCES = Option.valueOf("tcpLoopResources");
+
+    /**
      * Determine the number of queries that are cached in each connection.
      * The default is {@code -1}, meaning there's no limit. The value of {@code 0} disables the cache. Any other value specifies the cache size.
      */
@@ -224,6 +232,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         });
         mapper.from(TCP_KEEPALIVE).map(OptionMapper::toBoolean).to(builder::tcpKeepAlive);
         mapper.from(TCP_NODELAY).map(OptionMapper::toBoolean).to(builder::tcpNoDelay);
+        mapper.from(TCP_LOOP_RESOURCES).to(builder::tcpLoopResources);
         builder.username(options.getRequiredValue(USER));
 
         return builder;

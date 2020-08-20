@@ -22,6 +22,8 @@ import io.r2dbc.postgresql.message.backend.NoticeResponse;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.LogLevel;
 import reactor.netty.resources.ConnectionProvider;
+import reactor.netty.resources.LoopResources;
+import reactor.netty.tcp.TcpResources;
 import reactor.util.annotation.Nullable;
 
 import java.net.Socket;
@@ -40,6 +42,9 @@ public final class ConnectionSettings {
 
     private final ConnectionProvider connectionProvider;
 
+    @Nullable
+    private final LoopResources tcpLoopResources;
+
     private final SSLConfig sslConfig;
 
     private final boolean tcpKeepAlive;
@@ -50,10 +55,11 @@ public final class ConnectionSettings {
 
     private final LogLevel noticeLogLevel;
 
-    ConnectionSettings(@Nullable Duration connectTimeout, ConnectionProvider connectionProvider, SSLConfig sslConfig, boolean tcpKeepAlive, boolean tcpNoDelay, LogLevel errorResponseLogLevel,
-                       LogLevel noticeLogLevel) {
+    ConnectionSettings(@Nullable Duration connectTimeout, ConnectionProvider connectionProvider, @Nullable LoopResources tcpLoopResources,
+                       SSLConfig sslConfig, boolean tcpKeepAlive, boolean tcpNoDelay, LogLevel errorResponseLogLevel, LogLevel noticeLogLevel) {
         this.connectTimeout = connectTimeout;
         this.connectionProvider = connectionProvider;
+        this.tcpLoopResources = tcpLoopResources;
         this.sslConfig = sslConfig;
         this.tcpKeepAlive = tcpKeepAlive;
         this.tcpNoDelay = tcpNoDelay;
@@ -76,7 +82,9 @@ public final class ConnectionSettings {
      * @return a {@link Builder} that is pre-initialized with the current values
      */
     public Builder mutate() {
-        return new Builder().connectionProvider(this.connectionProvider).errorResponseLogLevel(this.errorResponseLogLevel).noticeLogLevel(this.noticeLogLevel).sslConfig(this.sslConfig);
+        return new Builder().connectionProvider(this.connectionProvider).tcpLoopResources(this.tcpLoopResources)
+                .errorResponseLogLevel(this.errorResponseLogLevel).noticeLogLevel(this.noticeLogLevel).sslConfig(this.sslConfig)
+                .connectTimeout(this.connectTimeout).tcpKeepAlive(this.tcpKeepAlive).tcpNoDelay(this.tcpNoDelay);
     }
 
     /**
@@ -106,6 +114,14 @@ public final class ConnectionSettings {
 
     ConnectionProvider getConnectionProvider() {
         return this.connectionProvider;
+    }
+
+    boolean hasTcpLoopResources() {
+        return this.tcpLoopResources != null;
+    }
+
+    LoopResources getTcpLoopResources() {
+        return this.tcpLoopResources;
     }
 
     SSLConfig getSslConfig() {
@@ -139,6 +155,8 @@ public final class ConnectionSettings {
 
         private ConnectionProvider connectionProvider = ConnectionProvider.newConnection();
 
+        private LoopResources tcpLoopResources = null;
+
         private LogLevel errorResponseLogLevel = LogLevel.WARN;
 
         private LogLevel noticeLogLevel = LogLevel.DEBUG;
@@ -158,7 +176,8 @@ public final class ConnectionSettings {
          * @return a configured {@link ConnectionSettings}
          */
         public ConnectionSettings build() {
-            return new ConnectionSettings(this.connectTimeout, this.connectionProvider, this.sslConfig, this.tcpKeepAlive, this.tcpNoDelay, this.errorResponseLogLevel, this.noticeLogLevel);
+            return new ConnectionSettings(this.connectTimeout, this.connectionProvider, this.tcpLoopResources, this.sslConfig,
+                    this.tcpKeepAlive, this.tcpNoDelay, this.errorResponseLogLevel, this.noticeLogLevel);
         }
 
         /**
@@ -180,6 +199,19 @@ public final class ConnectionSettings {
          */
         public Builder connectionProvider(ConnectionProvider connectionProvider) {
             this.connectionProvider = Assert.requireNonNull(connectionProvider, "connectionProvider must not be null");
+            return this;
+        }
+
+        /**
+         * Configure the {@link LoopResources} for TCP sockets.
+         * The {@link LoopResources}'s lifecycle should be managed externally.
+         *
+         * @param tcpLoopResources the {@link LoopResources} for TCP sockets.
+         * @return this {@link Builder}
+         * @since 1.0.0
+         */
+        public Builder tcpLoopResources(LoopResources tcpLoopResources) {
+            this.tcpLoopResources = tcpLoopResources;
             return this;
         }
 

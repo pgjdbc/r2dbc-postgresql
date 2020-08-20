@@ -338,14 +338,34 @@ public final class ReactorNettyClient implements Client {
      * @param connectTimeout connect timeout
      * @param sslConfig      SSL configuration
      * @throws IllegalArgumentException if {@code host} is {@code null}
+     * @throws IllegalArgumentException if {@code sslConfig} is {@code null}
      */
     public static Mono<ReactorNettyClient> connect(String host, int port, @Nullable Duration connectTimeout, SSLConfig sslConfig) {
         Assert.requireNonNull(host, "host must not be null");
         Assert.requireNonNull(sslConfig, "sslConfig must not be null");
 
-        ConnectionSettings settings = ConnectionSettings.builder().connectTimeout(connectTimeout).sslConfig(sslConfig).build();
+        return connect(host, port, connectTimeout, sslConfig, null);
+    }
 
-        return connect(InetSocketAddress.createUnresolved(host, port), settings);
+    /**
+     * Create a new frame processor connected to a given host.
+     *
+     * @param host             the host to connect to
+     * @param port             the port to connect to
+     * @param connectTimeout   connect timeout
+     * @param sslConfig        SSL configuration
+     * @param tcpLoopResources tcp loop resources
+     * @throws IllegalArgumentException if {@code host} is {@code null}
+     */
+    public static Mono<ReactorNettyClient> connect(String host, int port, @Nullable Duration connectTimeout, @Nullable SSLConfig sslConfig, @Nullable LoopResources tcpLoopResources) {
+        Assert.requireNonNull(host, "host must not be null");
+
+        ConnectionSettings.Builder builder = ConnectionSettings.builder().connectTimeout(connectTimeout).tcpLoopResources(tcpLoopResources);
+        if (sslConfig != null) {
+            builder.sslConfig(sslConfig);
+        }
+
+        return connect(InetSocketAddress.createUnresolved(host, port), builder.build());
     }
 
     /**
@@ -364,6 +384,9 @@ public final class ReactorNettyClient implements Client {
         if (!(socketAddress instanceof InetSocketAddress)) {
             tcpClient = tcpClient.runOn(new SocketLoopResources(), true);
         } else {
+            if (settings.hasTcpLoopResources()) {
+                tcpClient = tcpClient.runOn(settings.getTcpLoopResources());
+            }
             tcpClient = tcpClient.option(ChannelOption.SO_KEEPALIVE, settings.isTcpKeepAlive());
             tcpClient = tcpClient.option(ChannelOption.TCP_NODELAY, settings.isTcpNoDelay());
         }
