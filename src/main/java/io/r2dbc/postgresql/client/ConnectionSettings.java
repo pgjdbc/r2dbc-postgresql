@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql.client;
 
+import reactor.netty.resources.LoopResources;
 import reactor.util.annotation.Nullable;
 
 import java.time.Duration;
@@ -34,10 +35,14 @@ public final class ConnectionSettings {
 
     private final boolean tcpNoDelay;
 
-    public ConnectionSettings(@Nullable Duration connectTimeout, boolean tcpKeepAlive, boolean tcpNoDelay) {
+    @Nullable
+    private final LoopResources tcpLoopResources;
+
+    public ConnectionSettings(@Nullable Duration connectTimeout, boolean tcpKeepAlive, boolean tcpNoDelay, @Nullable LoopResources tcpLoopResources) {
         this.tcpKeepAlive = tcpKeepAlive;
         this.tcpNoDelay = tcpNoDelay;
         this.connectTimeout = connectTimeout;
+        this.tcpLoopResources = tcpLoopResources;
     }
 
     @Nullable
@@ -51,6 +56,14 @@ public final class ConnectionSettings {
 
     boolean isTcpNoDelay() {
         return this.tcpNoDelay;
+    }
+
+    public boolean hasTcpLoopResources() {
+        return this.tcpLoopResources != null;
+    }
+    
+    LoopResources getTcpLoopResources() {
+        return this.tcpLoopResources;
     }
 
 }

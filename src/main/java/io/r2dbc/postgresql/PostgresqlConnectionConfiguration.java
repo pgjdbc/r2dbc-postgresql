@@ -25,6 +25,7 @@ import io.r2dbc.postgresql.codec.Codec;
 import io.r2dbc.postgresql.extension.CodecRegistrar;
 import io.r2dbc.postgresql.extension.Extension;
 import io.r2dbc.postgresql.util.Assert;
+import reactor.netty.resources.LoopResources;
 import reactor.netty.tcp.SslProvider;
 import reactor.util.annotation.Nullable;
 
@@ -89,10 +90,12 @@ public final class PostgresqlConnectionConfiguration {
 
     private final boolean tcpNoDelay;
 
+    private final LoopResources tcpLoopResources;
+
     private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions, @Nullable Duration connectTimeout, @Nullable String database, List<Extension> extensions,
                                               ToIntFunction<String> fetchSize, boolean forceBinary, @Nullable String host, @Nullable Map<String, String> options, @Nullable CharSequence password,
                                               int port, int preparedStatementCacheQueries, @Nullable String schema, @Nullable String socket, boolean tcpKeepAlive, boolean tcpNoDelay,
-                                              String username, SSLConfig sslConfig) {
+                                              String username, SSLConfig sslConfig, LoopResources tcpLoopResources) {
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
         this.autodetectExtensions = autodetectExtensions;
         this.connectTimeout = connectTimeout;
@@ -115,6 +118,7 @@ public final class PostgresqlConnectionConfiguration {
         this.sslConfig = sslConfig;
         this.tcpKeepAlive = tcpKeepAlive;
         this.tcpNoDelay = tcpNoDelay;
+        this.tcpLoopResources = tcpLoopResources;
     }
 
     /**
@@ -244,8 +248,13 @@ public final class PostgresqlConnectionConfiguration {
     boolean isUseSocket() {
         return getSocket() != null;
     }
+
     SSLConfig getSslConfig() {
         return this.sslConfig;
+    }
+
+    LoopResources getTcpLoopResources() {
+        return this.tcpLoopResources;
     }
 
     private static String obfuscate(int length) {
@@ -318,9 +327,12 @@ public final class PostgresqlConnectionConfiguration {
 
         private Function<SslContextBuilder, SslContextBuilder> sslContextBuilderCustomizer = Function.identity();
 
-        private boolean tcpKeepAlive;
+        private boolean tcpKeepAlive = false;
 
-        private boolean tcpNoDelay;
+        private boolean tcpNoDelay = false;
+
+        @Nullable
+        private LoopResources tcpLoopResources = null;
 
         @Nullable
         private String username;
@@ -373,7 +385,7 @@ public final class PostgresqlConnectionConfiguration {
             return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.connectTimeout, this.database, this.extensions, this.fetchSize, this.forceBinary,
                 this.host, this.options, this.password, this.port, this.preparedStatementCacheQueries, this.schema, this.socket, this.tcpKeepAlive, this.tcpNoDelay, this.username,
                 this.createSslConfig()
-            );
+            , this.tcpLoopResources);
         }
 
         /**
@@ -677,6 +689,18 @@ public final class PostgresqlConnectionConfiguration {
          */
         public Builder username(String username) {
             this.username = Assert.requireNonNull(username, "username must not be null");
+            return this;
+        }
+
+        /**
+         * Configure TCP {@link LoopResources}.
+         *
+         * @param loopResources the {@link LoopResources}
+         * @return this {@link Builder}
+         * @since 1.0.0
+         */
+        public Builder tcpLoopResources(LoopResources loopResources) {
+            this.tcpLoopResources = Assert.requireNonNull(loopResources, "tcpLoopResources must not be null");
             return this;
         }
 

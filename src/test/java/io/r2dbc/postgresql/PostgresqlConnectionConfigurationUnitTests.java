@@ -18,6 +18,7 @@ package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.client.SSLMode;
 import org.junit.jupiter.api.Test;
+import reactor.netty.resources.LoopResources;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -25,6 +26,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.mockito.Mockito.mock;
 
 /**
  * Unit tests for {@link PostgresqlConnectionConfiguration}.
@@ -62,10 +64,17 @@ final class PostgresqlConnectionConfigurationUnitTests {
     }
 
     @Test
+    void builderNoTcpLoopResources() {
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().tcpLoopResources(null))
+            .withMessage("tcpLoopResources must not be null");
+    }
+
+    @Test
     void configuration() {
         Map<String, String> options = new HashMap<>();
         options.put("lock_timeout", "10s");
         options.put("statement_timeout", "60000"); // [ms]
+        LoopResources loopResources = mock(LoopResources.class);
 
         PostgresqlConnectionConfiguration configuration = PostgresqlConnectionConfiguration.builder()
             .applicationName("test-application-name")
@@ -77,6 +86,9 @@ final class PostgresqlConnectionConfigurationUnitTests {
             .schema("test-schema")
             .username("test-username")
             .sslMode(SSLMode.ALLOW)
+            .tcpKeepAlive(true)
+            .tcpNoDelay(true)
+            .tcpLoopResources(loopResources)
             .build();
 
         assertThat(configuration)
@@ -88,7 +100,10 @@ final class PostgresqlConnectionConfigurationUnitTests {
             .hasFieldOrPropertyWithValue("password", null)
             .hasFieldOrPropertyWithValue("port", 100)
             .hasFieldOrPropertyWithValue("username", "test-username")
-            .hasFieldOrProperty("sslConfig");
+            .hasFieldOrProperty("sslConfig")
+            .hasFieldOrPropertyWithValue("tcpKeepAlive", true)
+            .hasFieldOrPropertyWithValue("tcpNoDelay", true)
+            .hasFieldOrPropertyWithValue("tcpLoopResources", loopResources);
 
         assertThat(configuration.getOptions())
             .containsEntry("lock_timeout", "10s")
@@ -114,7 +129,10 @@ final class PostgresqlConnectionConfigurationUnitTests {
             .hasFieldOrPropertyWithValue("port", 5432)
             .hasFieldOrProperty("options")
             .hasFieldOrPropertyWithValue("username", "test-username")
-            .hasFieldOrProperty("sslConfig");
+            .hasFieldOrProperty("sslConfig")
+            .hasFieldOrPropertyWithValue("tcpKeepAlive", false)
+            .hasFieldOrPropertyWithValue("tcpNoDelay", false)
+            .hasFieldOrPropertyWithValue("tcpLoopResources", null);
 
         assertThat(configuration.getOptions())
             .containsEntry("search_path", "test-schema");
