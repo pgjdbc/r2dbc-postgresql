@@ -68,13 +68,13 @@ Mono<Connection> connectionMono = Mono.from(connectionFactory.create());
 
 | Option            | Description
 | ----------------- | -----------
-| `ssl`             | Enables SSL usage (`SSLMode.VERIFY_FULL`)
+| `ssl`             | Enables SSL usage (`SSLMode.VERIFY_FULL`).
 | `driver`          | Must be `postgresql`.
-| `host`            | Server hostname to connect to
+| `host`            | Server hostname to connect to.
 | `port`            | Server port to connect to.  Defaults to `5432`. _(Optional)_
 | `socket`          | Unix Domain Socket path to connect to as alternative to TCP. _(Optional)_
-| `username`        | Login username
-| `password`        | Login password _(Optional when using TLS Certificate authentication)_
+| `username`        | Login username.
+| `password`        | Login password. _(Optional when using TLS Certificate authentication)_
 | `database`        | Database to select. _(Optional)_
 | `applicationName` | The name of the application connecting to the database.  Defaults to `r2dbc-postgresql`. _(Optional)_
 | `autodetectExtensions` | Whether to auto-detect and register `Extension`s from the class path.  Defaults to `true`. _(Optional)_
@@ -92,7 +92,8 @@ Mono<Connection> connectionMono = Mono.from(connectionFactory.create());
 | `sslPassword`     | Key password to decrypt SSL key. _(Optional)_
 | `sslHostnameVerifier` | `javax.net.ssl.HostnameVerifier` implementation. _(Optional)_
 | `tcpNoDelay`      | Enabled/disable TCP NoDelay. Disabled by default. _(Optional)_
-| `tcpKeepAlive`    | Enabled/disable TCP KeepAlive. Disabled by default _(Optional)_
+| `tcpKeepAlive`    | Enabled/disable TCP KeepAlive. Disabled by default. _(Optional)_
+| `tcpLoopResources`| TCP LoopResources. _(Optional)_
 
 **Programmatic Configuration**
 
