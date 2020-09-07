@@ -43,6 +43,11 @@ final class InstantCodecUnitTests {
     private static final int dataType = TIMESTAMP.getObjectId();
 
     @Test
+    void cannotDecodeCustomType() {
+        assertThat(new InstantCodec(TEST).canDecode(72093, FORMAT_TEXT, Object.class)).isFalse();
+    }
+
+    @Test
     void constructorNoByteBufAllocator() {
         assertThatIllegalArgumentException().isThrownBy(() -> new InstantCodec(null))
             .withMessage("byteBufAllocator must not be null");
