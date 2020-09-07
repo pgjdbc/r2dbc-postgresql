@@ -48,7 +48,7 @@ class PostgresqlDateTimeFormatter {
             .appendFraction(NANO_OF_SECOND, 0, 9, true)
             .optionalEnd()
             .optionalStart()
-            .appendOffset("+HH:mm", "+00")
+            .appendOffset("+HH:mm", "+00:00")
             .optionalEnd()
             .toFormatter();
 
