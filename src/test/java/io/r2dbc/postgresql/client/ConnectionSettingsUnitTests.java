@@ -27,8 +27,6 @@ import java.time.Duration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 
 /**
  * Unit tests for {@link ConnectionSettings}.
@@ -64,14 +62,14 @@ final class ConnectionSettingsUnitTests {
         LoopResources loopResources = mock(LoopResources.class);
         ConnectionSettings connectionSettings =
             ConnectionSettings.builder().connectionProvider(ConnectionProvider.newConnection())
-                .tcpLoopResources(loopResources)
+                .loopResources(loopResources)
                 .errorResponseLogLevel(LogLevel.OFF).noticeLogLevel(LogLevel.ERROR)
                 .sslConfig(new SSLConfig(SSLMode.DISABLE, null, null)).build();
 
         assertThat(connectionSettings)
             .hasFieldOrPropertyWithValue("connectionProvider", ConnectionProvider.newConnection())
-            .hasFieldOrPropertyWithValue("tcpLoopResources", loopResources)
             .hasFieldOrPropertyWithValue("errorResponseLogLevel", LogLevel.OFF)
+            .hasFieldOrPropertyWithValue("loopResources", loopResources)
             .hasFieldOrPropertyWithValue("noticeLogLevel", LogLevel.ERROR)
             .hasFieldOrProperty("sslConfig");
     }
@@ -81,7 +79,7 @@ final class ConnectionSettingsUnitTests {
         ConnectionProvider foo = ConnectionProvider.builder("foo").build();
         ConnectionSettings connectionSettings =
             ConnectionSettings.builder().connectionProvider(ConnectionProvider.newConnection())
-                .tcpLoopResources(TcpResources.get())
+                .loopResources(TcpResources.get())
                 .errorResponseLogLevel(LogLevel.OFF).noticeLogLevel(LogLevel.ERROR)
                 .connectTimeout(Duration.ofSeconds(30)).tcpKeepAlive(true).tcpNoDelay(true)
                 .sslConfig(new SSLConfig(SSLMode.DISABLE, null, null)).build();
@@ -90,10 +88,10 @@ final class ConnectionSettingsUnitTests {
 
         assertThat(mutated)
             .hasFieldOrPropertyWithValue("connectionProvider", foo)
-            .hasFieldOrPropertyWithValue("tcpLoopResources", TcpResources.get())
-            .hasFieldOrPropertyWithValue("errorResponseLogLevel", LogLevel.OFF)
-            .hasFieldOrPropertyWithValue("noticeLogLevel", LogLevel.ERROR)
             .hasFieldOrPropertyWithValue("connectTimeout", Duration.ofSeconds(30))
+            .hasFieldOrPropertyWithValue("errorResponseLogLevel", LogLevel.OFF)
+            .hasFieldOrPropertyWithValue("loopResources", TcpResources.get())
+            .hasFieldOrPropertyWithValue("noticeLogLevel", LogLevel.ERROR)
             .hasFieldOrPropertyWithValue("tcpKeepAlive", true)
             .hasFieldOrPropertyWithValue("tcpNoDelay", true)
             .hasFieldOrProperty("sslConfig");
@@ -103,11 +101,11 @@ final class ConnectionSettingsUnitTests {
     void mutateLoopResources() {
         LoopResources loopResources1 = mock(LoopResources.class);
         LoopResources loopResources2 = mock(LoopResources.class);
-        ConnectionSettings connectionSettings = ConnectionSettings.builder().tcpLoopResources(loopResources1).build();
+        ConnectionSettings connectionSettings = ConnectionSettings.builder().loopResources(loopResources1).build();
 
-        ConnectionSettings mutated = connectionSettings.mutate(builder -> builder.tcpLoopResources(loopResources2));
+        ConnectionSettings mutated = connectionSettings.mutate(builder -> builder.loopResources(loopResources2));
 
-        assertThat(mutated).hasFieldOrPropertyWithValue("tcpLoopResources", loopResources2);
+        assertThat(mutated).hasFieldOrPropertyWithValue("loopResources", loopResources2);
     }
 
 }

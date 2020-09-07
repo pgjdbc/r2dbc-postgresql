@@ -81,6 +81,7 @@ Mono<Connection> connectionMono = Mono.from(connectionFactory.create());
 | `errorResponseLogLevel` | Log level for error responses. Any of `OFF`, `DEBUG`, `INFO`, `WARN` or `ERROR`  Defaults to `DEBUG`. _(Optional)_
 | `fetchSize`       | The default number of rows to return when fetching results. Defaults to `0` for unlimited. _(Optional)_
 | `forceBinary`     | Whether to force binary transfer.  Defaults to `false`. _(Optional)_
+| `loopResources`   | TCP/Socket LoopResources (depends on the endpoint connection type). _(Optional)_
 | `noticeLogLevel`  | Log level for error responses. Any of `OFF`, `DEBUG`, `INFO`, `WARN` or `ERROR`  Defaults to `DEBUG`. _(Optional)_
 | `preparedStatementCacheQueries` | Determine the number of queries that are cached in each connection. The default is `-1`, meaning there's no limit. The value of `0` disables the cache. Any other value specifies the cache size.
 | `options`         | A `Map<String, String>` of connection parameters. These are applied to each database connection created by the `ConnectionFactory`. Useful for setting generic [PostgreSQL connection parameters][psql-runtime-config]. _(Optional)_
@@ -93,7 +94,6 @@ Mono<Connection> connectionMono = Mono.from(connectionFactory.create());
 | `sslHostnameVerifier` | `javax.net.ssl.HostnameVerifier` implementation. _(Optional)_
 | `tcpNoDelay`      | Enabled/disable TCP NoDelay. Disabled by default. _(Optional)_
 | `tcpKeepAlive`    | Enabled/disable TCP KeepAlive. Disabled by default. _(Optional)_
-| `tcpLoopResources`| TCP LoopResources. _(Optional)_
 
 **Programmatic Configuration**
 

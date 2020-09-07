@@ -76,9 +76,12 @@ public final class PostgresqlConnectionConfiguration {
 
     private final boolean forceBinary;
 
-    private final LogLevel noticeLogLevel;
-
     private final String host;
+
+    @Nullable
+    private final LoopResources loopResources;
+
+    private final LogLevel noticeLogLevel;
 
     private final Map<String, String> options;
 
@@ -90,23 +93,19 @@ public final class PostgresqlConnectionConfiguration {
 
     private final String socket;
 
-    private final String username;
-
     private final SSLConfig sslConfig;
 
     private final boolean tcpKeepAlive;
 
     private final boolean tcpNoDelay;
 
-    private final LoopResources tcpLoopResources;
+    private final String username;
 
     private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions, @Nullable Duration connectTimeout, @Nullable String database, LogLevel errorResponseLogLevel,
-                                              List<Extension> extensions,
-                                              ToIntFunction<String> fetchSize, boolean forceBinary,
-                                              LogLevel noticeLogLevel, @Nullable String host,
-                                              @Nullable Map<String, String> options, @Nullable CharSequence password, int port, int preparedStatementCacheQueries, @Nullable String schema,
-                                              @Nullable String socket, boolean tcpKeepAlive, boolean tcpNoDelay,
-                                              String username, SSLConfig sslConfig, LoopResources tcpLoopResources) {
+                                              List<Extension> extensions, ToIntFunction<String> fetchSize, boolean forceBinary, @Nullable String host,
+                                              @Nullable LoopResources loopResources, LogLevel noticeLogLevel, @Nullable Map<String, String> options, @Nullable CharSequence password, int port,
+                                              int preparedStatementCacheQueries, @Nullable String schema, @Nullable String socket, SSLConfig sslConfig, boolean tcpKeepAlive, boolean tcpNoDelay,
+                                              String username) {
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
         this.autodetectExtensions = autodetectExtensions;
         this.connectTimeout = connectTimeout;
@@ -115,8 +114,9 @@ public final class PostgresqlConnectionConfiguration {
         this.database = database;
         this.fetchSize = fetchSize;
         this.forceBinary = forceBinary;
-        this.noticeLogLevel = noticeLogLevel;
         this.host = host;
+        this.loopResources = loopResources;
+        this.noticeLogLevel = noticeLogLevel;
         this.options = options == null ? new LinkedHashMap<>() : new LinkedHashMap<>(options);
 
         if (schema != null && !schema.isEmpty()) {
@@ -127,11 +127,10 @@ public final class PostgresqlConnectionConfiguration {
         this.port = port;
         this.preparedStatementCacheQueries = preparedStatementCacheQueries;
         this.socket = socket;
-        this.username = Assert.requireNonNull(username, "username must not be null");
         this.sslConfig = sslConfig;
         this.tcpKeepAlive = tcpKeepAlive;
         this.tcpNoDelay = tcpNoDelay;
-        this.tcpLoopResources = tcpLoopResources;
+        this.username = Assert.requireNonNull(username, "username must not be null");
     }
 
     /**
@@ -155,10 +154,12 @@ public final class PostgresqlConnectionConfiguration {
             ", fetchSize=" + this.fetchSize +
             ", forceBinary='" + this.forceBinary + '\'' +
             ", host='" + this.host + '\'' +
+            ", loopResources='" + this.loopResources + '\'' +
             ", noticeLogLevel='" + this.noticeLogLevel + '\'' +
             ", options='" + this.options + '\'' +
             ", password='" + obfuscate(this.password != null ? this.password.length() : 0) + '\'' +
             ", port=" + this.port +
+            ", socket=" + this.socket +
             ", tcpKeepAlive=" + this.tcpKeepAlive +
             ", tcpNoDelay=" + this.tcpNoDelay +
             ", username='" + this.username + '\'' +
@@ -268,10 +269,6 @@ public final class PostgresqlConnectionConfiguration {
         return this.sslConfig;
     }
 
-    LoopResources getTcpLoopResources() {
-        return this.tcpLoopResources;
-    }
-
     ConnectionSettings getConnectionSettings() {
         return ConnectionSettings.builder()
             .connectTimeout(getConnectTimeout())
@@ -280,7 +277,7 @@ public final class PostgresqlConnectionConfiguration {
             .sslConfig(getSslConfig())
             .tcpKeepAlive(isTcpKeepAlive())
             .tcpNoDelay(isTcpNoDelay())
-            .tcpLoopResources(this.tcpLoopResources)
+            .loopResources(this.loopResources)
             .build();
     }
 
@@ -314,7 +311,7 @@ public final class PostgresqlConnectionConfiguration {
 
         private LogLevel errorResponseLogLevel = LogLevel.DEBUG;
 
-        private List<Extension> extensions = new ArrayList<>();
+        private final List<Extension> extensions = new ArrayList<>();
 
         private ToIntFunction<String> fetchSize = sql -> NO_LIMIT;
 
@@ -363,7 +360,7 @@ public final class PostgresqlConnectionConfiguration {
         private boolean tcpNoDelay = false;
 
         @Nullable
-        private LoopResources tcpLoopResources = null;
+        private LoopResources loopResources = null;
 
         @Nullable
         private String username;
@@ -414,8 +411,8 @@ public final class PostgresqlConnectionConfiguration {
             }
 
             return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.connectTimeout, this.database, this.errorResponseLogLevel, this.extensions,
-                this.fetchSize, this.forceBinary, this.noticeLogLevel, this.host, this.options, this.password, this.port, this.preparedStatementCacheQueries, this.schema, this.socket,
-                this.tcpKeepAlive, this.tcpNoDelay, this.username, this.createSslConfig(), this.tcpLoopResources);
+                this.fetchSize, this.forceBinary, this.host, this.loopResources, this.noticeLogLevel, this.options, this.password, this.port, this.preparedStatementCacheQueries, this.schema,
+                this.socket, this.createSslConfig(), this.tcpKeepAlive, this.tcpNoDelay, this.username);
         }
 
         /**
@@ -531,6 +528,18 @@ public final class PostgresqlConnectionConfiguration {
          */
         public Builder host(String host) {
             this.host = Assert.requireNonNull(host, "host must not be null");
+            return this;
+        }
+
+        /**
+         * Configure {@link LoopResources}.
+         *
+         * @param loopResources the {@link LoopResources}
+         * @return this {@link Builder}
+         * @since 0.8.5
+         */
+        public Builder loopResources(LoopResources loopResources) {
+            this.loopResources = Assert.requireNonNull(loopResources, "loopResources must not be null");
             return this;
         }
 
@@ -746,18 +755,6 @@ public final class PostgresqlConnectionConfiguration {
             return this;
         }
 
-        /**
-         * Configure TCP {@link LoopResources}.
-         *
-         * @param loopResources the {@link LoopResources}
-         * @return this {@link Builder}
-         * @since 1.0.0
-         */
-        public Builder tcpLoopResources(LoopResources loopResources) {
-            this.tcpLoopResources = Assert.requireNonNull(loopResources, "tcpLoopResources must not be null");
-            return this;
-        }
-
         @Override
         public String toString() {
             return "Builder{" +
@@ -770,6 +767,7 @@ public final class PostgresqlConnectionConfiguration {
                 ", fetchSize='" + this.fetchSize + '\'' +
                 ", forceBinary='" + this.forceBinary + '\'' +
                 ", host='" + this.host + '\'' +
+                ", loopResources='" + this.loopResources + '\'' +
                 ", noticeLogLevel='" + this.noticeLogLevel + '\'' +
                 ", parameters='" + this.options + '\'' +
                 ", password='" + obfuscate(this.password != null ? this.password.length() : 0) + '\'' +

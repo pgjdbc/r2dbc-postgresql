@@ -344,26 +344,7 @@ public final class ReactorNettyClient implements Client {
         Assert.requireNonNull(host, "host must not be null");
         Assert.requireNonNull(sslConfig, "sslConfig must not be null");
 
-        return connect(host, port, connectTimeout, sslConfig, null);
-    }
-
-    /**
-     * Create a new frame processor connected to a given host.
-     *
-     * @param host             the host to connect to
-     * @param port             the port to connect to
-     * @param connectTimeout   connect timeout
-     * @param sslConfig        SSL configuration
-     * @param tcpLoopResources tcp loop resources
-     * @throws IllegalArgumentException if {@code host} is {@code null}
-     */
-    public static Mono<ReactorNettyClient> connect(String host, int port, @Nullable Duration connectTimeout, @Nullable SSLConfig sslConfig, @Nullable LoopResources tcpLoopResources) {
-        Assert.requireNonNull(host, "host must not be null");
-
-        ConnectionSettings.Builder builder = ConnectionSettings.builder().connectTimeout(connectTimeout).tcpLoopResources(tcpLoopResources);
-        if (sslConfig != null) {
-            builder.sslConfig(sslConfig);
-        }
+        ConnectionSettings.Builder builder = ConnectionSettings.builder().connectTimeout(connectTimeout).sslConfig(sslConfig);
 
         return connect(InetSocketAddress.createUnresolved(host, port), builder.build());
     }
@@ -382,11 +363,13 @@ public final class ReactorNettyClient implements Client {
         TcpClient tcpClient = TcpClient.create(settings.getConnectionProvider()).remoteAddress(() -> socketAddress);
 
         if (!(socketAddress instanceof InetSocketAddress)) {
-            tcpClient = tcpClient.runOn(new SocketLoopResources(), true);
+            tcpClient = tcpClient.runOn(new SocketLoopResources(settings.hasLoopResources() ? settings.getRequiredLoopResources() : TcpResources.get()), true);
         } else {
-            if (settings.hasTcpLoopResources()) {
-                tcpClient = tcpClient.runOn(settings.getTcpLoopResources());
+
+            if (settings.hasLoopResources()) {
+                tcpClient = tcpClient.runOn(settings.getRequiredLoopResources());
             }
+
             tcpClient = tcpClient.option(ChannelOption.SO_KEEPALIVE, settings.isTcpKeepAlive());
             tcpClient = tcpClient.option(ChannelOption.TCP_NODELAY, settings.isTcpNoDelay());
         }
@@ -614,7 +597,11 @@ public final class ReactorNettyClient implements Client {
             epoll = epollCheck;
         }
 
-        private final LoopResources delegate = TcpResources.get();
+        private final LoopResources delegate;
+
+        public SocketLoopResources(LoopResources delegate) {
+            this.delegate = delegate;
+        }
 
         @SuppressWarnings("unchecked")
         private static Class<? extends Channel> findClass(String className) {

@@ -23,7 +23,6 @@ import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.LogLevel;
 import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.resources.LoopResources;
-import reactor.netty.tcp.TcpResources;
 import reactor.util.annotation.Nullable;
 
 import java.net.Socket;
@@ -43,7 +42,7 @@ public final class ConnectionSettings {
     private final ConnectionProvider connectionProvider;
 
     @Nullable
-    private final LoopResources tcpLoopResources;
+    private final LoopResources loopResources;
 
     private final SSLConfig sslConfig;
 
@@ -55,11 +54,11 @@ public final class ConnectionSettings {
 
     private final LogLevel noticeLogLevel;
 
-    ConnectionSettings(@Nullable Duration connectTimeout, ConnectionProvider connectionProvider, @Nullable LoopResources tcpLoopResources,
+    ConnectionSettings(@Nullable Duration connectTimeout, ConnectionProvider connectionProvider, @Nullable LoopResources loopResources,
                        SSLConfig sslConfig, boolean tcpKeepAlive, boolean tcpNoDelay, LogLevel errorResponseLogLevel, LogLevel noticeLogLevel) {
         this.connectTimeout = connectTimeout;
         this.connectionProvider = connectionProvider;
-        this.tcpLoopResources = tcpLoopResources;
+        this.loopResources = loopResources;
         this.sslConfig = sslConfig;
         this.tcpKeepAlive = tcpKeepAlive;
         this.tcpNoDelay = tcpNoDelay;
@@ -82,9 +81,9 @@ public final class ConnectionSettings {
      * @return a {@link Builder} that is pre-initialized with the current values
      */
     public Builder mutate() {
-        return new Builder().connectionProvider(this.connectionProvider).tcpLoopResources(this.tcpLoopResources)
-                .errorResponseLogLevel(this.errorResponseLogLevel).noticeLogLevel(this.noticeLogLevel).sslConfig(this.sslConfig)
-                .connectTimeout(this.connectTimeout).tcpKeepAlive(this.tcpKeepAlive).tcpNoDelay(this.tcpNoDelay);
+        return new Builder().connectionProvider(this.connectionProvider).loopResources(this.loopResources)
+            .errorResponseLogLevel(this.errorResponseLogLevel).noticeLogLevel(this.noticeLogLevel).sslConfig(this.sslConfig)
+            .connectTimeout(this.connectTimeout).tcpKeepAlive(this.tcpKeepAlive).tcpNoDelay(this.tcpNoDelay);
     }
 
     /**
@@ -116,12 +115,17 @@ public final class ConnectionSettings {
         return this.connectionProvider;
     }
 
-    boolean hasTcpLoopResources() {
-        return this.tcpLoopResources != null;
+    boolean hasLoopResources() {
+        return this.loopResources != null;
     }
 
-    LoopResources getTcpLoopResources() {
-        return this.tcpLoopResources;
+    LoopResources getRequiredLoopResources() {
+
+        if (!hasLoopResources()) {
+            throw new IllegalStateException("No LoopResources configured");
+        }
+
+        return this.loopResources;
     }
 
     SSLConfig getSslConfig() {
@@ -155,7 +159,7 @@ public final class ConnectionSettings {
 
         private ConnectionProvider connectionProvider = ConnectionProvider.newConnection();
 
-        private LoopResources tcpLoopResources = null;
+        private LoopResources loopResources = null;
 
         private LogLevel errorResponseLogLevel = LogLevel.WARN;
 
@@ -176,8 +180,8 @@ public final class ConnectionSettings {
          * @return a configured {@link ConnectionSettings}
          */
         public ConnectionSettings build() {
-            return new ConnectionSettings(this.connectTimeout, this.connectionProvider, this.tcpLoopResources, this.sslConfig,
-                    this.tcpKeepAlive, this.tcpNoDelay, this.errorResponseLogLevel, this.noticeLogLevel);
+            return new ConnectionSettings(this.connectTimeout, this.connectionProvider, this.loopResources, this.sslConfig,
+                this.tcpKeepAlive, this.tcpNoDelay, this.errorResponseLogLevel, this.noticeLogLevel);
         }
 
         /**
@@ -186,7 +190,7 @@ public final class ConnectionSettings {
          * @param connectTimeout the connection timeout
          * @return this {@link Builder}
          */
-        public Builder connectTimeout(Duration connectTimeout) {
+        public Builder connectTimeout(@Nullable Duration connectTimeout) {
             this.connectTimeout = connectTimeout;
             return this;
         }
@@ -203,15 +207,15 @@ public final class ConnectionSettings {
         }
 
         /**
-         * Configure the {@link LoopResources} for TCP sockets.
+         * Configure the {@link LoopResources}.
          * The {@link LoopResources}'s lifecycle should be managed externally.
          *
-         * @param tcpLoopResources the {@link LoopResources} for TCP sockets.
+         * @param loopResources the {@link LoopResources}.
          * @return this {@link Builder}
-         * @since 1.0.0
+         * @since 0.8.5
          */
-        public Builder tcpLoopResources(LoopResources tcpLoopResources) {
-            this.tcpLoopResources = tcpLoopResources;
+        public Builder loopResources(@Nullable LoopResources loopResources) {
+            this.loopResources = loopResources;
             return this;
         }
 
