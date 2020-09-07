@@ -32,7 +32,7 @@
     <url>https://github.com/pgjdbc/r2dbc-postgresql</url>
 
     <properties>
-        <assertj.version>3.16.1</assertj.version>
+        <assertj.version>3.17.2</assertj.version>
         <awaitility.version>4.0.3</awaitility.version>
         <blockhound.version>1.0.3.RELEASE</blockhound.version>
         <hikari-cp.version>3.4.5</hikari-cp.version>
