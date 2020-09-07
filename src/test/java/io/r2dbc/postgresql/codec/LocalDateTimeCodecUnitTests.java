@@ -19,7 +19,6 @@ package io.r2dbc.postgresql.codec;
 import io.r2dbc.postgresql.client.Parameter;
 import org.junit.jupiter.api.Test;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 
 import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
@@ -60,9 +59,9 @@ final class LocalDateTimeCodecUnitTests {
         LocalDateTime localDateTime = LocalDateTime.parse("2018-11-05T00:06:31.700426");
 
         assertThat(new LocalDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:06:31.700426+00:00"), dataType, FORMAT_TEXT, LocalDateTime.class))
-                .isEqualTo(localDateTime);
+            .isEqualTo(localDateTime);
         assertThat(new LocalDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:06:31.700426+00"), dataType, FORMAT_TEXT, LocalDateTime.class))
-                .isEqualTo(localDateTime);
+            .isEqualTo(localDateTime);
     }
 
     @Test

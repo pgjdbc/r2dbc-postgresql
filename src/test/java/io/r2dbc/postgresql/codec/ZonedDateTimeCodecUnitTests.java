@@ -51,7 +51,7 @@ final class ZonedDateTimeCodecUnitTests {
         ZonedDateTime zonedDateTime = ZonedDateTime.parse("2018-11-05T00:20:25.039883+09:00[Asia/Tokyo]");
 
         assertThat(new ZonedDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:20:25.039883+09:00"), dataType, FORMAT_TEXT, ZonedDateTime.class))
-                .isEqualTo(zonedDateTime);
+            .isEqualTo(zonedDateTime);
         assertThat(new ZonedDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:20:25.039883+09"), dataType, FORMAT_TEXT, ZonedDateTime.class))
             .isEqualTo(zonedDateTime);
     }
@@ -61,9 +61,9 @@ final class ZonedDateTimeCodecUnitTests {
         ZonedDateTime zonedDateTime = ZonedDateTime.parse("2018-11-05T00:20:25.039883+00:00");
 
         assertThat(new ZonedDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:20:25.039883+00:00"), dataType, FORMAT_TEXT, ZonedDateTime.class))
-                .isEqualTo(zonedDateTime);
+            .isEqualTo(zonedDateTime);
         assertThat(new ZonedDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:20:25.039883+00"), dataType, FORMAT_TEXT, ZonedDateTime.class))
-                .isEqualTo(zonedDateTime);
+            .isEqualTo(zonedDateTime);
     }
 
     @Test

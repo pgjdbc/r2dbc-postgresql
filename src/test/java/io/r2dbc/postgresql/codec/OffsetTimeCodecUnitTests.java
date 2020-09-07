@@ -16,11 +16,11 @@
 
 package io.r2dbc.postgresql.codec;
 
-import java.time.OffsetTime;
-
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.client.ParameterAssert;
 import org.junit.jupiter.api.Test;
+
+import java.time.OffsetTime;
 
 import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
