@@ -65,8 +65,8 @@ final class PostgresqlConnectionConfigurationUnitTests {
 
     @Test
     void builderNoTcpLoopResources() {
-        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().tcpLoopResources(null))
-            .withMessage("tcpLoopResources must not be null");
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().loopResources(null))
+            .withMessage("loopResources must not be null");
     }
 
     @Test
@@ -88,7 +88,7 @@ final class PostgresqlConnectionConfigurationUnitTests {
             .sslMode(SSLMode.ALLOW)
             .tcpKeepAlive(true)
             .tcpNoDelay(true)
-            .tcpLoopResources(loopResources)
+            .loopResources(loopResources)
             .build();
 
         assertThat(configuration)
@@ -103,7 +103,7 @@ final class PostgresqlConnectionConfigurationUnitTests {
             .hasFieldOrProperty("sslConfig")
             .hasFieldOrPropertyWithValue("tcpKeepAlive", true)
             .hasFieldOrPropertyWithValue("tcpNoDelay", true)
-            .hasFieldOrPropertyWithValue("tcpLoopResources", loopResources);
+            .hasFieldOrPropertyWithValue("loopResources", loopResources);
 
         assertThat(configuration.getOptions())
             .containsEntry("lock_timeout", "10s")
@@ -132,7 +132,7 @@ final class PostgresqlConnectionConfigurationUnitTests {
             .hasFieldOrProperty("sslConfig")
             .hasFieldOrPropertyWithValue("tcpKeepAlive", false)
             .hasFieldOrPropertyWithValue("tcpNoDelay", false)
-            .hasFieldOrPropertyWithValue("tcpLoopResources", null);
+            .hasFieldOrPropertyWithValue("loopResources", null);
 
         assertThat(configuration.getOptions())
             .containsEntry("search_path", "test-schema");

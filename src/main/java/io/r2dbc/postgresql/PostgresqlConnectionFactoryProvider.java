@@ -65,6 +65,18 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<Boolean> FORCE_BINARY = Option.valueOf("forceBinary");
 
     /**
+     * Event {@link LoopResources}.
+     *
+     * @since 0.8.5
+     */
+    public static final Option<LoopResources> LOOP_RESOURCES = Option.valueOf("loopResources");
+
+    /**
+     * Connection options which are applied once after the connection has been created.
+     */
+    public static final Option<Map<String, String>> OPTIONS = Option.valueOf("options");
+
+    /**
      * Driver option value.
      */
     public static final String POSTGRESQL_DRIVER = "postgresql";
@@ -73,6 +85,12 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
      * Legacy driver option value.
      */
     public static final String LEGACY_POSTGRESQL_DRIVER = "postgres";
+
+    /**
+     * Determine the number of queries that are cached in each connection.
+     * The default is {@code -1}, meaning there's no limit. The value of {@code 0} disables the cache. Any other value specifies the cache size.
+     */
+    public static final Option<Integer> PREPARED_STATEMENT_CACHE_QUERIES = Option.valueOf("preparedStatementCacheQueries");
 
     /**
      * Schema search path (alias for "currentSchema").
@@ -141,24 +159,6 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<Boolean> TCP_NODELAY = Option.valueOf("tcpNoDelay");
 
     /**
-     * TCP {@link LoopResources}.
-     *
-     * @since 1.0.0
-     */
-    public static final Option<LoopResources> TCP_LOOP_RESOURCES = Option.valueOf("tcpLoopResources");
-
-    /**
-     * Determine the number of queries that are cached in each connection.
-     * The default is {@code -1}, meaning there's no limit. The value of {@code 0} disables the cache. Any other value specifies the cache size.
-     */
-    public static final Option<Integer> PREPARED_STATEMENT_CACHE_QUERIES = Option.valueOf("preparedStatementCacheQueries");
-
-    /**
-     * Connection options which are applied once after the connection has been created.
-     */
-    public static final Option<Map<String, String>> OPTIONS = Option.valueOf("options");
-
-    /**
      * Returns a new {@link PostgresqlConnectionConfiguration.Builder} configured with the given {@link ConnectionFactoryOptions}.
      *
      * @param connectionFactoryOptions {@link ConnectionFactoryOptions} used to initialize the {@link PostgresqlConnectionConfiguration.Builder}.
@@ -209,6 +209,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         mapper.from(DATABASE).to(builder::database);
         mapper.from(FETCH_SIZE).map(OptionMapper::toInteger).to(builder::fetchSize);
         mapper.from(FORCE_BINARY).map(OptionMapper::toBoolean).to(builder::forceBinary);
+        mapper.from(LOOP_RESOURCES).to(builder::loopResources);
         mapper.from(OPTIONS).map(PostgresqlConnectionFactoryProvider::convertToMap).to(builder::options);
         mapper.from(PASSWORD).to(builder::password);
         mapper.from(PORT).map(OptionMapper::toInteger).to(builder::port);
@@ -219,7 +220,6 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         });
         mapper.from(TCP_KEEPALIVE).map(OptionMapper::toBoolean).to(builder::tcpKeepAlive);
         mapper.from(TCP_NODELAY).map(OptionMapper::toBoolean).to(builder::tcpNoDelay);
-        mapper.from(TCP_LOOP_RESOURCES).to(builder::tcpLoopResources);
         builder.username(options.getRequiredValue(USER));
 
         return builder;

@@ -36,13 +36,13 @@ public final class ConnectionSettings {
     private final boolean tcpNoDelay;
 
     @Nullable
-    private final LoopResources tcpLoopResources;
+    private final LoopResources loopResources;
 
-    public ConnectionSettings(@Nullable Duration connectTimeout, boolean tcpKeepAlive, boolean tcpNoDelay, @Nullable LoopResources tcpLoopResources) {
+    public ConnectionSettings(@Nullable Duration connectTimeout, boolean tcpKeepAlive, boolean tcpNoDelay, @Nullable LoopResources loopResources) {
         this.tcpKeepAlive = tcpKeepAlive;
         this.tcpNoDelay = tcpNoDelay;
         this.connectTimeout = connectTimeout;
-        this.tcpLoopResources = tcpLoopResources;
+        this.loopResources = loopResources;
     }
 
     @Nullable
@@ -58,12 +58,17 @@ public final class ConnectionSettings {
         return this.tcpNoDelay;
     }
 
-    public boolean hasTcpLoopResources() {
-        return this.tcpLoopResources != null;
+    boolean hasLoopResources() {
+        return this.loopResources != null;
     }
-    
-    LoopResources getTcpLoopResources() {
-        return this.tcpLoopResources;
+
+    LoopResources getRequiredLoopResources() {
+
+        if (!hasLoopResources()) {
+            throw new IllegalStateException("No LoopResources configured");
+        }
+
+        return this.loopResources;
     }
 
 }
