@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql.codec;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.util.ByteBufUtils;
@@ -23,6 +24,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
@@ -34,6 +36,7 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 
 /**
  * Unit tests for {@link JsonCodec}.
@@ -108,6 +111,32 @@ final class JsonCodecUnitTests {
             .hasFormat(FORMAT_BINARY)
             .hasType(JSONB.getObjectId())
             .hasValue(Unpooled.wrappedBuffer(Unpooled.wrappedBuffer(new byte[]{1}), ByteBufUtils.encode(TEST, json)));
+    }
+
+    @Test
+    void doEncodeReleasedByteBuf() {
+        String json = "{\"name\":\"John Doe\"}";
+        JsonCodec jsonCodec = new JsonCodec(TEST);
+
+        ByteBuf buffer = TEST.buffer();
+        buffer.writeCharSequence(json, StandardCharsets.UTF_8);
+
+        assertThat(jsonCodec.doEncode(Json.of(buffer)))
+            .hasValue(Unpooled.wrappedBuffer(Unpooled.wrappedBuffer(new byte[]{1}), ByteBufUtils.encode(TEST, json)));
+
+        assertThat(buffer.refCnt()).isZero();
+    }
+
+    @Test
+    void doEncodeReleasedJsonOutput() {
+        String json = "{\"name\":\"John Doe\"}";
+        JsonCodec jsonCodec = new JsonCodec(TEST);
+        Json decodedBytes = jsonCodec.decode(ByteBufUtils.encode(TEST, json), JSON.getObjectId(), FORMAT_TEXT, Json.class);
+
+        assertThat(jsonCodec.doEncode(decodedBytes))
+            .hasValue(Unpooled.wrappedBuffer(Unpooled.wrappedBuffer(new byte[]{1}), ByteBufUtils.encode(TEST, json)));
+
+        assertThatIllegalStateException().isThrownBy(decodedBytes::asString).withMessage("JSON is already released");
     }
 
     @Test

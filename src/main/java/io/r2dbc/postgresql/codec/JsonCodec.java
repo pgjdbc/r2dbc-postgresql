@@ -18,7 +18,9 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
+import io.netty.util.ReferenceCountUtil;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
@@ -91,7 +93,11 @@ final class JsonCodec extends AbstractJsonCodec<Json> {
             ByteBuf buffer = (ByteBuf) toEncode;
             buffer.touch();
 
-            return this.byteBufAllocator.buffer(buffer.readableBytes() + 1).writeByte(1).writeBytes(buffer);
+            try {
+                return this.byteBufAllocator.buffer(buffer.readableBytes() + 1).writeByte(1).writeBytes(buffer);
+            } finally {
+                ReferenceCountUtil.safeRelease(buffer);
+            }
         });
 
     }
