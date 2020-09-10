@@ -158,7 +158,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
             )
             .flatMap(client -> {
 
-                DefaultCodecs codecs = new DefaultCodecs(client.getByteBufAllocator());
+                DefaultCodecs codecs = new DefaultCodecs(client.getByteBufAllocator(), this.configuration.isPreferAttachedBuffers());
                 StatementCache statementCache = StatementCache.fromPreparedStatementCacheQueries(client, this.configuration.getPreparedStatementCacheQueries());
 
                 // early connection object to retrieve initialization details
