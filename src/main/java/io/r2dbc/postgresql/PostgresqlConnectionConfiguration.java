@@ -22,6 +22,8 @@ import io.r2dbc.postgresql.client.DefaultHostnameVerifier;
 import io.r2dbc.postgresql.client.SSLConfig;
 import io.r2dbc.postgresql.client.SSLMode;
 import io.r2dbc.postgresql.codec.Codec;
+import io.r2dbc.postgresql.codec.Codecs;
+import io.r2dbc.postgresql.codec.Json;
 import io.r2dbc.postgresql.extension.CodecRegistrar;
 import io.r2dbc.postgresql.extension.Extension;
 import io.r2dbc.postgresql.util.Assert;
@@ -81,6 +83,8 @@ public final class PostgresqlConnectionConfiguration {
 
     private final int port;
 
+    private final boolean preferAttachedBuffers;
+
     private final int preparedStatementCacheQueries;
 
     private final String socket;
@@ -95,7 +99,7 @@ public final class PostgresqlConnectionConfiguration {
 
     private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions, @Nullable Duration connectTimeout, @Nullable String database, List<Extension> extensions,
                                               ToIntFunction<String> fetchSize, boolean forceBinary, @Nullable String host, @Nullable LoopResources loopResources,
-                                              @Nullable Map<String, String> options, @Nullable CharSequence password, int port, int preparedStatementCacheQueries, @Nullable String schema,
+                                              @Nullable Map<String, String> options, @Nullable CharSequence password, int port,boolean preferAttachedBuffers, int preparedStatementCacheQueries, @Nullable String schema,
                                               @Nullable String socket, SSLConfig sslConfig, boolean tcpKeepAlive, boolean tcpNoDelay, String username) {
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
         this.autodetectExtensions = autodetectExtensions;
@@ -114,6 +118,7 @@ public final class PostgresqlConnectionConfiguration {
 
         this.password = password;
         this.port = port;
+        this.preferAttachedBuffers = preferAttachedBuffers;
         this.preparedStatementCacheQueries = preparedStatementCacheQueries;
         this.socket = socket;
         this.sslConfig = sslConfig;
@@ -146,6 +151,7 @@ public final class PostgresqlConnectionConfiguration {
             ", options='" + this.options + '\'' +
             ", password='" + obfuscate(this.password != null ? this.password.length() : 0) + '\'' +
             ", port=" + this.port +
+            ", preferAttachedBuffers=" + this.preferAttachedBuffers +
             ", socket=" + this.socket +
             ", tcpKeepAlive=" + this.tcpKeepAlive +
             ", tcpNoDelay=" + this.tcpNoDelay +
@@ -211,6 +217,10 @@ public final class PostgresqlConnectionConfiguration {
 
     int getPort() {
         return this.port;
+    }
+
+    boolean isPreferAttachedBuffers() {
+        return this.preferAttachedBuffers;
     }
 
     int getPreparedStatementCacheQueries() {
@@ -305,6 +315,8 @@ public final class PostgresqlConnectionConfiguration {
 
         private int port = DEFAULT_PORT;
 
+        private boolean preferAttachedBuffers = false;
+
         private int preparedStatementCacheQueries = -1;
 
         @Nullable
@@ -387,7 +399,8 @@ public final class PostgresqlConnectionConfiguration {
             }
 
             return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.connectTimeout, this.database, this.extensions, this.fetchSize, this.forceBinary,
-                this.host, this.loopResources, this.options, this.password, this.port, this.preparedStatementCacheQueries, this.schema, this.socket, this.createSslConfig(), this.tcpKeepAlive,
+                this.host, this.loopResources, this.options, this.password, this.port, this.preferAttachedBuffers,
+                this.preparedStatementCacheQueries, this.schema, this.socket, this.createSslConfig(), this.tcpKeepAlive,
                 this.tcpNoDelay, this.username);
         }
 
@@ -549,6 +562,20 @@ public final class PostgresqlConnectionConfiguration {
          */
         public Builder port(int port) {
             this.port = port;
+            return this;
+        }
+
+        /**
+         * Configure whether {@link Codecs codecs} should prefer attached data buffers. The default is {@code false}, meaning that codecs will copy data from the input buffer into a {@code byte[]}
+         * or similar data structure that is enabled for garbage collection.  Using attached buffers is more efficient but comes with the requirement that decoded values (such as {@link Json}) must
+         * be consumed to release attached buffers to avoid memory leaks.
+         *
+         * @param preferAttachedBuffers the flag whether to prefer attached buffers
+         * @return this {@link Builder}
+         * @since 0.8.5
+         */
+        public Builder preferAttachedBuffers(boolean preferAttachedBuffers) {
+            this.preferAttachedBuffers = preferAttachedBuffers;
             return this;
         }
 

@@ -19,6 +19,8 @@ package io.r2dbc.postgresql;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.r2dbc.postgresql.client.DefaultHostnameVerifier;
 import io.r2dbc.postgresql.client.SSLMode;
+import io.r2dbc.postgresql.codec.Codecs;
+import io.r2dbc.postgresql.codec.Json;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.ConnectionFactoryProvider;
@@ -85,6 +87,15 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
      * Legacy driver option value.
      */
     public static final String LEGACY_POSTGRESQL_DRIVER = "postgres";
+
+    /**
+     * Configure whether {@link Codecs codecs} should prefer attached data buffers. The default is {@code false}, meaning that codecs will copy data from the input buffer into a {@code byte[]}
+     * or similar data structure that is enabled for garbage collection.  Using attached buffers is more efficient but comes with the requirement that decoded values (such as {@link Json}) must
+     * be consumed to release attached buffers to avoid memory leaks.
+     *
+     * @since 0.8.5
+     */
+    public static final Option<Boolean> PREFER_ATTACHED_BUFFERS = Option.valueOf("preferAttachedBuffers");
 
     /**
      * Determine the number of queries that are cached in each connection.
@@ -213,6 +224,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         mapper.from(OPTIONS).map(PostgresqlConnectionFactoryProvider::convertToMap).to(builder::options);
         mapper.from(PASSWORD).to(builder::password);
         mapper.from(PORT).map(OptionMapper::toInteger).to(builder::port);
+        mapper.from(PREFER_ATTACHED_BUFFERS).map(OptionMapper::toBoolean).to(builder::preferAttachedBuffers);
         mapper.from(PREPARED_STATEMENT_CACHE_QUERIES).map(OptionMapper::toInteger).to(builder::preparedStatementCacheQueries);
         mapper.from(SOCKET).to(builder::socket).otherwise(() -> {
             builder.host(options.getRequiredValue(HOST));

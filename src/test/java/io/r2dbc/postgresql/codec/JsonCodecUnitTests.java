@@ -45,27 +45,49 @@ final class JsonCodecUnitTests {
 
     @Test
     void constructorNoByteBufAllocator() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new JsonCodec(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new JsonCodec(null, true))
             .withMessage("byteBufAllocator must not be null");
     }
 
     @Test
     void decode() {
         String json = "{\"name\": \"John Doe\"}";
-        JsonCodec jsonCodec = new JsonCodec(TEST);
+        JsonCodec jsonCodec = new JsonCodec(TEST, true);
         Json decodedBytes = jsonCodec.decode(ByteBufUtils.encode(TEST, json), JSON.getObjectId(), FORMAT_TEXT, Json.class);
 
         assertThat(decodedBytes.asString()).isEqualTo(json);
     }
 
     @Test
+    void shouldDecodeWithAttachedBuffers() {
+        String json = "{\"name\": \"John Doe\"}";
+        JsonCodec jsonCodec = new JsonCodec(TEST, true);
+        ByteBuf encoded = ByteBufUtils.encode(TEST, json);
+        jsonCodec.decode(encoded, JSON.getObjectId(), FORMAT_TEXT, Json.class);
+
+        assertThat(encoded.refCnt()).isEqualTo(2);
+        encoded.release(2);
+    }
+
+    @Test
+    void shouldDecodeWithDetachedBuffers() {
+        String json = "{\"name\": \"John Doe\"}";
+        JsonCodec jsonCodec = new JsonCodec(TEST, false);
+        ByteBuf encoded = ByteBufUtils.encode(TEST, json);
+        jsonCodec.decode(encoded, JSON.getObjectId(), FORMAT_TEXT, Json.class);
+
+        assertThat(encoded.refCnt()).isEqualTo(1);
+        encoded.release();
+    }
+
+    @Test
     void decodeNoByteBuf() {
-        assertThat(new JsonCodec(TEST).decode(null, JSON.getObjectId(), FORMAT_TEXT, Json.class)).isNull();
+        assertThat(new JsonCodec(TEST, true).decode(null, JSON.getObjectId(), FORMAT_TEXT, Json.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
-        JsonCodec jsonCodec = new JsonCodec(TEST);
+        JsonCodec jsonCodec = new JsonCodec(TEST, true);
 
         assertThat(jsonCodec.doCanDecode(JSON, FORMAT_TEXT)).isTrue();
         assertThat(jsonCodec.doCanDecode(JSON, FORMAT_BINARY)).isTrue();
@@ -77,20 +99,20 @@ final class JsonCodecUnitTests {
 
     @Test
     void doCanDecodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new JsonCodec(TEST).doCanDecode(JSON, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new JsonCodec(TEST, true).doCanDecode(JSON, null))
             .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new JsonCodec(TEST).doCanDecode(null, FORMAT_TEXT))
+        assertThatIllegalArgumentException().isThrownBy(() -> new JsonCodec(TEST, true).doCanDecode(null, FORMAT_TEXT))
             .withMessage("type must not be null");
     }
 
     @Test
     void doEncode() {
         String json = "{\"name\":\"John Doe\"}";
-        JsonCodec jsonCodec = new JsonCodec(TEST);
+        JsonCodec jsonCodec = new JsonCodec(TEST, true);
 
         assertThat(jsonCodec.doEncode(Json.of(json)))
             .hasFormat(FORMAT_BINARY)
@@ -116,7 +138,7 @@ final class JsonCodecUnitTests {
     @Test
     void doEncodeReleasedByteBuf() {
         String json = "{\"name\":\"John Doe\"}";
-        JsonCodec jsonCodec = new JsonCodec(TEST);
+        JsonCodec jsonCodec = new JsonCodec(TEST, true);
 
         ByteBuf buffer = TEST.buffer();
         buffer.writeCharSequence(json, StandardCharsets.UTF_8);
@@ -130,7 +152,7 @@ final class JsonCodecUnitTests {
     @Test
     void doEncodeReleasedJsonOutput() {
         String json = "{\"name\":\"John Doe\"}";
-        JsonCodec jsonCodec = new JsonCodec(TEST);
+        JsonCodec jsonCodec = new JsonCodec(TEST, true);
         Json decodedBytes = jsonCodec.decode(ByteBufUtils.encode(TEST, json), JSON.getObjectId(), FORMAT_TEXT, Json.class);
 
         assertThat(jsonCodec.doEncode(decodedBytes))
@@ -141,13 +163,13 @@ final class JsonCodecUnitTests {
 
     @Test
     void doEncodeNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new JsonCodec(TEST).doEncode(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new JsonCodec(TEST, true).doEncode(null))
             .withMessage("value must not be null");
     }
 
     @Test
     void encodeNull() {
-        assertThat(new JsonCodec(TEST).encodeNull())
+        assertThat(new JsonCodec(TEST, true).encodeNull())
             .isEqualTo(new Parameter(FORMAT_BINARY, JSONB.getObjectId(), NULL_VALUE));
     }
 

@@ -260,7 +260,7 @@ public abstract class Json {
 
         @Override
         public String toString() {
-            return "JsonByteBufInput{" +
+            return "JsonByteArrayInput{" +
                 asString() +
                 '}';
         }
@@ -323,6 +323,13 @@ public abstract class Json {
         @Override
         public String asString() {
             return new String(asArray(), StandardCharsets.UTF_8);
+        }
+
+        @Override
+        public String toString() {
+            return "JsonInputStreamInput{" +
+                this.value +
+                '}';
         }
 
     }

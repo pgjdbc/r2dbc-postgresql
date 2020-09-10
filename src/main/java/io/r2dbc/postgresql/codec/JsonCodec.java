@@ -37,9 +37,12 @@ final class JsonCodec extends AbstractJsonCodec<Json> {
 
     private final ByteBufAllocator byteBufAllocator;
 
-    JsonCodec(ByteBufAllocator byteBufAllocator) {
+    private final boolean preferAttachedBuffers;
+
+    JsonCodec(ByteBufAllocator byteBufAllocator, boolean preferAttachedBuffers) {
         super(Json.class);
         this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        this.preferAttachedBuffers = preferAttachedBuffers;
     }
 
     @Override
@@ -48,12 +51,15 @@ final class JsonCodec extends AbstractJsonCodec<Json> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        ByteBuf slice = buffer.retainedSlice();
         if (dataType == JSONB && format == FORMAT_BINARY) {
-            slice.skipBytes(1);
+            buffer.skipBytes(1);
         }
 
-        return new Json.JsonOutput(slice);
+        if (this.preferAttachedBuffers) {
+            return new Json.JsonOutput(buffer.retainedSlice());
+        }
+
+        return new Json.JsonByteArrayInput(ByteBufUtil.getBytes(buffer));
     }
 
     @Override
@@ -68,7 +74,7 @@ final class JsonCodec extends AbstractJsonCodec<Json> {
             Object toEncode;
 
             if (value instanceof Json.JsonInput) {
-                toEncode = ((Json.JsonInput) value).value;
+                toEncode = ((Json.JsonInput<?>) value).value;
             } else {
                 toEncode = ((Json.JsonOutput) value).buffer;
                 ((Json.JsonOutput) value).released = true;

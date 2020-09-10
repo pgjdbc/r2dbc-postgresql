@@ -31,17 +31,29 @@ import java.util.List;
 
 /**
  * The default {@link Codec} implementation.  Delegates to type-specific codec implementations.
+ * <p>Codecs can be configured to prefer or avoid attached buffers for certain data types.  Using attached buffers is more memory-efficient as data doesn't need to be copied. In turn, attached
+ * buffers require release or consumption to avoid memory leaks.  By default, codecs don't use attached buffers to minimize the risk of memory leaks.</p>
  */
 public final class DefaultCodecs implements Codecs, CodecRegistry {
 
     private final List<Codec<?>> codecs;
 
     /**
-     * Create a new instance of {@link DefaultCodecs}.
+     * Create a new instance of {@link DefaultCodecs} preferring detached (copied buffers).
      *
      * @param byteBufAllocator the {@link ByteBufAllocator} to use for encoding
      */
     public DefaultCodecs(ByteBufAllocator byteBufAllocator) {
+        this(byteBufAllocator, false);
+    }
+
+    /**
+     * Create a new instance of {@link DefaultCodecs}.
+     *
+     * @param byteBufAllocator      the {@link ByteBufAllocator} to use for encoding
+     * @param preferAttachedBuffers whether to prefer attached (pooled) {@link ByteBuf buffers}. Use {@code false} (default) to use detached buffers which minimize the risk of memory leaks.
+     */
+    public DefaultCodecs(ByteBufAllocator byteBufAllocator, boolean preferAttachedBuffers) {
         Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
 
         this.codecs = new ArrayList<>(Arrays.asList(
@@ -74,7 +86,7 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
             new ZoneIdCodec(byteBufAllocator),
 
             // JSON
-            new JsonCodec(byteBufAllocator),
+            new JsonCodec(byteBufAllocator, preferAttachedBuffers),
             new JsonByteArrayCodec(byteBufAllocator),
             new JsonByteBufCodec(byteBufAllocator),
             new JsonByteBufferCodec(byteBufAllocator),

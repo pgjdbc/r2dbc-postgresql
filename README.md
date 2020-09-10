@@ -80,6 +80,7 @@ Mono<Connection> connectionMono = Mono.from(connectionFactory.create());
 | `fetchSize`       | The default number of rows to return when fetching results. Defaults to `0` for unlimited. _(Optional)_
 | `forceBinary`     | Whether to force binary transfer.  Defaults to `false`. _(Optional)_
 | `loopResources`   | TCP/Socket LoopResources (depends on the endpoint connection type). _(Optional)_
+| `preferAttachedBuffers` |Configure whether codecs should prefer attached data buffers. The default is `false`, meaning that codecs will copy data from the input buffer into a byte array. Enabling attached buffers requires consumption of values such as `Json`  to avoid memory leaks.
 | `preparedStatementCacheQueries` | Determine the number of queries that are cached in each connection. The default is `-1`, meaning there's no limit. The value of `0` disables the cache. Any other value specifies the cache size.
 | `options`         | A `Map<String, String>` of connection parameters. These are applied to each database connection created by the `ConnectionFactory`. Useful for setting generic [PostgreSQL connection parameters][psql-runtime-config]. _(Optional)_
 | `schema`          | The search path to set. _(Optional)_

@@ -31,6 +31,7 @@ import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.FORCE_BINA
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.LEGACY_POSTGRESQL_DRIVER;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.OPTIONS;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.POSTGRESQL_DRIVER;
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.PREFER_ATTACHED_BUFFERS;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.PREPARED_STATEMENT_CACHE_QUERIES;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SOCKET;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_CONTEXT_BUILDER_CUSTOMIZER;
@@ -384,6 +385,20 @@ final class PostgresqlConnectionFactoryProviderUnitTests {
 
         assertThat(factory.getConfiguration().getOptions().get("search_path")).isEqualTo("public,private");
         assertThat(factory.getConfiguration().getOptions().get("default_tablespace")).isEqualTo("unknown");
+    }
+
+    @Test
+    void shouldConfigurePreferAttachedBuffers() {
+
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(PREFER_ATTACHED_BUFFERS, true)
+            .build());
+
+        assertThat(factory.getConfiguration().isPreferAttachedBuffers()).isTrue();
     }
 
 }
