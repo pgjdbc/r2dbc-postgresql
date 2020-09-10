@@ -1,6 +1,24 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+0.8.5.RELEASE
+-----------------------------------------
+* Use detached byte buffers by default for decoded values #330
+* JsonCodec.encode(…) doesn't release input buffer #329
+* Upgrade to Assertj 3.17.2 #328
+* Upgrade to Netty 4.1.51.Final #327
+* Upgrade to Reactor Dysprosium SR11 #326
+* Issue parsing UTC timestamptz from CockroachDB #320
+* Possibility to configure LoopResources  inside ReactorNettyClient  #319
+* Add priority to EnumCodec registrar #310
+* EnumCodec's canDecode method fix (Issue #302) #308
+* Support for geospatial types - point, line, box, polygon etc #306
+* NullPointerExceptionwhen adding SSL handler via SSLTunnelHandlerAdapter #304
+* Add priority to EnumCodec registrar #303
+* EnumCodec decoding fails if the requested value type is Object #302
+* Row.decode(…) fails for enum type with IllegalArgumentException: 72093 is not a valid object id #301
+* Support for geospatial types - point, line, box, polygon etc #282
+
 0.8.4.RELEASE
 -----------------------------------------
 * Ensure no snapshots get referenced in release builds #299
