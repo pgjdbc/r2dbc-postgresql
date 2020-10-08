@@ -15,7 +15,7 @@ ls -l /var/runtime
 
 ./docker-entrypoint.sh postgres \
   -c 'wal_level=logical' \
-  -c 'wal_keep_segments=4' \
+  -c 'wal_keep_size=4' \
   -c 'max_replication_slots=4' \
   -c 'ssl=on' \
   -c 'ssl_key_file=/var/runtime/server.key' \
