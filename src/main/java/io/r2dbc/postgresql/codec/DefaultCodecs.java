@@ -106,6 +106,7 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
             new StringArrayCodec(byteBufAllocator),
             new IntegerArrayCodec(byteBufAllocator),
             new LongArrayCodec(byteBufAllocator),
+            new UuidArrayCodec(byteBufAllocator),
 
             //Geometry
             new CircleCodec(byteBufAllocator),
