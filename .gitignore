@@ -31,6 +31,9 @@ build/
 *.tar.gz
 *.rar
 
+# MacOS #
+**/.DS_Store
+
 # virtual machine crash logs, see https://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 .flattened-pom.xml
