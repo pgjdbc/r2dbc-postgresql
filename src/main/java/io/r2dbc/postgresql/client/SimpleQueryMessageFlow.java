@@ -43,7 +43,7 @@ public final class SimpleQueryMessageFlow {
         Assert.requireNonNull(client, "client must not be null");
         Assert.requireNonNull(query, "query must not be null");
 
-        return client.exchange(Mono.<FrontendMessage>just(new Query(query)).doOnSubscribe(ignore -> QueryLogger.logQuery(query)));
+        return client.exchange(Mono.<FrontendMessage>just(new Query(query)).doOnSubscribe(ignore -> QueryLogger.logQuery(client.getContext(), query)));
     }
 
 }

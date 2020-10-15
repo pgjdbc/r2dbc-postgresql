@@ -105,6 +105,14 @@ public interface Client {
     ByteBufAllocator getByteBufAllocator();
 
     /**
+     * Returns the {@link ConnectionContext}.
+     *
+     * @return the {@link ConnectionContext}
+     * @since 0.8.6
+     */
+    ConnectionContext getContext();
+
+    /**
      * Returns the connected process id if it has been communicated.
      *
      * @return the connected process id if it has been communicated

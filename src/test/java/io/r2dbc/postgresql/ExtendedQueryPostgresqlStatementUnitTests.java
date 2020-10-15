@@ -174,7 +174,7 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
             .build();
 
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
-        ConnectionContext context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
+        ConnectionResources context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
 
         when(context.getStatementCache().getName(any(), any())).thenReturn(Mono.just("test-name"));
 
@@ -212,7 +212,7 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
             .build();
 
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
-        ConnectionContext context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
+        ConnectionResources context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
 
         when(context.getStatementCache().getName(any(), any())).thenReturn(Mono.just("test-name"));
 
@@ -241,7 +241,7 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
             .build();
 
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
-        ConnectionContext context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
+        ConnectionResources context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
 
         when(context.getStatementCache().getName(any(), any())).thenReturn(Mono.just("test-name"));
 
@@ -270,7 +270,7 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
             .build();
 
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
-        ConnectionContext context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
+        ConnectionResources context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
 
         when(context.getStatementCache().getName(any(), any())).thenReturn(Mono.just("test-name"));
 
@@ -299,7 +299,7 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
             .build();
 
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
-        ConnectionContext context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
+        ConnectionResources context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
 
         when(context.getStatementCache().getName(any(), any())).thenReturn(Mono.just("test-name"));
 
@@ -329,7 +329,7 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
             .build();
 
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
-        ConnectionContext context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
+        ConnectionResources context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
 
         when(context.getStatementCache().getName(any(), any())).thenReturn(Mono.just("test-name"));
 
@@ -359,7 +359,7 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
             .build();
 
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
-        ConnectionContext context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
+        ConnectionResources context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
 
         when(context.getStatementCache().getName(any(), any())).thenReturn(Mono.just("test-name"));
 
@@ -391,7 +391,7 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
             .build();
 
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
-        ConnectionContext context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
+        ConnectionResources context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
 
         when(context.getStatementCache().getName(any(), any())).thenReturn(Mono.just("test-name"));
 

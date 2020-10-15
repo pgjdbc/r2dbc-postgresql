@@ -48,7 +48,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
 
     private final Bindings bindings;
 
-    private final ConnectionContext context;
+    private final ConnectionResources context;
 
     private final String sql;
 
@@ -56,7 +56,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
 
     private String[] generatedColumns;
 
-    ExtendedQueryPostgresqlStatement(ConnectionContext context, String sql) {
+    ExtendedQueryPostgresqlStatement(ConnectionResources context, String sql) {
         this.context = Assert.requireNonNull(context, "context must not be null");
         this.sql = Assert.requireNonNull(sql, "sql must not be null");
         this.bindings = new Bindings(expectedSize(sql));
@@ -181,7 +181,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
             .cast(io.r2dbc.postgresql.api.PostgresqlResult.class);
     }
 
-    static PostgresqlResult createPostgresqlResult(String sql, ExceptionFactory factory, String statementName, Binding binding, ConnectionContext context, int fetchSize) {
+    static PostgresqlResult createPostgresqlResult(String sql, ExceptionFactory factory, String statementName, Binding binding, ConnectionResources context, int fetchSize) {
         Flux<BackendMessage> messages = ExtendedQueryMessageFlow
             .execute(binding, context.getClient(), context.getPortalNameSupplier(), statementName, sql, context.getConfiguration().isForceBinary(), fetchSize)
             .filter(RESULT_FRAME_FILTER);

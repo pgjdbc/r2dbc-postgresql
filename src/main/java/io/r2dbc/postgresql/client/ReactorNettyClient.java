@@ -105,6 +105,8 @@ public final class ReactorNettyClient implements Client {
 
     private final Connection connection;
 
+    private ConnectionContext context;
+
     private final EmitterProcessor<Publisher<FrontendMessage>> requestProcessor = EmitterProcessor.create(false);
 
     private final FluxSink<Publisher<FrontendMessage>> requests = this.requestProcessor.sink();
@@ -142,6 +144,7 @@ public final class ReactorNettyClient implements Client {
         connection.addHandler(new EnsureSubscribersCompleteChannelHandler(this.requestProcessor));
         this.connection = connection;
         this.byteBufAllocator = connection.outbound().alloc();
+        this.context = new ConnectionContext().withChannelId(connection.channel().toString());
 
         AtomicReference<Throwable> receiveError = new AtomicReference<>();
 
@@ -165,7 +168,7 @@ public final class ReactorNettyClient implements Client {
             .concatMap(Function.identity())
             .flatMap(message -> {
                 if (DEBUG_ENABLED) {
-                    logger.debug("Request:  {}", message);
+                    logger.debug(this.context.getMessage(String.format("Request:  %s", message)));
                 }
                 return connection.outbound().send(message.encode(this.byteBufAllocator));
             }, 1)
@@ -195,7 +198,7 @@ public final class ReactorNettyClient implements Client {
                 }
 
                 return Flux.just(Terminate.INSTANCE)
-                    .doOnNext(message -> logger.debug("Request:  {}", message))
+                    .doOnNext(message -> logger.debug(this.context.getMessage(String.format("Request:  %s", message))))
                     .concatMap(message -> this.connection.outbound().send(message.encode(this.connection.outbound().alloc())))
                     .then()
                     .doOnSuccess(v -> this.connection.dispose())
@@ -232,9 +235,9 @@ public final class ReactorNettyClient implements Client {
         this.requestProcessor.onComplete();
 
         if (isSslException(throwable)) {
-            logger.debug("Connection Error", throwable);
+            logger.debug(this.context.getMessage("Connection Error"), throwable);
         } else {
-            logger.error("Connection Error", throwable);
+            logger.error(this.context.getMessage("Connection Error"), throwable);
         }
 
         return close();
@@ -254,11 +257,11 @@ public final class ReactorNettyClient implements Client {
     private boolean consumeMessage(BackendMessage message) {
 
         if (DEBUG_ENABLED) {
-            logger.debug("Response: {}", message);
+            logger.debug(this.context.getMessage(String.format("Response: %s", message)));
         }
 
         if (message.getClass() == NoticeResponse.class) {
-            logger.warn("Notice: {}", toString(((NoticeResponse) message).getFields()));
+            logger.warn(this.context.getMessage("Notice: {}"), toString(((NoticeResponse) message).getFields()));
             return true;
         }
 
@@ -267,12 +270,13 @@ public final class ReactorNettyClient implements Client {
             BackendKeyData backendKeyData = (BackendKeyData) message;
 
             this.processId = backendKeyData.getProcessId();
+            this.context = this.context.withProcessId(this.processId);
             this.secretKey = backendKeyData.getSecretKey();
             return true;
         }
 
         if (message.getClass() == ErrorResponse.class) {
-            logger.warn("Error: {}", toString(((ErrorResponse) message).getFields()));
+            logger.warn(this.context.getMessage("Error: {}"), toString(((ErrorResponse) message).getFields()));
         }
 
         if (message.getClass() == ParameterStatus.class) {
@@ -445,6 +449,11 @@ public final class ReactorNettyClient implements Client {
     @Override
     public ByteBufAllocator getByteBufAllocator() {
         return this.byteBufAllocator;
+    }
+
+    @Override
+    public ConnectionContext getContext() {
+        return this.context;
     }
 
     @Override
@@ -882,9 +891,9 @@ public final class ReactorNettyClient implements Client {
             this.terminated = true;
 
             if (isSslException(throwable)) {
-                logger.debug("Connection Error", throwable);
+                logger.debug(ReactorNettyClient.this.context.getMessage("Connection Error"), throwable);
             } else {
-                logger.error("Connection Error", throwable);
+                logger.error(ReactorNettyClient.this.context.getMessage("Connection Error"), throwable);
             }
 
             ReactorNettyClient.this.close().subscribe();

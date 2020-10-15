@@ -45,7 +45,7 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
 
     private static final Predicate<BackendMessage> WINDOW_UNTIL = or(CommandComplete.class::isInstance, EmptyQueryResponse.class::isInstance, ErrorResponse.class::isInstance);
 
-    private final ConnectionContext context;
+    private final ConnectionResources context;
 
     private final String sql;
 
@@ -53,7 +53,7 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
 
     private int fetchSize;
 
-    SimpleQueryPostgresqlStatement(ConnectionContext context, String sql) {
+    SimpleQueryPostgresqlStatement(ConnectionResources context, String sql) {
         this.context = Assert.requireNonNull(context, "context must not be null");
         this.sql = Assert.requireNonNull(sql, "sql must not be null");
         fetchSize(isBatch() ? NO_LIMIT : this.context.getConfiguration().getFetchSize(sql));

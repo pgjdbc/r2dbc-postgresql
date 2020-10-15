@@ -32,7 +32,7 @@ import java.util.Objects;
  */
 final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
 
-    private final ConnectionContext context;
+    private final ConnectionResources context;
 
     private final List<RowDescription.Field> fields;
 
@@ -40,7 +40,7 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
 
     private volatile boolean isReleased = false;
 
-    PostgresqlRow(ConnectionContext context, List<RowDescription.Field> fields, ByteBuf[] data) {
+    PostgresqlRow(ConnectionResources context, List<RowDescription.Field> fields, ByteBuf[] data) {
         this.context = Assert.requireNonNull(context, "context must not be null");
         this.fields = Assert.requireNonNull(fields, "fields must not be null");
         this.data = Assert.requireNonNull(data, "data must not be null");
@@ -107,7 +107,7 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
             '}';
     }
 
-    static PostgresqlRow toRow(ConnectionContext context, DataRow dataRow, RowDescription rowDescription) {
+    static PostgresqlRow toRow(ConnectionResources context, DataRow dataRow, RowDescription rowDescription) {
         Assert.requireNonNull(dataRow, "dataRow must not be null");
         Assert.requireNonNull(rowDescription, "rowDescription must not be null");
 

@@ -25,7 +25,7 @@ import io.r2dbc.postgresql.util.Assert;
 /**
  * @author Mark Paluch
  */
-final class ConnectionContext {
+final class ConnectionResources {
 
     private final Client client;
 
@@ -39,8 +39,8 @@ final class ConnectionContext {
 
     private final PortalNameSupplier portalNameSupplier;
 
-    ConnectionContext(Client client, Codecs codecs, PostgresqlConnection connection, PostgresqlConnectionConfiguration configuration, PortalNameSupplier portalNameSupplier,
-                      StatementCache statementCache) {
+    ConnectionResources(Client client, Codecs codecs, PostgresqlConnection connection, PostgresqlConnectionConfiguration configuration, PortalNameSupplier portalNameSupplier,
+                        StatementCache statementCache) {
         this.client = client;
         this.codecs = codecs;
         this.connection = connection;

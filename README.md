@@ -456,6 +456,52 @@ Logging facilities:
 * Transport Logging (`io.r2dbc.postgresql.client`)
     * `DEBUG` enables `Message` exchange logging
     * `TRACE` enables traffic logging
+    
+Logging that is associated with a connection reports the logical connection id (`cid`) which is a driver-local connection counter and the Postgres Process Id (`pid`) once the connection handshake finishes.
+    
+## Getting Help
+
+Having trouble with R2DBC? We'd love to help!
+
+* Check the [spec documentation](https://r2dbc.io/spec/0.8.0.RELEASE/spec/html/), and [Javadoc](https://r2dbc.io/spec/0.8.0.RELEASE/api/).
+* If you are upgrading, check out the [changelog](https://r2dbc.io/spec/0.8.0.RELEASE/CHANGELOG.txt) for "new and noteworthy" features.
+* Ask a question - we monitor [stackoverflow.com](https://stackoverflow.com) for questions
+  tagged with [`r2dbc`](https://stackoverflow.com/tags/r2dbc). 
+  You can also chat with the community on [Gitter](https://gitter.im/r2dbc/r2dbc).
+* Report bugs with R2DBC PostgreSQL at [github.com/pgjdbc/r2dbc-postgresql/issues](https://github.com/pgjdbc/r2dbc-postgresql/issues).
+
+## Reporting Issues
+
+R2DBC uses GitHub as issue tracking system to record bugs and feature requests. 
+If you want to raise an issue, please follow the recommendations below:
+
+* Before you log a bug, please search the [issue tracker](https://github.com/pgjdbc/r2dbc-postgresql/issues) to see if someone has already reported the problem.
+* If the issue doesn't already exist, [create a new issue](https://github.com/pgjdbc/r2dbc-postgresql/issues/new).
+* Please provide as much information as possible with the issue report, we like to know the version of R2DBC PostgreSQL that you are using and JVM version.
+* If you need to paste code, or include a stack trace use Markdown ``` escapes before and after your text.
+* If possible try to create a test-case or project that replicates the issue. 
+Attach a link to your code or a compressed file containing your code.
+
+## Building from Source
+
+You don't need to build from source to use R2DBC PostgreSQL (binaries in Maven Central), but if you want to try out the latest and greatest, R2DBC PostgreSQL can be easily built with the
+[maven wrapper](https://github.com/takari/maven-wrapper). You also need JDK 1.8 and Docker to run integration tests.
+
+```bash
+ $ ./mvnw clean install
+```
+
+If you want to build with the regular `mvn` command, you will need [Maven v3.5.0 or above](https://maven.apache.org/run-maven/index.html).
+
+_Also see [CONTRIBUTING.adoc](.github/CONTRIBUTING.adoc) if you wish to submit pull requests._
+
+### Running JMH Benchmarks
+
+Running the JMH benchmarks builds and runs the benchmarks without running tests.
+
+```bash
+ $ ./mvnw clean install -Pjmh
+```
 
 ## License
 This project is released under version 2.0 of the [Apache License][l].
