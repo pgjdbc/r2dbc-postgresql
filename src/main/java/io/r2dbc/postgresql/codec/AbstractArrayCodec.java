@@ -37,7 +37,7 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
  * Abstract codec class that provides a basis for all concrete
  * implementations of a array-typed {@link Codec}.
  *
- * @param <T> the type that is handled by this {@link Codec}.
+ * @param <T> the type that is handled by this {@link Codec}
  */
 abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
 
@@ -94,10 +94,6 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
         return b.toString();
     }
 
-    abstract T decodeItem(ByteBuf byteBuf);
-
-    abstract T decodeItem(String strValue);
-
     @Override
     final Object[] doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, Class<? extends Object[]> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
@@ -111,20 +107,48 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
         }
     }
 
+    /**
+     * Decode value using binary format.
+     *
+     * @param byteBuffer buffer containing the binary representation of the value to decode
+     * @return decoded value
+     */
+    abstract T doDecodeBinary(ByteBuf byteBuffer);
+
+    /**
+     * Decode value using text format.
+     *
+     * @param text string containing the textual representation of the value to decode
+     * @return decoded value
+     */
+    abstract T doDecodeText(String text);
+
     @Override
     final Parameter doEncode(Object[] value) {
         Assert.requireNonNull(value, "value must not be null");
 
         return encodeArray(() -> {
             ByteBuf byteBuf = this.byteBufAllocator.buffer();
-            encodeAsText(byteBuf, value, this::encodeItem);
+            encodeAsText(byteBuf, value, this::doEncodeText);
             return byteBuf;
         });
     }
 
+    /**
+     * Create the encoded array representation.
+     *
+     * @param encodedSupplier supplies the
+     * @return encoded {@link Parameter} item
+     */
     abstract Parameter encodeArray(Supplier<ByteBuf> encodedSupplier);
 
-    abstract String encodeItem(T value);
+    /**
+     * Encode a single array item using text format.
+     *
+     * @param value the value to encode
+     * @return encoded array item
+     */
+    abstract String doEncodeText(T value);
 
     boolean isTypeAssignable(Class<?> type) {
         Assert.requireNonNull(type, "type must not be null");
@@ -148,7 +172,7 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
         Object inner = list.get(0);
 
         while (inner instanceof List) {
-            inner = ((List) inner).get(0);
+            inner = ((List<?>) inner).get(0);
             dims++;
         }
 
@@ -156,10 +180,14 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
     }
 
     private static Object[] toArray(List<?> list, Class<?> returnType) {
-        return list
-            .stream()
-            .map(e -> (e instanceof List ? toArray((List) e, returnType.getComponentType()) : e))
-            .toArray(r -> (Object[]) Array.newInstance(returnType, list.size()));
+        List<Object> result = new ArrayList<>(list.size());
+
+        for (Object e : list) {
+            Object o = (e instanceof List ? toArray((List<?>) e, returnType.getComponentType()) : e);
+            result.add(o);
+        }
+
+        return result.toArray((Object[]) Array.newInstance(returnType, list.size()));
     }
 
     private List<Object> buildArrayList(ByteBuf buf) {
@@ -245,7 +273,7 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
 
                 // add element to current array
                 if (b != null && (!b.isEmpty() || wasInsideString)) {
-                    curArray.add(!wasInsideString && b.equals("NULL") ? null : decodeItem(b));
+                    curArray.add(!wasInsideString && b.equals("NULL") ? null : doDecodeText(b));
                 }
 
                 wasInsideString = false;
@@ -352,7 +380,7 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
                     continue;
 
                 }
-                array[i] = decodeItem(buffer.readSlice(len));
+                array[i] = doDecodeBinary(buffer.readSlice(len));
             }
         } else {
             for (int i = 0; i < dims[thisDimension]; ++i) {

@@ -71,7 +71,7 @@ public interface PostgresqlConnection extends Connection {
      * connection are published as they are received. When the client gets {@link #close() closed}, the subscription {@link Subscriber#onComplete() completes normally}. Otherwise (transport
      * connection disconnected unintentionally) with an {@link R2dbcNonTransientResourceException error}.
      *
-     * @return a hot {@link Flux} of {@link Notification Notifications}.
+     * @return a hot {@link Flux} of {@link Notification Notifications}
      */
     Flux<Notification> getNotifications();
 

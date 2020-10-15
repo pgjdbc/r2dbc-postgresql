@@ -84,12 +84,12 @@ abstract class AbstractTemporalCodec<T extends Temporal> extends AbstractCodec<T
     /**
      * Decode {@code buffer} to {@link Temporal} and potentially convert it to {@link Class expectedType} using {@link Function converter} if the decoded type does not match {@code expectedType}.
      *
-     * @param buffer
-     * @param dataType
-     * @param format
-     * @param expectedType
-     * @param converter
-     * @return
+     * @param buffer       the buffer
+     * @param dataType     the Postgres type
+     * @param format       value format
+     * @param expectedType expected result type
+     * @param converter    converter to convert from {@link Temporal} into {@code expectedType}
+     * @return the decoded value
      */
     T decodeTemporal(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, Class<T> expectedType, Function<Temporal, T> converter) {
         Temporal number = decodeTemporal(buffer, dataType, format);
@@ -99,10 +99,10 @@ abstract class AbstractTemporalCodec<T extends Temporal> extends AbstractCodec<T
     /**
      * Decode {@code buffer} to {@link Temporal} according to {@link PostgresqlObjectId}.
      *
-     * @param buffer
-     * @param dataType
-     * @param format
-     * @return
+     * @param buffer   the buffer
+     * @param dataType the Postgres type
+     * @param format   value format
+     * @return the decoded value
      */
     private Temporal decodeTemporal(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
@@ -149,7 +149,7 @@ abstract class AbstractTemporalCodec<T extends Temporal> extends AbstractCodec<T
     /**
      * Returns the {@link PostgresqlObjectId} for to identify whether this codec is the default codec.
      *
-     * @return the {@link PostgresqlObjectId} for to identify whether this codec is the default codec.
+     * @return the {@link PostgresqlObjectId} for to identify whether this codec is the default codec
      */
     @Nullable
     abstract PostgresqlObjectId getDefaultType();

@@ -40,13 +40,13 @@ final class IntegerArrayCodec extends AbstractArrayCodec<Integer> {
     }
 
     @Override
-    Integer decodeItem(ByteBuf byteBuf) {
-        return byteBuf.readInt();
+    Integer doDecodeBinary(ByteBuf byteBuffer) {
+        return byteBuffer.readInt();
     }
 
     @Override
-    Integer decodeItem(String strValue) {
-        return Integer.parseInt(strValue);
+    Integer doDecodeText(String text) {
+        return Integer.parseInt(text);
     }
 
     @Override
@@ -62,7 +62,7 @@ final class IntegerArrayCodec extends AbstractArrayCodec<Integer> {
     }
 
     @Override
-    String encodeItem(Integer value) {
+    String doEncodeText(Integer value) {
         Assert.requireNonNull(value, "value must not be null");
 
         return value.toString();

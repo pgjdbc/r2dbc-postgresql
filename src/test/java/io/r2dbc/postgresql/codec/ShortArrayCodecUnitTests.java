@@ -100,12 +100,12 @@ final class ShortArrayCodecUnitTests {
 
     @Test
     void encodeItem() {
-        assertThat(new ShortArrayCodec(TEST).encodeItem((short) 100)).isEqualTo("100");
+        assertThat(new ShortArrayCodec(TEST).doEncodeText((short) 100)).isEqualTo("100");
     }
 
     @Test
     void encodeItemNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new ShortArrayCodec(TEST).encodeItem(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ShortArrayCodec(TEST).doEncodeText(null))
             .withMessage("value must not be null");
     }
 

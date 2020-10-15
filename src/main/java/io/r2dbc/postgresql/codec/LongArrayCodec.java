@@ -40,13 +40,13 @@ final class LongArrayCodec extends AbstractArrayCodec<Long> {
     }
 
     @Override
-    Long decodeItem(ByteBuf byteBuf) {
-        return byteBuf.readLong();
+    Long doDecodeBinary(ByteBuf byteBuffer) {
+        return byteBuffer.readLong();
     }
 
     @Override
-    Long decodeItem(String strValue) {
-        return Long.parseLong(strValue);
+    Long doDecodeText(String text) {
+        return Long.parseLong(text);
     }
 
     @Override
@@ -62,7 +62,7 @@ final class LongArrayCodec extends AbstractArrayCodec<Long> {
     }
 
     @Override
-    String encodeItem(Long value) {
+    String doEncodeText(Long value) {
         Assert.requireNonNull(value, "value must not be null");
 
         return value.toString();

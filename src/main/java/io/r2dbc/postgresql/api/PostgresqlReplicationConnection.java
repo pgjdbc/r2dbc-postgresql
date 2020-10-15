@@ -37,8 +37,8 @@ public interface PostgresqlReplicationConnection extends Closeable {
     /**
      * Create a replication slot for logical or physical replication.
      *
-     * @param request description of the slot to create.
-     * @return {@link Mono} emitting {@link ReplicationSlot} information once the slot was created.
+     * @param request description of the slot to create
+     * @return {@link Mono} emitting {@link ReplicationSlot} information once the slot was created
      */
     Mono<ReplicationSlot> createSlot(ReplicationSlotRequest request);
 
@@ -46,15 +46,15 @@ public interface PostgresqlReplicationConnection extends Closeable {
      * Starts the {@link ReplicationStream} for logical or physical replication.
      * After starting the replication stream this connection becomes unavailable for slot creation and other streams unless the {@link ReplicationStream} is {@link ReplicationStream#close() closed}.
      *
-     * @param request description of the replication stream to create.
-     * @return {@link Mono} emitting {@link ReplicationStream} once the replication was started.
+     * @param request description of the replication stream to create
+     * @return {@link Mono} emitting {@link ReplicationStream} once the replication was started
      */
     Mono<ReplicationStream> startReplication(ReplicationRequest request);
 
     /**
      * Returns the {@link PostgresqlConnectionMetadata} for this connection.
      *
-     * @return the {@link PostgresqlConnectionMetadata} for this connection.
+     * @return the {@link PostgresqlConnectionMetadata} for this connection
      */
     PostgresqlConnectionMetadata getMetadata();
 

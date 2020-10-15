@@ -20,6 +20,9 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 
+/**
+ * @since 0.8.5
+ */
 final class LineCodec extends AbstractGeometryCodec<Line> {
 
     LineCodec(ByteBufAllocator byteBufAllocator) {

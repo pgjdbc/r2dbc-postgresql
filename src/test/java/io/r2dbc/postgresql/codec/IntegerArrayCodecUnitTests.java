@@ -160,12 +160,12 @@ final class IntegerArrayCodecUnitTests {
 
     @Test
     void encodeItem() {
-        assertThat(new IntegerArrayCodec(TEST).encodeItem(100)).isEqualTo("100");
+        assertThat(new IntegerArrayCodec(TEST).doEncodeText(100)).isEqualTo("100");
     }
 
     @Test
     void encodeItemNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new IntegerArrayCodec(TEST).encodeItem(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new IntegerArrayCodec(TEST).doEncodeText(null))
             .withMessage("value must not be null");
     }
 

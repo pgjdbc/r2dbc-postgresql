@@ -248,11 +248,11 @@ public final class ReactorNettyClient implements Client {
     }
 
     /**
-     * Consume a {@link BackendMessage}. This method can either fully consume the message or it can signal by returning {@literal false} that the method wasn't able to fully consume the message and
+     * Consume a {@link BackendMessage}. This method can either fully consume the message or it can signal by returning {@code false} that the method wasn't able to fully consume the message and
      * that the message needs to be passed to an active {@link Conversation}.
      *
      * @param message the {@link BackendMessage} to handle
-     * @return {@literal false} if the message could not be fully consumed and should be propagated to the active {@link Conversation}
+     * @return {@code false} if the message could not be fully consumed and should be propagated to the active {@link Conversation}
      */
     private boolean consumeMessage(BackendMessage message) {
 

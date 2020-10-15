@@ -44,8 +44,8 @@ final class Extensions {
     /**
      * Create a new {@link Extensions} object.
      *
-     * @param extensions the extensions to hold.
-     * @return a new {@link Extensions} object.
+     * @param extensions the extensions to hold
+     * @return a new {@link Extensions} object
      */
     static Extensions from(Collection<Extension> extensions) {
         return new Extensions(new ArrayList<>(extensions));
@@ -54,7 +54,7 @@ final class Extensions {
     /**
      * Autodetect extensions using {@link ServiceLoader} mechanism.
      *
-     * @return the detected {@link Extension}s.
+     * @return the detected {@link Extension}s
      */
     static Extensions autodetect() {
         logger.debug("Discovering Extensions using ServiceLoader");
@@ -93,8 +93,8 @@ final class Extensions {
     /**
      * Create a new {@link Extensions} object that contains all extensions from this and {@code other}.
      *
-     * @param other the additional {@link Extensions} to add.
-     * @return a new {@link Extensions} object that contains all extensions from this and {@code other}.
+     * @param other the additional {@link Extensions} to add
+     * @return a new {@link Extensions} object that contains all extensions from this and {@code other}
      */
     Extensions mergeWith(Extensions other) {
         List<Extension> extensions = new ArrayList<>(size() + other.size());
@@ -106,7 +106,7 @@ final class Extensions {
     /**
      * Returns the number of {@link Extension}s.
      *
-     * @return the number of {@link Extension}s.
+     * @return the number of {@link Extension}s
      */
     public int size() {
         return this.extensions.size();

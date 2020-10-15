@@ -393,7 +393,7 @@ public enum PostgresqlObjectId {
      * Returns if the {@code objectId} is a known and valid {@code objectId}.
      *
      * @param objectId the object id to match
-     * @return {@literal true} if the {@code objectId} is a valid and known (static) objectId;{@literal false} otherwise.
+     * @return {@code true} if the {@code objectId} is a valid and known (static) objectId;{@code false} otherwise.
      */
     public static boolean isValid(int objectId) {
 

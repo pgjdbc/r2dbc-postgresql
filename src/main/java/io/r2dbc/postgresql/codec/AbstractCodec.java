@@ -34,7 +34,7 @@ import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
  * Abstract codec class that provides a basis for all concrete
  * implementations of a {@link Codec} for well-known {@link PostgresqlObjectId}.
  *
- * @param <T> the type that is handled by this {@link Codec}.
+ * @param <T> the type that is handled by this {@link Codec}
  */
 abstract class AbstractCodec<T> implements Codec<T> {
 
@@ -100,9 +100,10 @@ abstract class AbstractCodec<T> implements Codec<T> {
      *
      * @param type   the well-known {@link PostgresqlObjectId type OID}
      * @param format the format to use
-     * @param value  {@link Publisher} emitting {@link ByteBuf buffers}. Make sure to use deferred buffer creation instead of {@link Mono#just(Object)} and {@link Flux#just(Object)} to avoid memory
-     *               leaks
+     * @param value  {@link Publisher} emitting {@link ByteBuf buffers}
      * @return the encoded  {@link Parameter}
+     * @implNote use deferred buffer creation instead of {@link Mono#just(Object)} and {@link Flux#just(Object)} to avoid memory
+     * leaks
      */
     static Parameter create(PostgresqlObjectId type, Format format, Publisher<? extends ByteBuf> value) {
         return new Parameter(format, type.getObjectId(), value);
@@ -125,7 +126,7 @@ abstract class AbstractCodec<T> implements Codec<T> {
      *
      * @param type   the well-known {@link PostgresqlObjectId type OID}
      * @param format the data type {@link Format}, text or binary
-     * @return the encoded {@code null} value.
+     * @return the encoded {@code null} value
      */
     static Parameter createNull(PostgresqlObjectId type, Format format) {
         return create(type, format, NULL_VALUE);
@@ -136,7 +137,7 @@ abstract class AbstractCodec<T> implements Codec<T> {
      *
      * @param type   the well-known {@link PostgresqlObjectId type OID}
      * @param format the data type {@link Format}, text or binary
-     * @return {@code true} if this codec is able to decode values of {@link Format} and {@link PostgresqlObjectId}.
+     * @return {@code true} if this codec is able to decode values of {@link Format} and {@link PostgresqlObjectId}
      */
     abstract boolean doCanDecode(PostgresqlObjectId type, Format format);
 
@@ -146,14 +147,14 @@ abstract class AbstractCodec<T> implements Codec<T> {
      * @param buffer   the data buffer
      * @param dataType the well-known {@link PostgresqlObjectId type OID}
      * @param format   data type format
-     * @param type     the desired value type.
-     * @return the decoded value. Can be {@code null} if the column value is {@code null}.
+     * @param type     the desired value type
+     * @return the decoded value, can be {@code null} if the column value is {@code null}
      */
     abstract T doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, Class<? extends T> type);
 
     /**
-     * @param value the  {@code value}.
-     * @return the encoded value.
+     * @param value the  {@code value}
+     * @return the encoded value
      */
     abstract Parameter doEncode(T value);
 

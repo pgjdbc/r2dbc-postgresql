@@ -96,12 +96,12 @@ final class UuidArrayCodecUnitTests {
 
     @Test
     void encodeItem() {
-        assertThat(new UuidArrayCodec(TEST).encodeItem(u1)).isEqualTo(u1.toString());
+        assertThat(new UuidArrayCodec(TEST).doEncodeText(u1)).isEqualTo(u1.toString());
     }
 
     @Test
     void encodeItemNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new UuidArrayCodec(TEST).encodeItem(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new UuidArrayCodec(TEST).doEncodeText(null))
             .withMessage("value must not be null");
     }
 

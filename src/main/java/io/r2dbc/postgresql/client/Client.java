@@ -43,7 +43,7 @@ public interface Client {
      * disconnects are not visible to the {@link Consumer notification consumer}.
      *
      * @param consumer the consumer of notification messages
-     * @return a new {@link Disposable} that can be used to cancel the underlying subscription.
+     * @return a new {@link Disposable} that can be used to cancel the underlying subscription
      * @throws IllegalArgumentException if {@code consumer} is {@code null}
      */
     Disposable addNotificationListener(Consumer<NotificationResponse> consumer);
@@ -53,7 +53,7 @@ public interface Client {
      * subscription {@link Subscriber#onComplete() completes normally}. Otherwise (transport connection disconnected unintentionally) with an {@link R2dbcNonTransientResourceException error}.
      *
      * @param consumer the consumer of notification messages
-     * @return a new {@link Disposable} that can be used to cancel the underlying subscription.
+     * @return a new {@link Disposable} that can be used to cancel the underlying subscription
      * @throws IllegalArgumentException if {@code consumer} is {@code null}
      * @since 0.8.1
      */
@@ -70,7 +70,7 @@ public interface Client {
      * Perform an exchange of messages. Note that the {@link ReadyForQuery} frame is not emitted through the resulting {@link Flux}.
      *
      * @param requests the publisher of outbound messages
-     * @return a {@link Flux} of incoming messages that ends with the end of conversation (i.e. reception of a {@link ReadyForQuery} message. Th
+     * @return a {@link Flux} of incoming messages that ends with the end of conversation (i.e. reception of a {@link ReadyForQuery} message
      * @throws IllegalArgumentException if {@code requests} is {@code null}
      */
     default Flux<BackendMessage> exchange(Publisher<FrontendMessage> requests) {
@@ -83,7 +83,7 @@ public interface Client {
      * @param takeUntil the predicate that signals the resulting {@link Flux} to terminate. Typically a check if the {@link BackendMessage} is the last frame of a conversation. Note that the
      *                  {@link BackendMessage} that matches the predicate is not emitted through the resulting {@link Flux}.
      * @param requests  the publisher of outbound messages
-     * @return a {@link Flux} of incoming messages that ends with the end of conversation matching {@code takeUntil}. (i.e. reception of a {@link ReadyForQuery} message.
+     * @return a {@link Flux} of incoming messages that ends with the end of conversation matching {@code takeUntil}. (i.e. reception of a {@link ReadyForQuery} message
      * @throws IllegalArgumentException if {@code requests} is {@code null}
      * @since 0.9
      */
@@ -129,14 +129,14 @@ public interface Client {
     /**
      * Return the server version.
      *
-     * @return the server version from {@code server_version}/{@code server_version_num} startup parameters.
+     * @return the server version from {@code server_version}/{@code server_version_num} startup parameters
      */
     Version getVersion();
 
     /**
      * Returns whether the client is connected to a server.
      *
-     * @return {@literal true} if the client is connected to a server.
+     * @return {@code true} if the client is connected to a server
      */
     boolean isConnected();
 

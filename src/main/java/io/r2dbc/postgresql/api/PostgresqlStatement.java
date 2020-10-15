@@ -33,7 +33,7 @@ public interface PostgresqlStatement extends Statement {
     /**
      * {@inheritDoc}
      *
-     * @throws IllegalArgumentException if {@code identifier} is not a {@link String} like {@code $1}, {@code $2}, etc.
+     * @throws IllegalArgumentException if {@code identifier} is not a {@link String} like {@code $1}, {@code $2}, …
      */
     @Override
     PostgresqlStatement bind(String identifier, Object value);
@@ -47,7 +47,7 @@ public interface PostgresqlStatement extends Statement {
     /**
      * {@inheritDoc}
      *
-     * @throws IllegalArgumentException if {@code identifier} is not a {@link String} like {@code $1}, {@code $2}, etc.
+     * @throws IllegalArgumentException if {@code identifier} is not a {@link String} like {@code $1}, {@code $2}, …
      */
     @Override
     PostgresqlStatement bindNull(String identifier, Class<?> type);
@@ -75,7 +75,7 @@ public interface PostgresqlStatement extends Statement {
     /**
      * {@inheritDoc}
      *
-     * @throws IllegalStateException if this {@link Statement} already has a {@code RETURNING clause} or isn't a {@code DELETE}, {@code INSERT}, or {@code UPDATE} command.
+     * @throws IllegalStateException if this {@link Statement} already has a {@code RETURNING clause} or isn't a {@code DELETE}, {@code INSERT}, or {@code UPDATE} command
      */
     @Override
     PostgresqlStatement returnGeneratedValues(String... columns);

@@ -26,6 +26,9 @@ import io.r2dbc.postgresql.util.Assert;
 import java.util.UUID;
 import java.util.function.Supplier;
 
+/**
+ * @since 0.8.6
+ */
 final class UuidArrayCodec extends AbstractArrayCodec<UUID> {
 
     UuidArrayCodec(ByteBufAllocator byteBufAllocator) {
@@ -38,13 +41,13 @@ final class UuidArrayCodec extends AbstractArrayCodec<UUID> {
     }
 
     @Override
-    UUID decodeItem(ByteBuf byteBuf) {
-        return new UUID(byteBuf.readLong(), byteBuf.readLong());
+    UUID doDecodeBinary(ByteBuf byteBuffer) {
+        return new UUID(byteBuffer.readLong(), byteBuffer.readLong());
     }
 
     @Override
-    UUID decodeItem(String str) {
-        return UUID.fromString(str);
+    UUID doDecodeText(String text) {
+        return UUID.fromString(text);
     }
 
     @Override
@@ -60,7 +63,7 @@ final class UuidArrayCodec extends AbstractArrayCodec<UUID> {
     }
 
     @Override
-    String encodeItem(UUID value) {
+    String doEncodeText(UUID value) {
         Assert.requireNonNull(value, "value must not be null");
 
         return value.toString();

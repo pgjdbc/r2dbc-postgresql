@@ -57,7 +57,7 @@ public abstract class ReplicationSlotRequest {
     /**
      * Renders this request as SQL.
      *
-     * @return this request as SQL.
+     * @return this request as SQL
      */
     public abstract String asSQL();
 
@@ -82,7 +82,7 @@ public abstract class ReplicationSlotRequest {
     /**
      * Returns the slot is temporary.
      *
-     * @return {@literal true} if the slot should be temporary.
+     * @return {@code true} if the slot should be temporary
      */
     boolean isTemporary() {
         return this.temporary;

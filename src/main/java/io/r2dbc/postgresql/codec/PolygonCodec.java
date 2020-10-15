@@ -23,6 +23,9 @@ import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @since 0.8.5
+ */
 final class PolygonCodec extends AbstractGeometryCodec<Polygon> {
 
     PolygonCodec(ByteBufAllocator byteBufAllocator) {
