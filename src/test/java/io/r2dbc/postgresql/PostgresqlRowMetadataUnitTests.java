@@ -91,6 +91,34 @@ final class PostgresqlRowMetadataUnitTests {
     }
 
     @Test
+    void getColumnNamesRetainsOrdering() {
+
+        List<PostgresqlColumnMetadata> columnMetadatas = Arrays.asList(
+            new PostgresqlColumnMetadata(MockCodecs.empty(), "id", 400, (short) 300),
+            new PostgresqlColumnMetadata(MockCodecs.empty(), "age", 200, (short) 100),
+            new PostgresqlColumnMetadata(MockCodecs.empty(), "name", 200, (short) 100)
+        );
+
+        Collection<String> columnNames = new PostgresqlRowMetadata(columnMetadatas).getColumnNames();
+
+        assertThat(columnNames).containsSequence("id", "age", "name");
+    }
+
+    @Test
+    void getColumnNamesRetainsMayContainDuplicates() {
+
+        List<PostgresqlColumnMetadata> columnMetadatas = Arrays.asList(
+            new PostgresqlColumnMetadata(MockCodecs.empty(), "age", 200, (short) 100),
+            new PostgresqlColumnMetadata(MockCodecs.empty(), "name", 200, (short) 100),
+            new PostgresqlColumnMetadata(MockCodecs.empty(), "age", 200, (short) 100)
+        );
+
+        Collection<String> columnNames = new PostgresqlRowMetadata(columnMetadatas).getColumnNames();
+
+        assertThat(columnNames).containsSequence("age", "name", "age");
+    }
+
+    @Test
     void getColumnNamesModify() {
         assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> new PostgresqlRowMetadata(this.columnMetadatas).getColumnNames().remove("test-name-1"));
     }
