@@ -1,4 +1,4 @@
-# PostgreSQL R2DBC Driver [![Build Status](https://travis-ci.org/r2dbc/r2dbc-postgresql.svg?branch=main)](https://travis-ci.org/r2dbc/r2dbc-postgresql) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.r2dbc/r2dbc-postgresql/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.r2dbc/r2dbc-postgresql)
+# PostgreSQL R2DBC Driver [![Java CI with Maven](https://github.com/pgjdbc/r2dbc-postgresql/workflows/Java%20CI%20with%20Maven/badge.svg?branch=main)](https://github.com/pgjdbc/r2dbc-postgresql/actions?query=workflow%3A%22Java+CI+with+Maven%22+branch%3Amain) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.r2dbc/r2dbc-postgresql/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.r2dbc/r2dbc-postgresql)
 
 This project contains the [PostgreSQL][p] implementation of the [R2DBC SPI][r].  This implementation is not intended to be used directly, but rather to be used as the backing implementation for a humane client library to delegate to.
 
@@ -154,16 +154,11 @@ If you'd rather like the latest snapshots of the upcoming major version, use our
   <version>${version}.BUILD-SNAPSHOT</version>
 </dependency>
 
-<repositories>
-  <repository>
-    <id>sonatype-snapshots</id>
-    <name>Sonatype Snapshot Repository</name>
-    <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-    <snapshots>
-      <enabled>true</enabled>
-    </snapshots>
-  </repository>
-</repositories>
+<repository>
+  <id>sonatype-nexus-snapshots</id>
+  <name>Sonatype OSS Snapshot Repository</name>
+  <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+</repository>
 ```
 
 ## Listen/Notify
