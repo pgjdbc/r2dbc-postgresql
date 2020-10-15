@@ -26,7 +26,7 @@ public interface Notification {
     /**
      * Returns name of this notification.
      *
-     * @return name of this notification.
+     * @return name of this notification
      */
     String getName();
 

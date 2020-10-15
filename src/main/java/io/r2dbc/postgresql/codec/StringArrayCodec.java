@@ -44,13 +44,13 @@ final class StringArrayCodec extends AbstractArrayCodec<String> {
     }
 
     @Override
-    String decodeItem(ByteBuf byteBuf) {
-        return ByteBufUtils.decode(byteBuf);
+    String doDecodeBinary(ByteBuf byteBuffer) {
+        return ByteBufUtils.decode(byteBuffer);
     }
 
     @Override
-    String decodeItem(String strValue) {
-        return strValue;
+    String doDecodeText(String text) {
+        return text;
     }
 
     @Override
@@ -67,7 +67,7 @@ final class StringArrayCodec extends AbstractArrayCodec<String> {
     }
 
     @Override
-    String encodeItem(String value) {
+    String doEncodeText(String value) {
         Assert.requireNonNull(value, "value must not be null");
 
         return AbstractArrayCodec.escapeArrayElement(value);

@@ -49,7 +49,7 @@ public interface ReplicationStream extends Closeable {
      * <p>The {@link ByteBuf data buffer} is released after applying the {@link Function mapping function}.
      * <p>Unsubscribing from the stream will cancel consumption leaving protocol frames on the transport buffer. {@link #close() Close the} {@code ReplicationStream} object to terminate the
      *
-     * @param mappingFunction the {@link Function} that maps a {@link ByteBuf} to a value.
+     * @param mappingFunction the {@link Function} that maps a {@link ByteBuf} to a value
      * @param <T>             the type of the mapped value
      * @return a mapping of the {@link ByteBuf data buffers} that are the results of the replication stream
      * @throws IllegalArgumentException if {@code mappingFunction} is {@code null}
@@ -59,7 +59,7 @@ public interface ReplicationStream extends Closeable {
     /**
      * Returns the last received LSN position.
      *
-     * @return LSN position that was received with the last read via {@link #map(Function)}.
+     * @return LSN position that was received with the last read via {@link #map(Function)}
      */
     LogSequenceNumber getLastReceiveLSN();
 
@@ -73,7 +73,7 @@ public interface ReplicationStream extends Closeable {
     /**
      * Returns the last applied lsn send in update message to backed.
      *
-     * @return location of the last WAL applied in the standby.
+     * @return location of the last WAL applied in the standby
      */
     LogSequenceNumber getLastAppliedLSN();
 
@@ -81,7 +81,7 @@ public interface ReplicationStream extends Closeable {
      * Sets the flushed LSN. The parameter will be send to backend on next update status iteration. Flushed
      * LSN position help backend define which wal can be recycle.
      *
-     * @param flushed not null location of the last WAL flushed to disk in the standby.
+     * @param flushed not null location of the last WAL flushed to disk in the standby
      */
     void setFlushedLSN(LogSequenceNumber flushed);
 
@@ -89,7 +89,7 @@ public interface ReplicationStream extends Closeable {
      * Parameter used only physical replication and define which lsn already was apply on standby.
      * Feedback will send to backend on next update status iteration.
      *
-     * @param applied not null location of the last WAL applied in the standby.
+     * @param applied not null location of the last WAL applied in the standby
      */
     void setAppliedLSN(LogSequenceNumber applied);
 

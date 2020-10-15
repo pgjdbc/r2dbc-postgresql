@@ -41,13 +41,13 @@ final class ShortArrayCodec extends AbstractArrayCodec<Short> {
     }
 
     @Override
-    Short decodeItem(ByteBuf byteBuf) {
-        return byteBuf.readShort();
+    Short doDecodeBinary(ByteBuf byteBuffer) {
+        return byteBuffer.readShort();
     }
 
     @Override
-    Short decodeItem(String strValue) {
-        return Short.parseShort(strValue);
+    Short doDecodeText(String text) {
+        return Short.parseShort(text);
     }
 
     @Override
@@ -63,7 +63,7 @@ final class ShortArrayCodec extends AbstractArrayCodec<Short> {
     }
 
     @Override
-    String encodeItem(Short value) {
+    String doEncodeText(Short value) {
         Assert.requireNonNull(value, "value must not be null");
 
         return value.toString();

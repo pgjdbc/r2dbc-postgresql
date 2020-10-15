@@ -28,6 +28,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * Support class for codecs that read/write geometry values.
+ *
+ * @param <T> the type that is handled by this {@link Codec}
+ * @since 0.8.5
+ */
 abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> {
 
     protected final PostgresqlObjectId postgresqlObjectId;
@@ -39,12 +45,6 @@ abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> {
         this.postgresqlObjectId = Assert.requireNonNull(postgresqlObjectId, "postgresqlObjectId must not be null");
         this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
     }
-
-    abstract T doDecodeBinary(ByteBuf byteBuffer);
-
-    abstract T doDecodeText(String text);
-
-    abstract ByteBuf doEncodeBinary(T value);
 
     @Override
     boolean doCanDecode(PostgresqlObjectId type, Format format) {
@@ -67,12 +67,36 @@ abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> {
         return doDecodeText(ByteBufUtils.decode(buffer));
     }
 
+    /**
+     * Decode value using binary format.
+     *
+     * @param byteBuffer buffer containing the binary representation of the value to decode
+     * @return decoded value
+     */
+    abstract T doDecodeBinary(ByteBuf byteBuffer);
+
+    /**
+     * Decode value using text format.
+     *
+     * @param text string containing the textual representation of the value to decode
+     * @return decoded value
+     */
+    abstract T doDecodeText(String text);
+
     @Override
     Parameter doEncode(T value) {
         Assert.requireNonNull(value, "value must not be null");
 
         return create(this.postgresqlObjectId, Format.FORMAT_BINARY, () -> doEncodeBinary(value));
     }
+
+    /**
+     * Encode the value using binary format.
+     *
+     * @param value the value to encode
+     * @return encoded value
+     */
+    abstract ByteBuf doEncodeBinary(T value);
 
     @Override
     public Parameter encodeNull() {
@@ -83,7 +107,7 @@ abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> {
      * Create a {@link TokenStream} given {@code content}.
      *
      * @param content the textual representation
-     * @return a {@link TokenStream} providing access to a tokenized form of the data structure.
+     * @return a {@link TokenStream} providing access to a tokenized form of the data structure
      */
     TokenStream getTokenStream(String content) {
 
@@ -156,8 +180,8 @@ abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> {
         /**
          * Advance the stream and return the next token.
          *
-         * @return the token.
-         * @throws IllegalStateException if the token stream is exhausted.
+         * @return the token
+         * @throws IllegalStateException if the token stream is exhausted
          * @see #hasNext()
          */
         @Override
@@ -166,8 +190,8 @@ abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> {
         /**
          * Advance the stream and return the next token as {@code double} value.
          *
-         * @return the token.
-         * @throws IllegalStateException if the token stream is exhausted.
+         * @return the token
+         * @throws IllegalStateException if the token stream is exhausted
          * @see #hasNext()
          */
         double nextDouble();

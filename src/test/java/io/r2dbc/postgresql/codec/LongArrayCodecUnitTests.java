@@ -86,12 +86,12 @@ final class LongArrayCodecUnitTests {
 
     @Test
     void encodeItem() {
-        assertThat(new LongArrayCodec(TEST).encodeItem(100L)).isEqualTo("100");
+        assertThat(new LongArrayCodec(TEST).doEncodeText(100L)).isEqualTo("100");
     }
 
     @Test
     void encodeItemNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new LongArrayCodec(TEST).encodeItem(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new LongArrayCodec(TEST).doEncodeText(null))
             .withMessage("value must not be null");
     }
 

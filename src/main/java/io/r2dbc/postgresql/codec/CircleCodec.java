@@ -21,6 +21,9 @@ import io.netty.buffer.ByteBufAllocator;
 
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.CIRCLE;
 
+/**
+ * @since 0.8.5
+ */
 final class CircleCodec extends AbstractGeometryCodec<Circle> {
 
     CircleCodec(ByteBufAllocator byteBufAllocator) {

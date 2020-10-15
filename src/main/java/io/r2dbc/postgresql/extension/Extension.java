@@ -31,7 +31,7 @@ package io.r2dbc.postgresql.extension;
  *
  * <h3>Configuring Automatic Extension Detection</h3>
  * Auto-detection is enabled by default. To disable it, simply set the {@link io.r2dbc.postgresql.PostgresqlConnectionConfiguration.Builder#autodetectExtensions(boolean)} parameter to
- * {@literal false}.
+ * {@code false}.
  *
  * <h3>Constructor Requirements</h3>
  * <p>Extension implementations must have a <em>default constructor</em> if registered via the {@code ServiceLoader}.  When registered through

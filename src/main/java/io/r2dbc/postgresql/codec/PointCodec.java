@@ -21,6 +21,9 @@ import io.netty.buffer.ByteBufAllocator;
 
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.POINT;
 
+/**
+ * @since 0.8.5
+ */
 final class PointCodec extends AbstractGeometryCodec<Point> {
 
     PointCodec(ByteBufAllocator byteBufAllocator) {

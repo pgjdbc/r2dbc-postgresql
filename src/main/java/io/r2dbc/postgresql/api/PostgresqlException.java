@@ -28,7 +28,7 @@ public interface PostgresqlException {
     /**
      * Returns additional error information.
      *
-     * @return the {@link ErrorDetails}.
+     * @return the {@link ErrorDetails}
      */
     ErrorDetails getErrorDetails();
 

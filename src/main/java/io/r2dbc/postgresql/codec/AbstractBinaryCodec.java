@@ -33,6 +33,11 @@ import java.util.regex.Pattern;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.BYTEA;
 
+/**
+ * Support class for codecs that read/write {@code BYTEA} values.
+ *
+ * @param <T> the type that is handled by this {@link Codec}
+ */
 abstract class AbstractBinaryCodec<T> extends AbstractCodec<T> {
 
     private static final Pattern BLOB_PATTERN = Pattern.compile("\\\\x([\\p{XDigit}]+)?");
