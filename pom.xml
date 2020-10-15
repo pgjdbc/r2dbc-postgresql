@@ -440,129 +440,6 @@
     <profiles>
 
         <profile>
-            <id>snapshot</id>
-
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.jfrog.buildinfo</groupId>
-                        <artifactId>artifactory-maven-plugin</artifactId>
-                        <version>2.6.1</version>
-                        <inherited>false</inherited>
-                        <executions>
-                            <execution>
-                                <id>build-info</id>
-                                <goals>
-                                    <goal>publish</goal>
-                                </goals>
-                                <configuration>
-                                    <buildInfo>
-                                        <buildUrl>{{BUILD_URL}}</buildUrl>
-                                    </buildInfo>
-                                    <deployProperties>
-                                        <zip.name>r2dbc-postgresql</zip.name>
-                                        <zip.displayname>r2dbc-postgresql</zip.displayname>
-                                        <zip.deployed>false</zip.deployed>
-                                        <archives>*:*:*:*@zip</archives>
-                                    </deployProperties>
-                                    <publisher>
-                                        <contextUrl>https://repo.spring.io</contextUrl>
-                                        <username>{{ARTIFACTORY_USR}}</username>
-                                        <password>{{ARTIFACTORY_PSW}}</password>
-                                        <repoKey>libs-snapshot-local</repoKey>
-                                        <snapshotRepoKey>libs-snapshot-local</snapshotRepoKey>
-                                    </publisher>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>milestone</id>
-
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.jfrog.buildinfo</groupId>
-                        <artifactId>artifactory-maven-plugin</artifactId>
-                        <version>2.6.1</version>
-                        <inherited>false</inherited>
-                        <executions>
-                            <execution>
-                                <id>build-info</id>
-                                <goals>
-                                    <goal>publish</goal>
-                                </goals>
-                                <configuration>
-                                    <buildInfo>
-                                        <buildUrl>{{BUILD_URL}}</buildUrl>
-                                    </buildInfo>
-                                    <deployProperties>
-                                        <zip.name>r2dbc-postgresql</zip.name>
-                                        <zip.displayname>r2dbc-postgresql</zip.displayname>
-                                        <zip.deployed>false</zip.deployed>
-                                        <archives>*:*:*:*@zip</archives>
-                                    </deployProperties>
-                                    <publisher>
-                                        <contextUrl>https://repo.spring.io</contextUrl>
-                                        <username>{{ARTIFACTORY_USR}}</username>
-                                        <password>{{ARTIFACTORY_PSW}}</password>
-                                        <repoKey>libs-milestone-local</repoKey>
-                                        <snapshotRepoKey>libs-milestone-local</snapshotRepoKey>
-                                    </publisher>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>release</id>
-
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.jfrog.buildinfo</groupId>
-                        <artifactId>artifactory-maven-plugin</artifactId>
-                        <version>2.6.1</version>
-                        <inherited>false</inherited>
-                        <executions>
-                            <execution>
-                                <id>build-info</id>
-                                <goals>
-                                    <goal>publish</goal>
-                                </goals>
-                                <configuration>
-                                    <buildInfo>
-                                        <buildUrl>{{BUILD_URL}}</buildUrl>
-                                    </buildInfo>
-                                    <deployProperties>
-                                        <zip.name>r2dbc-postgresql</zip.name>
-                                        <zip.displayname>r2dbc-postgresql</zip.displayname>
-                                        <zip.deployed>false</zip.deployed>
-                                        <archives>*:*:*:*@zip</archives>
-                                    </deployProperties>
-                                    <publisher>
-                                        <contextUrl>https://repo.spring.io</contextUrl>
-                                        <username>{{ARTIFACTORY_USR}}</username>
-                                        <password>{{ARTIFACTORY_PSW}}</password>
-                                        <repoKey>libs-release-local</repoKey>
-                                        <snapshotRepoKey>libs-release-local</snapshotRepoKey>
-                                    </publisher>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
             <id>jmh</id>
             <dependencies>
                 <dependency>
@@ -654,15 +531,25 @@
             </repositories>
         </profile>
 
-		<profile>
-			<id>central</id>
-			<build>
-				<pluginManagement>
-					<plugins>
+        <profile>
+            <id>snapshot</id>
+            <distributionManagement>
+                <snapshotRepository>
+                    <id>sonatype</id>
+                    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+                </snapshotRepository>
+            </distributionManagement>
+        </profile>
 
-						<!-- Sign JARs -->
+        <profile>
+            <id>central</id>
+            <build>
+                <pluginManagement>
+                    <plugins>
 
-						<plugin>
+                        <!-- Sign JARs -->
+
+                        <plugin>
 							<groupId>org.apache.maven.plugins</groupId>
 							<artifactId>maven-gpg-plugin</artifactId>
 							<version>1.6</version>
@@ -731,28 +618,10 @@
 
     <repositories>
         <repository>
-            <id>spring-milestones</id>
-            <name>Spring Milestones</name>
-            <url>https://repo.spring.io/milestone</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>spring-snapshots</id>
-            <name>Spring Snapshots</name>
-            <url>https://repo.spring.io/snapshot</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
+            <id>sonatype-nexus-snapshots</id>
+            <name>Sonatype OSS Snapshot Repository</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </repository>
     </repositories>
-
-    <pluginRepositories>
-        <pluginRepository>
-            <id>spring-plugins-release</id>
-            <url>https://repo.spring.io/plugins-release</url>
-        </pluginRepository>
-    </pluginRepositories>
 
 </project>
