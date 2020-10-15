@@ -447,6 +447,11 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     }
 
     @Test
+    void uuidArray() {
+        testCodec(UUID[].class, new UUID[]{UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()}, "UUID[]");
+    }
+
+    @Test
     void zoneId() {
         testCodec(ZoneId.class, ZoneId.systemDefault(), "BPCHAR(32)");
         testCodec(ZoneId.class, ZoneId.systemDefault(), "VARCHAR(32)");

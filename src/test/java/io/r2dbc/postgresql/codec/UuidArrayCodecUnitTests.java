@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+
 import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
@@ -31,8 +33,6 @@ import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
-import java.util.UUID;
-
 /**
  * Unit tests for {@link UuidArrayCodec}.
  */
@@ -41,23 +41,24 @@ final class UuidArrayCodecUnitTests {
     private static final int dataType = UUID_ARRAY.getObjectId();
 
     private static final UUID u1 = UUID.randomUUID();
+
     private static final UUID u2 = UUID.randomUUID();
-    private static final String parms = "{"+u1+","+u2+"}";
+
+    private static final String parms = "{" + u1 + "," + u2 + "}";
 
     private final ByteBuf BINARY_ARRAY = TEST
-            .buffer()
-            .writeInt(1)
-            .writeInt(0)
-            .writeInt(2951)
-            .writeInt(2)
-            .writeInt(2)
-            .writeInt(16)
-            .writeLong(u1.getMostSignificantBits())
-            .writeLong(u1.getLeastSignificantBits())
-            .writeInt(16)
-            .writeLong(u2.getMostSignificantBits())
-            .writeLong(u2.getLeastSignificantBits());
-
+        .buffer()
+        .writeInt(1)
+        .writeInt(0)
+        .writeInt(2951)
+        .writeInt(2)
+        .writeInt(2)
+        .writeInt(16)
+        .writeLong(u1.getMostSignificantBits())
+        .writeLong(u1.getLeastSignificantBits())
+        .writeInt(16)
+        .writeLong(u2.getMostSignificantBits())
+        .writeLong(u2.getLeastSignificantBits());
 
     @Test
     void decodeItem() {

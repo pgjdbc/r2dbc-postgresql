@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,43 +18,52 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
-import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.util.Assert;
-import reactor.util.annotation.Nullable;
 
 import java.util.UUID;
 import java.util.function.Supplier;
 
 final class UuidArrayCodec extends AbstractArrayCodec<UUID> {
-	UuidArrayCodec(ByteBufAllocator byteBufAllocator) {
-		super(byteBufAllocator, UUID.class);
-	}
 
-	public Parameter encodeNull() {
-		return createNull(PostgresqlObjectId.UUID_ARRAY, Format.FORMAT_TEXT);
-	}
+    UuidArrayCodec(ByteBufAllocator byteBufAllocator) {
+        super(byteBufAllocator, UUID.class);
+    }
 
-	UUID decodeItem(ByteBuf byteBuf) {
-		return new UUID(byteBuf.readLong(), byteBuf.readLong());
-	}
+    @Override
+    public Parameter encodeNull() {
+        return createNull(PostgresqlObjectId.UUID_ARRAY, Format.FORMAT_TEXT);
+    }
 
-	UUID decodeItem(String str) {
-		return UUID.fromString(str);
-	}
+    @Override
+    UUID decodeItem(ByteBuf byteBuf) {
+        return new UUID(byteBuf.readLong(), byteBuf.readLong());
+    }
 
-	boolean doCanDecode(PostgresqlObjectId type, @Nullable Format format) {
-		Assert.requireNonNull(type, "type must not be null");
-		return PostgresqlObjectId.UUID_ARRAY==type;
-	}
+    @Override
+    UUID decodeItem(String str) {
+        return UUID.fromString(str);
+    }
 
-	Parameter encodeArray(Supplier<ByteBuf> encodedSupplier) {
-		return create(PostgresqlObjectId.UUID_ARRAY, Format.FORMAT_TEXT, encodedSupplier);
-	}
+    @Override
+    boolean doCanDecode(PostgresqlObjectId type, Format format) {
+        Assert.requireNonNull(type, "type must not be null");
 
-	String encodeItem(UUID value) {
-		Assert.requireNonNull(value, "value must not be null");
-		return value.toString();
-	}
+        return PostgresqlObjectId.UUID_ARRAY == type;
+    }
+
+    @Override
+    Parameter encodeArray(Supplier<ByteBuf> encodedSupplier) {
+        return create(PostgresqlObjectId.UUID_ARRAY, Format.FORMAT_TEXT, encodedSupplier);
+    }
+
+    @Override
+    String encodeItem(UUID value) {
+        Assert.requireNonNull(value, "value must not be null");
+
+        return value.toString();
+    }
+
 }

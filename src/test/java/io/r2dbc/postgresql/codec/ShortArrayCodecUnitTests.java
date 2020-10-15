@@ -20,6 +20,8 @@ import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.client.Parameter;
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+
 import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
@@ -68,6 +70,18 @@ final class ShortArrayCodecUnitTests {
         assertThat(new ShortArrayCodec(TEST).doCanDecode(INT2, FORMAT_TEXT)).isFalse();
         assertThat(new ShortArrayCodec(TEST).doCanDecode(INT2_ARRAY, FORMAT_TEXT)).isTrue();
         assertThat(new ShortArrayCodec(TEST).doCanDecode(INT2_ARRAY, FORMAT_BINARY)).isTrue();
+    }
+
+    @Test
+    void canEncode() {
+        assertThat(new ShortArrayCodec(TEST).canEncode(new Short[0])).isTrue();
+        assertThat(new ShortArrayCodec(TEST).canEncode(new UUID[0])).isFalse();
+    }
+
+    @Test
+    void canEncodeNull() {
+        assertThat(new ShortArrayCodec(TEST).canEncodeNull(Short[].class)).isTrue();
+        assertThat(new ShortArrayCodec(TEST).canEncodeNull(UUID[].class)).isFalse();
     }
 
     @Test
