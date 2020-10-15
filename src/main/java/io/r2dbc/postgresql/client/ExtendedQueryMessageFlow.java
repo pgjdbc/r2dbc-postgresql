@@ -92,7 +92,7 @@ public final class ExtendedQueryMessageFlow {
 
         return Flux.defer(() -> {
 
-            Flux<FrontendMessage> bindFlow = toBindFlow(binding, portal, statementName, query, forceBinary);
+            Flux<FrontendMessage> bindFlow = toBindFlow(client.getContext(), binding, portal, statementName, query, forceBinary);
 
             if (fetchSize == NO_LIMIT) {
                 return fetchAll(bindFlow, client, portal);
@@ -205,7 +205,7 @@ public final class ExtendedQueryMessageFlow {
             .takeUntil(CloseComplete.class::isInstance);
     }
 
-    private static Flux<FrontendMessage> toBindFlow(Binding binding, String portal, String statementName, String query, boolean forceBinary) {
+    private static Flux<FrontendMessage> toBindFlow(ConnectionContext connectionContext, Binding binding, String portal, String statementName, String query, boolean forceBinary) {
 
         return Flux.fromIterable(binding.getParameterValues())
             .flatMap(f -> {
@@ -221,7 +221,7 @@ public final class ExtendedQueryMessageFlow {
                 Bind bind = new Bind(portal, binding.getParameterFormats(), values, resultFormat(forceBinary), statementName);
 
                 return Flux.<FrontendMessage>just(bind, new Describe(portal, PORTAL));
-            }).doOnSubscribe(ignore -> QueryLogger.logQuery(query));
+            }).doOnSubscribe(ignore -> QueryLogger.logQuery(connectionContext, query));
     }
 
     private static Collection<Format> resultFormat(boolean forceBinary) {

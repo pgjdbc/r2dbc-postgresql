@@ -45,7 +45,7 @@ final class PostgresqlResult extends AbstractReferenceCounted implements io.r2db
 
     private static final Predicate<BackendMessage> TAKE_UNTIL = or(CommandComplete.class::isInstance, EmptyQueryResponse.class::isInstance);
 
-    private final ConnectionContext context;
+    private final ConnectionResources context;
 
     private final Flux<BackendMessage> messages;
 
@@ -55,7 +55,7 @@ final class PostgresqlResult extends AbstractReferenceCounted implements io.r2db
 
     private volatile RowDescription rowDescription;
 
-    private PostgresqlResult(ConnectionContext context, Flux<BackendMessage> messages, ExceptionFactory factory) {
+    private PostgresqlResult(ConnectionResources context, Flux<BackendMessage> messages, ExceptionFactory factory) {
         this.context = context;
         this.messages = messages;
         this.factory = factory;
@@ -138,7 +138,7 @@ final class PostgresqlResult extends AbstractReferenceCounted implements io.r2db
             '}';
     }
 
-    static PostgresqlResult toResult(ConnectionContext context, Flux<BackendMessage> messages, ExceptionFactory factory) {
+    static PostgresqlResult toResult(ConnectionResources context, Flux<BackendMessage> messages, ExceptionFactory factory) {
         return new PostgresqlResult(context, messages, factory);
     }
 

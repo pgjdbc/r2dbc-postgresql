@@ -21,6 +21,7 @@ import io.r2dbc.postgresql.api.Notification;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.postgresql.client.Client;
+import io.r2dbc.postgresql.client.ConnectionContext;
 import io.r2dbc.postgresql.client.PortalNameSupplier;
 import io.r2dbc.postgresql.client.SimpleQueryMessageFlow;
 import io.r2dbc.postgresql.client.TransactionStatus;
@@ -59,9 +60,11 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
 
     private final Logger logger = Loggers.getLogger(this.getClass());
 
-    private final ConnectionContext context;
-
     private final Client client;
+
+    private final ConnectionResources resources;
+
+    private final ConnectionContext connectionContext;
 
     private final Codecs codecs;
 
@@ -73,11 +76,12 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
 
     PostgresqlConnection(Client client, Codecs codecs, PortalNameSupplier portalNameSupplier, StatementCache statementCache, IsolationLevel isolationLevel,
                          PostgresqlConnectionConfiguration configuration) {
-        this.context = new ConnectionContext(client, codecs, this, configuration, portalNameSupplier, statementCache);
         this.client = Assert.requireNonNull(client, "client must not be null");
+        this.resources = new ConnectionResources(client, codecs, this, configuration, portalNameSupplier, statementCache);
+        this.connectionContext = client.getContext();
         this.codecs = Assert.requireNonNull(codecs, "codecs must not be null");
         this.isolationLevel = Assert.requireNonNull(isolationLevel, "isolationLevel must not be null");
-        this.validationQuery = new SimpleQueryPostgresqlStatement(this.context, "SELECT 1").fetchSize(0).execute().flatMap(PostgresqlResult::getRowsUpdated);
+        this.validationQuery = new SimpleQueryPostgresqlStatement(this.resources, "SELECT 1").fetchSize(0).execute().flatMap(PostgresqlResult::getRowsUpdated);
     }
 
     Client getClient() {
@@ -90,7 +94,7 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
             if (IDLE == transactionStatus) {
                 return exchange("BEGIN");
             } else {
-                this.logger.debug("Skipping begin transaction because status is {}", transactionStatus);
+                this.logger.debug(this.connectionContext.getMessage("Skipping begin transaction because status is {}"), transactionStatus);
                 return Mono.empty();
             }
         });
@@ -137,7 +141,7 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
                         sink.next(message);
                     });
             } else {
-                this.logger.debug("Skipping commit transaction because status is {}", transactionStatus);
+                this.logger.debug(this.connectionContext.getMessage("Skipping commit transaction because status is {}"), transactionStatus);
                 return Mono.empty();
             }
         });
@@ -145,7 +149,7 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
 
     @Override
     public PostgresqlBatch createBatch() {
-        return new PostgresqlBatch(this.context);
+        return new PostgresqlBatch(this.resources);
     }
 
     @Override
@@ -157,7 +161,7 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
                 if (OPEN == transactionStatus) {
                     return exchange(String.format("SAVEPOINT %s", name));
                 } else {
-                    this.logger.debug("Skipping create savepoint because status is {}", transactionStatus);
+                    this.logger.debug(this.connectionContext.getMessage("Skipping create savepoint because status is {}"), transactionStatus);
                     return Mono.empty();
                 }
             }));
@@ -168,9 +172,9 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
         Assert.requireNonNull(sql, "sql must not be null");
 
         if (SimpleQueryPostgresqlStatement.supports(sql)) {
-            return new SimpleQueryPostgresqlStatement(this.context, sql);
+            return new SimpleQueryPostgresqlStatement(this.resources, sql);
         } else if (ExtendedQueryPostgresqlStatement.supports(sql)) {
-            return new ExtendedQueryPostgresqlStatement(this.context, sql);
+            return new ExtendedQueryPostgresqlStatement(this.resources, sql);
         } else {
             throw new IllegalArgumentException(String.format("Statement '%s' cannot be created. This is often due to the presence of both multiple statements and parameters at the same time.", sql));
         }
@@ -229,7 +233,7 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
             if (OPEN == transactionStatus) {
                 return exchange(String.format("RELEASE SAVEPOINT %s", name));
             } else {
-                this.logger.debug("Skipping release savepoint because status is {}", transactionStatus);
+                this.logger.debug(this.connectionContext.getMessage("Skipping release savepoint because status is {}"), transactionStatus);
                 return Mono.empty();
             }
         });
@@ -241,7 +245,7 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
             if (IDLE != transactionStatus) {
                 return exchange("ROLLBACK");
             } else {
-                this.logger.debug("Skipping rollback transaction because status is {}", transactionStatus);
+                this.logger.debug(this.connectionContext.getMessage("Skipping rollback transaction because status is {}"), transactionStatus);
                 return Mono.empty();
             }
         });
@@ -255,7 +259,7 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
             if (IDLE != transactionStatus) {
                 return exchange(String.format("ROLLBACK TO SAVEPOINT %s", name));
             } else {
-                this.logger.debug("Skipping rollback transaction to savepoint because status is {}", transactionStatus);
+                this.logger.debug(this.connectionContext.getMessage("Skipping rollback transaction to savepoint because status is {}"), transactionStatus);
                 return Mono.empty();
             }
         });
@@ -266,17 +270,17 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
 
         return useTransactionStatus(transactionStatus -> {
 
-            this.logger.debug(String.format("Setting auto-commit mode to [%s]", autoCommit));
+            this.logger.debug(this.connectionContext.getMessage(String.format("Setting auto-commit mode to [%s]", autoCommit)));
 
             if (isAutoCommit()) {
                 if (!autoCommit) {
-                    this.logger.debug("Beginning transaction");
+                    this.logger.debug(this.connectionContext.getMessage("Beginning transaction"));
                     return beginTransaction();
                 }
             } else {
 
                 if (autoCommit) {
-                    this.logger.debug("Committing pending transactions");
+                    this.logger.debug(this.connectionContext.getMessage("Committing pending transactions"));
                     return commitTransaction();
                 }
             }
@@ -331,7 +335,7 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
 
                 @Override
                 public void onError(Throwable t) {
-                    PostgresqlConnection.this.logger.debug("Validation failed", t);
+                    PostgresqlConnection.this.logger.debug(PostgresqlConnection.this.connectionContext.getMessage("Validation failed"), t);
                     sink.success(false);
                 }
 

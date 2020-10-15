@@ -223,7 +223,7 @@ final class SimpleQueryPostgresqlStatementUnitTests {
             .preferredType(200, FORMAT_TEXT, String.class)
             .build();
 
-        ConnectionContext context = MockContext.builder().client(client).codecs(codecs).build();
+        ConnectionResources context = MockContext.builder().client(client).codecs(codecs).build();
 
         new SimpleQueryPostgresqlStatement(context, "test-query")
             .execute()
@@ -278,7 +278,7 @@ final class SimpleQueryPostgresqlStatementUnitTests {
 
         MockCodecs codecs = MockCodecs.empty();
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
-        ConnectionContext context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
+        ConnectionResources context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
 
         when(context.getStatementCache().getName(any(), any())).thenReturn(Mono.just("test-name"));
 

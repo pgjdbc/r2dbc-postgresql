@@ -28,11 +28,11 @@ import java.util.List;
  */
 final class PostgresqlBatch implements io.r2dbc.postgresql.api.PostgresqlBatch {
 
-    private final ConnectionContext context;
+    private final ConnectionResources context;
 
     private final List<String> statements = new ArrayList<>();
 
-    PostgresqlBatch(ConnectionContext context) {
+    PostgresqlBatch(ConnectionResources context) {
         this.context = Assert.requireNonNull(context, "context must not be null");
     }
 

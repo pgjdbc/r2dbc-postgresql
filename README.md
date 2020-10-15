@@ -484,6 +484,8 @@ Logging facilities:
     * `DEBUG` enables `Message` exchange logging
     * `TRACE` enables traffic logging
     
+Logging that is associated with a connection reports the logical connection id (`cid`) which is a driver-local connection counter and the Postgres Process Id (`pid`) once the connection handshake finishes.
+    
 ## Getting Help
 
 Having trouble with R2DBC? We'd love to help!

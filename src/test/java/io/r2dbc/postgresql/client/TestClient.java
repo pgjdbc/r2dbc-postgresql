@@ -133,6 +133,11 @@ public final class TestClient implements Client {
     }
 
     @Override
+    public ConnectionContext getContext() {
+        return new ConnectionContext();
+    }
+
+    @Override
     public Optional<Integer> getProcessId() {
         return Optional.ofNullable(this.processId);
     }
