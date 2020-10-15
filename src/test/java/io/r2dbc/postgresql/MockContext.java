@@ -19,6 +19,7 @@ package io.r2dbc.postgresql;
 import io.r2dbc.postgresql.api.PostgresqlConnection;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.PortalNameSupplier;
+import io.r2dbc.postgresql.client.TestClient;
 import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.codec.MockCodecs;
 
@@ -39,7 +40,7 @@ final class MockContext {
 
         private Codecs codecs = MockCodecs.empty();
 
-        private Client client;
+        private Client client = TestClient.NO_OP;
 
         private PostgresqlConnection connection;
 
