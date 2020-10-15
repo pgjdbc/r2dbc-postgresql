@@ -18,6 +18,7 @@ package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.postgresql.client.Binding;
+import io.r2dbc.postgresql.client.ConnectionContext;
 import io.r2dbc.postgresql.client.ExtendedQueryMessageFlow;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.BindComplete;
@@ -31,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -49,7 +49,9 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
 
     private final Bindings bindings;
 
-    private final ConnectionResources context;
+    private final ConnectionResources resources;
+
+    private final ConnectionContext connectionContext;
 
     private final String sql;
 
@@ -57,11 +59,12 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
 
     private String[] generatedColumns;
 
-    ExtendedQueryPostgresqlStatement(ConnectionResources context, String sql) {
-        this.context = Assert.requireNonNull(context, "context must not be null");
+    ExtendedQueryPostgresqlStatement(ConnectionResources resources, String sql) {
+        this.resources = Assert.requireNonNull(resources, "context must not be null");
+        this.connectionContext = resources.getClient().getContext();
         this.sql = Assert.requireNonNull(sql, "sql must not be null");
         this.bindings = new Bindings(expectedSize(sql));
-        fetchSize(this.context.getConfiguration().getFetchSize(sql));
+        fetchSize(this.resources.getConfiguration().getFetchSize(sql));
     }
 
     @Override
@@ -75,7 +78,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
         Assert.requireNonNull(identifier, "identifier must not be null");
         Assert.requireType(identifier, String.class, "identifier must be a String");
 
-        BindingLogger.logBinding(identifier, Objects.toString(value));
+        BindingLogger.logBind(this.connectionContext, identifier, value);
         return bind(getIndex(identifier), value);
     }
 
@@ -83,8 +86,8 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
     public ExtendedQueryPostgresqlStatement bind(int index, Object value) {
         Assert.requireNonNull(value, "value must not be null");
 
-        BindingLogger.logBinding(index, Objects.toString(value));
-        this.bindings.getCurrent().add(index, this.context.getCodecs().encode(value));
+        BindingLogger.logBind(this.connectionContext, index, value);
+        this.bindings.getCurrent().add(index, this.resources.getCodecs().encode(value));
 
         return this;
     }
@@ -95,7 +98,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
         Assert.requireType(identifier, String.class, "identifier must be a String");
         Assert.requireNonNull(type, "type must not be null");
 
-        BindingLogger.logBinding(identifier, "null of type " + type.getName());
+        BindingLogger.logBindNull(this.connectionContext, identifier, type);
         bindNull(getIndex(identifier), type);
         return this;
     }
@@ -104,8 +107,8 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
     public ExtendedQueryPostgresqlStatement bindNull(int index, Class<?> type) {
         Assert.requireNonNull(type, "type must not be null");
 
-        BindingLogger.logBinding(index, "null of type " + type.getName());
-        this.bindings.getCurrent().add(index, this.context.getCodecs().encodeNull(type));
+        BindingLogger.logBindNull(this.connectionContext, index, type);
+        this.bindings.getCurrent().add(index, this.resources.getCodecs().encodeNull(type));
         return this;
     }
 
@@ -145,7 +148,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
     public String toString() {
         return "ExtendedQueryPostgresqlStatement{" +
             "bindings=" + this.bindings +
-            ", context=" + this.context +
+            ", context=" + this.resources +
             ", sql='" + this.sql + '\'' +
             ", generatedColumns=" + Arrays.toString(this.generatedColumns) +
             '}';
@@ -179,9 +182,9 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
         this.bindings.finish();
 
         ExceptionFactory factory = ExceptionFactory.withSql(sql);
-        return this.context.getStatementCache().getName(this.bindings.first(), sql)
+        return this.resources.getStatementCache().getName(this.bindings.first(), sql)
             .flatMapMany(name -> Flux.fromIterable(this.bindings.bindings).map(binding -> {
-                return createPostgresqlResult(sql, factory, name, binding, this.context, this.fetchSize);
+                return createPostgresqlResult(sql, factory, name, binding, this.resources, this.fetchSize);
             }))
             .cast(io.r2dbc.postgresql.api.PostgresqlResult.class);
     }
