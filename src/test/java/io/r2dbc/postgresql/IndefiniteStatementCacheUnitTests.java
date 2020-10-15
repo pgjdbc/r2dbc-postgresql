@@ -22,6 +22,7 @@ import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.client.TestClient;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.ParseComplete;
+import io.r2dbc.postgresql.message.frontend.CompositeFrontendMessage;
 import io.r2dbc.postgresql.message.frontend.Flush;
 import io.r2dbc.postgresql.message.frontend.Parse;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
@@ -51,11 +52,11 @@ final class IndefiniteStatementCacheUnitTests {
     void getName() {
         // @formatter:off
         Client client = TestClient.builder()
-            .expectRequest(new Parse("S_0", new int[]{100}, "test-query"), Flush.INSTANCE)
+            .expectRequest(new CompositeFrontendMessage(new Parse("S_0", new int[]{100}, "test-query"), Flush.INSTANCE))
                 .thenRespond(ParseComplete.INSTANCE)
-            .expectRequest(new Parse("S_1", new int[]{200}, "test-query"), Flush.INSTANCE)
+            .expectRequest(new CompositeFrontendMessage(new Parse("S_1", new int[]{200}, "test-query"), Flush.INSTANCE))
                 .thenRespond(ParseComplete.INSTANCE)
-            .expectRequest(new Parse("S_2", new int[]{200}, "test-query-2"), Flush.INSTANCE)
+            .expectRequest(new CompositeFrontendMessage(new Parse("S_2", new int[]{200}, "test-query-2"), Flush.INSTANCE))
                 .thenRespond(ParseComplete.INSTANCE)
             .build();
         // @formatter:on
@@ -87,7 +88,7 @@ final class IndefiniteStatementCacheUnitTests {
     void getNameErrorResponse() {
         // @formatter:off
         Client client = TestClient.builder()
-            .expectRequest(new Parse("S_0", new int[]{100}, "test-query"), Flush.INSTANCE)
+            .expectRequest(new CompositeFrontendMessage(new Parse("S_0", new int[]{100}, "test-query"), Flush.INSTANCE))
                 .thenRespond(new ErrorResponse(Collections.emptyList()))
             .build();
         // @formatter:on
