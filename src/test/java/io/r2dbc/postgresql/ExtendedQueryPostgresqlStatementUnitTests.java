@@ -31,6 +31,7 @@ import io.r2dbc.postgresql.message.backend.NoData;
 import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.postgresql.message.frontend.Bind;
 import io.r2dbc.postgresql.message.frontend.Close;
+import io.r2dbc.postgresql.message.frontend.CompositeFrontendMessage;
 import io.r2dbc.postgresql.message.frontend.Describe;
 import io.r2dbc.postgresql.message.frontend.Execute;
 import io.r2dbc.postgresql.message.frontend.ExecutionType;
@@ -199,11 +200,11 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
     void executeErrorAfterBind() {
         Client client = TestClient.builder()
             .expectRequest(
-                new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
-                new Describe("B_0", ExecutionType.PORTAL),
-                new Execute("B_0", 0),
-                new Close("B_0", ExecutionType.PORTAL),
-                Sync.INSTANCE)
+                new CompositeFrontendMessage(new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
+                    new Describe("B_0", ExecutionType.PORTAL)),
+                new CompositeFrontendMessage(new Execute("B_0", 0),
+                    new Close("B_0", ExecutionType.PORTAL),
+                    Sync.INSTANCE))
             .thenRespond(BindComplete.INSTANCE, new RowDescription(Collections.emptyList()), new ErrorResponse(Collections.emptyList()))
             .build();
 
@@ -228,11 +229,11 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
     void executeErrorResponseRows() {
         Client client = TestClient.builder()
             .expectRequest(
-                new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
-                new Describe("B_0", ExecutionType.PORTAL),
-                new Execute("B_0", 0),
-                new Close("B_0", ExecutionType.PORTAL),
-                Sync.INSTANCE)
+                new CompositeFrontendMessage(new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
+                    new Describe("B_0", ExecutionType.PORTAL)),
+                new CompositeFrontendMessage(new Execute("B_0", 0),
+                    new Close("B_0", ExecutionType.PORTAL),
+                    Sync.INSTANCE))
             .thenRespond(BindComplete.INSTANCE, NoData.INSTANCE, new ErrorResponse(Collections.emptyList()))
             .build();
 
@@ -257,11 +258,11 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
     void executeErrorResponseRowsUpdated() {
         Client client = TestClient.builder()
             .expectRequest(
-                new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
-                new Describe("B_0", ExecutionType.PORTAL),
-                new Execute("B_0", 0),
-                new Close("B_0", ExecutionType.PORTAL),
-                Sync.INSTANCE)
+                new CompositeFrontendMessage(new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
+                    new Describe("B_0", ExecutionType.PORTAL)),
+                new CompositeFrontendMessage(new Execute("B_0", 0),
+                    new Close("B_0", ExecutionType.PORTAL),
+                    Sync.INSTANCE))
             .thenRespond(new ErrorResponse(Collections.emptyList()))
             .build();
 
@@ -286,11 +287,11 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
     void executeErrorResponse() {
         Client client = TestClient.builder()
             .expectRequest(
-                new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
-                new Describe("B_0", ExecutionType.PORTAL),
-                new Execute("B_0", 0),
-                new Close("B_0", ExecutionType.PORTAL),
-                Sync.INSTANCE)
+                new CompositeFrontendMessage(new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
+                    new Describe("B_0", ExecutionType.PORTAL)),
+                new CompositeFrontendMessage(new Execute("B_0", 0),
+                    new Close("B_0", ExecutionType.PORTAL),
+                    Sync.INSTANCE))
             .thenRespond(new ErrorResponse(Collections.emptyList()))
             .build();
 
@@ -315,11 +316,11 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
     void executeWithoutAdd() {
         Client client = TestClient.builder()
             .expectRequest(
-                new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
-                new Describe("B_0", ExecutionType.PORTAL),
-                new Execute("B_0", 0),
-                new Close("B_0", ExecutionType.PORTAL),
-                Sync.INSTANCE)
+                new CompositeFrontendMessage(new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
+                    new Describe("B_0", ExecutionType.PORTAL)),
+                new CompositeFrontendMessage(new Execute("B_0", 0),
+                    new Close("B_0", ExecutionType.PORTAL),
+                    Sync.INSTANCE))
             .thenRespond(
                 BindComplete.INSTANCE, NoData.INSTANCE, new CommandComplete("test", null, null), CloseComplete.INSTANCE)
             .build();
@@ -345,11 +346,11 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
     void executeWithoutResultWithMap() {
         Client client = TestClient.builder()
             .expectRequest(
-                new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
-                new Describe("B_0", ExecutionType.PORTAL),
-                new Execute("B_0", 0),
-                new Close("B_0", ExecutionType.PORTAL),
-                Sync.INSTANCE)
+                new CompositeFrontendMessage(new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
+                    new Describe("B_0", ExecutionType.PORTAL)),
+                new CompositeFrontendMessage(new Execute("B_0", 0),
+                    new Close("B_0", ExecutionType.PORTAL),
+                    Sync.INSTANCE))
             .thenRespond(
                 BindComplete.INSTANCE, NoData.INSTANCE, new CommandComplete("test", null, null), CloseComplete.INSTANCE)
             .build();
@@ -377,11 +378,11 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
     void returnGeneratedValues() {
         Client client = TestClient.builder()
             .expectRequest(
-                new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
-                new Describe("B_0", ExecutionType.PORTAL),
-                new Execute("B_0", 0),
-                new Close("B_0", ExecutionType.PORTAL),
-                Sync.INSTANCE)
+                new CompositeFrontendMessage(new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
+                    new Describe("B_0", ExecutionType.PORTAL)),
+                new CompositeFrontendMessage(new Execute("B_0", 0),
+                    new Close("B_0", ExecutionType.PORTAL),
+                    Sync.INSTANCE))
             .thenRespond(
                 BindComplete.INSTANCE, NoData.INSTANCE, new CommandComplete("test", null, null), CloseComplete.INSTANCE)
             .build();

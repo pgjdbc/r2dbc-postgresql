@@ -24,6 +24,7 @@ import io.r2dbc.postgresql.message.backend.CloseComplete;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.ParseComplete;
 import io.r2dbc.postgresql.message.frontend.Close;
+import io.r2dbc.postgresql.message.frontend.CompositeFrontendMessage;
 import io.r2dbc.postgresql.message.frontend.ExecutionType;
 import io.r2dbc.postgresql.message.frontend.Flush;
 import io.r2dbc.postgresql.message.frontend.Parse;
@@ -64,17 +65,17 @@ final class BoundedStatementCacheUnitTests {
     void getName() {
         // @formatter:off
         Client client = TestClient.builder()
-            .expectRequest(new Parse("S_0", new int[]{100}, "test-query-0"),  Flush.INSTANCE)
+            .expectRequest(new CompositeFrontendMessage(new Parse("S_0", new int[]{100}, "test-query-0"),  Flush.INSTANCE))
             .thenRespond(ParseComplete.INSTANCE)
-            .expectRequest(new Parse("S_1", new int[]{200}, "test-query-1"), Flush.INSTANCE)
+            .expectRequest(new CompositeFrontendMessage(new Parse("S_1", new int[]{200}, "test-query-1"), Flush.INSTANCE))
             .thenRespond(ParseComplete.INSTANCE)
-            .expectRequest(new Close("S_0", ExecutionType.STATEMENT), Sync.INSTANCE)
+            .expectRequest(new CompositeFrontendMessage(new Close("S_0", ExecutionType.STATEMENT), Sync.INSTANCE))
             .thenRespond(CloseComplete.INSTANCE)
-            .expectRequest(new Parse("S_2", new int[]{200}, "test-query-2"), Flush.INSTANCE)
+            .expectRequest(new CompositeFrontendMessage(new Parse("S_2", new int[]{200}, "test-query-2"), Flush.INSTANCE))
             .thenRespond(ParseComplete.INSTANCE)
-            .expectRequest(new Close("S_2", ExecutionType.STATEMENT), Sync.INSTANCE)
+            .expectRequest(new CompositeFrontendMessage(new Close("S_2", ExecutionType.STATEMENT), Sync.INSTANCE))
             .thenRespond(CloseComplete.INSTANCE)
-            .expectRequest(new Parse("S_3", new int[]{100}, "test-query-0"),  Flush.INSTANCE)
+            .expectRequest(new CompositeFrontendMessage(new Parse("S_3", new int[]{100}, "test-query-0"),  Flush.INSTANCE))
             .thenRespond(ParseComplete.INSTANCE)
             .build();
         // @formatter:on
@@ -123,7 +124,7 @@ final class BoundedStatementCacheUnitTests {
     void getNameErrorResponse() {
         // @formatter:off
         Client client = TestClient.builder()
-            .expectRequest(new Parse("S_0", new int[]{100}, "test-query"),  Flush.INSTANCE)
+            .expectRequest(new CompositeFrontendMessage(new Parse("S_0", new int[]{100}, "test-query"),  Flush.INSTANCE))
             .thenRespond(new ErrorResponse(Collections.emptyList()))
             .build();
         // @formatter:on

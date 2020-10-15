@@ -29,6 +29,7 @@ import io.r2dbc.postgresql.message.backend.PortalSuspended;
 import io.r2dbc.postgresql.message.backend.ReadyForQuery;
 import io.r2dbc.postgresql.message.frontend.Bind;
 import io.r2dbc.postgresql.message.frontend.Close;
+import io.r2dbc.postgresql.message.frontend.CompositeFrontendMessage;
 import io.r2dbc.postgresql.message.frontend.Describe;
 import io.r2dbc.postgresql.message.frontend.Execute;
 import io.r2dbc.postgresql.message.frontend.ExecutionType;
@@ -111,7 +112,7 @@ public final class ExtendedQueryMessageFlow {
      * @return the resulting message stream
      */
     private static Flux<BackendMessage> fetchAll(Flux<FrontendMessage> bindFlow, Client client, String portal) {
-        return client.exchange(bindFlow.concatWithValues(new Execute(portal, NO_LIMIT), new Close(portal, PORTAL), Sync.INSTANCE))
+        return client.exchange(bindFlow.concatWithValues(new CompositeFrontendMessage(new Execute(portal, NO_LIMIT), new Close(portal, PORTAL), Sync.INSTANCE)))
             .as(Operators::discardOnCancel);
     }
 
@@ -130,7 +131,7 @@ public final class ExtendedQueryMessageFlow {
         FluxSink<FrontendMessage> requestsSink = requestsProcessor.sink();
         AtomicBoolean isCanceled = new AtomicBoolean(false);
 
-        return client.exchange(bindFlow.concatWithValues(new Execute(portal, fetchSize), Flush.INSTANCE).concatWith(requestsProcessor))
+        return client.exchange(bindFlow.concatWithValues(new CompositeFrontendMessage(new Execute(portal, fetchSize), Flush.INSTANCE)).concatWith(requestsProcessor))
             .handle((BackendMessage message, SynchronousSink<BackendMessage> sink) -> {
                 if (message instanceof CommandComplete) {
                     requestsSink.next(new Close(portal, PORTAL));
@@ -177,7 +178,7 @@ public final class ExtendedQueryMessageFlow {
          ParseComplete will be received if parse was successful
          ReadyForQuery will be received as a response to Sync, which was send in case of error in parsing
          */
-        return client.exchange(PARSE_TAKE_UNTIL, Flux.just(new Parse(name, types, query), Flush.INSTANCE))
+        return client.exchange(PARSE_TAKE_UNTIL, Flux.just(new CompositeFrontendMessage(new Parse(name, types, query), Flush.INSTANCE)))
             .doOnNext(message -> {
                 if (message instanceof ErrorResponse) {
                     /*
@@ -201,7 +202,7 @@ public final class ExtendedQueryMessageFlow {
         Assert.requireNonNull(client, "client must not be null");
         Assert.requireNonNull(name, "name must not be null");
 
-        return client.exchange(Flux.just(new Close(name, ExecutionType.STATEMENT), Sync.INSTANCE))
+        return client.exchange(Flux.just(new CompositeFrontendMessage(new Close(name, ExecutionType.STATEMENT), Sync.INSTANCE)))
             .takeUntil(CloseComplete.class::isInstance);
     }
 
@@ -220,7 +221,7 @@ public final class ExtendedQueryMessageFlow {
             .flatMapMany(values -> {
                 Bind bind = new Bind(portal, binding.getParameterFormats(), values, resultFormat(forceBinary), statementName);
 
-                return Flux.<FrontendMessage>just(bind, new Describe(portal, PORTAL));
+                return Flux.<FrontendMessage>just(new CompositeFrontendMessage(bind, new Describe(portal, PORTAL)));
             }).doOnSubscribe(ignore -> QueryLogger.logQuery(connectionContext, query));
     }
 

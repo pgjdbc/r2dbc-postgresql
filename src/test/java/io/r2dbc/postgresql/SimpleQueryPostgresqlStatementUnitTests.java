@@ -30,6 +30,7 @@ import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.NoData;
 import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.postgresql.message.frontend.Bind;
+import io.r2dbc.postgresql.message.frontend.CompositeFrontendMessage;
 import io.r2dbc.postgresql.message.frontend.Describe;
 import io.r2dbc.postgresql.message.frontend.Execute;
 import io.r2dbc.postgresql.message.frontend.ExecutionType;
@@ -268,11 +269,11 @@ final class SimpleQueryPostgresqlStatementUnitTests {
     @Test
     void executeWithFetchSize() {
         Client client = TestClient.builder()
-            .expectRequest(
-                new Bind("B_0", Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), "test-name"),
-                new Describe("B_0", ExecutionType.PORTAL),
-                new Execute("B_0", 1),
-                Flush.INSTANCE)
+            .expectRequest(new CompositeFrontendMessage(
+                    new Bind("B_0", Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), "test-name"),
+                    new Describe("B_0", ExecutionType.PORTAL)),
+                new CompositeFrontendMessage(new Execute("B_0", 1),
+                    Flush.INSTANCE))
             .thenRespond(BindComplete.INSTANCE, NoData.INSTANCE, new CommandComplete("test", null, null))
             .build();
 

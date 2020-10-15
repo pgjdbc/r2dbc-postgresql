@@ -35,7 +35,7 @@ import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeSiz
 /**
  * The Parse message.
  */
-public final class Parse implements FrontendMessage {
+public final class Parse implements FrontendMessage, FrontendMessage.DirectEncoder {
 
     /**
      * The unnamed statement.
@@ -76,18 +76,25 @@ public final class Parse implements FrontendMessage {
         return Mono.fromSupplier(() -> {
             ByteBuf out = byteBufAllocator.ioBuffer();
 
-            writeByte(out, 'P');
-            writeLengthPlaceholder(out);
-            writeCStringUTF8(out, this.name);
-            writeCStringUTF8(out, this.query);
-
-            writeShort(out, this.parameters.length);
-            for (int parameter : this.parameters) {
-                writeInt(out, parameter);
-            }
-
-            return writeSize(out);
+            encode(out);
+            return out;
         });
+    }
+
+    @Override
+    public void encode(ByteBuf byteBuf) {
+
+        writeByte(byteBuf, 'P');
+        writeLengthPlaceholder(byteBuf);
+        writeCStringUTF8(byteBuf, this.name);
+        writeCStringUTF8(byteBuf, this.query);
+
+        writeShort(byteBuf, this.parameters.length);
+        for (int parameter : this.parameters) {
+            writeInt(byteBuf, parameter);
+        }
+
+        writeSize(byteBuf);
     }
 
     @Override
