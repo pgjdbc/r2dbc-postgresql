@@ -66,7 +66,7 @@ abstract class AbstractCodec<T> implements Codec<T> {
     }
 
     @Override
-    public final boolean canEncodeNull(Class<?> type) {
+    public boolean canEncodeNull(Class<?> type) {
         Assert.requireNonNull(type, "type must not be null");
 
         return this.type.isAssignableFrom(type);

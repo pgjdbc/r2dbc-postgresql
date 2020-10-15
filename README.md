@@ -365,9 +365,9 @@ Support for the following single-dimensional arrays (read and write):
 
 | PostgreSQL Type                                | Supported Data Type                  |
 |:-----------------------------------------------|:-------------------------------------|
-|[`text[]`][psql-text-ref]                        |[`String[]`][java-string-ref]         |
+|[`text[]`][psql-text-ref]                       |[`String[]`][java-string-ref]         |
 |[`integer[] or int[]`][psql-integer-ref]        |[`Integer[]`][java-integer-ref], [`Long[]`][java-long-ref], [`Short[]`][java-short-ref]|
-|[`uuid[]`][psql-uuid-ref]        |[`UUID[]`][java-uuid-ref]|
+|[`uuid[]`][psql-uuid-ref]                       |[`UUID[]`][java-uuid-ref]|
 
 [psql-bigint-ref]: https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-INT
 [psql-bit-ref]: https://www.postgresql.org/docs/current/datatype-numeric.html

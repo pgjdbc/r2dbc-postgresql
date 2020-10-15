@@ -72,6 +72,13 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
         return isTypeAssignable(value.getClass());
     }
 
+    @Override
+    public boolean canEncodeNull(Class<?> type) {
+        Assert.requireNonNull(type, "type must not be null");
+
+        return isTypeAssignable(type);
+    }
+
     static String escapeArrayElement(String s) {
         StringBuilder b = new StringBuilder();
         b.append('"');
