@@ -20,29 +20,36 @@ import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.RowMetadata;
+import reactor.util.annotation.Nullable;
 
+import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * An implementation of {@link RowMetadata} for a PostgreSQL database.
  */
-final class PostgresqlRowMetadata implements io.r2dbc.postgresql.api.PostgresqlRowMetadata {
-
-    private static final Comparator<String> IGNORE_CASE_COMPARATOR = (o1, o2) -> o2.compareToIgnoreCase(o1);
+final class PostgresqlRowMetadata extends AbstractCollection<String> implements io.r2dbc.postgresql.api.PostgresqlRowMetadata {
 
     private final List<PostgresqlColumnMetadata> columnMetadatas;
 
-    private volatile Collection<String> columnNames;
+    private final Map<String, PostgresqlColumnMetadata> nameKeyedColumns;
 
     PostgresqlRowMetadata(List<PostgresqlColumnMetadata> columnMetadatas) {
         this.columnMetadatas = Assert.requireNonNull(columnMetadatas, "columnMetadatas must not be null");
+        this.nameKeyedColumns = new LinkedHashMap<>();
+
+        for (PostgresqlColumnMetadata columnMetadata : columnMetadatas) {
+            if (!this.nameKeyedColumns.containsKey(columnMetadata.getName())) {
+                this.nameKeyedColumns.put(columnMetadata.getName(), columnMetadata);
+            }
+        }
     }
 
     @Override
@@ -86,26 +93,98 @@ final class PostgresqlRowMetadata implements io.r2dbc.postgresql.api.PostgresqlR
     }
 
     @Override
-    public Collection<String> getColumnNames() {
-
-        if (this.columnNames == null) {
-            this.columnNames = getColumnNames(this.columnMetadatas);
-        }
-
-        return Collections.unmodifiableCollection(this.columnNames);
-    }
-
-    @Override
     public int hashCode() {
         return Objects.hash(this.columnMetadatas);
     }
 
     @Override
-    public String toString() {
-        return "PostgresqlRowMetadata{" +
-            "columnMetadatas=" + this.columnMetadatas +
-            ", columnNames=" + this.columnNames +
-            '}';
+    public Collection<String> getColumnNames() {
+        return this;
+    }
+
+    @Override
+    public int size() {
+        return this.columnMetadatas.size();
+    }
+
+    @Override
+    public boolean contains(Object o) {
+
+        if (o instanceof String) {
+            return this.findColumn((String) o) != null;
+        }
+
+        return false;
+    }
+
+    @Override
+    public Iterator<String> iterator() {
+
+        return new Iterator<String>() {
+
+            int index = 0;
+
+            @Override
+            public boolean hasNext() {
+                return size() > this.index;
+            }
+
+            @Override
+            public String next() {
+                return PostgresqlRowMetadata.this.columnMetadatas.get(this.index++).getName();
+            }
+        };
+    }
+
+    @Override
+    public boolean add(String s) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean remove(Object o) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean addAll(Collection<? extends String> c) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean removeAll(Collection<?> c) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean retainAll(Collection<?> c) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void clear() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Lookup {@link PostgresqlColumnMetadata} by its {@code name}.
+     *
+     * @param name the column name.
+     * @return the {@link PostgresqlColumnMetadata}.
+     */
+    @Nullable
+    PostgresqlColumnMetadata findColumn(String name) {
+
+        PostgresqlColumnMetadata column = this.nameKeyedColumns.get(name);
+
+        if (column == null) {
+            name = EscapeAwareColumnMatcher.findColumn(name, this.nameKeyedColumns.keySet());
+            if (name != null) {
+                column = this.nameKeyedColumns.get(name);
+            }
+        }
+
+        return column;
     }
 
     static PostgresqlRowMetadata toRowMetadata(Codecs codecs, RowDescription rowDescription) {
@@ -124,15 +203,4 @@ final class PostgresqlRowMetadata implements io.r2dbc.postgresql.api.PostgresqlR
 
         return columnMetadatas;
     }
-
-    private Collection<String> getColumnNames(List<PostgresqlColumnMetadata> columnMetadatas) {
-        Set<String> columnNames = new TreeSet<>(IGNORE_CASE_COMPARATOR);
-
-        for (PostgresqlColumnMetadata columnMetadata : columnMetadatas) {
-            columnNames.add(columnMetadata.getName());
-        }
-
-        return columnNames;
-    }
-
 }
