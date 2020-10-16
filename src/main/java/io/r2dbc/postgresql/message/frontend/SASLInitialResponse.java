@@ -50,7 +50,12 @@ public final class SASLInitialResponse implements FrontendMessage {
      * @throws IllegalArgumentException if {@code name} is {@code null}
      */
     public SASLInitialResponse(@Nullable ByteBuffer initialResponse, String name) {
-        this.initialResponse = initialResponse == null ? null : (ByteBuffer) initialResponse.flip();
+        if (initialResponse == null) {
+            this.initialResponse = null;
+        } else {
+            initialResponse.flip();
+            this.initialResponse = initialResponse;
+        }
         this.name = Assert.requireNonNull(name, "name must not be null");
     }
 

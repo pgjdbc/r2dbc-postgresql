@@ -46,8 +46,8 @@ public final class GSSResponse implements FrontendMessage {
      */
     public GSSResponse(ByteBuffer data) {
         Assert.requireNonNull(data, "data must not be null");
-
-        this.data = (ByteBuffer) data.flip();
+        data.flip();
+        this.data = data;
     }
 
     @Override
