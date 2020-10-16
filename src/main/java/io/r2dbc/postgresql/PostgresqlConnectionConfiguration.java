@@ -369,7 +369,7 @@ public final class PostgresqlConnectionConfiguration {
 
         private boolean tcpKeepAlive = false;
 
-        private boolean tcpNoDelay = false;
+        private boolean tcpNoDelay = true;
 
         @Nullable
         private LoopResources loopResources = null;
