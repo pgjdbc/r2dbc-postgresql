@@ -90,8 +90,8 @@ Mono<Connection> connectionMono = Mono.from(connectionFactory.create());
 | `sslCert`         | Path to SSL certificate for TLS authentication in PEM format. _(Optional)_
 | `sslPassword`     | Key password to decrypt SSL key. _(Optional)_
 | `sslHostnameVerifier` | `javax.net.ssl.HostnameVerifier` implementation. _(Optional)_
-| `tcpNoDelay`      | Enabled/disable TCP NoDelay. Disabled by default. _(Optional)_
-| `tcpKeepAlive`    | Enabled/disable TCP KeepAlive. Disabled by default. _(Optional)_
+| `tcpNoDelay`      | Enable/disable TCP NoDelay. Enabled by default. _(Optional)_
+| `tcpKeepAlive`    | Enable/disable TCP KeepAlive. Disabled by default. _(Optional)_
 
 **Programmatic Configuration**
 

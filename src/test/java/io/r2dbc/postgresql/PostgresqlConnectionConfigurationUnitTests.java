@@ -87,7 +87,7 @@ final class PostgresqlConnectionConfigurationUnitTests {
             .username("test-username")
             .sslMode(SSLMode.ALLOW)
             .tcpKeepAlive(true)
-            .tcpNoDelay(true)
+            .tcpNoDelay(false)
             .loopResources(loopResources)
             .build();
 
@@ -102,7 +102,7 @@ final class PostgresqlConnectionConfigurationUnitTests {
             .hasFieldOrPropertyWithValue("username", "test-username")
             .hasFieldOrProperty("sslConfig")
             .hasFieldOrPropertyWithValue("tcpKeepAlive", true)
-            .hasFieldOrPropertyWithValue("tcpNoDelay", true)
+            .hasFieldOrPropertyWithValue("tcpNoDelay", false)
             .hasFieldOrPropertyWithValue("loopResources", loopResources);
 
         assertThat(configuration.getOptions())
@@ -131,7 +131,7 @@ final class PostgresqlConnectionConfigurationUnitTests {
             .hasFieldOrPropertyWithValue("username", "test-username")
             .hasFieldOrProperty("sslConfig")
             .hasFieldOrPropertyWithValue("tcpKeepAlive", false)
-            .hasFieldOrPropertyWithValue("tcpNoDelay", false)
+            .hasFieldOrPropertyWithValue("tcpNoDelay", true)
             .hasFieldOrPropertyWithValue("loopResources", null);
 
         assertThat(configuration.getOptions())
