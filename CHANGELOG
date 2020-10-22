@@ -1,6 +1,20 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+0.8.6.RELEASE
+-----------------------------------------
+* Upgrade dependencies #343
+* Replace casts to ByteBuffer after ByteBuffer.flip #340
+* Introduce connection context to allow correlation of log statements to the actual connection #339
+* Use RoundRobinInetAddressResolver for DNS resolution #338
+* RowMetadata.getColumnNames() iteration order doesn't match result set column order #337
+* Add UUID array codec #336
+* Occasional delays caused by TCP NoDelay config option defaulting to false #334
+* Upgrade to R2DBC SPI 0.8.3 #333
+* Use GitHub actions to deploy to OSS Sonatype/Maven Central #325
+* add capability to log query parameters (bindings) values #278
+* Combine extended flow messages into a single composite message #138
+
 0.8.5.RELEASE
 -----------------------------------------
 * Use detached byte buffers by default for decoded values #330
