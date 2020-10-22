@@ -34,23 +34,23 @@
     <properties>
         <assertj.version>3.17.2</assertj.version>
         <awaitility.version>4.0.3</awaitility.version>
-        <blockhound.version>1.0.3.RELEASE</blockhound.version>
+        <blockhound.version>1.0.4.RELEASE</blockhound.version>
         <hikari-cp.version>3.4.5</hikari-cp.version>
         <java.version>1.8</java.version>
         <jsr305.version>3.0.2</jsr305.version>
-        <junit.version>5.6.1</junit.version>
+        <junit.version>5.7.0</junit.version>
         <jmh.version>1.23</jmh.version>
         <mbr.version>0.2.0.RELEASE</mbr.version>
         <logback.version>1.2.3</logback.version>
-        <mockito.version>3.3.3</mockito.version>
-        <netty.version>4.1.51.Final</netty.version>
-        <postgresql.version>42.2.12</postgresql.version>
+        <mockito.version>3.5.15</mockito.version>
+        <netty.version>4.1.53.Final</netty.version>
+        <postgresql.version>42.2.18</postgresql.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <r2dbc-spi.version>0.8.3.RELEASE</r2dbc-spi.version>
-        <reactor.version>Dysprosium-SR11</reactor.version>
+        <reactor.version>Dysprosium-SR12</reactor.version>
         <scram-client.version>2.1</scram-client.version>
-        <spring-framework.version>5.2.6.RELEASE</spring-framework.version>
+        <spring-framework.version>5.2.9.RELEASE</spring-framework.version>
         <testcontainers.version>1.14.2</testcontainers.version>
     </properties>
 
