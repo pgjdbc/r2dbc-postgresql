@@ -9,6 +9,7 @@ on:
 
 jobs:
   release:
+    if: github.repository == 'pgjdbc/r2dbc-postgresql'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
