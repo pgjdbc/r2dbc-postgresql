@@ -110,7 +110,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     /**
      * File path for the certificate file.
      */
-    public static final Option<URL> SSL_CERT = Option.valueOf("sslCert");
+    public static final Option<String> SSL_CERT = Option.valueOf("sslCert");
 
     /**
      * Class name of hostname verifier. Defaults to {@link DefaultHostnameVerifier}.
@@ -120,7 +120,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     /**
      * Full path for the key file.
      */
-    public static final Option<URL> SSL_KEY = Option.valueOf("sslKey");
+    public static final Option<String> SSL_KEY = Option.valueOf("sslKey");
 
     /**
      * Ssl mode. Default: disabled
@@ -135,7 +135,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     /**
      * File path of the SSL root certificate.
      */
-    public static final Option<URL> SSL_ROOT_CERT = Option.valueOf("sslRootCert");
+    public static final Option<String> SSL_ROOT_CERT = Option.valueOf("sslRootCert");
 
     /**
      * Enable TCP KeepAlive.

@@ -19,12 +19,15 @@ package io.r2dbc.postgresql.util;
 import reactor.util.annotation.Nullable;
 
 import java.io.File;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 /**
  * Assertion library for the implementation.
  */
 public final class Assert {
+
+    private static final String CLASSPATH_PREFIX = "classpath:";
 
     private Assert() {
     }
@@ -116,25 +119,6 @@ public final class Assert {
     }
 
     /**
-     * Checks that the provided file exists or null.
-     *
-     * @param file    file to check
-     * @param message the message to use in exception if type is not as required
-     * @return existing file or null
-     * @throws IllegalArgumentException if {@code value} is not of the required type
-     * @throws IllegalArgumentException if {@code value}, {@code type}, or {@code message} is {@code null}
-     */
-    public static String requireFileExistsOrNull(@Nullable String file, String message) {
-        if (file == null) {
-            throw new IllegalArgumentException(message);
-        }
-        if (!new File(file).exists()) {
-            throw new IllegalArgumentException(message);
-        }
-        return file;
-    }
-
-    /**
      * Assert a boolean expression, throwing an {@link IllegalArgumentException}
      * if the expression evaluates to {@code false}.
      *
@@ -151,19 +135,40 @@ public final class Assert {
     /**
      * Checks that the provided URL exists or null.
      *
-     * @param url    url to check
+     * @param path    path to check
      * @param message the message to use in exception if type is not as required
      * @return existing url
      * @throws IllegalArgumentException if {@code value} is not of the required type
      * @throws IllegalArgumentException if {@code value}, {@code type}, or {@code message} is {@code null}
      */
-    public static URL requireUrlExistsOrNull(@Nullable URL url, String message) {
+    public static URL requireUrlExistsOrNull(@Nullable String path, String message) {
+        if (path == null) {
+            throw new IllegalArgumentException(message);
+        }
+
+        if (path.startsWith(CLASSPATH_PREFIX)) {
+            path = path.substring(CLASSPATH_PREFIX.length());
+        }
+
+        ClassLoader classLoader = Assert.class.getClassLoader();
+        URL url = classLoader != null ? classLoader.getResource(path) : ClassLoader.getSystemResource(path);
+
         if (url == null) {
-            throw new IllegalArgumentException(message);
+            File file = new File(path);
+
+            if (file.exists()) {
+                try {
+                    url = file.toURI().toURL();
+                } catch (MalformedURLException ignored) {
+
+                }
+            }
         }
-        if (!new File(url.getFile()).exists()) {
-            throw new IllegalArgumentException(message);
+
+        if (url == null) {
+            throw new IllegalArgumentException(String.format("URL resource %s does not exist", path));
         }
+
         return url;
     }
 

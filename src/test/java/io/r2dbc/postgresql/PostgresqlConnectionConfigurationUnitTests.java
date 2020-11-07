@@ -172,4 +172,64 @@ final class PostgresqlConnectionConfigurationUnitTests {
             .withMessage("sslContextBuilderCustomizer must not be null");
     }
 
+    @Test
+    void constructorNoSslCert() {
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder()
+            .host("test-host")
+            .password("test-password")
+            .sslCert(null)
+            .build())
+            .withMessage("sslCert must not be null");
+    }
+
+    @Test
+    void constructorNotExistSslCert() {
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder()
+            .host("test-host")
+            .password("test-password")
+            .sslCert("no-client.crt")
+            .build())
+            .withMessage("URL resource no-client.crt does not exist");
+    }
+
+    @Test
+    void constructorNoSslKey() {
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder()
+            .host("test-host")
+            .password("test-password")
+            .sslKey(null)
+            .build())
+            .withMessage("sslKey must not be null");
+    }
+
+    @Test
+    void constructorNotExistSslKey() {
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder()
+            .host("test-host")
+            .password("test-password")
+            .sslKey("no-client.key")
+            .build())
+            .withMessage("URL resource no-client.key does not exist");
+    }
+
+    @Test
+    void constructorNullSslRootCert() {
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder()
+            .host("test-host")
+            .password("test-password")
+            .sslRootCert(null)
+            .build())
+            .withMessage("sslRootCert must not be null");
+    }
+
+    @Test
+    void constructorNotExistSslRootCert() {
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder()
+            .host("test-host")
+            .password("test-password")
+            .sslRootCert("no-server.crt")
+            .build())
+            .withMessage("URL resource no-server.crt does not exist");
+    }
+
 }

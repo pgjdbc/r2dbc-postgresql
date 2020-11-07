@@ -639,8 +639,8 @@ public final class PostgresqlConnectionConfiguration {
          * @param sslCert an X.509 certificate chain file in PEM format
          * @return this {@link Builder}
          */
-        public Builder sslCert(URL sslCert) {
-            this.sslCert = Assert.requireUrlExistsOrNull(sslCert, "sslCert must not be null and must exist");
+        public Builder sslCert(String sslCert) {
+            this.sslCert = Assert.requireUrlExistsOrNull(sslCert, "sslCert must not be null");
             return this;
         }
 
@@ -661,8 +661,8 @@ public final class PostgresqlConnectionConfiguration {
          * @param sslKey a PKCS#8 private key file in PEM format
          * @return this {@link Builder}
          */
-        public Builder sslKey(URL sslKey) {
-            this.sslKey = Assert.requireUrlExistsOrNull(sslKey, "sslKey must not be null and must exist");
+        public Builder sslKey(String sslKey) {
+            this.sslKey = Assert.requireUrlExistsOrNull(sslKey, "sslKey must not be null");
             return this;
         }
 
@@ -694,8 +694,8 @@ public final class PostgresqlConnectionConfiguration {
          * @param sslRootCert an X.509 certificate chain file in PEM format
          * @return this {@link Builder}
          */
-        public Builder sslRootCert(URL sslRootCert) {
-            this.sslRootCert = Assert.requireUrlExistsOrNull(sslRootCert, "sslRootCert must not be null and must exist");
+        public Builder sslRootCert(String sslRootCert) {
+            this.sslRootCert = Assert.requireUrlExistsOrNull(sslRootCert, "sslRootCert must not be null");
             return this;
         }
 
@@ -802,24 +802,12 @@ public final class PostgresqlConnectionConfiguration {
 
             if (sslCert == null) {
                 String pathname = defaultDir + "postgresql.crt";
-                if (new File(pathname).exists()) {
-                    try {
-                        sslCert = new URL(pathname);
-                    } catch (MalformedURLException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
+                sslCert = getUrlFromPath(pathname);
             }
 
             if (sslKey == null) {
                 String pathname = defaultDir + "postgresql.pk8";
-                if (new File(pathname).exists()) {
-                    try {
-                        sslKey = new URL(pathname);
-                    } catch (MalformedURLException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
+                sslKey = getUrlFromPath(pathname);
             }
 
             if (sslKey != null && sslCert != null) {
@@ -831,6 +819,20 @@ public final class PostgresqlConnectionConfiguration {
                 .sslContext(this.sslContextBuilderCustomizer.apply(sslContextBuilder))
                 .defaultConfiguration(TCP)
                 .build();
+        }
+
+        private URL getUrlFromPath(String pathname) {
+            final File file = new File(pathname);
+
+            if (file.exists()) {
+                try {
+                    return file.toURI().toURL();
+                } catch (MalformedURLException e) {
+                    throw new IllegalArgumentException(String.format("Malformed error occurred during creating URL from %s", pathname));
+                }
+            }
+
+            return null;
         }
 
     }

@@ -35,8 +35,11 @@ import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.OPTIONS;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.POSTGRESQL_DRIVER;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.PREPARED_STATEMENT_CACHE_QUERIES;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SOCKET;
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_CERT;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_CONTEXT_BUILDER_CUSTOMIZER;
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_KEY;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_MODE;
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_ROOT_CERT;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.TCP_KEEPALIVE;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.TCP_NODELAY;
 import static io.r2dbc.spi.ConnectionFactoryOptions.DRIVER;
@@ -149,6 +152,38 @@ final class PostgresqlConnectionFactoryProviderUnitTests {
         SSLConfig sslConfig = factory.getConfiguration().getSslConfig();
 
         assertThat(sslConfig.getSslMode()).isEqualTo(SSLMode.VERIFY_FULL);
+    }
+
+    @Test
+    void supportsSslCertificates() {
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(SSL, true)
+            .option(SSL_KEY, "client.key")
+            .option(SSL_CERT, "client.crt")
+            .option(SSL_ROOT_CERT, "server.crt")
+            .build());
+
+        assertThat(factory).isNotNull();
+    }
+
+    @Test
+    void supportsSslCertificatesByClasspath() {
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(SSL, true)
+            .option(SSL_KEY, "classpath:client.key")
+            .option(SSL_CERT, "classpath:client.crt")
+            .option(SSL_ROOT_CERT, "classpath:server.crt")
+            .build());
+
+        assertThat(factory).isNotNull();
     }
 
     @Test

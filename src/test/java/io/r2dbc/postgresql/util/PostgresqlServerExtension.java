@@ -131,14 +131,6 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
         this.jdbcOperations = new JdbcTemplate(this.dataSource);
     }
 
-    public URL getClientCrt() {
-        return getResourceUrl("client.crt");
-    }
-
-    public URL getClientKey() {
-        return getResourceUrl("client.key");
-    }
-
     public PostgresqlConnectionConfiguration.Builder configBuilder() {
         return PostgresqlConnectionConfiguration.builder().database(getDatabase()).host(getHost()).port(getPort()).username(getUsername()).password(getPassword());
     }
@@ -168,12 +160,37 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
         return this.postgres.getPort();
     }
 
-    public URL getServerCrt() {
-        return getResourceUrl("server.crt");
+    public String getClientCrt() {
+        return "client.crt";
     }
 
-    public URL getServerKey() {
-        return getResourceUrl("server.key");
+    public String getClientKey() {
+        return "client.key";
+    }
+
+    public String getServerCrt() {
+        return "server.crt";
+    }
+
+    public File getClientKeyFile() {
+        return getFile("client.key");
+    }
+
+    public File getServerCrtFile() {
+        return getFile("server.crt");
+    }
+
+    public File getClientCrtFile() {
+        return getFile("client.crt");
+    }
+
+    private File getFile(String filepath) {
+        final URL resourceUrl = getResourceUrl(filepath);
+        return new File(resourceUrl.getFile());
+    }
+
+    public String getServerKey() {
+        return "server.key";
     }
 
     public String getUsername() {

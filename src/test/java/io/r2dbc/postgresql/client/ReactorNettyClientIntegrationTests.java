@@ -685,6 +685,20 @@ final class ReactorNettyClientIntegrationTests {
             }
 
             @Test
+            void requireCertificatesWithClasspath() {
+                client(
+                    c -> c
+                        .sslMode(SSLMode.REQUIRE)
+                        .sslRootCert("classpath:server.crt")
+                        .sslKey("classpath:client.key")
+                        .sslCert("classpath:client.crt"),
+                    c -> c
+                        .as(StepVerifier::create)
+                        .expectNextCount(1)
+                        .verifyComplete());
+            }
+
+            @Test
             void requireConnectsWithoutCertificate() {
                 client(
                     c -> c
@@ -726,10 +740,8 @@ final class ReactorNettyClientIntegrationTests {
             @Test
             void verifyCaWithCustomizer() {
                 client(
-                    c -> c.sslContextBuilderCustomizer(sslContextBuilder -> {
-                        return sslContextBuilder.trustManager(new File(SERVER.getServerCrt().getFile()))
-                            .keyManager(new File(SERVER.getClientCrt().getFile()), new File(SERVER.getClientKey().getFile()));
-                    })
+                    c -> c.sslContextBuilderCustomizer(sslContextBuilder -> sslContextBuilder.trustManager(SERVER.getServerCrtFile())
+                        .keyManager(SERVER.getClientCrtFile(), SERVER.getClientKeyFile()))
                         .sslMode(SSLMode.VERIFY_CA),
                     c -> c
                         .as(StepVerifier::create)
