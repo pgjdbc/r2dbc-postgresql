@@ -94,11 +94,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
             return InetSocketAddress.createUnresolved(configuration.getRequiredHost(), configuration.getPort());
         }
 
-        if (configuration.isUseSocket()) {
-            return new DomainSocketAddress(configuration.getRequiredSocket());
-        }
-
-        throw new IllegalArgumentException("Cannot create SocketAddress for " + configuration);
+        return new DomainSocketAddress(configuration.getRequiredSocket());
     }
 
     private static Extensions getExtensions(PostgresqlConnectionConfiguration configuration) {
