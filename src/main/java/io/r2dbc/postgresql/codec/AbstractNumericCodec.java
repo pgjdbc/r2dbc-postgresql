@@ -20,6 +20,7 @@ import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
+import io.r2dbc.postgresql.util.BigDecimalUtils;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
@@ -105,7 +106,7 @@ abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> {
 
             case NUMERIC:
                 if (format == FORMAT_BINARY) {
-                    return decodeBinaryBigDecimal(buffer);
+                    return BigDecimalUtils.decodeBinary(buffer);
                 }
                 return new BigDecimal(ByteBufUtils.decode(buffer));
 
@@ -149,56 +150,6 @@ abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> {
 
     private static <T> T potentiallyConvert(Number number, Class<T> expectedType, Function<Number, T> converter) {
         return expectedType.isInstance(number) ? expectedType.cast(number) : converter.apply(number);
-    }
-
-    private static BigDecimal decodeBinaryBigDecimal(ByteBuf byteBuf) {
-        // extract values
-        short numOfDigits = byteBuf.readShort();
-        if (numOfDigits == 0) {
-            return BigDecimal.ZERO;
-        }
-        short weight = byteBuf.readShort();
-        short sign = byteBuf.readShort();
-        short scale = byteBuf.readShort();
-        short[] digits = new short[numOfDigits];
-        for (short i = 0; i < numOfDigits; i++) {
-            digits[i] = byteBuf.readShort();
-        }
-
-        StringBuilder builder = new StringBuilder();
-        // whole part
-        builder.append(digits[0]);
-        for (short i = 0; i < weight * 4; i++) {
-            builder.append(0);
-        }
-        // decimal part
-        if (scale > 0) {
-            builder.append('.');
-            for (short i = 0; i < scale; i++) {
-                builder.append(0);
-            }
-        }
-
-        int expectedLength = builder.length();
-        int baseOffset = Short.toString(digits[0]).length();
-
-        for (short i = 1; i < numOfDigits; i++) {
-            weight--;
-            String temp = Short.toString(digits[i]);
-            int offset = baseOffset + 4 * i - temp.length();
-            if (weight < 0) {
-                offset++; // dot between whole and decimal parts
-            }
-            builder.replace(offset, offset + temp.length(), temp);
-        }
-
-        builder.setLength(expectedLength); // remove zeros from the end
-
-        if (sign == 0) {
-            return new BigDecimal(builder.toString());
-        } else {
-            return new BigDecimal("-" + builder.toString());
-        }
     }
 
 }
