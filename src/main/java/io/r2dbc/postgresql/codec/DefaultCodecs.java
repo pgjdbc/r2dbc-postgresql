@@ -102,6 +102,7 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
             RefCursorCodec.INSTANCE,
             RefCursorNameCodec.INSTANCE,
 
+            new BigDecimalArrayCodec(byteBufAllocator),
             new ShortArrayCodec(byteBufAllocator),
             new StringArrayCodec(byteBufAllocator),
             new IntegerArrayCodec(byteBufAllocator),
