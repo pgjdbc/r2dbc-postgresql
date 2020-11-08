@@ -100,6 +100,7 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
             new BlobCodec(byteBufAllocator),
             new ClobCodec(byteBufAllocator),
 
+            new BigDecimalArrayCodec(byteBufAllocator),
             new ShortArrayCodec(byteBufAllocator),
             new StringArrayCodec(byteBufAllocator),
             new IntegerArrayCodec(byteBufAllocator),
