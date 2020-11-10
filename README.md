@@ -139,7 +139,7 @@ Artifacts can be found on [Maven Central](https://search.maven.org/search?q=r2db
 
 ```xml
 <dependency>
-  <groupId>org.postgresql</groupId>
+  <groupId>io.r2dbc</groupId>
   <artifactId>r2dbc-postgresql</artifactId>
   <version>${version}</version>
 </dependency>
@@ -149,7 +149,7 @@ If you'd rather like the latest snapshots of the upcoming major version, use our
 
 ```xml
 <dependency>
-  <groupId>org.postgresql</groupId>
+  <groupId>io.r2dbc</groupId>
   <artifactId>r2dbc-postgresql</artifactId>
   <version>${version}.BUILD-SNAPSHOT</version>
 </dependency>
