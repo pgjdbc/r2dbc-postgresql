@@ -73,6 +73,7 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
             new FloatCodec(byteBufAllocator),
             new InetAddressCodec(byteBufAllocator),
             new IntegerCodec(byteBufAllocator),
+            new IntervalCodec(byteBufAllocator),
             new LocalDateCodec(byteBufAllocator),
             new LocalDateTimeCodec(byteBufAllocator),
             new LocalTimeCodec(byteBufAllocator),
