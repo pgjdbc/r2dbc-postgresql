@@ -68,6 +68,7 @@ final class ExceptionFactory {
             case "42501":
                 return new PostgresqlPermissionDeniedException(errorDetails);
             case "40000":
+            case "40001":
                 return new PostgresqlRollbackException(errorDetails);
             case "28000":
             case "28P01":
