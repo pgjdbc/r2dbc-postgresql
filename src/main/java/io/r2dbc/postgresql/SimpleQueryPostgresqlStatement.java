@@ -136,7 +136,18 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
     static boolean supports(String sql) {
         Assert.requireNonNull(sql, "sql must not be null");
 
-        return sql.trim().isEmpty() || !sql.contains("$1");
+        boolean singleQuoteOpened = false;
+        for (int i = 0; i < sql.length(); i++) {
+            final char currentSymbol = sql.charAt(i);
+            if (currentSymbol == '\'') {
+                singleQuoteOpened = !singleQuoteOpened;
+            }
+            if (!singleQuoteOpened && currentSymbol == '$') {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private Flux<io.r2dbc.postgresql.api.PostgresqlResult> execute(String sql) {
