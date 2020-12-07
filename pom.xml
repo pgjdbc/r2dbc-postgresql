@@ -51,7 +51,7 @@
         <reactor.version>Dysprosium-SR12</reactor.version>
         <scram-client.version>2.1</scram-client.version>
         <spring-framework.version>5.2.9.RELEASE</spring-framework.version>
-        <testcontainers.version>1.14.2</testcontainers.version>
+        <testcontainers.version>1.15.0</testcontainers.version>
     </properties>
 
     <licenses>
