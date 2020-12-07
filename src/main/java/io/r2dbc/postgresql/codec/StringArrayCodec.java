@@ -27,10 +27,7 @@ import io.r2dbc.postgresql.util.ByteBufUtils;
 import java.util.function.Supplier;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR_ARRAY;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.CHAR_ARRAY;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.TEXT_ARRAY;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR_ARRAY;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.*;
 
 final class StringArrayCodec extends AbstractArrayCodec<String> {
 
@@ -58,7 +55,7 @@ final class StringArrayCodec extends AbstractArrayCodec<String> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return (BPCHAR_ARRAY == type || CHAR_ARRAY == type || TEXT_ARRAY == type || VARCHAR_ARRAY == type);
+        return (BPCHAR_ARRAY == type || CHAR_ARRAY == type || TEXT_ARRAY == type || VARCHAR_ARRAY == type | NAME_ARRAY == type);
     }
 
     @Override
