@@ -24,14 +24,7 @@ import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR_ARRAY;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.CHAR;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.CHAR_ARRAY;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.TEXT_ARRAY;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR_ARRAY;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.*;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -85,6 +78,9 @@ final class StringArrayCodecUnitTests {
         assertThat(new StringArrayCodec(TEST).doCanDecode(VARCHAR, FORMAT_TEXT)).isFalse();
         assertThat(new StringArrayCodec(TEST).doCanDecode(VARCHAR_ARRAY, FORMAT_BINARY)).isTrue();
         assertThat(new StringArrayCodec(TEST).doCanDecode(VARCHAR_ARRAY, FORMAT_TEXT)).isTrue();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(NAME, FORMAT_TEXT)).isFalse();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(NAME_ARRAY, FORMAT_BINARY)).isTrue();
+        assertThat(new StringArrayCodec(TEST).doCanDecode(NAME_ARRAY, FORMAT_TEXT)).isTrue();
     }
 
     @Test

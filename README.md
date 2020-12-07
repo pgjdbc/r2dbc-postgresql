@@ -359,7 +359,8 @@ This reference table shows the type mapping between [PostgreSQL][p] and Java dat
 | [`lseg`][psql-lseq-ref]                         | **`Lseg`**|
 | [`macaddr`][psql-macaddr-ref]                   | Not yet supported.|
 | [`macaddr8`][psql-macaddr8-ref]                 | Not yet supported.|
-| [`money`][psql-money-ref]                       | Not yet supported.|
+| [`money`][psql-money-ref]                       | Not yet supported. Please don't use this type. It is a very poor implementation. |
+| [`name`][psql-name-ref]                         | [**`String`**][java-string-ref]
 | [`numeric`][psql-bignumeric-ref]                | [`BigDecimal`][java-bigdecimal-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Integer`][java-integer-ref], [`Long`][java-long-ref], [`BigInteger`][java-biginteger-ref]|
 | [`oid`][psql-oid-ref]                           | [**`Integer`**][java-integer-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
 | [`path`][psql-path-ref]                         | **`Path`**|
@@ -412,6 +413,7 @@ Support for the following single-dimensional arrays (read and write):
 [psql-bignumeric-ref]: https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-NUMERIC-DECIMAL
 [psql-macaddr-ref]: https://www.postgresql.org/docs/current/datatype-net-types.html#DATATYPE-MACADDR
 [psql-macaddr8-ref]: https://www.postgresql.org/docs/current/datatype-net-types.html#DATATYPE-MACADDR8
+[psql-name-ref]: https://www.postgresql.org/docs/13/datatype-character.html#DATATYPE-CHARACTER-SPECIAL-TABLE
 [psql-money-ref]: https://www.postgresql.org/docs/current/datatype.html
 [psql-oid-ref]: https://www.postgresql.org/docs/current/datatype-oid.html
 [psql-path-ref]: https://www.postgresql.org/docs/current/datatype-geometric.html#id-1.5.7.16.9
