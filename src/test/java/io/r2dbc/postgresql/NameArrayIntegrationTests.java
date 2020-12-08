@@ -8,11 +8,11 @@ import reactor.test.StepVerifier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ArrayAggIntegrationTests extends AbstractIntegrationTests {
+public class NameArrayIntegrationTests extends AbstractIntegrationTests {
 
 
     @Test
-    void shouldReadArrayAgg() {
+    void shouldReadArrayOfName() {
 
         JdbcOperations jdbcOperations = SERVER.getJdbcOperations();
         jdbcOperations.execute("DROP TABLE IF EXISTS name_table;");
