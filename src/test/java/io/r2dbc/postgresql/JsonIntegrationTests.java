@@ -19,30 +19,14 @@ package io.r2dbc.postgresql;
 import io.r2dbc.postgresql.api.PostgresqlConnection;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.codec.Json;
-import io.r2dbc.postgresql.util.PostgresqlServerExtension;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.jdbc.core.JdbcOperations;
 import reactor.test.StepVerifier;
 
 /**
  * Integration tests for {@link Json}.
  */
-final class JsonIntegrationTests {
-
-    @RegisterExtension
-    static final PostgresqlServerExtension SERVER = new PostgresqlServerExtension();
-
-    private final PostgresqlConnectionConfiguration configuration = PostgresqlConnectionConfiguration.builder()
-        .database(SERVER.getDatabase())
-        .host(SERVER.getHost())
-        .port(SERVER.getPort())
-        .password(SERVER.getPassword())
-        .username(SERVER.getUsername())
-        .forceBinary(true)
-        .build();
-
-    private final PostgresqlConnectionFactory connectionFactory = new PostgresqlConnectionFactory(this.configuration);
+final class JsonIntegrationTests extends AbstractIntegrationTests{
 
     @Test
     void shouldReadAndWriteJson() {
