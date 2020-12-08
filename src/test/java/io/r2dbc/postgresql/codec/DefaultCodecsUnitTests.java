@@ -86,7 +86,7 @@ final class DefaultCodecsUnitTests {
     @Test
     void decodeUnsupportedType() {
         assertThatIllegalArgumentException().isThrownBy(() -> new DefaultCodecs(TEST).decode(TEST.buffer(4), INT4.getObjectId(), FORMAT_BINARY, Void.class))
-            .withMessage("Cannot decode value of type java.lang.Void");
+            .withMessage("Cannot decode value of type java.lang.Void with OID 25");
     }
 
     @Test
