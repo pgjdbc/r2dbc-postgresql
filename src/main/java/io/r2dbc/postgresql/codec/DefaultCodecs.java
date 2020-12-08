@@ -152,7 +152,7 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
             }
         }
 
-        throw new IllegalArgumentException(String.format("Cannot decode value of type %s", type.getName()));
+        throw new IllegalArgumentException(String.format("Cannot decode value of type %s with OID %d", type.getName(), dataType));
     }
 
     @Override
