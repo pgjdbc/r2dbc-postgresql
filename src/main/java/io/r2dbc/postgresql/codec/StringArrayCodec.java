@@ -27,7 +27,11 @@ import io.r2dbc.postgresql.util.ByteBufUtils;
 import java.util.function.Supplier;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.*;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR_ARRAY;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.CHAR_ARRAY;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.NAME_ARRAY;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.TEXT_ARRAY;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR_ARRAY;
 
 final class StringArrayCodec extends AbstractArrayCodec<String> {
 
