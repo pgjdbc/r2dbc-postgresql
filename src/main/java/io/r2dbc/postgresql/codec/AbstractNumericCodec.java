@@ -20,16 +20,12 @@ import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
-import io.r2dbc.postgresql.util.BigDecimalUtils;
-import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
-import java.math.BigDecimal;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.function.Function;
 
-import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.FLOAT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.FLOAT8;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT2;
@@ -87,58 +83,8 @@ abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> {
      * @return the decoded number
      */
     T decodeNumber(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, Class<T> expectedType, Function<Number, T> converter) {
-        Number number = decodeNumber(buffer, dataType, format);
+        Number number = NumericDecodeUtils.decodeNumber(buffer, dataType, format);
         return potentiallyConvert(number, expectedType, converter);
-    }
-
-    /**
-     * Decode {@code buffer} to {@link Number} according to {@link PostgresqlObjectId}.
-     *
-     * @param buffer   the data buffer
-     * @param dataType the well-known {@link PostgresqlObjectId type OID}
-     * @param format   the data type {@link Format}, text or binary
-     * @return the decoded number
-     */
-    private Number decodeNumber(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format) {
-        Assert.requireNonNull(buffer, "byteBuf must not be null");
-
-        switch (dataType) {
-
-            case NUMERIC:
-                if (format == FORMAT_BINARY) {
-                    return BigDecimalUtils.decodeBinary(buffer);
-                }
-                return new BigDecimal(ByteBufUtils.decode(buffer));
-
-            case INT2:
-                if (FORMAT_BINARY == format) {
-                    return buffer.readShort();
-                }
-                return Short.parseShort(ByteBufUtils.decode(buffer));
-            case INT4:
-            case OID:
-                if (FORMAT_BINARY == format) {
-                    return buffer.readInt();
-                }
-                return Integer.parseInt(ByteBufUtils.decode(buffer));
-            case INT8:
-                if (FORMAT_BINARY == format) {
-                    return buffer.readLong();
-                }
-                return Long.parseLong(ByteBufUtils.decode(buffer));
-            case FLOAT4:
-                if (FORMAT_BINARY == format) {
-                    return buffer.readFloat();
-                }
-                return Float.parseFloat(ByteBufUtils.decode(buffer));
-            case FLOAT8:
-                if (FORMAT_BINARY == format) {
-                    return buffer.readDouble();
-                }
-                return Double.parseDouble(ByteBufUtils.decode(buffer));
-            default:
-                throw new UnsupportedOperationException(String.format("Cannot decode value for type %s, format %s", dataType, format));
-        }
     }
 
     /**
