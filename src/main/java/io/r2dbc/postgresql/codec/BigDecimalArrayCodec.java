@@ -22,12 +22,11 @@ import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
-import io.r2dbc.postgresql.util.BigDecimalUtils;
 
 import java.math.BigDecimal;
 import java.util.function.Supplier;
 
-public class BigDecimalArrayCodec extends AbstractArrayCodec<BigDecimal> {
+final class BigDecimalArrayCodec extends AbstractArrayCodec<BigDecimal> {
 
     public BigDecimalArrayCodec(ByteBufAllocator byteBufAllocator) {
         super(byteBufAllocator, BigDecimal.class);
@@ -47,7 +46,7 @@ public class BigDecimalArrayCodec extends AbstractArrayCodec<BigDecimal> {
 
     @Override
     BigDecimal doDecodeBinary(ByteBuf byteBuffer) {
-        return BigDecimalUtils.decodeBinary(byteBuffer);
+        return NumericDecodeUtils.decodeBinary(byteBuffer);
     }
 
     @Override
