@@ -27,10 +27,7 @@ import io.r2dbc.postgresql.util.ByteBufUtils;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INTERVAL;
 
-/**
- * @since 0.9.0
- */
-public class IntervalCodec extends AbstractCodec<Interval> {
+final class IntervalCodec extends AbstractCodec<Interval> {
 
     private final ByteBufAllocator byteBufAllocator;
 

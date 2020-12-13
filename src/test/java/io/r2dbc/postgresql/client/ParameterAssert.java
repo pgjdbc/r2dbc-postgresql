@@ -20,9 +20,11 @@ import io.netty.buffer.ByteBuf;
 import io.netty.util.ReferenceCountUtil;
 import io.r2dbc.postgresql.message.Format;
 import org.assertj.core.api.AbstractAssert;
+import org.assertj.core.api.Assertions;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 /**
@@ -58,7 +60,7 @@ public final class ParameterAssert extends AbstractAssert<ParameterAssert, Param
         return this;
     }
 
-    public ParameterAssert hasValue(ByteBuf... expected) {
+    public ParameterAssert hasValue(ByteBuf expected) {
         isNotNull();
 
         Flux<ByteBuf> byteBufFlux = Flux.create(sink -> Flux.<ByteBuf>from(this.actual.getValue()).subscribe(buf -> {
@@ -68,12 +70,14 @@ public final class ParameterAssert extends AbstractAssert<ParameterAssert, Param
 
         Flux.from(byteBufFlux)
             .as(StepVerifier::create)
-            .expectNext(expected)
+            .assertNext(actual -> {
+
+                Assertions.assertThat(actual).describedAs("Actual: <%s> expected: <%s>", actual.toString(StandardCharsets.US_ASCII), expected.toString(StandardCharsets.US_ASCII)).isEqualTo(expected);
+
+            })
             .verifyComplete();
 
-        for (ByteBuf byteBuf : expected) {
-            ReferenceCountUtil.release(byteBuf);
-        }
+        ReferenceCountUtil.release(expected);
 
         return this;
     }
