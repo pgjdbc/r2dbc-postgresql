@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,4 +90,45 @@ public class IntervalAssert extends AbstractAssert<IntervalAssert, Interval> {
 
         return this;
     }
+
+    public IntervalAssert isNegative() {
+        isNotNull();
+
+        if (!this.actual.isNegative()) {
+            failWithMessage("Expected interval to be negative but was <%s>", this.actual.isNegative());
+        }
+
+        return this;
+    }
+
+    public IntervalAssert isNotNegative() {
+        isNotNull();
+
+        if (this.actual.isNegative()) {
+            failWithMessage("Expected interval to be not negative but was <%s>", !this.actual.isNegative());
+        }
+
+        return this;
+    }
+
+    public IntervalAssert isZero() {
+        isNotNull();
+
+        if (!this.actual.isZero()) {
+            failWithMessage("Expected interval to be zero but was <%s>", false);
+        }
+
+        return this;
+    }
+
+    public IntervalAssert isNotZero() {
+        isNotNull();
+
+        if (this.actual.isZero()) {
+            failWithMessage("Expected interval to be not zero but was <%s>", false);
+        }
+
+        return this;
+    }
+
 }

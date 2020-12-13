@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,23 +88,23 @@ final class IntervalCodecUnitTests {
     void doEncode() {
         IntervalCodec codec = new IntervalCodec(TEST);
 
-        ByteBuf intervalAsText = encode(TEST, "10 yr 5 mon 2 day 0 hr 0 min 0.0 sec");
+        ByteBuf intervalAsText = encode(TEST, "10 years 5 mons 2 days 0 hours 0 mins 0.0 secs");
         ParameterAssert.assertThat(codec.doEncode(Interval.of(Period.of(10, 5, 2))))
                 .hasFormat(FORMAT_TEXT)
                 .hasType(INTERVAL.getObjectId())
                 .hasValue(intervalAsText);
 
-        intervalAsText = encode(TEST, "0 yr 0 mon 23 day 23 hr 59 min 3.35 sec");
+        intervalAsText = encode(TEST, "0 years 0 mons 23 days 23 hours 59 mins 3.35 secs");
         ParameterAssert.assertThat(codec.doEncode(Interval.of(Duration.ofSeconds(2073543, 350000000))))
-                .hasFormat(FORMAT_TEXT)
-                .hasType(INTERVAL.getObjectId())
-                .hasValue(intervalAsText);
+            .hasFormat(FORMAT_TEXT)
+            .hasType(INTERVAL.getObjectId())
+            .hasValue(intervalAsText);
 
-        intervalAsText = encode(TEST, "0 yr 0 mon 0 day 0 hr 0 min 0.000001 sec");
+        intervalAsText = encode(TEST, "0 years 0 mons 0 days 0 hours 0 mins 0.000001 secs");
         ParameterAssert.assertThat(codec.doEncode(Interval.of(Duration.ofNanos(1000))))
-                .hasFormat(FORMAT_TEXT)
-                .hasType(INTERVAL.getObjectId())
-                .hasValue(intervalAsText);
+            .hasFormat(FORMAT_TEXT)
+            .hasType(INTERVAL.getObjectId())
+            .hasValue(intervalAsText);
     }
 
     @Test
