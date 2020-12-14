@@ -18,9 +18,11 @@ package io.r2dbc.postgresql.message.backend;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
 import java.util.EnumSet;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.message.backend.BackendMessageAssert.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
@@ -49,6 +51,17 @@ final class CopyOutResponseUnitTests {
                 .writeShort(1)
                 .writeShort(1))
             .isEqualTo(new CopyOutResponse(EnumSet.of(FORMAT_BINARY), FORMAT_BINARY));
+    }
+
+    @Test
+    void decodeOverallFormatText() {
+        assertThat(CopyOutResponse.class)
+            .decoded(buffer -> buffer
+                .writeByte(0)
+                .writeShort(2)
+                .writeShort(0)
+                .writeShort(0))
+            .isEqualTo(new CopyOutResponse(Collections.unmodifiableSet(EnumSet.of(FORMAT_TEXT)), FORMAT_TEXT));
     }
 
 }
