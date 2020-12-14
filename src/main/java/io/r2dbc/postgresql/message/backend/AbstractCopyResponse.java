@@ -88,11 +88,6 @@ abstract class AbstractCopyResponse implements BackendMessage {
         switch (count) {
             case 0:
                 return EnumSet.noneOf(Format.class);
-            case 1:
-                short format = in.readShort();
-                return format == 0 ? Format.text() : Format.binary();
-            case 2:
-                return Format.all();
             default:
                 Set<Format> formatSet = EnumSet.noneOf(Format.class);
                 for (int i = 0; i < count; i++) {
