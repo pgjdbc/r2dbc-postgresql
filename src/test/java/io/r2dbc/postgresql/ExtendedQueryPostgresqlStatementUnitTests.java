@@ -22,7 +22,6 @@ import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.client.PortalNameSupplier;
 import io.r2dbc.postgresql.client.TestClient;
-import io.r2dbc.postgresql.codec.DefaultCodecs;
 import io.r2dbc.postgresql.codec.MockCodecs;
 import io.r2dbc.postgresql.message.backend.BindComplete;
 import io.r2dbc.postgresql.message.backend.CloseComplete;
@@ -37,11 +36,9 @@ import io.r2dbc.postgresql.message.frontend.Describe;
 import io.r2dbc.postgresql.message.frontend.Execute;
 import io.r2dbc.postgresql.message.frontend.ExecutionType;
 import io.r2dbc.postgresql.message.frontend.Sync;
-import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.Arrays;
@@ -58,7 +55,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
@@ -165,8 +161,8 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
         Client client = TestClient.builder()
             .expectRequest(
                 new CompositeFrontendMessage(new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
-                    new Describe("B_0", ExecutionType.PORTAL)),
-                new CompositeFrontendMessage(new Execute("B_0", 0),
+                    new Describe("B_0", ExecutionType.PORTAL),
+                    new Execute("B_0", 0),
                     new Close("B_0", ExecutionType.PORTAL),
                     Sync.INSTANCE))
             .thenRespond(BindComplete.INSTANCE, new RowDescription(Collections.emptyList()), new ErrorResponse(Collections.emptyList()))
@@ -194,8 +190,8 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
         Client client = TestClient.builder()
             .expectRequest(
                 new CompositeFrontendMessage(new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
-                    new Describe("B_0", ExecutionType.PORTAL)),
-                new CompositeFrontendMessage(new Execute("B_0", 0),
+                    new Describe("B_0", ExecutionType.PORTAL),
+                    new Execute("B_0", 0),
                     new Close("B_0", ExecutionType.PORTAL),
                     Sync.INSTANCE))
             .thenRespond(BindComplete.INSTANCE, NoData.INSTANCE, new ErrorResponse(Collections.emptyList()))
@@ -223,8 +219,8 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
         Client client = TestClient.builder()
             .expectRequest(
                 new CompositeFrontendMessage(new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
-                    new Describe("B_0", ExecutionType.PORTAL)),
-                new CompositeFrontendMessage(new Execute("B_0", 0),
+                    new Describe("B_0", ExecutionType.PORTAL),
+                    new Execute("B_0", 0),
                     new Close("B_0", ExecutionType.PORTAL),
                     Sync.INSTANCE))
             .thenRespond(new ErrorResponse(Collections.emptyList()))
@@ -252,8 +248,7 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
         Client client = TestClient.builder()
             .expectRequest(
                 new CompositeFrontendMessage(new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
-                    new Describe("B_0", ExecutionType.PORTAL)),
-                new CompositeFrontendMessage(new Execute("B_0", 0),
+                    new Describe("B_0", ExecutionType.PORTAL), new Execute("B_0", 0),
                     new Close("B_0", ExecutionType.PORTAL),
                     Sync.INSTANCE))
             .thenRespond(new ErrorResponse(Collections.emptyList()))

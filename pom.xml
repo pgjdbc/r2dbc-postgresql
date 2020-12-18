@@ -261,6 +261,7 @@
                     <compilerArgs>
                         <arg>-Werror</arg>
                         <arg>-Xlint:all</arg>
+                        <arg>-Xlint:-deprecation</arg>
                         <arg>-Xlint:-options</arg>
                         <arg>-Xlint:-processing</arg>
                         <arg>-Xlint:-serial</arg>

@@ -58,6 +58,13 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<Boolean> AUTODETECT_EXTENSIONS = Option.valueOf("autodetectExtensions");
 
     /**
+     * Compatibility query mode for cursored query execution.
+     *
+     * @since 0.8.7
+     */
+    public static final Option<Boolean> COMPATIBILITY_MODE = Option.valueOf("compatibilityMode");
+
+    /**
      * Error Response Log Level.
      */
     public static final Option<LogLevel> ERROR_RESPONSE_LOG_LEVEL = Option.valueOf("errorResponseLogLevel");
@@ -226,6 +233,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
 
         mapper.from(APPLICATION_NAME).to(builder::applicationName);
         mapper.from(AUTODETECT_EXTENSIONS).map(OptionMapper::toBoolean).to(builder::autodetectExtensions);
+        mapper.from(COMPATIBILITY_MODE).map(OptionMapper::toBoolean).to(builder::compatibilityMode);
         mapper.from(CONNECT_TIMEOUT).map(OptionMapper::toDuration).to(builder::connectTimeout);
         mapper.from(CURRENT_SCHEMA).to(builder::schema).otherwise(() -> mapper.from(SCHEMA).to(builder::schema));
         mapper.from(DATABASE).to(builder::database);

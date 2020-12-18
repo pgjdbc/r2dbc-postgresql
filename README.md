@@ -79,6 +79,7 @@ Mono<Connection> connectionMono = Mono.from(connectionFactory.create());
 | `database`        | Database to select. _(Optional)_
 | `applicationName` | The name of the application connecting to the database.  Defaults to `r2dbc-postgresql`. _(Optional)_
 | `autodetectExtensions` | Whether to auto-detect and register `Extension`s from the class path.  Defaults to `true`. _(Optional)_
+| `compatibilityMode` | Enable compatibility mode for cursored fetching. Required when using newer pgpool versions. Defaults to `false`. _(Optional)_
 | `errorResponseLogLevel` | Log level for error responses. Any of `OFF`, `DEBUG`, `INFO`, `WARN` or `ERROR`  Defaults to `DEBUG`. _(Optional)_
 | `fetchSize`       | The default number of rows to return when fetching results. Defaults to `0` for unlimited. _(Optional)_
 | `forceBinary`     | Whether to force binary transfer.  Defaults to `false`. _(Optional)_
@@ -156,21 +157,30 @@ If you'd rather like the latest snapshots of the upcoming major version, use our
 </dependency>
 
 <repository>
-  <id>sonatype-nexus-snapshots</id>
-  <name>Sonatype OSS Snapshot Repository</name>
-  <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+<id>sonatype-nexus-snapshots</id>
+<name>Sonatype OSS Snapshot Repository</name>
+<url>https://oss.sonatype.org/content/repositories/snapshots</url>
 </repository>
 ```
 
+## Cursors
+
+R2DBC Postgres supports both, the [simple](https://www.postgresql.org/docs/current/protocol-flow.html#id-1.10.5.7.4)
+and [extended](https://www.postgresql.org/docs/current/protocol-flow.html#PROTOCOL-FLOW-EXT-QUERY) message flow.
+
+Cursored fetching is activated by configuring a `fetchSize`. Postgres cursors are valid for the duration of a transaction. R2DBC can use cursors in auto-commit mode (`Execute` and `Flush`) to not
+require an explicit transaction (`BEGIN…COMMIT/ROLLBACK`). Newer pgpool versions don't support this feature. To work around this limitation, either use explicit transactions when configuring a fetch
+size or enable compatibility mode. Compatibility mode avoids cursors in auto-commit mode (`Execute` with no limit + `Sync`). Cursors in a transaction use `Execute` (with fetch size as limit) + `Sync`
+as message flow.
+
 ## Listen/Notify
 
-Listen and Notify provide a simple form of signal or inter-process communication mechanism for processes accessing the same PostgreSQL database.
-For Listen/Notify, two actors are involved: The sender (notify) and the receiver (listen). The following example uses two connections
-to illustrate how they work together:
+Listen and Notify provide a simple form of signal or inter-process communication mechanism for processes accessing the same PostgreSQL database. For Listen/Notify, two actors are involved: The
+sender (notify) and the receiver (listen). The following example uses two connections to illustrate how they work together:
 
 ```java
-PostgresqlConnection sender = …;
-PostgresqlConnection receiver = …;
+PostgresqlConnection sender= …;
+        PostgresqlConnection receiver= …;
 
 Flux<Notification> listen = receiver.createStatement("LISTEN mymessage")
                                 .execute()

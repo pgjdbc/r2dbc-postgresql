@@ -125,12 +125,7 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
         dataSource.setPassword(getPassword());
         dataSource.setJdbcUrl(String.format("jdbc:postgresql://%s:%d/%s", getHost(), getPort(), getDatabase()));
 
-        HikariDataSource hikariDataSource = new HikariDataSource();
-        hikariDataSource.setUsername(getUsername());
-        hikariDataSource.setPassword(getPassword());
-        hikariDataSource.setJdbcUrl(String.format("jdbc:postgresql://%s:%d/%s", getHost(), getPort(), getDatabase()));
-
-        this.dataSource = hikariDataSource;
+        this.dataSource = dataSource;
         this.jdbcOperations = new JdbcTemplate(this.dataSource);
     }
 
