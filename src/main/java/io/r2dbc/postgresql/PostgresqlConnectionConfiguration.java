@@ -62,6 +62,8 @@ public final class PostgresqlConnectionConfiguration {
 
     private final boolean autodetectExtensions;
 
+    private final boolean compatibilityMode;
+
     private final Duration connectTimeout;
 
     private final String database;
@@ -97,12 +99,15 @@ public final class PostgresqlConnectionConfiguration {
 
     private final String username;
 
-    private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions, @Nullable Duration connectTimeout, @Nullable String database, List<Extension> extensions,
+    private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions, @Nullable boolean compatibilityMode, Duration connectTimeout, @Nullable String database,
+                                              List<Extension> extensions,
                                               ToIntFunction<String> fetchSize, boolean forceBinary, @Nullable String host, @Nullable LoopResources loopResources,
-                                              @Nullable Map<String, String> options, @Nullable CharSequence password, int port,boolean preferAttachedBuffers, int preparedStatementCacheQueries, @Nullable String schema,
+                                              @Nullable Map<String, String> options, @Nullable CharSequence password, int port, boolean preferAttachedBuffers, int preparedStatementCacheQueries,
+                                              @Nullable String schema,
                                               @Nullable String socket, SSLConfig sslConfig, boolean tcpKeepAlive, boolean tcpNoDelay, String username) {
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
         this.autodetectExtensions = autodetectExtensions;
+        this.compatibilityMode = compatibilityMode;
         this.connectTimeout = connectTimeout;
         this.extensions = Assert.requireNonNull(extensions, "extensions must not be null");
         this.database = database;
@@ -141,6 +146,7 @@ public final class PostgresqlConnectionConfiguration {
         return "PostgresqlConnectionConfiguration{" +
             "applicationName='" + this.applicationName + '\'' +
             ", autodetectExtensions='" + this.autodetectExtensions + '\'' +
+            ", compatibilityMode=" + this.compatibilityMode +
             ", connectTimeout=" + this.connectTimeout +
             ", database='" + this.database + '\'' +
             ", extensions=" + this.extensions +
@@ -161,6 +167,10 @@ public final class PostgresqlConnectionConfiguration {
 
     String getApplicationName() {
         return this.applicationName;
+    }
+
+    boolean isCompatibilityMode() {
+        return this.compatibilityMode;
     }
 
     @Nullable
@@ -293,6 +303,8 @@ public final class PostgresqlConnectionConfiguration {
 
         private boolean autodetectExtensions = true;
 
+        private boolean compatibilityMode = false;
+
         @Nullable
         private Duration connectTimeout;
 
@@ -398,10 +410,24 @@ public final class PostgresqlConnectionConfiguration {
                 throw new IllegalArgumentException("username must not be null");
             }
 
-            return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.connectTimeout, this.database, this.extensions, this.fetchSize, this.forceBinary,
+            return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.compatibilityMode, this.connectTimeout, this.database, this.extensions, this.fetchSize
+                , this.forceBinary,
                 this.host, this.loopResources, this.options, this.password, this.port, this.preferAttachedBuffers,
                 this.preparedStatementCacheQueries, this.schema, this.socket, this.createSslConfig(), this.tcpKeepAlive,
                 this.tcpNoDelay, this.username);
+        }
+
+        /**
+         * Enables protocol compatibility mode for cursored query execution. Cursored query execution applies when configuring a non-zero fetch size. Compatibility mode uses {@code Execute+Sync}
+         * messages instead of {@code Execute+Flush}. The default mode uses optimized fetching which does not work with newer pgpool versions.
+         *
+         * @param compatibilityMode whether to enable compatibility mode
+         * @return this {@link Builder}
+         * @since 0.8.7
+         */
+        public Builder compatibilityMode(boolean compatibilityMode) {
+            this.compatibilityMode = compatibilityMode;
+            return this;
         }
 
         /**
@@ -739,6 +765,7 @@ public final class PostgresqlConnectionConfiguration {
             return "Builder{" +
                 "applicationName='" + this.applicationName + '\'' +
                 ", autodetectExtensions='" + this.autodetectExtensions + '\'' +
+                ", compatibilityMode='" + this.compatibilityMode + '\'' +
                 ", connectTimeout='" + this.connectTimeout + '\'' +
                 ", database='" + this.database + '\'' +
                 ", extensions='" + this.extensions + '\'' +

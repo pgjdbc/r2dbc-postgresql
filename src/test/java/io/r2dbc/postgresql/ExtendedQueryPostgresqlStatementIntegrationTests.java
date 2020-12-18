@@ -21,26 +21,31 @@ import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.jdbc.core.JdbcOperations;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
 /**
- * Integration tests for {@link ExtendedQueryPostgresqlStatement}
+ * Integration tests for {@link ExtendedQueryPostgresqlStatement}.
  */
-final class ExtendedQueryPostgresqlStatementIntegrationTests extends AbstractIntegrationTests {
+class ExtendedQueryPostgresqlStatementIntegrationTests extends AbstractIntegrationTests {
 
     @BeforeEach
     void setUp() {
         super.setUp();
-        SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS test");
-        SERVER.getJdbcOperations().execute("CREATE TABLE test (id SERIAL PRIMARY KEY, val VARCHAR(255))");
-        SERVER.getJdbcOperations().execute("INSERT INTO test (val) VALUES ('a'), ('a'), ('b'), ('c'), ('c')");
+        getJdbcOperations().execute("DROP TABLE IF EXISTS test");
+        getJdbcOperations().execute("CREATE TABLE test (id SERIAL PRIMARY KEY, val VARCHAR(255))");
+        getJdbcOperations().execute("INSERT INTO test (val) VALUES ('a'), ('a'), ('b'), ('c'), ('c')");
     }
 
     @AfterEach
     void tearDown() {
         super.tearDown();
-        SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS test");
+        getJdbcOperations().execute("DROP TABLE IF EXISTS test");
+    }
+
+    private JdbcOperations getJdbcOperations() {
+        return SERVER.getJdbcOperations();
     }
 
     @Override
