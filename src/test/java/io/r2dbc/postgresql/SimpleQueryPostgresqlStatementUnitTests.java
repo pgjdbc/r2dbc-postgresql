@@ -106,9 +106,9 @@ final class SimpleQueryPostgresqlStatementUnitTests {
     }
 
     @Test
-    void constructorNoContext() {
+    void constructorNoResources() {
         assertThatIllegalArgumentException().isThrownBy(() -> new SimpleQueryPostgresqlStatement(null, "test-query"))
-            .withMessage("context must not be null");
+            .withMessage("resources must not be null");
     }
 
     @Test

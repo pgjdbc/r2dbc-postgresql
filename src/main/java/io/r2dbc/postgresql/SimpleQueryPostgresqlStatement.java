@@ -55,7 +55,7 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
     private int fetchSize;
 
     SimpleQueryPostgresqlStatement(ConnectionResources resources, String sql) {
-        this.resources = Assert.requireNonNull(resources, "context must not be null");
+        this.resources = Assert.requireNonNull(resources, "resources must not be null");
         this.sql = Assert.requireNonNull(sql, "sql must not be null");
         fetchSize(isBatch() ? NO_LIMIT : this.resources.getConfiguration().getFetchSize(sql));
     }
