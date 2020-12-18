@@ -22,6 +22,7 @@ import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.client.PortalNameSupplier;
 import io.r2dbc.postgresql.client.TestClient;
+import io.r2dbc.postgresql.codec.DefaultCodecs;
 import io.r2dbc.postgresql.codec.MockCodecs;
 import io.r2dbc.postgresql.message.backend.BindComplete;
 import io.r2dbc.postgresql.message.backend.CloseComplete;
@@ -36,16 +37,18 @@ import io.r2dbc.postgresql.message.frontend.Describe;
 import io.r2dbc.postgresql.message.frontend.Execute;
 import io.r2dbc.postgresql.message.frontend.ExecutionType;
 import io.r2dbc.postgresql.message.frontend.Sync;
+import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
 
 import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT4;
@@ -55,6 +58,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
@@ -151,46 +155,6 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
     }
 
     @Test
-    void execute() {
-        Client client = TestClient.builder()
-            .expectRequest(
-                new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
-                new Describe("B_0", ExecutionType.PORTAL),
-                new Execute("B_0", 0),
-                new Close("B_0", ExecutionType.PORTAL),
-                new Bind("B_1", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(200)), Collections.emptyList(), "test-name"),
-                new Describe("B_1", ExecutionType.PORTAL),
-                new Execute("B_1", 0),
-                new Close("B_1", ExecutionType.PORTAL),
-                Sync.INSTANCE)
-            .thenRespond(
-                BindComplete.INSTANCE, NoData.INSTANCE, new CommandComplete("test", null, null), CloseComplete.INSTANCE,
-                BindComplete.INSTANCE, NoData.INSTANCE, new CommandComplete("test", null, null), CloseComplete.INSTANCE
-            )
-            .build();
-
-        MockCodecs codecs = MockCodecs.builder()
-            .encoding(100, new EncodedParameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100))))
-            .encoding(200, new EncodedParameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(200))))
-            .build();
-
-        PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
-        ConnectionResources context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
-
-        when(context.getStatementCache().getName(any(), any())).thenReturn(Mono.just("test-name"));
-
-        new ExtendedQueryPostgresqlStatement(context, "test-query-$1-$1")
-            .bind("$1", 100)
-            .add()
-            .bind("$1", 200)
-            .add()
-            .execute()
-            .as(StepVerifier::create)
-            .expectNextCount(2)
-            .verifyComplete();
-    }
-
-    @Test
     void executeEmpty() {
         assertThatIllegalStateException().isThrownBy(this.statement::execute)
             .withMessage("No parameters have been bound");
@@ -215,7 +179,7 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
         ConnectionResources context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
 
-        when(context.getStatementCache().getName(any(), any())).thenReturn(Mono.just("test-name"));
+        when(context.getStatementCache().getName(any(), any())).thenReturn("test-name");
 
         new ExtendedQueryPostgresqlStatement(context, "test-query-$1")
             .bind("$1", 100)
@@ -244,7 +208,7 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
         ConnectionResources context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
 
-        when(context.getStatementCache().getName(any(), any())).thenReturn(Mono.just("test-name"));
+        when(context.getStatementCache().getName(any(), any())).thenReturn("test-name");
 
         new ExtendedQueryPostgresqlStatement(context, "test-query-$1")
             .bind("$1", 100)
@@ -273,7 +237,7 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
         ConnectionResources context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
 
-        when(context.getStatementCache().getName(any(), any())).thenReturn(Mono.just("test-name"));
+        when(context.getStatementCache().getName(any(), any())).thenReturn("test-name");
 
         new ExtendedQueryPostgresqlStatement(context, "test-query-$1")
             .bind("$1", 100)
@@ -302,7 +266,7 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
         ConnectionResources context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
 
-        when(context.getStatementCache().getName(any(), any())).thenReturn(Mono.just("test-name"));
+        when(context.getStatementCache().getName(any(), any())).thenReturn("test-name");
 
         new ExtendedQueryPostgresqlStatement(context, "test-query-$1")
             .bind("$1", 100)
@@ -332,7 +296,8 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
         ConnectionResources context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
 
-        when(context.getStatementCache().getName(any(), any())).thenReturn(Mono.just("test-name"));
+        when(context.getStatementCache().getName(any(), any())).thenReturn("test-name");
+        when(context.getStatementCache().requiresPrepare(any(), any())).thenReturn(true);
 
         new ExtendedQueryPostgresqlStatement(context, "test-query-$1")
             .bind("$1", 100)
@@ -343,35 +308,40 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
     }
 
     @Test
-    void executeWithoutResultWithMap() {
+    void releasesArgumentsOnCancel() {
         Client client = TestClient.builder()
             .expectRequest(
                 new CompositeFrontendMessage(new Bind("B_0", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(TEST.buffer(4).writeInt(100)), Collections.emptyList(), "test-name"),
-                    new Describe("B_0", ExecutionType.PORTAL)),
-                new CompositeFrontendMessage(new Execute("B_0", 0),
+                    new Describe("B_0", ExecutionType.PORTAL), new Execute("B_0", 0),
                     new Close("B_0", ExecutionType.PORTAL),
                     Sync.INSTANCE))
             .thenRespond(
-                BindComplete.INSTANCE, NoData.INSTANCE, new CommandComplete("test", null, null), CloseComplete.INSTANCE)
+                new ErrorResponse(Collections.emptyList()))
             .build();
+
+        AtomicBoolean hasReleased = new AtomicBoolean();
 
         MockCodecs codecs = MockCodecs.builder()
             .encoding(100, new EncodedParameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100))))
+            .encoding(200, new EncodedParameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100)).doOnSubscribe(it -> hasReleased.set(true))))
             .build();
 
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
         ConnectionResources context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
 
-        when(context.getStatementCache().getName(any(), any())).thenReturn(Mono.just("test-name"));
+        when(context.getStatementCache().getName(any(), any())).thenReturn("test-name");
+        when(context.getStatementCache().requiresPrepare(any(), any())).thenReturn(false);
 
         new ExtendedQueryPostgresqlStatement(context, "test-query-$1")
-            .bind("$1", 100)
+            .bind("$1", 100).add()
+            .bind("$1", 200)
             .execute()
-            .flatMap(result -> result.map((row, metadata) -> 1))
-            .timeout(Duration.ofSeconds(1))
+            .flatMap(PostgresqlResult::getRowsUpdated)
+            .log("foo", Level.SEVERE)
             .as(StepVerifier::create)
-            .expectNextCount(0)
-            .verifyComplete();
+            .verifyError(R2dbcNonTransientResourceException.class);
+
+        assertThat(hasReleased).isTrue();
     }
 
     @Test
@@ -394,7 +364,8 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
         ConnectionResources context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
 
-        when(context.getStatementCache().getName(any(), any())).thenReturn(Mono.just("test-name"));
+        when(context.getStatementCache().getName(any(), any())).thenReturn("test-name");
+        when(context.getStatementCache().requiresPrepare(any(), any())).thenReturn(true);
 
         new ExtendedQueryPostgresqlStatement(context, "INSERT test-query-$1")
             .bind("$1", 100)

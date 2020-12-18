@@ -80,7 +80,9 @@ public final class ExtendedQueryMessageFlow {
      *                           {@link Execute} sizes.
      * @return the messages received in response to the exchange
      * @throws IllegalArgumentException if {@code bindings}, {@code client}, {@code portalNameSupplier}, or {@code statementName} is {@code null}
+     * @deprecated encapsulated since 0.8.7 with {@code ExtendedFlowDelegate}
      */
+    @Deprecated
     public static Flux<BackendMessage> execute(Binding binding, Client client, PortalNameSupplier portalNameSupplier, String statementName, String query, boolean forceBinary,
                                                int fetchSize) {
         Assert.requireNonNull(binding, "binding must not be null");
@@ -165,7 +167,9 @@ public final class ExtendedQueryMessageFlow {
      * @param types  the parameter types for the query
      * @return the messages received in response to this exchange
      * @throws IllegalArgumentException if {@code client}, {@code name}, {@code query}, or {@code types} is {@code null}
+     * @deprecated encapsulated since 0.8.7 with {@code ExtendedFlowDelegate}
      */
+    @Deprecated
     public static Flux<BackendMessage> parse(Client client, String name, String query, int[] types) {
         Assert.requireNonNull(client, "client must not be null");
         Assert.requireNonNull(name, "name must not be null");
@@ -200,8 +204,7 @@ public final class ExtendedQueryMessageFlow {
         Assert.requireNonNull(client, "client must not be null");
         Assert.requireNonNull(name, "name must not be null");
 
-        return client.exchange(Flux.just(new CompositeFrontendMessage(new Close(name, ExecutionType.STATEMENT), Sync.INSTANCE)))
-            .takeUntil(CloseComplete.class::isInstance);
+        return client.exchange(Flux.just(new CompositeFrontendMessage(new Close(name, ExecutionType.STATEMENT), Sync.INSTANCE))).as(Operators::discardOnCancel);
     }
 
     private static Flux<FrontendMessage> toBindFlow(ConnectionContext connectionContext, Binding binding, String portal, String statementName, String query, boolean forceBinary) {
@@ -223,7 +226,7 @@ public final class ExtendedQueryMessageFlow {
             }).doOnSubscribe(ignore -> QueryLogger.logQuery(connectionContext, query));
     }
 
-    private static Collection<Format> resultFormat(boolean forceBinary) {
+    public static Collection<Format> resultFormat(boolean forceBinary) {
         if (forceBinary) {
             return Format.binary();
         } else {

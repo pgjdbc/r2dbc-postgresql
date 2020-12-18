@@ -22,130 +22,76 @@ import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.client.TestClient;
 import io.r2dbc.postgresql.message.backend.CloseComplete;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
-import io.r2dbc.postgresql.message.backend.ParseComplete;
 import io.r2dbc.postgresql.message.frontend.Close;
 import io.r2dbc.postgresql.message.frontend.CompositeFrontendMessage;
 import io.r2dbc.postgresql.message.frontend.ExecutionType;
-import io.r2dbc.postgresql.message.frontend.Flush;
-import io.r2dbc.postgresql.message.frontend.Parse;
 import io.r2dbc.postgresql.message.frontend.Sync;
-import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.junit.jupiter.api.Test;
-import reactor.core.publisher.Flux;
-import reactor.test.StepVerifier;
 
 import java.util.Collections;
 
-import static io.r2dbc.postgresql.client.TestClient.NO_OP;
-import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
-import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.mockito.Mockito.mock;
 
 /**
  * Unit tests for {@link BoundedStatementCache}.
  */
-final class BoundedStatementCacheUnitTests {
+class BoundedStatementCacheUnitTests {
 
     @Test
-    void constructorInvalidLimit() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new BoundedStatementCache(NO_OP, -1))
-            .withMessage("statement cache limit must be greater than zero");
-        assertThatIllegalArgumentException().isThrownBy(() -> new BoundedStatementCache(NO_OP, 0))
-            .withMessage("statement cache limit must be greater than zero");
+    void name() {
+
+        BoundedStatementCache cache = new BoundedStatementCache(mock(Client.class), 100);
+
+        assertThat(cache.getName(new Binding(0), "foo")).isEqualTo("S_0");
+        assertThat(cache.getName(new Binding(0), "foo")).isEqualTo("S_1");
+
+        cache.put(new Binding(0), "foo", "S_0");
+        assertThat(cache.getName(new Binding(0), "foo")).isEqualTo("S_0");
+
+        assertThat(cache.getName(new Binding(0), "bar")).isEqualTo("S_2");
     }
 
     @Test
-    void constructorNoClient() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new BoundedStatementCache(null, 2))
-            .withMessage("client must not be null");
+    void requiresPrepare() {
+
+        BoundedStatementCache cache = new BoundedStatementCache(mock(Client.class), 100);
+
+        assertThat(cache.requiresPrepare(new Binding(0), "foo")).isTrue();
+        cache.put(new Binding(0), "foo", "S_0");
+        assertThat(cache.requiresPrepare(new Binding(0), "foo")).isFalse();
     }
 
     @Test
-    void getName() {
-        // @formatter:off
-        Client client = TestClient.builder()
-            .expectRequest(new CompositeFrontendMessage(new Parse("S_0", new int[]{100}, "test-query-0"),  Flush.INSTANCE))
-            .thenRespond(ParseComplete.INSTANCE)
-            .expectRequest(new CompositeFrontendMessage(new Parse("S_1", new int[]{200}, "test-query-1"), Flush.INSTANCE))
-            .thenRespond(ParseComplete.INSTANCE)
-            .expectRequest(new CompositeFrontendMessage(new Close("S_0", ExecutionType.STATEMENT), Sync.INSTANCE))
-            .thenRespond(CloseComplete.INSTANCE)
-            .expectRequest(new CompositeFrontendMessage(new Parse("S_2", new int[]{200}, "test-query-2"), Flush.INSTANCE))
-            .thenRespond(ParseComplete.INSTANCE)
-            .expectRequest(new CompositeFrontendMessage(new Close("S_2", ExecutionType.STATEMENT), Sync.INSTANCE))
-            .thenRespond(CloseComplete.INSTANCE)
-            .expectRequest(new CompositeFrontendMessage(new Parse("S_3", new int[]{100}, "test-query-0"),  Flush.INSTANCE))
-            .thenRespond(ParseComplete.INSTANCE)
-            .build();
-        // @formatter:on
+    void put() {
 
-        BoundedStatementCache statementCache = new BoundedStatementCache(client, 2);
+        TestClient client = TestClient.builder().expectRequest(new CompositeFrontendMessage(new Close("S_0", ExecutionType.STATEMENT), Sync.INSTANCE)).thenRespond(CloseComplete.INSTANCE).build();
 
-        statementCache.getName(new Binding(1).add(0, new EncodedParameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(100)))), "test-query-0")
-            .as(StepVerifier::create)
-            .expectNext("S_0")
-            .verifyComplete();
+        BoundedStatementCache cache = new BoundedStatementCache(client, 2);
 
-        statementCache.getName(new Binding(1).add(0, new EncodedParameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200)))), "test-query-0")
-            .as(StepVerifier::create)
-            .expectNext("S_0")
-            .verifyComplete();
+        cache.put(new Binding(0), "foo", "S_0");
+        assertThat(cache.getCachedStatementNames()).containsOnly("S_0");
 
-        statementCache.getName(new Binding(1).add(0, new EncodedParameter(FORMAT_BINARY, 200, Flux.just(TEST.buffer(2).writeShort(300)))), "test-query-1")
-            .as(StepVerifier::create)
-            .expectNext("S_1")
-            .verifyComplete();
+        cache.put(new Binding(0), "bar", "S_1");
+        assertThat(cache.getCachedStatementNames()).containsOnly("S_0", "S_1");
 
-        statementCache.getName(new Binding(1).add(0, new EncodedParameter(FORMAT_BINARY, 200, Flux.just(TEST.buffer(4).writeShort(300)))), "test-query-2")
-            .as(StepVerifier::create)
-            .expectNext("S_2")
-            .verifyComplete();
-
-        statementCache.getName(new Binding(1).add(0, new EncodedParameter(FORMAT_BINARY, 200, Flux.just(TEST.buffer(2).writeShort(300)))), "test-query-1")
-            .as(StepVerifier::create)
-            .expectNext("S_1")
-            .verifyComplete();
-
-        statementCache.getName(new Binding(1).add(0, new EncodedParameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(100)))), "test-query-0")
-            .as(StepVerifier::create)
-            .expectNext("S_3")
-            .verifyComplete();
-
-        statementCache.getName(new Binding(1).add(0, new EncodedParameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(100)))), "test-query-0")
-            .as(StepVerifier::create)
-            .expectNext("S_3")
-            .verifyComplete();
-
-        assertThat(statementCache.getCachedStatementNames()).hasSize(2).containsOnly("S_1", "S_3");
+        cache.put(new Binding(0), "baz", "S_2");
+        assertThat(cache.getCachedStatementNames()).containsOnly("S_1", "S_2");
     }
 
     @Test
-    void getNameErrorResponse() {
-        // @formatter:off
-        Client client = TestClient.builder()
-            .expectRequest(new CompositeFrontendMessage(new Parse("S_0", new int[]{100}, "test-query"),  Flush.INSTANCE))
-            .thenRespond(new ErrorResponse(Collections.emptyList()))
-            .build();
-        // @formatter:on
+    void putCloseFails() {
 
-        BoundedStatementCache statementCache = new BoundedStatementCache(client, 2);
+        TestClient client =
+            TestClient.builder().expectRequest(new CompositeFrontendMessage(new Close("S_0", ExecutionType.STATEMENT), Sync.INSTANCE)).thenRespond(new ErrorResponse(Collections.emptyList())).build();
 
-        statementCache.getName(new Binding(1).add(0, new EncodedParameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200)))), "test-query")
-            .as(StepVerifier::create)
-            .verifyError(R2dbcNonTransientResourceException.class);
-    }
+        BoundedStatementCache cache = new BoundedStatementCache(client, 2);
 
-    @Test
-    void getNameNoBinding() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new BoundedStatementCache(NO_OP, 2).getName(null, "test-query"))
-            .withMessage("binding must not be null");
-    }
+        cache.put(new Binding(0), "foo", "S_0");
+        cache.put(new Binding(0), "bar", "S_1");
 
-    @Test
-    void getNameNoSql() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new BoundedStatementCache(NO_OP, 2).getName(new Binding(0), null))
-            .withMessage("sql must not be null");
+        cache.put(new Binding(0), "baz", "S_2");
+        assertThat(cache.getCachedStatementNames()).containsOnly("S_1", "S_2");
     }
 
 }
