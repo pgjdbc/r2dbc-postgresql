@@ -16,36 +16,35 @@
 
 package io.r2dbc.postgresql;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.postgresql.client.Binding;
 import io.r2dbc.postgresql.client.ConnectionContext;
-import io.r2dbc.postgresql.client.ExtendedQueryMessageFlow;
+import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
-import io.r2dbc.postgresql.message.backend.BindComplete;
-import io.r2dbc.postgresql.message.backend.NoData;
+import io.r2dbc.postgresql.message.frontend.Bind;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.GeneratedValuesUtils;
 import io.r2dbc.spi.Statement;
+import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.regex.Matcher;
 
 import static io.r2dbc.postgresql.client.ExtendedQueryMessageFlow.PARAMETER_SYMBOL;
-import static io.r2dbc.postgresql.util.PredicateUtils.not;
-import static io.r2dbc.postgresql.util.PredicateUtils.or;
 
 /**
  * {@link Statement} using the  <a href="https://www.postgresql.org/docs/current/static/protocol-flow.html#PROTOCOL-FLOW-EXT-QUERY">Extended Query Flow</a>.
  */
 final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
-
-    static final Predicate<BackendMessage> RESULT_FRAME_FILTER = not(or(BindComplete.class::isInstance, NoData.class::isInstance));
 
     private final Bindings bindings;
 
@@ -182,18 +181,66 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
         this.bindings.finish();
 
         ExceptionFactory factory = ExceptionFactory.withSql(sql);
-        return this.resources.getStatementCache().getName(this.bindings.first(), sql)
-            .flatMapMany(name -> Flux.fromIterable(this.bindings.bindings).map(binding -> {
-                return createPostgresqlResult(sql, factory, name, binding, this.resources, this.fetchSize);
-            }))
-            .cast(io.r2dbc.postgresql.api.PostgresqlResult.class);
+        this.bindings.first();
+
+        int fetchSize = this.fetchSize;
+        return Flux.defer(() -> {
+
+            // possible optimization: fetch all when statement is already prepared or first statement to be prepared
+            if (this.bindings.bindings.size() == 1) {
+
+                Binding binding = this.bindings.bindings.get(0);
+                Flux<BackendMessage> messages = collectBindingParameters(binding).flatMapMany(values -> ExtendedFlowDelegate.runQuery(this.resources, factory, sql, binding, values, fetchSize));
+                return Flux.just(PostgresqlResult.toResult(this.resources, messages, factory));
+            }
+
+            Iterator<Binding> iterator = this.bindings.bindings.iterator();
+            EmitterProcessor<Binding> bindingEmitter = EmitterProcessor.create(true);
+            return bindingEmitter.startWith(iterator.next())
+                .map(it -> {
+
+                    Flux<BackendMessage> messages =
+                        collectBindingParameters(it).flatMapMany(values -> ExtendedFlowDelegate.runQuery(this.resources, factory, sql, it, values, this.fetchSize)).doOnComplete(() -> {
+                            tryNextBinding(iterator, bindingEmitter);
+                        });
+
+                    return PostgresqlResult.toResult(this.resources, messages, factory);
+                })
+                .doOnCancel(() -> clearBindings(iterator))
+                .doOnError(e -> clearBindings(iterator));
+
+        }).cast(io.r2dbc.postgresql.api.PostgresqlResult.class);
     }
 
-    static PostgresqlResult createPostgresqlResult(String sql, ExceptionFactory factory, String statementName, Binding binding, ConnectionResources context, int fetchSize) {
-        Flux<BackendMessage> messages = ExtendedQueryMessageFlow
-            .execute(binding, context.getClient(), context.getPortalNameSupplier(), statementName, sql, context.getConfiguration().isForceBinary(), fetchSize)
-            .filter(RESULT_FRAME_FILTER);
-        return PostgresqlResult.toResult(context, messages, factory);
+    private static void tryNextBinding(Iterator<Binding> iterator, EmitterProcessor<Binding> boundRequests) {
+
+        if (boundRequests.isCancelled()) {
+            return;
+        }
+
+        try {
+            if (iterator.hasNext()) {
+                boundRequests.onNext(iterator.next());
+            } else {
+                boundRequests.onComplete();
+            }
+        } catch (Exception e) {
+            boundRequests.onError(e);
+        }
+    }
+
+    private static Mono<List<ByteBuf>> collectBindingParameters(Binding binding) {
+
+        return Flux.fromIterable(binding.getParameterValues())
+            .flatMap(f -> {
+                if (f == Parameter.NULL_VALUE) {
+                    return Flux.just(Bind.NULL_VALUE);
+                } else {
+                    return Flux.from(f)
+                        .reduce(Unpooled.compositeBuffer(), (c, b) -> c.addComponent(true, b));
+                }
+            })
+            .collectList();
     }
 
     private int getIndex(String identifier) {
@@ -204,6 +251,16 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
         }
 
         return Integer.parseInt(matcher.group(1)) - 1;
+    }
+
+    private void clearBindings(Iterator<Binding> iterator) {
+
+        while (iterator.hasNext()) {
+            // exhaust iterator, ignore returned elements
+            iterator.next();
+        }
+
+        this.bindings.clear();
     }
 
     private static final class Bindings {
@@ -248,6 +305,13 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
             }
 
             return this.current;
+        }
+
+        /**
+         * Clear/release binding values.
+         */
+        void clear() {
+            this.bindings.forEach(Binding::clear);
         }
 
     }

@@ -17,11 +17,14 @@
 package io.r2dbc.postgresql.client;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.util.ReferenceCountUtil;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.Logger;
+import reactor.util.Loggers;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,6 +36,8 @@ import java.util.function.Function;
  * A collection of {@link Parameter}s for a single bind invocation of an {@link ExtendedQueryMessageFlow}.
  */
 public final class Binding {
+
+    private static final Logger LOGGER = Loggers.getLogger(Binding.class);
 
     public static final Binding EMPTY = new Binding(0);
 
@@ -74,6 +79,19 @@ public final class Binding {
         this.types[index] = parameter.getType();
 
         return this;
+    }
+
+    /**
+     * Clear/release binding values.
+     */
+    public void clear() {
+
+        this.parameters.forEach(parameter -> {
+            Flux.from(parameter.getValue()).doOnNext(ReferenceCountUtil::release).subscribe(ignore -> {
+            }, err -> LOGGER.warn(String.format("Cannot release parameter %s", parameter), err));
+        });
+
+        this.parameters.clear();
     }
 
     @Override

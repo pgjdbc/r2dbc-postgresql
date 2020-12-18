@@ -32,6 +32,7 @@ import io.r2dbc.spi.Statement;
 import reactor.core.publisher.Flux;
 import reactor.util.annotation.Nullable;
 
+import java.util.Collections;
 import java.util.function.Predicate;
 
 import static io.r2dbc.postgresql.message.frontend.Execute.NO_LIMIT;
@@ -45,7 +46,7 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
 
     private static final Predicate<BackendMessage> WINDOW_UNTIL = or(CommandComplete.class::isInstance, EmptyQueryResponse.class::isInstance, ErrorResponse.class::isInstance);
 
-    private final ConnectionResources context;
+    private final ConnectionResources resources;
 
     private final String sql;
 
@@ -53,10 +54,10 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
 
     private int fetchSize;
 
-    SimpleQueryPostgresqlStatement(ConnectionResources context, String sql) {
-        this.context = Assert.requireNonNull(context, "context must not be null");
+    SimpleQueryPostgresqlStatement(ConnectionResources resources, String sql) {
+        this.resources = Assert.requireNonNull(resources, "context must not be null");
         this.sql = Assert.requireNonNull(sql, "sql must not be null");
-        fetchSize(isBatch() ? NO_LIMIT : this.context.getConfiguration().getFetchSize(sql));
+        fetchSize(isBatch() ? NO_LIMIT : this.resources.getConfiguration().getFetchSize(sql));
     }
 
     private boolean isBatch() {
@@ -103,8 +104,9 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
 
         if (rows != NO_LIMIT) {
             Assert.isTrue(!isBatch(), "Fetch size can only be used with a single SQL statement");
-            this.fetchSize = rows;
         }
+
+        this.fetchSize = rows;
 
         return this;
     }
@@ -128,7 +130,7 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
     @Override
     public String toString() {
         return "SimpleQueryPostgresqlStatement{" +
-            "context=" + this.context +
+            "context=" + this.resources +
             ", sql='" + this.sql + '\'' +
             '}';
     }
@@ -145,15 +147,15 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
 
         if (this.fetchSize != NO_LIMIT) {
 
-            return this.context.getStatementCache().getName(Binding.EMPTY, sql)
-                .map(name -> ExtendedQueryPostgresqlStatement.createPostgresqlResult(sql, factory, name, Binding.EMPTY, this.context, this.fetchSize))
-                .cast(io.r2dbc.postgresql.api.PostgresqlResult.class).flux();
+            Flux<BackendMessage> messages = ExtendedFlowDelegate.runQuery(this.resources, factory, sql, Binding.EMPTY, Collections.emptyList(), this.fetchSize);
+
+            return Flux.just(new PostgresqlResult(this.resources, messages, factory));
         }
 
         return SimpleQueryMessageFlow
-            .exchange(this.context.getClient(), sql)
+            .exchange(this.resources.getClient(), sql)
             .windowUntil(WINDOW_UNTIL)
-            .map(dataRow -> PostgresqlResult.toResult(this.context, dataRow, factory))
+            .map(dataRow -> PostgresqlResult.toResult(this.resources, dataRow, factory))
             .cast(io.r2dbc.postgresql.api.PostgresqlResult.class)
             .as(Operators::discardOnCancel)
             .doOnDiscard(ReferenceCounted.class, ReferenceCountUtil::release);
