@@ -69,7 +69,7 @@ final class PostgresqlResultUnitTests {
     @Test
     void toResultNoContext() {
         assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlResult.toResult(null, Flux.empty(), ExceptionFactory.INSTANCE))
-            .withMessage("context must not be null");
+            .withMessage("resources must not be null");
     }
 
     @Test

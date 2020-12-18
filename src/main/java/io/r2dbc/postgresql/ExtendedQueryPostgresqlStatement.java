@@ -59,7 +59,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
     private String[] generatedColumns;
 
     ExtendedQueryPostgresqlStatement(ConnectionResources resources, String sql) {
-        this.resources = Assert.requireNonNull(resources, "context must not be null");
+        this.resources = Assert.requireNonNull(resources, "resources must not be null");
         this.connectionContext = resources.getClient().getContext();
         this.sql = Assert.requireNonNull(sql, "sql must not be null");
         this.bindings = new Bindings(expectedSize(sql));

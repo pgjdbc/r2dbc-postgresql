@@ -22,9 +22,6 @@ import io.r2dbc.postgresql.client.PortalNameSupplier;
 import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.util.Assert;
 
-/**
- * @author Mark Paluch
- */
 final class ConnectionResources {
 
     private final Client client;
