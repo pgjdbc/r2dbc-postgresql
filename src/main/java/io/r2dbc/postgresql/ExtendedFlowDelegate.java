@@ -22,13 +22,16 @@ import io.netty.util.ReferenceCounted;
 import io.r2dbc.postgresql.client.Binding;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.ExtendedQueryMessageFlow;
+import io.r2dbc.postgresql.client.TransactionStatus;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.BindComplete;
+import io.r2dbc.postgresql.message.backend.CloseComplete;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.NoData;
 import io.r2dbc.postgresql.message.backend.ParseComplete;
 import io.r2dbc.postgresql.message.backend.PortalSuspended;
+import io.r2dbc.postgresql.message.backend.ReadyForQuery;
 import io.r2dbc.postgresql.message.frontend.Bind;
 import io.r2dbc.postgresql.message.frontend.Close;
 import io.r2dbc.postgresql.message.frontend.CompositeFrontendMessage;
@@ -98,11 +101,23 @@ class ExtendedFlowDelegate {
         messagesToSend.add(new Describe(portal, PORTAL));
 
         Flux<BackendMessage> exchange;
+        boolean compatibilityMode = resources.getConfiguration().isCompatibilityMode();
+        boolean implicitTransactions = resources.getClient().getTransactionStatus() == TransactionStatus.IDLE;
 
-        if (fetchSize == NO_LIMIT) {
-            exchange = fetchAll(messagesToSend, client, portal);
+        if (compatibilityMode) {
+
+            if (fetchSize == NO_LIMIT || implicitTransactions) {
+                exchange = fetchAll(messagesToSend, client, portal);
+            } else {
+                exchange = fetchCursoredWithSync(messagesToSend, client, portal, fetchSize);
+            }
         } else {
-            exchange = fetchOptimisticCursored(messagesToSend, client, portal, fetchSize);
+
+            if (fetchSize == NO_LIMIT) {
+                exchange = fetchAll(messagesToSend, client, portal);
+            } else {
+                exchange = fetchCursoredWithFlush(messagesToSend, client, portal, fetchSize);
+            }
         }
 
         if (prepareRequired) {
@@ -137,6 +152,68 @@ class ExtendedFlowDelegate {
     }
 
     /**
+     * Execute a chunked query and indicate to fetch rows in chunks with the {@link Execute} message.
+     *
+     * @param messagesToSend the messages to send
+     * @param client         client to use
+     * @param portal         the portal
+     * @param fetchSize      fetch size per roundtrip
+     * @return the resulting message stream
+     */
+    private static Flux<BackendMessage> fetchCursoredWithSync(List<FrontendMessage.DirectEncoder> messagesToSend, Client client, String portal, int fetchSize) {
+
+        DirectProcessor<FrontendMessage> requestsProcessor = DirectProcessor.create();
+        FluxSink<FrontendMessage> requestsSink = requestsProcessor.sink();
+        AtomicBoolean isCanceled = new AtomicBoolean(false);
+        AtomicBoolean done = new AtomicBoolean(false);
+
+        messagesToSend.add(new Execute(portal, fetchSize));
+        messagesToSend.add(Sync.INSTANCE);
+
+        return client.exchange(it -> done.get() && it instanceof ReadyForQuery, Flux.<FrontendMessage>just(new CompositeFrontendMessage(messagesToSend)).concatWith(requestsProcessor))
+            .handle((BackendMessage message, SynchronousSink<BackendMessage> sink) -> {
+
+                if (message instanceof CommandComplete) {
+                    requestsSink.next(new Close(portal, PORTAL));
+                    requestsSink.next(Sync.INSTANCE);
+                    requestsSink.complete();
+                    sink.next(message);
+                } else if (message instanceof CloseComplete) {
+                    requestsSink.complete();
+                    done.set(true);
+                    sink.next(message);
+                } else if (message instanceof ErrorResponse) {
+                    done.set(true);
+                    requestsSink.next(Sync.INSTANCE);
+                    requestsSink.complete();
+                    sink.next(message);
+                } else if (message instanceof PortalSuspended) {
+
+                    if (isCanceled.get()) {
+                        requestsSink.next(new Close(portal, PORTAL));
+                        requestsSink.next(Sync.INSTANCE);
+                        requestsSink.complete();
+                    } else {
+                        requestsSink.next(new Execute(portal, fetchSize));
+                        requestsSink.next(Sync.INSTANCE);
+                    }
+                } else if (message instanceof NoData) {
+
+                    if (isCanceled.get()) {
+                        requestsSink.next(new Close(portal, PORTAL));
+                        requestsSink.next(Sync.INSTANCE);
+                        requestsSink.complete();
+                    } else {
+                        done.set(true);
+                    }
+                } else {
+                    sink.next(message);
+                }
+            }).doFinally(ignore -> requestsSink.complete())
+            .as(flux -> Operators.discardOnCancel(flux, () -> isCanceled.set(true)));
+    }
+
+    /**
      * Execute a contiguous query and indicate to fetch rows in chunks with the {@link Execute} message. Uses {@link Flush}-based synchronization that creates a cursor. Note that flushing keeps the
      * cursor open even with implicit transactions and this method may not work with newer pgpool implementations.
      *
@@ -146,7 +223,7 @@ class ExtendedFlowDelegate {
      * @param fetchSize      fetch size per roundtrip
      * @return the resulting message stream
      */
-    private static Flux<BackendMessage> fetchOptimisticCursored(List<FrontendMessage.DirectEncoder> messagesToSend, Client client, String portal, int fetchSize) {
+    private static Flux<BackendMessage> fetchCursoredWithFlush(List<FrontendMessage.DirectEncoder> messagesToSend, Client client, String portal, int fetchSize) {
 
         DirectProcessor<FrontendMessage> requestsProcessor = DirectProcessor.create();
         FluxSink<FrontendMessage> requestsSink = requestsProcessor.sink();
