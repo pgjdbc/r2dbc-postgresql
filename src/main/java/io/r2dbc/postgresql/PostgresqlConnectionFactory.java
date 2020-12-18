@@ -255,6 +255,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
 
     private Mono<IsolationLevel> getIsolationLevel(io.r2dbc.postgresql.api.PostgresqlConnection connection) {
         return connection.createStatement("SHOW TRANSACTION ISOLATION LEVEL")
+            .fetchSize(0)
             .execute()
             .flatMap(it -> it.map((row, rowMetadata) -> {
                 String level = row.get(0, String.class);

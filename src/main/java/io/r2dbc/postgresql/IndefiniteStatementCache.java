@@ -17,10 +17,7 @@
 package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.client.Binding;
-import io.r2dbc.postgresql.client.Client;
-import io.r2dbc.postgresql.client.ExtendedQueryMessageFlow;
 import io.r2dbc.postgresql.util.Assert;
-import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -30,21 +27,52 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 final class IndefiniteStatementCache implements StatementCache {
 
-    private final Map<String, Map<int[], Mono<String>>> cache = new ConcurrentHashMap<>();
-
-    private final Client client;
+    private final Map<String, Map<int[], String>> cache = new ConcurrentHashMap<>();
 
     private final AtomicInteger counter = new AtomicInteger();
 
-    IndefiniteStatementCache(Client client) {
-        this.client = Assert.requireNonNull(client, "client must not be null");
+    IndefiniteStatementCache() {
     }
 
     @Override
-    public Mono<String> getName(Binding binding, String sql) {
+    public String getName(Binding binding, String sql) {
         Assert.requireNonNull(binding, "binding must not be null");
         Assert.requireNonNull(sql, "sql must not be null");
-        Map<int[], Mono<String>> typedMap = this.cache.computeIfAbsent(sql, ignore -> new TreeMap<>((o1, o2) -> {
+
+        Map<int[], String> typedMap = getTypeMap(sql);
+        String name = typedMap.get(binding.getParameterTypes());
+
+        if (name == null) {
+            name = "S_" + this.counter.getAndIncrement();
+        }
+
+        return name;
+    }
+
+    @Override
+    public boolean requiresPrepare(Binding binding, String sql) {
+
+        Assert.requireNonNull(binding, "binding must not be null");
+        Assert.requireNonNull(sql, "sql must not be null");
+
+        Map<int[], String> typedMap = getTypeMap(sql);
+        return !typedMap.containsKey(binding.getParameterTypes());
+    }
+
+    @Override
+    public void put(Binding binding, String sql, String name) {
+
+        Assert.requireNonNull(binding, "binding must not be null");
+        Assert.requireNonNull(sql, "sql must not be null");
+
+        Map<int[], String> typedMap = getTypeMap(sql);
+
+        typedMap.put(binding.getParameterTypes(), name);
+    }
+
+    private Map<int[], String> getTypeMap(String sql) {
+
+        return this.cache.computeIfAbsent(sql, ignore -> new TreeMap<>((o1, o2) -> {
 
             if (Arrays.equals(o1, o2)) {
                 return 0;
@@ -65,34 +93,13 @@ final class IndefiniteStatementCache implements StatementCache {
 
             return 0;
         }));
-
-        Mono<String> mono = typedMap.get(binding.getParameterTypes());
-        if (mono == null) {
-            mono = parse(sql, binding.getParameterTypes());
-            typedMap.put(binding.getParameterTypes(), mono);
-        }
-
-        return mono;
     }
 
     @Override
     public String toString() {
         return "IndefiniteStatementCache{" +
             "cache=" + this.cache +
-            ", client=" + this.client +
             ", counter=" + this.counter +
             '}';
     }
-
-    private Mono<String> parse(String sql, int[] types) {
-        String name = "S_" + this.counter.getAndIncrement();
-
-        ExceptionFactory factory = ExceptionFactory.withSql(sql);
-        return ExtendedQueryMessageFlow
-            .parse(this.client, name, sql, types)
-            .handle(factory::handleErrorResponse)
-            .then(Mono.just(name))
-            .cache();
-    }
-
 }

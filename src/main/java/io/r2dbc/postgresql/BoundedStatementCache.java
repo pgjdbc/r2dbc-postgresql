@@ -20,7 +20,8 @@ import io.r2dbc.postgresql.client.Binding;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.ExtendedQueryMessageFlow;
 import io.r2dbc.postgresql.util.Assert;
-import reactor.core.publisher.Mono;
+import reactor.util.Logger;
+import reactor.util.Loggers;
 import reactor.util.annotation.Nullable;
 
 import java.util.ArrayList;
@@ -36,6 +37,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Bounded (size-limited) {@link StatementCache}.
  */
 final class BoundedStatementCache implements StatementCache {
+
+    private static final Logger LOGGER = Loggers.getLogger(BoundedStatementCache.class);
 
     private final Map<CacheKey, String> cache = new LinkedHashMap<>(16, 0.75f, true);
 
@@ -54,29 +57,47 @@ final class BoundedStatementCache implements StatementCache {
     }
 
     @Override
-    public Mono<String> getName(Binding binding, String sql) {
+    public String getName(Binding binding, String sql) {
         Assert.requireNonNull(binding, "binding must not be null");
         Assert.requireNonNull(sql, "sql must not be null");
-        CacheKey key = new CacheKey(sql, binding.getParameterTypes());
-        String name = get(key);
+
+        String name = get(new CacheKey(sql, binding.getParameterTypes()));
+
         if (name != null) {
-            return Mono.just(name);
+            return name;
         }
 
-        Mono<Void> closeLastStatement = Mono.defer(() -> {
-            if (getCacheSize() < this.limit) {
-                return Mono.empty();
-            }
-            String lastAccessedStatementName = getAndRemoveEldest();
-            ExceptionFactory factory = ExceptionFactory.withSql(lastAccessedStatementName);
-            return ExtendedQueryMessageFlow
-                .closeStatement(this.client, lastAccessedStatementName)
-                .handle(factory::handleErrorResponse)
-                .then();
-        });
+        return "S_" + this.counter.getAndIncrement();
+    }
 
-        return closeLastStatement.then(parse(sql, binding.getParameterTypes()))
-            .doOnNext(preparedName -> put(key, preparedName));
+    @Override
+    public boolean requiresPrepare(Binding binding, String sql) {
+
+        Assert.requireNonNull(binding, "binding must not be null");
+        Assert.requireNonNull(sql, "sql must not be null");
+
+        return get(new CacheKey(sql, binding.getParameterTypes())) == null;
+    }
+
+    @Override
+    public void put(Binding binding, String sql, String name) {
+
+        CacheKey key = new CacheKey(sql, binding.getParameterTypes());
+
+        put(key, name);
+
+        if (getCacheSize() <= this.limit) {
+            return;
+        }
+
+        Map.Entry<CacheKey, String> lastAccessedStatement = getAndRemoveEldest();
+        ExceptionFactory factory = ExceptionFactory.withSql(lastAccessedStatement.getKey().sql);
+
+        ExtendedQueryMessageFlow
+            .closeStatement(this.client, lastAccessedStatement.getValue())
+            .handle(factory::handleErrorResponse)
+            .subscribe(it -> {
+            }, err -> LOGGER.warn(String.format("Cannot close statement %s (%s)", lastAccessedStatement.getValue(), lastAccessedStatement.getKey().sql), err));
     }
 
     /**
@@ -87,7 +108,7 @@ final class BoundedStatementCache implements StatementCache {
     Collection<String> getCachedStatementNames() {
         synchronized (this.cache) {
             List<String> names = new ArrayList<>(this.cache.size());
-            names.addAll(cache.values());
+            names.addAll(this.cache.values());
             return names;
         }
     }
@@ -110,10 +131,10 @@ final class BoundedStatementCache implements StatementCache {
      *
      * @return least recently used entry
      */
-    private String getAndRemoveEldest() {
+    private Map.Entry<CacheKey, String> getAndRemoveEldest() {
         synchronized (this.cache) {
             Iterator<Map.Entry<CacheKey, String>> iterator = this.cache.entrySet().iterator();
-            String entry = iterator.next().getValue();
+            Map.Entry<CacheKey, String> entry = iterator.next();
             iterator.remove();
             return entry;
         }
@@ -147,17 +168,6 @@ final class BoundedStatementCache implements StatementCache {
             ", client=" + this.client +
             ", limit=" + this.limit +
             '}';
-    }
-
-    private Mono<String> parse(String sql, int[] types) {
-        String name = "S_" + this.counter.getAndIncrement();
-
-        ExceptionFactory factory = ExceptionFactory.withSql(name);
-        return ExtendedQueryMessageFlow
-            .parse(this.client, name, sql, types)
-            .handle(factory::handleErrorResponse)
-            .then(Mono.just(name))
-            .cache();
     }
 
     static class CacheKey {

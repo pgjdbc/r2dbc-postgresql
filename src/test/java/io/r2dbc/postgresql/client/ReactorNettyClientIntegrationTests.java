@@ -300,56 +300,6 @@ final class ReactorNettyClientIntegrationTests {
     }
 
     @Test
-    void parallelExchangeExtendedFlow() {
-        ExtendedQueryMessageFlow.parse(this.client, "S_1", "SELECT $1", new int[]{INT4.getObjectId()})
-            .as(StepVerifier::create)
-            .verifyComplete();
-
-        this.client.exchange(Mono.just(Sync.INSTANCE))
-            .as(StepVerifier::create)
-            .verifyComplete();
-
-        FrontendMessage bind1 = new Bind(
-            "P_1",
-            Collections.singletonList(Format.FORMAT_BINARY),
-            Collections.singletonList(this.client.getByteBufAllocator().buffer(4).writeInt(42)),
-            Collections.singletonList(Format.FORMAT_BINARY),
-            "S_1"
-        );
-        Describe describe1 = new Describe("P_1", ExecutionType.PORTAL);
-        Execute execute1 = new Execute("P_1", Integer.MAX_VALUE);
-        FrontendMessage bind2 = new Bind(
-            "P_2",
-            Collections.singletonList(Format.FORMAT_BINARY),
-            Collections.singletonList(this.client.getByteBufAllocator().buffer(4).writeInt(42)),
-            Collections.singletonList(Format.FORMAT_BINARY),
-            "S_1"
-        );
-        Describe describe2 = new Describe("P_2", ExecutionType.PORTAL);
-        Execute execute2 = new Execute("P_2", Integer.MAX_VALUE);
-
-        Flux<FrontendMessage> flow1 = Flux.just(bind1, describe1, execute1, Sync.INSTANCE).delayElements(Duration.ofMillis(10));
-        Flux<FrontendMessage> flow2 = Flux.just(bind2, describe2, execute2, Sync.INSTANCE).delayElements(Duration.ofMillis(20));
-
-        // Actual response sequence is BindComplete/RowDescription/DataRow/CommandComplete for each of the extended flows
-        // Zipping and flattening makes it appear in the assertions that it would be BindComplete/BindComplete/RowDescription/RowDescription…
-
-        this.datarowCleanup(Flux.zip(this.client.exchange(flow1), this.client.exchange(flow2))
-            .flatMapIterable(t -> Arrays.asList(t.getT1(), t.getT2()))
-        )
-            .as(StepVerifier::create)
-            .assertNext(message -> assertThat(message).isInstanceOf(BindComplete.class))
-            .assertNext(message -> assertThat(message).isInstanceOf(BindComplete.class))
-            .assertNext(message -> assertThat(message).isInstanceOf(RowDescription.class))
-            .assertNext(message -> assertThat(message).isInstanceOf(RowDescription.class))
-            .assertNext(message -> assertThat(message).isInstanceOf(DataRow.class))
-            .assertNext(message -> assertThat(message).isInstanceOf(DataRow.class))
-            .expectNext(new CommandComplete("SELECT", null, 1))
-            .expectNext(new CommandComplete("SELECT", null, 1))
-            .verifyComplete();
-    }
-
-    @Test
     void timeoutTest() {
         PostgresqlConnectionFactory postgresqlConnectionFactory = new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
             .host("example.com")

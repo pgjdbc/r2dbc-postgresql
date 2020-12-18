@@ -35,10 +35,10 @@ import io.r2dbc.postgresql.message.frontend.Describe;
 import io.r2dbc.postgresql.message.frontend.Execute;
 import io.r2dbc.postgresql.message.frontend.ExecutionType;
 import io.r2dbc.postgresql.message.frontend.Flush;
+import io.r2dbc.postgresql.message.frontend.Parse;
 import io.r2dbc.postgresql.message.frontend.Query;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.junit.jupiter.api.Test;
-import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.Arrays;
@@ -270,10 +270,10 @@ final class SimpleQueryPostgresqlStatementUnitTests {
     void executeWithFetchSize() {
         Client client = TestClient.builder()
             .expectRequest(new CompositeFrontendMessage(
-                    new Bind("B_0", Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), "test-name"),
-                    new Describe("B_0", ExecutionType.PORTAL)),
-                new CompositeFrontendMessage(new Execute("B_0", 1),
-                    Flush.INSTANCE))
+                new Parse("test-name", new int[0], "SELECT test-query"),
+                new Bind("B_0", Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), "test-name"), new Describe("B_0", ExecutionType.PORTAL)
+                , new Execute("B_0", 1),
+                Flush.INSTANCE))
             .thenRespond(BindComplete.INSTANCE, NoData.INSTANCE, new CommandComplete("test", null, null))
             .build();
 
@@ -281,7 +281,8 @@ final class SimpleQueryPostgresqlStatementUnitTests {
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
         ConnectionResources context = MockContext.builder().client(client).codecs(codecs).portalNameSupplier(portalNameSupplier).build();
 
-        when(context.getStatementCache().getName(any(), any())).thenReturn(Mono.just("test-name"));
+        when(context.getStatementCache().getName(any(), any())).thenReturn("test-name");
+        when(context.getStatementCache().requiresPrepare(any(), any())).thenReturn(true);
 
         new SimpleQueryPostgresqlStatement(context, "SELECT test-query")
             .fetchSize(1)

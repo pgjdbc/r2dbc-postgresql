@@ -17,39 +17,31 @@
 package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.client.Binding;
-import io.r2dbc.postgresql.client.Client;
-import io.r2dbc.postgresql.client.ExtendedQueryMessageFlow;
-import io.r2dbc.postgresql.util.Assert;
-import reactor.core.publisher.Mono;
 
 class DisabledStatementCache implements StatementCache {
 
     private static final String UNNAMED_STATEMENT_NAME = "";
 
-    private final Client client;
-
-    DisabledStatementCache(Client client) {
-        this.client = Assert.requireNonNull(client, "client must not be null");
+    DisabledStatementCache() {
     }
 
     @Override
-    public Mono<String> getName(Binding binding, String sql) {
-        Assert.requireNonNull(binding, "binding must not be null");
-        Assert.requireNonNull(sql, "sql must not be null");
-        String name = UNNAMED_STATEMENT_NAME;
+    public String getName(Binding binding, String sql) {
+        return UNNAMED_STATEMENT_NAME;
+    }
 
-        ExceptionFactory factory = ExceptionFactory.withSql(name);
-        return ExtendedQueryMessageFlow
-            .parse(this.client, name, sql, binding.getParameterTypes())
-            .handle(factory::handleErrorResponse)
-            .then(Mono.just(name));
+    @Override
+    public boolean requiresPrepare(Binding binding, String sql) {
+        return true;
+    }
+
+    @Override
+    public void put(Binding binding, String sql, String name) {
     }
 
     @Override
     public String toString() {
-        return "DisabledStatementCache{" +
-            "client=" + this.client +
-            '}';
+        return "DisabledStatementCache";
     }
 
 }
