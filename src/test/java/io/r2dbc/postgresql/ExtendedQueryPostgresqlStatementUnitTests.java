@@ -143,9 +143,9 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
     }
 
     @Test
-    void constructorNoContext() {
+    void constructorNoResources() {
         assertThatIllegalArgumentException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(null, "test-query"))
-            .withMessage("context must not be null");
+            .withMessage("resources must not be null");
     }
 
     @Test
