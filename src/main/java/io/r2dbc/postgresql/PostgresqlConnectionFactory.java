@@ -97,7 +97,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
             return InetSocketAddress.createUnresolved(configuration.getRequiredHost(), configuration.getPort());
         }
 
-        return Util.getDomainSocketAddress(configuration);
+        return DomainSocketFactory.getDomainSocketAddress(configuration);
     }
 
     private static Extensions getExtensions(PostgresqlConnectionConfiguration configuration) {
@@ -271,10 +271,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
 
     }
 
-    static class Util {
-
-        private Util() {
-        }
+    static class DomainSocketFactory {
 
         private static SocketAddress getDomainSocketAddress(PostgresqlConnectionConfiguration configuration) {
             return new DomainSocketAddress(configuration.getRequiredSocket());
