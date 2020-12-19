@@ -84,18 +84,17 @@ abstract class AbstractCopyResponse implements BackendMessage {
         Assert.requireNonNull(in, "in must not be null");
 
         int count = in.readShort();
+        Set<Format> formatSet = EnumSet.noneOf(Format.class);
 
-        switch (count) {
-            case 0:
-                return EnumSet.noneOf(Format.class);
-            default:
-                Set<Format> formatSet = EnumSet.noneOf(Format.class);
-                for (int i = 0; i < count; i++) {
-                    formatSet.add(Format.valueOf(in.readShort()));
-                }
-
-                return formatSet;
+        if (0 == count) {
+            return formatSet;
         }
+
+        for (int i = 0; i < count; i++) {
+            formatSet.add(Format.valueOf(in.readShort()));
+        }
+
+        return formatSet;
     }
 
 }
