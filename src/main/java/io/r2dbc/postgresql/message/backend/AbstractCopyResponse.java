@@ -86,10 +86,6 @@ abstract class AbstractCopyResponse implements BackendMessage {
         int count = in.readShort();
         Set<Format> formatSet = EnumSet.noneOf(Format.class);
 
-        if (0 == count) {
-            return formatSet;
-        }
-
         for (int i = 0; i < count; i++) {
             formatSet.add(Format.valueOf(in.readShort()));
         }
