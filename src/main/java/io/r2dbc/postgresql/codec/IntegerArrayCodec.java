@@ -19,8 +19,6 @@ package io.r2dbc.postgresql.codec;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.EncodedParameter;
-import io.r2dbc.postgresql.message.Format;
-import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 
 import java.util.function.Supplier;
@@ -31,12 +29,7 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4_ARRAY;
 final class IntegerArrayCodec extends AbstractArrayCodec<Integer> {
 
     IntegerArrayCodec(ByteBufAllocator byteBufAllocator) {
-        super(byteBufAllocator, Integer.class);
-    }
-
-    @Override
-    public EncodedParameter encodeNull() {
-        return createNull(INT4_ARRAY, FORMAT_TEXT);
+        super(byteBufAllocator, Integer.class, INT4_ARRAY);
     }
 
     @Override
@@ -47,13 +40,6 @@ final class IntegerArrayCodec extends AbstractArrayCodec<Integer> {
     @Override
     Integer doDecodeText(String text) {
         return Integer.parseInt(text);
-    }
-
-    @Override
-    boolean doCanDecode(PostgresqlObjectId type, Format format) {
-        Assert.requireNonNull(type, "type must not be null");
-
-        return INT4_ARRAY == type;
     }
 
     @Override

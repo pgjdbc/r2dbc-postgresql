@@ -99,7 +99,7 @@ final class BigIntegerCodecUnitTests {
     @Test
     void encodeNull() {
         assertThat(new BigIntegerCodec(TEST).encodeNull())
-            .isEqualTo(new EncodedParameter(FORMAT_TEXT, NUMERIC.getObjectId(), NULL_VALUE));
+            .isEqualTo(new EncodedParameter(FORMAT_BINARY, NUMERIC.getObjectId(), NULL_VALUE));
     }
 
 }

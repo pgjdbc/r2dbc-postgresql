@@ -37,11 +37,6 @@ final class IntegerCodec extends AbstractNumericCodec<Integer> {
     }
 
     @Override
-    public EncodedParameter encodeNull() {
-        return createNull(INT4, FORMAT_BINARY);
-    }
-
-    @Override
     Integer doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends Integer> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
         Assert.requireNonNull(format, "format must not be null");

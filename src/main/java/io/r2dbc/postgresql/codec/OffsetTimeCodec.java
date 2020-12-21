@@ -39,11 +39,6 @@ public class OffsetTimeCodec extends AbstractTemporalCodec<OffsetTime> {
     }
 
     @Override
-    PostgresqlObjectId getDefaultType() {
-        return TIMETZ;
-    }
-
-    @Override
     OffsetTime doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, Class<? extends OffsetTime> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
@@ -58,8 +53,8 @@ public class OffsetTimeCodec extends AbstractTemporalCodec<OffsetTime> {
     }
 
     @Override
-    public EncodedParameter encodeNull() {
-        return createNull(TIMETZ, FORMAT_TEXT);
+    PostgresqlObjectId getDefaultType() {
+        return TIMETZ;
     }
 
 }

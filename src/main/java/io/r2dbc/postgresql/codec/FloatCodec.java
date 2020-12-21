@@ -37,11 +37,6 @@ final class FloatCodec extends AbstractNumericCodec<Float> {
     }
 
     @Override
-    public EncodedParameter encodeNull() {
-        return createNull(FLOAT4, FORMAT_BINARY);
-    }
-
-    @Override
     Float doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, @Nullable Class<? extends Float> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
         Assert.requireNonNull(format, "format must not be null");

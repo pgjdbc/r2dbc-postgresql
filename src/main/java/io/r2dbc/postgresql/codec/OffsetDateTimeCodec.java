@@ -40,11 +40,6 @@ final class OffsetDateTimeCodec extends AbstractTemporalCodec<OffsetDateTime> {
     }
 
     @Override
-    public EncodedParameter encodeNull() {
-        return createNull(TIMESTAMPTZ, FORMAT_TEXT);
-    }
-
-    @Override
     OffsetDateTime doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends OffsetDateTime> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 

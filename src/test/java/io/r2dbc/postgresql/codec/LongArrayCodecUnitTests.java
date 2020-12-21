@@ -98,7 +98,7 @@ final class LongArrayCodecUnitTests {
     @Test
     void encodeNull() {
         assertThat(new LongArrayCodec(TEST).encodeNull())
-            .isEqualTo(new EncodedParameter(FORMAT_TEXT, INT8_ARRAY.getObjectId(), NULL_VALUE));
+            .isEqualTo(new EncodedParameter(FORMAT_BINARY, INT8_ARRAY.getObjectId(), NULL_VALUE));
     }
 
 }

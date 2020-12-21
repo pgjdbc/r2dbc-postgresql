@@ -36,12 +36,7 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR_ARRAY;
 final class StringArrayCodec extends AbstractArrayCodec<String> {
 
     StringArrayCodec(ByteBufAllocator byteBufAllocator) {
-        super(byteBufAllocator, String.class);
-    }
-
-    @Override
-    public EncodedParameter encodeNull() {
-        return createNull(TEXT_ARRAY, FORMAT_TEXT);
+        super(byteBufAllocator, String.class, TEXT_ARRAY);
     }
 
     @Override

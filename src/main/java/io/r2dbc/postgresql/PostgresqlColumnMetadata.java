@@ -19,8 +19,10 @@ package io.r2dbc.postgresql;
 import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.message.backend.RowDescription.Field;
+import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ColumnMetadata;
+import io.r2dbc.spi.Type;
 
 import java.util.Objects;
 
@@ -77,6 +79,16 @@ final class PostgresqlColumnMetadata implements io.r2dbc.postgresql.api.Postgres
     }
 
     @Override
+    public Type getType() {
+
+        if (PostgresqlObjectId.isValid(this.nativeType)) {
+            return new OidType(PostgresqlObjectId.valueOf(this.nativeType), getJavaType());
+        }
+
+        return new UnknownOidType(this.nativeType, getJavaType());
+    }
+
+    @Override
     public String getName() {
         return this.name;
     }
@@ -107,6 +119,52 @@ final class PostgresqlColumnMetadata implements io.r2dbc.postgresql.api.Postgres
 
     static PostgresqlColumnMetadata toColumnMetadata(Codecs codecs, Field field) {
         return new PostgresqlColumnMetadata(codecs, field);
+    }
+
+    static class OidType implements Type {
+
+        private final PostgresqlObjectId objectId;
+
+        private final Class<?> javaType;
+
+        OidType(PostgresqlObjectId objectId, Class<?> javaType) {
+            this.objectId = objectId;
+            this.javaType = javaType;
+        }
+
+        @Override
+        public Class<?> getJavaType() {
+            return this.javaType;
+        }
+
+        @Override
+        public String getName() {
+            return this.objectId.name();
+        }
+
+    }
+
+    static class UnknownOidType implements Type {
+
+        private final int oid;
+
+        private final Class<?> javaType;
+
+        UnknownOidType(int oid, Class<?> javaType) {
+            this.oid = oid;
+            this.javaType = javaType;
+        }
+
+        @Override
+        public Class<?> getJavaType() {
+            return this.javaType;
+        }
+
+        @Override
+        public String getName() {
+            return "" + this.oid;
+        }
+
     }
 
 }

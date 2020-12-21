@@ -177,6 +177,11 @@ final class DefaultCodecsUnitTests {
         }
 
         @Override
+        public EncodedParameter encodeNull(int dataType) {
+            return null;
+        }
+
+        @Override
         public Class<?> type() {
             return null;
         }

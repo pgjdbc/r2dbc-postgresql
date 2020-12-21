@@ -41,11 +41,6 @@ public class BigIntegerCodec extends AbstractNumericCodec<BigInteger> {
     }
 
     @Override
-    public EncodedParameter encodeNull() {
-        return createNull(NUMERIC, FORMAT_TEXT);
-    }
-
-    @Override
     BigInteger doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends BigInteger> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 

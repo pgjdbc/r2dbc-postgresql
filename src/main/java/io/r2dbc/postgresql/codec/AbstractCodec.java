@@ -91,6 +91,11 @@ abstract class AbstractCodec<T> implements Codec<T> {
     }
 
     @Override
+    public EncodedParameter encodeNull(int dataType) {
+        return new EncodedParameter(Format.FORMAT_BINARY, dataType, NULL_VALUE);
+    }
+
+    @Override
     public Class<?> type() {
         return this.type;
     }

@@ -141,7 +141,7 @@ final class StringArrayCodecUnitTests {
     @Test
     void encodeNull() {
         assertThat(new StringArrayCodec(TEST).encodeNull())
-            .isEqualTo(new EncodedParameter(FORMAT_TEXT, TEXT_ARRAY.getObjectId(), NULL_VALUE));
+            .isEqualTo(new EncodedParameter(FORMAT_BINARY, TEXT_ARRAY.getObjectId(), NULL_VALUE));
     }
 
 }

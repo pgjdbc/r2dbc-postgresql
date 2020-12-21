@@ -37,11 +37,6 @@ final class DoubleCodec extends AbstractNumericCodec<Double> {
     }
 
     @Override
-    public EncodedParameter encodeNull() {
-        return createNull(FLOAT8, FORMAT_BINARY);
-    }
-
-    @Override
     Double doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, @Nullable Class<? extends Double> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
         Assert.requireNonNull(format, "format must not be null");

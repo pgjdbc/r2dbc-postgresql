@@ -44,11 +44,6 @@ final class LocalDateTimeCodec extends AbstractTemporalCodec<LocalDateTime> {
     }
 
     @Override
-    public EncodedParameter encodeNull() {
-        return createNull(TIMESTAMP, FORMAT_TEXT);
-    }
-
-    @Override
     LocalDateTime doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends LocalDateTime> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 

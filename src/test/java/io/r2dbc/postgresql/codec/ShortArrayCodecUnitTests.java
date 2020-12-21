@@ -112,7 +112,7 @@ final class ShortArrayCodecUnitTests {
     @Test
     void encodeNull() {
         assertThat(new ShortArrayCodec(TEST).encodeNull())
-            .isEqualTo(new EncodedParameter(FORMAT_TEXT, INT2_ARRAY.getObjectId(), NULL_VALUE));
+            .isEqualTo(new EncodedParameter(FORMAT_BINARY, INT2_ARRAY.getObjectId(), NULL_VALUE));
     }
 
 }

@@ -19,10 +19,7 @@ package io.r2dbc.postgresql.codec;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.EncodedParameter;
-import io.r2dbc.postgresql.message.Format;
-import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
-import reactor.util.annotation.Nullable;
 
 import java.util.function.Supplier;
 
@@ -32,12 +29,7 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT2_ARRAY;
 final class ShortArrayCodec extends AbstractArrayCodec<Short> {
 
     ShortArrayCodec(ByteBufAllocator byteBufAllocator) {
-        super(byteBufAllocator, Short.class);
-    }
-
-    @Override
-    public EncodedParameter encodeNull() {
-        return createNull(INT2_ARRAY, FORMAT_TEXT);
+        super(byteBufAllocator, Short.class, INT2_ARRAY);
     }
 
     @Override
@@ -48,13 +40,6 @@ final class ShortArrayCodec extends AbstractArrayCodec<Short> {
     @Override
     Short doDecodeText(String text) {
         return Short.parseShort(text);
-    }
-
-    @Override
-    boolean doCanDecode(PostgresqlObjectId type, @Nullable Format format) {
-        Assert.requireNonNull(type, "type must not be null");
-
-        return INT2_ARRAY == type;
     }
 
     @Override

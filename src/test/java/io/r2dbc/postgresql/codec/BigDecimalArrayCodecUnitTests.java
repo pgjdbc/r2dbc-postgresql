@@ -107,7 +107,7 @@ final class BigDecimalArrayCodecUnitTests {
     @Test
     void encodeNull() {
         ParameterAssert.assertThat(new BigDecimalArrayCodec(TEST).encodeNull())
-            .isEqualTo(new EncodedParameter(FORMAT_TEXT, NUMERIC_ARRAY.getObjectId(), NULL_VALUE));
+            .isEqualTo(new EncodedParameter(FORMAT_BINARY, NUMERIC_ARRAY.getObjectId(), NULL_VALUE));
     }
 
 }

@@ -20,11 +20,12 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
-import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 
 import java.util.UUID;
 import java.util.function.Supplier;
+
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.UUID_ARRAY;
 
 /**
  * @since 0.8.6
@@ -32,12 +33,7 @@ import java.util.function.Supplier;
 final class UuidArrayCodec extends AbstractArrayCodec<UUID> {
 
     UuidArrayCodec(ByteBufAllocator byteBufAllocator) {
-        super(byteBufAllocator, UUID.class);
-    }
-
-    @Override
-    public EncodedParameter encodeNull() {
-        return createNull(PostgresqlObjectId.UUID_ARRAY, Format.FORMAT_TEXT);
+        super(byteBufAllocator, UUID.class, UUID_ARRAY);
     }
 
     @Override
@@ -51,15 +47,8 @@ final class UuidArrayCodec extends AbstractArrayCodec<UUID> {
     }
 
     @Override
-    boolean doCanDecode(PostgresqlObjectId type, Format format) {
-        Assert.requireNonNull(type, "type must not be null");
-
-        return PostgresqlObjectId.UUID_ARRAY == type;
-    }
-
-    @Override
     EncodedParameter encodeArray(Supplier<ByteBuf> encodedSupplier) {
-        return create(PostgresqlObjectId.UUID_ARRAY, Format.FORMAT_TEXT, encodedSupplier);
+        return create(UUID_ARRAY, Format.FORMAT_TEXT, encodedSupplier);
     }
 
     @Override

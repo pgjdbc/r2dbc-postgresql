@@ -20,28 +20,17 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
-import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 
 import java.math.BigDecimal;
 import java.util.function.Supplier;
 
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.NUMERIC_ARRAY;
+
 final class BigDecimalArrayCodec extends AbstractArrayCodec<BigDecimal> {
 
     public BigDecimalArrayCodec(ByteBufAllocator byteBufAllocator) {
-        super(byteBufAllocator, BigDecimal.class);
-    }
-
-    @Override
-    public EncodedParameter encodeNull() {
-        return createNull(PostgresqlObjectId.NUMERIC_ARRAY, Format.FORMAT_TEXT);
-    }
-
-    @Override
-    boolean doCanDecode(PostgresqlObjectId type, Format format) {
-        Assert.requireNonNull(type, "type must not be null");
-
-        return PostgresqlObjectId.NUMERIC_ARRAY == type;
+        super(byteBufAllocator, BigDecimal.class, NUMERIC_ARRAY);
     }
 
     @Override
@@ -63,7 +52,7 @@ final class BigDecimalArrayCodec extends AbstractArrayCodec<BigDecimal> {
 
     @Override
     EncodedParameter encodeArray(Supplier<ByteBuf> encodedSupplier) {
-        return create(PostgresqlObjectId.NUMERIC_ARRAY, Format.FORMAT_TEXT, encodedSupplier);
+        return create(NUMERIC_ARRAY, Format.FORMAT_TEXT, encodedSupplier);
     }
 
 }

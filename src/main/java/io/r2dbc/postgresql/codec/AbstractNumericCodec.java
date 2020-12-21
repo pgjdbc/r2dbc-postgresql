@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
@@ -26,6 +27,7 @@ import java.util.EnumSet;
 import java.util.Set;
 import java.util.function.Function;
 
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.FLOAT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.FLOAT8;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT2;
@@ -85,6 +87,11 @@ abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> {
     T decodeNumber(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, Class<T> expectedType, Function<Number, T> converter) {
         Number number = NumericDecodeUtils.decodeNumber(buffer, dataType, format);
         return potentiallyConvert(number, expectedType, converter);
+    }
+
+    @Override
+    public EncodedParameter encodeNull() {
+        return createNull(getDefaultType(), FORMAT_BINARY);
     }
 
     /**

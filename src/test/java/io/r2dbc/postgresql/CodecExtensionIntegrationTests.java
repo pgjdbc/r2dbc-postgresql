@@ -134,6 +134,11 @@ final class CodecExtensionIntegrationTests extends AbstractIntegrationTests {
         }
 
         @Override
+        public EncodedParameter encodeNull(int dataType) {
+            return null;
+        }
+
+        @Override
         public Class<?> type() {
             return Json.class;
         }

@@ -172,7 +172,7 @@ final class IntegerArrayCodecUnitTests {
     @Test
     void encodeNull() {
         assertThat(new IntegerArrayCodec(TEST).encodeNull())
-            .isEqualTo(new EncodedParameter(FORMAT_TEXT, INT4_ARRAY.getObjectId(), NULL_VALUE));
+            .isEqualTo(new EncodedParameter(FORMAT_BINARY, INT4_ARRAY.getObjectId(), NULL_VALUE));
     }
 
 }

@@ -108,7 +108,7 @@ final class UuidArrayCodecUnitTests {
     @Test
     void encodeNull() {
         assertThat(new UuidArrayCodec(TEST).encodeNull())
-            .isEqualTo(new EncodedParameter(FORMAT_TEXT, UUID_ARRAY.getObjectId(), NULL_VALUE));
+            .isEqualTo(new EncodedParameter(FORMAT_BINARY, UUID_ARRAY.getObjectId(), NULL_VALUE));
     }
 
 }
