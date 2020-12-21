@@ -20,6 +20,7 @@ import io.r2dbc.postgresql.api.PostgresqlConnection;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.annotation.Nullable;
 
 import java.util.Objects;
 import java.util.StringJoiner;
@@ -93,7 +94,6 @@ public class PostgresTypes {
             .flatMap(it -> it.map((row, rowMetadata) -> {
                 return new PostgresType(row.get("oid", Integer.class), row.get("typname", String.class), row.get("typcategory", String.class));
             }));
-
     }
 
     public static class PostgresType implements PostgresTypeIdentifier {
@@ -104,10 +104,14 @@ public class PostgresTypes {
 
         private final String category;
 
+        @Nullable
+        private final PostgresqlObjectId objectId;
+
         public PostgresType(int oid, String name, String category) {
             this.oid = oid;
             this.name = name;
             this.category = category;
+            this.objectId = PostgresqlObjectId.isValid(oid) ? PostgresqlObjectId.valueOf(oid) : null;
         }
 
         @Override
@@ -121,7 +125,7 @@ public class PostgresTypes {
 
         @Override
         public Class<?> getJavaType() {
-            return Object.class;
+            return this.objectId != null ? this.objectId.getJavaType() : Object.class;
         }
 
         @Override
