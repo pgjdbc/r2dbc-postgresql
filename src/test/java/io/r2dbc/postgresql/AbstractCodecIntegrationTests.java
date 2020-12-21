@@ -30,9 +30,13 @@ import io.r2dbc.postgresql.codec.Lseg;
 import io.r2dbc.postgresql.codec.Path;
 import io.r2dbc.postgresql.codec.Point;
 import io.r2dbc.postgresql.codec.Polygon;
+import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.Clob;
 import io.r2dbc.spi.Connection;
+import io.r2dbc.spi.Parameters;
+import io.r2dbc.spi.R2dbcTypes;
+import io.r2dbc.spi.Type;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 import org.reactivestreams.Publisher;
@@ -104,6 +108,9 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(BigDecimal.class, new BigDecimal("100"), "INT8");
         testCodec(BigDecimal.class, new BigDecimal("100"), "FLOAT4");
         testCodec(BigDecimal.class, new BigDecimal("100"), "FLOAT8");
+        testCodec(BigDecimal.class, new BigDecimal("100"), "NUMERIC", R2dbcTypes.NUMERIC);
+        testCodec(BigDecimal.class, new BigDecimal("100"), "FLOAT8", R2dbcTypes.DOUBLE);
+        testCodec(BigDecimal.class, new BigDecimal("100"), "INT8", R2dbcTypes.BIGINT);
     }
 
     @Test
@@ -221,6 +228,10 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(Double.class, 100.1, "DECIMAL");
         testCodec(Double.class, 100.1, "FLOAT4");
         testCodec(Double.class, 100.1, "FLOAT8");
+
+        testCodec(Double.class, 100.1, "DECIMAL", R2dbcTypes.DECIMAL);
+        testCodec(Double.class, 100.1, "FLOAT4", R2dbcTypes.FLOAT);
+        testCodec(Double.class, 100.1, "FLOAT8", R2dbcTypes.DOUBLE);
     }
 
     @Test
@@ -236,6 +247,10 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(Float.class, 100.1f, "DECIMAL");
         testCodec(Float.class, 100.1f, "FLOAT4");
         testCodec(Float.class, 100.1f, "FLOAT8");
+
+        testCodec(Float.class, 100.1f, "DECIMAL", R2dbcTypes.DECIMAL);
+        testCodec(Float.class, 100.1f, "FLOAT4", R2dbcTypes.FLOAT);
+        testCodec(Float.class, 100.1f, "FLOAT8", R2dbcTypes.DOUBLE);
     }
 
     @Test
@@ -272,6 +287,14 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(Integer.class, 100, "NUMERIC");
         testCodec(Integer.class, 100, "FLOAT4");
         testCodec(Integer.class, 100, "FLOAT8");
+
+        testCodec(Integer.class, 100, "INT2", R2dbcTypes.SMALLINT);
+        testCodec(Integer.class, 100, "INT4", R2dbcTypes.INTEGER);
+        testCodec(Integer.class, 100, "INT8", R2dbcTypes.INTEGER);
+        testCodec(Integer.class, 100, "OID");
+        testCodec(Integer.class, 100, "NUMERIC", R2dbcTypes.NUMERIC);
+        testCodec(Integer.class, 100, "FLOAT4", R2dbcTypes.FLOAT);
+        testCodec(Integer.class, 100, "FLOAT8", R2dbcTypes.DOUBLE);
     }
 
     @Test
@@ -282,6 +305,8 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     @Test
     void json() {
         testCodec(String.class, "{\"hello\": \"world\"}", "JSON", "$1::json");
+
+        testCodec(String.class, "{\"hello\": \"world\"}", "JSON", PostgresqlObjectId.JSON);
 
         testCodec(Json.class, Json.of("{\"hello\": \"world\"}"), (actual, expected) -> assertThat(actual.asString()).isEqualTo(("{\"hello\": \"world\"}")), "JSON");
         testCodec(Json.class, Json.of("{\"hello\": \"world\"}".getBytes()), (actual, expected) -> assertThat(actual.asString()).isEqualTo(("{\"hello\": \"world\"}")), "JSON");
@@ -512,6 +537,10 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(javaType, value, sqlType, "$1");
     }
 
+    private <T> void testCodec(Class<T> javaType, T value, String sqlType, Type parameterType) {
+        testCodec(javaType, value, sqlType, "$1", parameterType);
+    }
+
     private <T> void testCodec(Class<T> javaType, T value, String sqlType, String insertPlaceholder) {
         testCodec(javaType, value, (actual, expected) -> {
 
@@ -525,47 +554,99 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
                 return;
             }
             assertThat(actual).isEqualTo(expected);
-        }, sqlType, insertPlaceholder);
+        }, sqlType, insertPlaceholder, null);
+    }
+
+    private <T> void testCodec(Class<T> javaType, T value, String sqlType, String insertPlaceholder, Type parameterType) {
+        testCodec(javaType, value, (actual, expected) -> {
+
+            if (value instanceof Float) {
+                assertThat((Float) actual).isCloseTo((Float) value, Offset.offset(0.01f));
+                return;
+            }
+
+            if (value instanceof Double) {
+                assertThat((Double) actual).isCloseTo((Double) value, Offset.offset(0.01));
+                return;
+            }
+            assertThat(actual).isEqualTo(expected);
+        }, sqlType, insertPlaceholder, parameterType);
     }
 
     private <T> void testCodec(Class<T> javaType, T value, BiConsumer<T, T> equality, String sqlType) {
-        testCodec(javaType, value, equality, sqlType, "$1");
+        testCodec(javaType, value, equality, sqlType, "$1", null);
     }
 
-    private <T> void testCodec(Class<T> javaType, T value, BiConsumer<T, T> equality, String sqlType, String insertPlaceholder) {
+    private <T> void testCodec(Class<T> javaType, T value, BiConsumer<T, T> equality, String sqlType, String insertPlaceholder, Type parameterType) {
         SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS test");
         SERVER.getJdbcOperations().execute(String.format("CREATE TABLE test ( value %s )", sqlType));
 
         try {
-            this.connectionFactory.create()
-                .flatMapMany(connection -> connection
 
-                    .createStatement("INSERT INTO test VALUES (" + insertPlaceholder + ")")
-                    .bindNull("$1", javaType)
-                    .execute()
+            if (parameterType == null) {
 
-                    .flatMap(PostgresqlResult::getRowsUpdated)
+                this.connectionFactory.create()
+                    .flatMapMany(connection -> connection
 
-                    .concatWith(close(connection)))
-                .as(StepVerifier::create)
-                .expectNext(1)
-                .verifyComplete();
+                        .createStatement("INSERT INTO test VALUES (" + insertPlaceholder + ")")
+                        .bindNull("$1", javaType)
+                        .execute()
 
-            SERVER.getJdbcOperations().execute("DELETE FROM test");
+                        .flatMap(PostgresqlResult::getRowsUpdated)
 
-            this.connectionFactory.create()
-                .flatMapMany(connection -> connection
+                        .concatWith(close(connection)))
+                    .as(StepVerifier::create)
+                    .expectNext(1)
+                    .verifyComplete();
 
-                    .createStatement("INSERT INTO test VALUES (" + insertPlaceholder + ")")
-                    .bind("$1", value)
-                    .execute()
+                SERVER.getJdbcOperations().execute("DELETE FROM test");
 
-                    .flatMap(PostgresqlResult::getRowsUpdated)
+                this.connectionFactory.create()
+                    .flatMapMany(connection -> connection
 
-                    .concatWith(close(connection)))
-                .as(StepVerifier::create)
-                .expectNext(1)
-                .verifyComplete();
+                        .createStatement("INSERT INTO test VALUES (" + insertPlaceholder + ")")
+                        .bind("$1", value)
+                        .execute()
+
+                        .flatMap(PostgresqlResult::getRowsUpdated)
+
+                        .concatWith(close(connection)))
+                    .as(StepVerifier::create)
+                    .expectNext(1)
+                    .verifyComplete();
+            } else {
+
+                this.connectionFactory.create()
+                    .flatMapMany(connection -> connection
+
+                        .createStatement("INSERT INTO test VALUES (" + insertPlaceholder + ")")
+                        .bind("$1", Parameters.in(parameterType)).add()
+                        .bind("$1", Parameters.in(javaType))
+                        .execute()
+
+                        .flatMap(PostgresqlResult::getRowsUpdated)
+
+                        .concatWith(close(connection)))
+                    .as(StepVerifier::create)
+                    .expectNext(1, 1)
+                    .verifyComplete();
+
+                SERVER.getJdbcOperations().execute("DELETE FROM test");
+
+                this.connectionFactory.create()
+                    .flatMapMany(connection -> connection
+
+                        .createStatement("INSERT INTO test VALUES (" + insertPlaceholder + ")")
+                        .bind("$1", Parameters.in(parameterType, value))
+                        .execute()
+
+                        .flatMap(PostgresqlResult::getRowsUpdated)
+
+                        .concatWith(close(connection)))
+                    .as(StepVerifier::create)
+                    .expectNext(1)
+                    .verifyComplete();
+            }
 
             if (value instanceof Buffer) {
                 ((Buffer) value).rewind();
@@ -611,7 +692,7 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
                 return;
             }
             assertThat(actual).isEqualTo(expected);
-        }, sqlType, insertPlaceholder);
+        }, sqlType, insertPlaceholder, null);
     }
 
     private <W, R> void testCodecReadAs(W toWrite, Class<R> javaTypeToRead, R expected, String sqlType) {

@@ -18,22 +18,18 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
-import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT8;
 
 final class LongCodec extends AbstractNumericCodec<Long> {
 
-    private final ByteBufAllocator byteBufAllocator;
 
     LongCodec(ByteBufAllocator byteBufAllocator) {
-        super(Long.class);
-        this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        super(Long.class, byteBufAllocator);
     }
 
     @Override
@@ -42,11 +38,6 @@ final class LongCodec extends AbstractNumericCodec<Long> {
         Assert.requireNonNull(format, "format must not be null");
 
         return decodeNumber(buffer, dataType, format, Long.class, Number::longValue);
-    }
-
-    @Override
-    EncodedParameter doEncode(Long value, PostgresqlObjectId dataType) {
-        return create(FORMAT_BINARY, dataType, () -> this.byteBufAllocator.buffer(8).writeLong(value));
     }
 
     @Override

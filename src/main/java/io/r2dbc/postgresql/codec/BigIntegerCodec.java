@@ -18,26 +18,20 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
-import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.NUMERIC;
 
 final class BigIntegerCodec extends AbstractNumericCodec<BigInteger> {
 
-    private final ByteBufAllocator byteBufAllocator;
-
     public BigIntegerCodec(ByteBufAllocator byteBufAllocator) {
-        super(BigInteger.class);
-        this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        super(BigInteger.class, byteBufAllocator);
     }
 
     @Override
@@ -47,13 +41,6 @@ final class BigIntegerCodec extends AbstractNumericCodec<BigInteger> {
         return this.decodeNumber(buffer, dataType, format, BigInteger.class, it -> {
             return it instanceof BigDecimal ? ((BigDecimal) it).toBigInteger() : BigInteger.valueOf(it.longValue());
         });
-    }
-
-    @Override
-    EncodedParameter doEncode(BigInteger value, PostgresqlObjectId dataType) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return create(FORMAT_TEXT, dataType, () -> ByteBufUtils.encode(this.byteBufAllocator, value.toString()));
     }
 
     @Override

@@ -18,22 +18,17 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
-import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.FLOAT4;
 
 final class FloatCodec extends AbstractNumericCodec<Float> {
 
-    private final ByteBufAllocator byteBufAllocator;
-
     FloatCodec(ByteBufAllocator byteBufAllocator) {
-        super(Float.class);
-        this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        super(Float.class, byteBufAllocator);
     }
 
     @Override
@@ -42,11 +37,6 @@ final class FloatCodec extends AbstractNumericCodec<Float> {
         Assert.requireNonNull(format, "format must not be null");
 
         return decodeNumber(buffer, dataType, format, Float.class, Number::floatValue);
-    }
-
-    @Override
-    EncodedParameter doEncode(Float value, PostgresqlObjectId dataType) {
-        return create(FORMAT_BINARY, dataType, () -> this.byteBufAllocator.buffer(4).writeFloat(value));
     }
 
     @Override

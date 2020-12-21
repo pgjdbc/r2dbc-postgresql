@@ -22,8 +22,10 @@ import io.r2dbc.spi.R2dbcTypes;
 /**
  * Object IDs for well know PostgreSQL data types.
  * <p>Extension Object IDs that are provided by Postgres extensions such as PostGIS are not constants of this enumeration and must be looked up from {@code pg_type}.
+ * <p>
+ * Lightweight {@link PostgresTypeIdentifier} identifier returning {@code Object.class} when calling {@link #getJavaType()}.
  */
-public enum PostgresqlObjectId {
+public enum PostgresqlObjectId implements PostgresTypeIdentifier {
 
     /**
      * The bit object id.
@@ -503,11 +505,22 @@ public enum PostgresqlObjectId {
         throw new UnsupportedOperationException("Type " + type + " not supported");
     }
 
+    @Override
+    public Class<?> getJavaType() {
+        return Object.class;
+    }
+
+    @Override
+    public String getName() {
+        return name();
+    }
+
     /**
      * Returns the object id represented by each return value.
      *
      * @return the object id represented by each return value
      */
+    @Override
     public int getObjectId() {
         return this.objectId;
     }

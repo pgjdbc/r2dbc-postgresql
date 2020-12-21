@@ -20,6 +20,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
+import io.r2dbc.postgresql.type.PostgresTypeIdentifier;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Parameter;
@@ -175,24 +176,30 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
             Parameter parameter = (Parameter) value;
             parameterValue = parameter.getValue();
 
-            if (parameter.getType() instanceof Type.InferredType) {
+            if (parameter.getType() instanceof Type.InferredType && parameterValue == null) {
+                return encodeNull(parameter.getType().getJavaType());
+            }
 
-                if (parameterValue == null) {
-                    throw new IllegalArgumentException("Cannot encode null values using type inference");
-                }
-
-            } else if (parameter.getType() instanceof R2dbcTypes) {
+            if (parameter.getType() instanceof R2dbcTypes) {
 
                 PostgresqlObjectId targetType = PostgresqlObjectId.valueOf((R2dbcTypes) parameter.getType());
                 dataType = targetType.getObjectId();
+            }
+
+            if (parameter.getType() instanceof PostgresTypeIdentifier) {
+                dataType = ((PostgresTypeIdentifier) parameter.getType()).getObjectId();
             }
         }
 
         if (dataType == -1) {
 
+            if (parameterValue == null) {
+                throw new IllegalArgumentException(String.format("Cannot encode null value %s using type inference", value));
+            }
+
             for (Codec<?> codec : this.codecs) {
-                if (codec.canEncode(value)) {
-                    return codec.encode(value);
+                if (codec.canEncode(parameterValue)) {
+                    return codec.encode(parameterValue);
                 }
             }
         } else {
@@ -203,14 +210,14 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
 
                 for (Codec<?> codec : this.codecs) {
 
-                    if (codec.canEncode(value)) {
-                        return codec.encode(value, dataType);
+                    if (codec.canEncode(parameterValue)) {
+                        return codec.encode(parameterValue, dataType);
                     }
                 }
             }
         }
 
-        throw new IllegalArgumentException(String.format("Cannot encode parameter of type %s", value.getClass().getName()));
+        throw new IllegalArgumentException(String.format("Cannot encode parameter of type %s (%s)", value.getClass().getName(), parameterValue));
     }
 
     @Override

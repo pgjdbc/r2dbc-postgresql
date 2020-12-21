@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.codec;
 
 import io.r2dbc.postgresql.api.PostgresqlConnection;
+import io.r2dbc.postgresql.type.PostgresTypeIdentifier;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -96,7 +97,7 @@ public class PostgresTypes {
 
     }
 
-    public static class PostgresType {
+    public static class PostgresType implements PostgresTypeIdentifier {
 
         private final int oid;
 
@@ -110,10 +111,21 @@ public class PostgresTypes {
             this.category = category;
         }
 
+        @Override
+        public int getObjectId() {
+            return getOid();
+        }
+
         public int getOid() {
             return this.oid;
         }
 
+        @Override
+        public Class<?> getJavaType() {
+            return Object.class;
+        }
+
+        @Override
         public String getName() {
             return this.name;
         }

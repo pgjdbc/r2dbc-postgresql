@@ -17,10 +17,12 @@
 package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
+import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
 import java.util.EnumSet;
@@ -28,6 +30,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.FLOAT4;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.FLOAT8;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT2;
@@ -45,13 +48,11 @@ abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> {
 
     private static final Set<PostgresqlObjectId> SUPPORTED_TYPES = EnumSet.of(INT2, INT4, INT8, FLOAT4, FLOAT8, NUMERIC, OID);
 
-    /**
-     * Create a new {@link AbstractCodec}.
-     *
-     * @param type the type handled by this codec
-     */
-    AbstractNumericCodec(Class<T> type) {
+    private final ByteBufAllocator byteBufAllocator;
+
+    AbstractNumericCodec(Class<T> type, ByteBufAllocator byteBufAllocator) {
         super(type);
+        this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
     }
 
     @Override
@@ -79,6 +80,40 @@ abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> {
         Assert.requireNonNull(value, "value must not be null");
 
         return doEncode(value, getDefaultType());
+    }
+
+    EncodedParameter doEncode(T value, PostgresqlObjectId dataType) {
+        Assert.requireNonNull(value, "value must not be null");
+
+        if (dataType == NUMERIC) {
+            return create(FORMAT_TEXT, dataType, () -> ByteBufUtils.encode(this.byteBufAllocator, value.toString()));
+        }
+
+        return create(FORMAT_BINARY, dataType, () -> doEncodeNumber(value, dataType));
+    }
+
+    private ByteBuf doEncodeNumber(Number value, PostgresqlObjectId dataType) {
+
+        switch (dataType) {
+
+            case FLOAT8:
+                return this.byteBufAllocator.buffer(8).writeDouble(value.doubleValue());
+
+            case FLOAT4:
+                return this.byteBufAllocator.buffer(4).writeFloat(value.floatValue());
+
+            case INT8:
+                return this.byteBufAllocator.buffer(8).writeLong(value.longValue());
+
+            case INT4:
+                return this.byteBufAllocator.buffer(4).writeInt(value.intValue());
+
+            case INT2:
+                return this.byteBufAllocator.buffer(4).writeShort(value.shortValue());
+        }
+
+        throw new IllegalArgumentException(String.format("Cannot encode %s to %s", value, dataType));
+
     }
 
     /**

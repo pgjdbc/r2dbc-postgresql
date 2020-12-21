@@ -35,7 +35,7 @@ final class BigDecimalCodec extends AbstractNumericCodec<BigDecimal> {
     private final ByteBufAllocator byteBufAllocator;
 
     BigDecimalCodec(ByteBufAllocator byteBufAllocator) {
-        super(BigDecimal.class);
+        super(BigDecimal.class, byteBufAllocator);
         this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
     }
 
