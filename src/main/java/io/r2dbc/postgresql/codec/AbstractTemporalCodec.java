@@ -99,6 +99,11 @@ abstract class AbstractTemporalCodec<T extends Temporal> extends AbstractCodec<T
     }
 
     @Override
+    EncodedParameter doEncode(T value) {
+        return doEncode(value, getDefaultType());
+    }
+
+    @Override
     public EncodedParameter encodeNull() {
 
         PostgresqlObjectId defaultType = getDefaultType();

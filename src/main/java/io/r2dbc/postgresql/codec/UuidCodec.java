@@ -40,10 +40,15 @@ final class UuidCodec extends AbstractCodec<UUID> {
     }
 
     @Override
-    public EncodedParameter doEncode(UUID value) {
+    EncodedParameter doEncode(UUID value) {
+        return doEncode(value, PostgresqlObjectId.UUID);
+    }
+
+    @Override
+    public EncodedParameter doEncode(UUID value, PostgresqlObjectId dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return create(PostgresqlObjectId.UUID, FORMAT_TEXT, () -> ByteBufUtils.encode(this.byteBufAllocator, value.toString()));
+        return create(dataType, FORMAT_TEXT, () -> ByteBufUtils.encode(this.byteBufAllocator, value.toString()));
     }
 
     @Override

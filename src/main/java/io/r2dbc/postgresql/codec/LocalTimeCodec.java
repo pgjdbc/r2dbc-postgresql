@@ -56,10 +56,10 @@ final class LocalTimeCodec extends AbstractTemporalCodec<LocalTime> {
     }
 
     @Override
-    EncodedParameter doEncode(LocalTime value) {
+    EncodedParameter doEncode(LocalTime value, PostgresqlObjectId dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return create(TIME, FORMAT_TEXT, () -> ByteBufUtils.encode(this.byteBufAllocator, value.toString()));
+        return create(dataType, FORMAT_TEXT, () -> ByteBufUtils.encode(this.byteBufAllocator, value.toString()));
     }
 
     @Override

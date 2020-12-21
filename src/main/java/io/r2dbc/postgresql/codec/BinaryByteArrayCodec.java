@@ -25,7 +25,6 @@ import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.BYTEA;
 
 final class BinaryByteArrayCodec extends AbstractBinaryCodec<byte[]> {
 
@@ -39,10 +38,10 @@ final class BinaryByteArrayCodec extends AbstractBinaryCodec<byte[]> {
     }
 
     @Override
-    EncodedParameter doEncode(byte[] value) {
+    EncodedParameter doEncode(byte[] value, PostgresqlObjectId dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return create(BYTEA, FORMAT_TEXT, () -> encodeToHex(Unpooled.wrappedBuffer(value)));
+        return create(dataType, FORMAT_TEXT, () -> encodeToHex(Unpooled.wrappedBuffer(value)));
     }
 
 }

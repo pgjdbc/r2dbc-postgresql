@@ -43,9 +43,14 @@ final class JsonByteBufCodec extends AbstractJsonCodec<ByteBuf> {
 
     @Override
     EncodedParameter doEncode(ByteBuf value) {
+        return doEncode(value, JSONB);
+    }
+
+    @Override
+    EncodedParameter doEncode(ByteBuf value, PostgresqlObjectId dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return create(JSONB, FORMAT_BINARY, () -> {
+        return create(dataType, FORMAT_BINARY, () -> {
             try {
                 return this.byteBufAllocator.buffer(value.readByte() + 1).writeByte(1).writeBytes(value);
             } finally {

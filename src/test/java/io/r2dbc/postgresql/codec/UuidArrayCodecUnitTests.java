@@ -88,7 +88,7 @@ final class UuidArrayCodecUnitTests {
 
     @Test
     void encodeArray() {
-        assertThat(new UuidArrayCodec(TEST).encodeArray(() -> encode(TEST, parms)))
+        assertThat(new UuidArrayCodec(TEST).encodeArray(() -> encode(TEST, parms), UUID_ARRAY))
             .hasFormat(FORMAT_TEXT)
             .hasType(UUID_ARRAY.getObjectId())
             .hasValue(encode(TEST, parms));

@@ -45,10 +45,8 @@ final class ShortCodec extends AbstractNumericCodec<Short> {
     }
 
     @Override
-    EncodedParameter doEncode(Short value) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return create(INT2, FORMAT_BINARY, () -> this.byteBufAllocator.buffer(2).writeShort(value));
+    EncodedParameter doEncode(Short value, PostgresqlObjectId dataType) {
+        return create(dataType, FORMAT_BINARY, () -> this.byteBufAllocator.buffer(2).writeShort(value));
     }
 
     @Override

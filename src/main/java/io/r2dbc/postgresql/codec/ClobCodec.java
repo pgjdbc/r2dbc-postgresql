@@ -63,9 +63,14 @@ final class ClobCodec extends AbstractCodec<Clob> {
 
     @Override
     EncodedParameter doEncode(Clob value) {
+        return doEncode(value, VARCHAR);
+    }
+
+    @Override
+    EncodedParameter doEncode(Clob value, PostgresqlObjectId dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return create(VARCHAR, FORMAT_TEXT,
+        return create(dataType, FORMAT_TEXT,
             Flux.from(value.stream())
                 .reduce(new StringBuilder(), StringBuilder::append)
                 .map(sb -> ByteBufUtils.encode(this.byteBufAllocator, sb.toString()))

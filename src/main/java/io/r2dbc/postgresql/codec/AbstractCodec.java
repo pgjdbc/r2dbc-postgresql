@@ -91,6 +91,14 @@ abstract class AbstractCodec<T> implements Codec<T> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
+    public EncodedParameter encode(Object value, int dataType) {
+        Assert.requireNonNull(value, "value must not be null");
+
+        return doEncode((T) value, PostgresqlObjectId.valueOf(dataType));
+    }
+
+    @Override
     public EncodedParameter encodeNull(int dataType) {
         return new EncodedParameter(Format.FORMAT_BINARY, dataType, NULL_VALUE);
     }
@@ -111,6 +119,7 @@ abstract class AbstractCodec<T> implements Codec<T> {
      * leaks
      */
     static EncodedParameter create(PostgresqlObjectId type, Format format, Publisher<? extends ByteBuf> value) {
+        Assert.requireNonNull(type, "type must not be null");
         return new EncodedParameter(format, type.getObjectId(), value);
     }
 
@@ -123,6 +132,7 @@ abstract class AbstractCodec<T> implements Codec<T> {
      * @return the encoded  {@link EncodedParameter}
      */
     static EncodedParameter create(PostgresqlObjectId type, Format format, Supplier<? extends ByteBuf> bufferSupplier) {
+        Assert.requireNonNull(type, "type must not be null");
         return new EncodedParameter(format, type.getObjectId(), Mono.fromSupplier(bufferSupplier));
     }
 
@@ -162,6 +172,14 @@ abstract class AbstractCodec<T> implements Codec<T> {
      * @return the encoded value
      */
     abstract EncodedParameter doEncode(T value);
+
+    /**
+     * @param value    the  {@code value}
+     * @param dataType the Postgres OID to encode
+     * @return the encoded value
+     * @since 0.9
+     */
+    abstract EncodedParameter doEncode(T value, PostgresqlObjectId dataType);
 
     boolean isTypeAssignable(Class<?> type) {
         Assert.requireNonNull(type, "type must not be null");

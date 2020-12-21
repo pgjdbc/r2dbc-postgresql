@@ -92,7 +92,7 @@ final class ShortArrayCodecUnitTests {
 
     @Test
     void encodeArray() {
-        assertThat(new ShortArrayCodec(TEST).encodeArray(() -> encode(TEST, "{100,200}")))
+        assertThat(new ShortArrayCodec(TEST).encodeArray(() -> encode(TEST, "{100,200}"), INT2_ARRAY))
             .hasFormat(FORMAT_TEXT)
             .hasType(INT2_ARRAY.getObjectId())
             .hasValue(encode(TEST, "{100,200}"));

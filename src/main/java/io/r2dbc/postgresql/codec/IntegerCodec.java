@@ -45,10 +45,8 @@ final class IntegerCodec extends AbstractNumericCodec<Integer> {
     }
 
     @Override
-    EncodedParameter doEncode(Integer value) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return create(INT4, FORMAT_BINARY, () -> this.byteBufAllocator.buffer(4).writeInt(value));
+    EncodedParameter doEncode(Integer value, PostgresqlObjectId dataType) {
+        return create(dataType, FORMAT_BINARY, () -> this.byteBufAllocator.buffer(4).writeInt(value));
     }
 
     @Override

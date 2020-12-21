@@ -46,6 +46,13 @@ final class UrlCodec extends AbstractCodec<URL> {
     }
 
     @Override
+    public EncodedParameter doEncode(URL value, PostgresqlObjectId dataType) {
+        Assert.requireNonNull(value, "value must not be null");
+
+        return this.delegate.doEncode(value.toString(), dataType);
+    }
+
+    @Override
     public EncodedParameter encodeNull() {
         return this.delegate.encodeNull();
     }

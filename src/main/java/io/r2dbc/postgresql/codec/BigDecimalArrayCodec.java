@@ -20,6 +20,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
+import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 
 import java.math.BigDecimal;
@@ -51,8 +52,8 @@ final class BigDecimalArrayCodec extends AbstractArrayCodec<BigDecimal> {
     }
 
     @Override
-    EncodedParameter encodeArray(Supplier<ByteBuf> encodedSupplier) {
-        return create(NUMERIC_ARRAY, Format.FORMAT_TEXT, encodedSupplier);
+    EncodedParameter encodeArray(Supplier<ByteBuf> encodedSupplier, PostgresqlObjectId dataType) {
+        return create(dataType, Format.FORMAT_TEXT, encodedSupplier);
     }
 
 }

@@ -64,4 +64,11 @@ final class ZoneIdCodec extends AbstractCodec<ZoneId> {
         return this.delegate.doEncode(value.getId());
     }
 
+    @Override
+    EncodedParameter doEncode(ZoneId value, PostgresqlObjectId dataType) {
+        Assert.requireNonNull(value, "value must not be null");
+
+        return this.delegate.doEncode(value.getId(), dataType);
+    }
+
 }

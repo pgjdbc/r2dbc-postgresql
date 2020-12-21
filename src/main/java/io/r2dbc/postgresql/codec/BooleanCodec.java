@@ -69,9 +69,14 @@ final class BooleanCodec extends AbstractCodec<Boolean> {
 
     @Override
     EncodedParameter doEncode(Boolean value) {
+        return doEncode(value, BOOL);
+    }
+
+    @Override
+    EncodedParameter doEncode(Boolean value, PostgresqlObjectId dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return create(BOOL, FORMAT_TEXT, () -> ByteBufUtils.encode(this.byteBufAllocator, value ? "TRUE" : "FALSE"));
+        return create(dataType, FORMAT_TEXT, () -> ByteBufUtils.encode(this.byteBufAllocator, value ? "TRUE" : "FALSE"));
     }
 
 }

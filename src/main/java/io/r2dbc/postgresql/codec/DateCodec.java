@@ -64,7 +64,18 @@ final class DateCodec extends AbstractCodec<Date> {
     EncodedParameter doEncode(Date value) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return this.delegate.doEncode(value.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+        return this.delegate.doEncode(normalize(value));
+    }
+
+    @Override
+    EncodedParameter doEncode(Date value, PostgresqlObjectId dataType) {
+        Assert.requireNonNull(value, "value must not be null");
+
+        return this.delegate.doEncode(normalize(value), dataType);
+    }
+
+    private static LocalDateTime normalize(Date value) {
+        return value.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
     }
 
 }

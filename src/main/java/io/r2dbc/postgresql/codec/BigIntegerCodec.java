@@ -31,7 +31,7 @@ import java.math.BigInteger;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.NUMERIC;
 
-public class BigIntegerCodec extends AbstractNumericCodec<BigInteger> {
+final class BigIntegerCodec extends AbstractNumericCodec<BigInteger> {
 
     private final ByteBufAllocator byteBufAllocator;
 
@@ -50,10 +50,10 @@ public class BigIntegerCodec extends AbstractNumericCodec<BigInteger> {
     }
 
     @Override
-    EncodedParameter doEncode(BigInteger value) {
+    EncodedParameter doEncode(BigInteger value, PostgresqlObjectId dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return create(NUMERIC, FORMAT_TEXT, () -> ByteBufUtils.encode(this.byteBufAllocator, value.toString()));
+        return create(dataType, FORMAT_TEXT, () -> ByteBufUtils.encode(this.byteBufAllocator, value.toString()));
     }
 
     @Override

@@ -89,10 +89,15 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
 
     @Override
     public EncodedParameter encode(Object value) {
+        return encode(value, this.oid);
+    }
+
+    @Override
+    public EncodedParameter encode(Object value, int dataType) {
 
         Assert.requireNonNull(value, "value must not be null");
 
-        return new EncodedParameter(FORMAT_TEXT, this.oid, Mono.fromSupplier(() -> ByteBufUtils.encode(this.byteBufAllocator, this.type.cast(value).name())));
+        return new EncodedParameter(FORMAT_TEXT, dataType, Mono.fromSupplier(() -> ByteBufUtils.encode(this.byteBufAllocator, this.type.cast(value).name())));
     }
 
     @Override

@@ -191,10 +191,15 @@ final class HStoreCodec implements Codec<Map> {
 
     @Override
     public EncodedParameter encode(Object value) {
+        return encode(value, this.oid);
+    }
+
+    @Override
+    public EncodedParameter encode(Object value, int dataType) {
         Assert.requireNonNull(value, "value must not be null");
         Map<?, ?> map = (Map<?, ?>) value;
 
-        return new EncodedParameter(Format.FORMAT_BINARY, this.oid, Mono.fromSupplier(() -> {
+        return new EncodedParameter(Format.FORMAT_BINARY, dataType, Mono.fromSupplier(() -> {
             ByteBuf buffer = this.byteBufAllocator.buffer(4 + 10 * map.size());
             buffer.writeInt(map.size());
 

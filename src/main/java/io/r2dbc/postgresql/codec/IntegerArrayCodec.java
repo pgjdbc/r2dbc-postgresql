@@ -19,6 +19,7 @@ package io.r2dbc.postgresql.codec;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.EncodedParameter;
+import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 
 import java.util.function.Supplier;
@@ -43,8 +44,8 @@ final class IntegerArrayCodec extends AbstractArrayCodec<Integer> {
     }
 
     @Override
-    EncodedParameter encodeArray(Supplier<ByteBuf> encodedSupplier) {
-        return create(INT4_ARRAY, FORMAT_TEXT, encodedSupplier);
+    EncodedParameter encodeArray(Supplier<ByteBuf> encodedSupplier, PostgresqlObjectId dataType) {
+        return create(dataType, FORMAT_TEXT, encodedSupplier);
     }
 
     @Override

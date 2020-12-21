@@ -74,6 +74,13 @@ abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> {
         return SUPPORTED_TYPES.contains(type);
     }
 
+    @Override
+    EncodedParameter doEncode(T value) {
+        Assert.requireNonNull(value, "value must not be null");
+
+        return doEncode(value, getDefaultType());
+    }
+
     /**
      * Decode {@code buffer} to {@link Number} and potentially convert it to {@link Class expectedType} using {@link Function converter} if the decoded type does not match {@code expectedType}.
      *

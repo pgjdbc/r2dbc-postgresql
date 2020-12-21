@@ -20,7 +20,11 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
+import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
+import io.r2dbc.spi.Parameter;
+import io.r2dbc.spi.R2dbcTypes;
+import io.r2dbc.spi.Type;
 import reactor.util.annotation.Nullable;
 
 import java.util.ArrayList;
@@ -28,6 +32,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+
+import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 
 /**
  * The default {@link Codec} implementation.  Delegates to type-specific codec implementations.
@@ -161,9 +167,46 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
     public EncodedParameter encode(Object value) {
         Assert.requireNonNull(value, "value must not be null");
 
-        for (Codec<?> codec : this.codecs) {
-            if (codec.canEncode(value)) {
-                return codec.encode(value);
+        int dataType = -1;
+        Object parameterValue = value;
+
+        if (value instanceof Parameter) {
+
+            Parameter parameter = (Parameter) value;
+            parameterValue = parameter.getValue();
+
+            if (parameter.getType() instanceof Type.InferredType) {
+
+                if (parameterValue == null) {
+                    throw new IllegalArgumentException("Cannot encode null values using type inference");
+                }
+
+            } else if (parameter.getType() instanceof R2dbcTypes) {
+
+                PostgresqlObjectId targetType = PostgresqlObjectId.valueOf((R2dbcTypes) parameter.getType());
+                dataType = targetType.getObjectId();
+            }
+        }
+
+        if (dataType == -1) {
+
+            for (Codec<?> codec : this.codecs) {
+                if (codec.canEncode(value)) {
+                    return codec.encode(value);
+                }
+            }
+        } else {
+
+            if (parameterValue == null) {
+                return new EncodedParameter(Format.FORMAT_BINARY, dataType, NULL_VALUE);
+            } else {
+
+                for (Codec<?> codec : this.codecs) {
+
+                    if (codec.canEncode(value)) {
+                        return codec.encode(value, dataType);
+                    }
+                }
             }
         }
 

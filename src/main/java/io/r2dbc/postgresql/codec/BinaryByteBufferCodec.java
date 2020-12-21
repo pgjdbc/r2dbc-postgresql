@@ -22,12 +22,10 @@ import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
-import io.r2dbc.postgresql.util.Assert;
 
 import java.nio.ByteBuffer;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.BYTEA;
 
 final class BinaryByteBufferCodec extends AbstractBinaryCodec<ByteBuffer> {
 
@@ -41,10 +39,8 @@ final class BinaryByteBufferCodec extends AbstractBinaryCodec<ByteBuffer> {
     }
 
     @Override
-    EncodedParameter doEncode(ByteBuffer value) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return create(BYTEA, FORMAT_TEXT, () -> encodeToHex(Unpooled.wrappedBuffer(value)));
+    EncodedParameter doEncode(ByteBuffer value, PostgresqlObjectId dataType) {
+        return create(dataType, FORMAT_TEXT, () -> encodeToHex(Unpooled.wrappedBuffer(value)));
     }
 
 }

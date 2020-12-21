@@ -64,9 +64,14 @@ final class BlobCodec extends AbstractCodec<Blob> {
 
     @Override
     EncodedParameter doEncode(Blob value) {
+        return doEncode(value, BYTEA);
+    }
+
+    @Override
+    EncodedParameter doEncode(Blob value, PostgresqlObjectId dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return create(BYTEA, FORMAT_TEXT,
+        return create(dataType, FORMAT_TEXT,
             Flux.from(value.stream())
                 .reduce(this.byteBufAllocator.compositeBuffer(), (a, b) -> a.addComponent(true, Unpooled.wrappedBuffer(b)))
                 .map(it -> AbstractBinaryCodec.encodeToHex(it, this.byteBufAllocator))

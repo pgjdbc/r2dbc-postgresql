@@ -45,10 +45,8 @@ final class LongCodec extends AbstractNumericCodec<Long> {
     }
 
     @Override
-    EncodedParameter doEncode(Long value) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return create(INT8, FORMAT_BINARY, () -> this.byteBufAllocator.buffer(8).writeLong(value));
+    EncodedParameter doEncode(Long value, PostgresqlObjectId dataType) {
+        return create(dataType, FORMAT_BINARY, () -> this.byteBufAllocator.buffer(8).writeLong(value));
     }
 
     @Override

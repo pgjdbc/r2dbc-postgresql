@@ -26,7 +26,6 @@ import io.r2dbc.postgresql.util.Assert;
 import java.nio.ByteBuffer;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.JSON;
 
 final class JsonByteBufferCodec extends AbstractJsonCodec<ByteBuffer> {
 
@@ -48,10 +47,10 @@ final class JsonByteBufferCodec extends AbstractJsonCodec<ByteBuffer> {
     }
 
     @Override
-    EncodedParameter doEncode(ByteBuffer value) {
+    EncodedParameter doEncode(ByteBuffer value, PostgresqlObjectId dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return create(JSON, FORMAT_TEXT, () -> this.byteBufAllocator.buffer(value.remaining()).writeBytes(value));
+        return create(dataType, FORMAT_TEXT, () -> this.byteBufAllocator.buffer(value.remaining()).writeBytes(value));
     }
 
 }

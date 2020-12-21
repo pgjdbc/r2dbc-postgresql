@@ -62,4 +62,11 @@ final class CharacterCodec extends AbstractCodec<Character> {
         return this.delegate.doEncode(value.toString());
     }
 
+    @Override
+    EncodedParameter doEncode(Character value, PostgresqlObjectId dataType) {
+        Assert.requireNonNull(value, "value must not be null");
+
+        return this.delegate.doEncode(value.toString(), dataType);
+    }
+
 }

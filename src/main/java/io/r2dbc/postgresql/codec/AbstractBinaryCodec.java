@@ -62,6 +62,13 @@ abstract class AbstractBinaryCodec<T> extends AbstractCodec<T> {
         return BYTEA == type;
     }
 
+    @Override
+    EncodedParameter doEncode(T value) {
+        Assert.requireNonNull(value, "value must not be null");
+
+        return doEncode(value, BYTEA);
+    }
+
     byte[] decode(Format format, ByteBuf byteBuf) {
         if (format == FORMAT_TEXT) {
             return decodeFromHex(byteBuf);

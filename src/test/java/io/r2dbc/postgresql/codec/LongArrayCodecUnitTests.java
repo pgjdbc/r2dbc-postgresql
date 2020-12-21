@@ -78,7 +78,7 @@ final class LongArrayCodecUnitTests {
 
     @Test
     void encodeArray() {
-        assertThat(new LongArrayCodec(TEST).encodeArray(() -> encode(TEST, "{100,200}")))
+        assertThat(new LongArrayCodec(TEST).encodeArray(() -> encode(TEST, "{100,200}"), INT8_ARRAY))
             .hasFormat(FORMAT_TEXT)
             .hasType(INT8_ARRAY.getObjectId())
             .hasValue(encode(TEST, "{100,200}"));

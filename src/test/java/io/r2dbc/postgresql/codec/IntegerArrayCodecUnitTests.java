@@ -152,7 +152,7 @@ final class IntegerArrayCodecUnitTests {
 
     @Test
     void encodeArray() {
-        assertThat(new IntegerArrayCodec(TEST).encodeArray(() -> encode(TEST, "{100,200}")))
+        assertThat(new IntegerArrayCodec(TEST).encodeArray(() -> encode(TEST, "{100,200}"), INT4_ARRAY))
             .hasFormat(FORMAT_TEXT)
             .hasType(INT4_ARRAY.getObjectId())
             .hasValue(encode(TEST, "{100,200}"));

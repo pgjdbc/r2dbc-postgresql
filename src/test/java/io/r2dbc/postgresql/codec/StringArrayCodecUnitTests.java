@@ -106,7 +106,7 @@ final class StringArrayCodecUnitTests {
 
     @Test
     void encodeArray() {
-        assertThat(new StringArrayCodec(TEST).encodeArray(() -> encode(TEST, "{alpha,bravo}")))
+        assertThat(new StringArrayCodec(TEST).encodeArray(() -> encode(TEST, "{alpha,bravo}"), TEXT_ARRAY))
             .hasFormat(FORMAT_TEXT)
             .hasType(TEXT_ARRAY.getObjectId())
             .hasValue(encode(TEST, "{alpha,bravo}"));

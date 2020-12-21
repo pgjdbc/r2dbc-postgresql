@@ -64,9 +64,14 @@ final class StringCodec extends AbstractCodec<String> {
 
     @Override
     EncodedParameter doEncode(String value) {
+        return doEncode(value, VARCHAR);
+    }
+
+    @Override
+    EncodedParameter doEncode(String value, PostgresqlObjectId dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return create(VARCHAR, FORMAT_TEXT, () -> ByteBufUtils.encode(this.byteBufAllocator, value));
+        return create(dataType, FORMAT_TEXT, () -> ByteBufUtils.encode(this.byteBufAllocator, value));
     }
 
 }

@@ -16,6 +16,9 @@
 
 package io.r2dbc.postgresql.type;
 
+import io.r2dbc.postgresql.util.Assert;
+import io.r2dbc.spi.R2dbcTypes;
+
 /**
  * Object IDs for well know PostgreSQL data types.
  * <p>Extension Object IDs that are provided by Postgres extensions such as PostGIS are not constants of this enumeration and must be looked up from {@code pg_type}.
@@ -435,6 +438,69 @@ public enum PostgresqlObjectId {
             }
         }
         throw new IllegalArgumentException(String.format("%d is not a valid object id", objectId));
+    }
+
+    /**
+     * Returns the {@link PostgresqlObjectId} matching a given {@link R2dbcTypes R2DBC type}.
+     *
+     * @param type the R2DBC type
+     * @return the {@link PostgresqlObjectId}
+     * @throws IllegalArgumentException      if {@code type} is {@code null}
+     * @throws UnsupportedOperationException if the given {@code type} is not supported
+     * @since 0.9
+     */
+    public static PostgresqlObjectId valueOf(R2dbcTypes type) {
+
+        Assert.requireNonNull(type, "type must not be null");
+
+        switch (type) {
+
+            case NCHAR:
+            case CHAR:
+                return CHAR;
+            case NVARCHAR:
+            case VARCHAR:
+                return VARCHAR;
+            case CLOB:
+            case NCLOB:
+                return TEXT;
+            case BOOLEAN:
+                return BOOL;
+            case BINARY:
+            case VARBINARY:
+            case BLOB:
+                return BYTEA;
+            case INTEGER:
+                return INT4;
+            case TINYINT:
+                return BIT;
+            case SMALLINT:
+                return INT2;
+            case BIGINT:
+                return INT8;
+            case NUMERIC:
+            case DECIMAL:
+                return NUMERIC;
+            case FLOAT:
+            case REAL:
+                return FLOAT4;
+            case DOUBLE:
+                return FLOAT8;
+            case DATE:
+                return DATE;
+            case TIME:
+                return TIME;
+            case TIME_WITH_TIME_ZONE:
+                return TIMETZ;
+            case TIMESTAMP:
+                return TIMESTAMP;
+            case TIMESTAMP_WITH_TIME_ZONE:
+                return TIMESTAMPTZ;
+            case COLLECTION:
+                throw new UnsupportedOperationException("Raw collection (without component type) is not supported");
+        }
+
+        throw new UnsupportedOperationException("Type " + type + " not supported");
     }
 
     /**

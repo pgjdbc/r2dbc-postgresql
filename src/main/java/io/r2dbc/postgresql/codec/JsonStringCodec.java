@@ -43,9 +43,14 @@ final class JsonStringCodec extends AbstractJsonCodec<String> {
 
     @Override
     EncodedParameter doEncode(String value) {
+        return doEncode(value, JSON);
+    }
+
+    @Override
+    EncodedParameter doEncode(String value, PostgresqlObjectId dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return create(JSON, FORMAT_TEXT, () -> ByteBufUtils.encode(this.byteBufAllocator, value));
+        return create(dataType, FORMAT_TEXT, () -> ByteBufUtils.encode(this.byteBufAllocator, value));
     }
 
 }

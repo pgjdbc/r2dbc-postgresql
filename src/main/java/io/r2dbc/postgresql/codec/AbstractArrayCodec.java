@@ -141,22 +141,28 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
 
     @Override
     final EncodedParameter doEncode(Object[] value) {
+        return doEncode(value, this.oid);
+    }
+
+    @Override
+    EncodedParameter doEncode(Object[] value, PostgresqlObjectId dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
         return encodeArray(() -> {
             ByteBuf byteBuf = this.byteBufAllocator.buffer();
             encodeAsText(byteBuf, value, this::doEncodeText);
             return byteBuf;
-        });
+        }, dataType);
     }
 
     /**
      * Create the encoded array representation.
      *
-     * @param encodedSupplier supplies the
+     * @param encodedSupplier supplies the encoded buffers
+     * @param dataType        the Postgres data type
      * @return encoded {@link EncodedParameter} item
      */
-    abstract EncodedParameter encodeArray(Supplier<ByteBuf> encodedSupplier);
+    abstract EncodedParameter encodeArray(Supplier<ByteBuf> encodedSupplier, PostgresqlObjectId dataType);
 
     /**
      * Encode a single array item using text format.
