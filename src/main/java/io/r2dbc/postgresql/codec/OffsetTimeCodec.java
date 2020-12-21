@@ -18,7 +18,7 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
@@ -51,14 +51,14 @@ public class OffsetTimeCodec extends AbstractTemporalCodec<OffsetTime> {
     }
 
     @Override
-    Parameter doEncode(OffsetTime value) {
+    EncodedParameter doEncode(OffsetTime value) {
         Assert.requireNonNull(value, "value must not be null");
 
         return create(TIMETZ, FORMAT_TEXT, () -> ByteBufUtils.encode(this.byteBufAllocator, value.toString()));
     }
 
     @Override
-    public Parameter encodeNull() {
+    public EncodedParameter encodeNull() {
         return createNull(TIMETZ, FORMAT_TEXT);
     }
 

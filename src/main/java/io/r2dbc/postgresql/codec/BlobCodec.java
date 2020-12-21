@@ -19,7 +19,7 @@ package io.r2dbc.postgresql.codec;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
@@ -43,7 +43,7 @@ final class BlobCodec extends AbstractCodec<Blob> {
     }
 
     @Override
-    public Parameter encodeNull() {
+    public EncodedParameter encodeNull() {
         return createNull(BYTEA, FORMAT_TEXT);
     }
 
@@ -63,7 +63,7 @@ final class BlobCodec extends AbstractCodec<Blob> {
     }
 
     @Override
-    Parameter doEncode(Blob value) {
+    EncodedParameter doEncode(Blob value) {
         Assert.requireNonNull(value, "value must not be null");
 
         return create(BYTEA, FORMAT_TEXT,

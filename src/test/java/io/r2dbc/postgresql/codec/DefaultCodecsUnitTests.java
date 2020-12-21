@@ -17,7 +17,7 @@
 package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import org.junit.jupiter.api.Test;
@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 
-import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
@@ -106,7 +106,7 @@ final class DefaultCodecsUnitTests {
 
     @Test
     void encode() {
-        Parameter parameter = new DefaultCodecs(TEST).encode(100);
+        EncodedParameter parameter = new DefaultCodecs(TEST).encode(100);
 
         assertThat(parameter)
             .hasFormat(FORMAT_BINARY)
@@ -122,9 +122,9 @@ final class DefaultCodecsUnitTests {
 
     @Test
     void encodeNull() {
-        Parameter parameter = new DefaultCodecs(TEST).encodeNull(Integer.class);
+        EncodedParameter parameter = new DefaultCodecs(TEST).encodeNull(Integer.class);
 
-        assertThat(parameter).isEqualTo(new Parameter(FORMAT_BINARY, INT4.getObjectId(), NULL_VALUE));
+        assertThat(parameter).isEqualTo(new EncodedParameter(FORMAT_BINARY, INT4.getObjectId(), NULL_VALUE));
     }
 
     @Test
@@ -167,12 +167,12 @@ final class DefaultCodecsUnitTests {
         }
 
         @Override
-        public Parameter encode(Object value) {
+        public EncodedParameter encode(Object value) {
             return null;
         }
 
         @Override
-        public Parameter encodeNull() {
+        public EncodedParameter encodeNull() {
             return null;
         }
 

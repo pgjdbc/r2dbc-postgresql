@@ -17,7 +17,7 @@
 package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import reactor.util.annotation.Nullable;
 
@@ -47,7 +47,7 @@ public interface Codecs {
      * @return the encoded value
      * @throws IllegalArgumentException if {@code value} is {@code null}
      */
-    Parameter encode(Object value);
+    EncodedParameter encode(Object value);
 
     /**
      * Encode a {@code null} value.
@@ -56,7 +56,7 @@ public interface Codecs {
      * @return the encoded value
      * @throws IllegalArgumentException if {@code type} is {@code null}
      */
-    Parameter encodeNull(Class<?> type);
+    EncodedParameter encodeNull(Class<?> type);
 
     /**
      * Returns the preferred Java type for a given data type and format.

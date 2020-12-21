@@ -30,17 +30,17 @@ import java.util.Objects;
 import java.util.function.Function;
 
 /**
- * A collection of {@link Parameter}s for a single bind invocation of an {@link ExtendedQueryMessageFlow}.
+ * A collection of {@link EncodedParameter}s for a single bind invocation of an {@link ExtendedQueryMessageFlow}.
  */
 public final class Binding {
 
     public static final Binding EMPTY = new Binding(0);
 
-    private static final Parameter UNSPECIFIED = new Parameter(Format.FORMAT_BINARY, -1, Mono.never());
+    private static final EncodedParameter UNSPECIFIED = new EncodedParameter(Format.FORMAT_BINARY, -1, Mono.never());
 
     private final int expectedSize;
 
-    private final List<Parameter> parameters;
+    private final List<EncodedParameter> parameters;
 
     private final int[] types;
 
@@ -56,14 +56,14 @@ public final class Binding {
     }
 
     /**
-     * Add a {@link Parameter} to the binding.
+     * Add a {@link EncodedParameter} to the binding.
      *
-     * @param index     the index of the {@link Parameter}
-     * @param parameter the {@link Parameter}
+     * @param index     the index of the {@link EncodedParameter}
+     * @param parameter the {@link EncodedParameter}
      * @return this {@link Binding}
      * @throws IllegalArgumentException if {@code index} or {@code parameter} is {@code null}
      */
-    public Binding add(int index, Parameter parameter) {
+    public Binding add(int index, EncodedParameter parameter) {
         Assert.requireNonNull(parameter, "parameter must not be null");
 
         if (index >= this.expectedSize) {
@@ -95,7 +95,7 @@ public final class Binding {
      */
 
     public List<Format> getParameterFormats() {
-        return getTransformedParameters(Parameter::getFormat);
+        return getTransformedParameters(EncodedParameter::getFormat);
     }
 
     /**
@@ -106,7 +106,7 @@ public final class Binding {
     public int[] getParameterTypes() {
 
         for (int i = 0; i < this.parameters.size(); i++) {
-            Parameter parameter = this.parameters.get(i);
+            EncodedParameter parameter = this.parameters.get(i);
             if (parameter == UNSPECIFIED) {
                 throw new IllegalStateException(String.format("No parameter specified for index %d", i));
             }
@@ -120,11 +120,11 @@ public final class Binding {
      * @return the values of the parameters in the binding
      */
     public List<Publisher<? extends ByteBuf>> getParameterValues() {
-        return getTransformedParameters(Parameter::getValue);
+        return getTransformedParameters(EncodedParameter::getValue);
     }
 
     Flux<Publisher<? extends ByteBuf>> parameterValues() {
-        return Flux.fromIterable(this.parameters).map(Parameter::getValue);
+        return Flux.fromIterable(this.parameters).map(EncodedParameter::getValue);
     }
 
     @Override
@@ -153,14 +153,14 @@ public final class Binding {
      * @throws IllegalStateException if the incorrect number of parameters have been bound
      */
     public void validate() {
-        for (Parameter parameter : this.parameters) {
+        for (EncodedParameter parameter : this.parameters) {
             if (UNSPECIFIED == parameter) {
                 throw new IllegalStateException("Bound parameter count does not match parameters in SQL statement");
             }
         }
     }
 
-    private <T> List<T> getTransformedParameters(Function<Parameter, T> transformer) {
+    private <T> List<T> getTransformedParameters(Function<EncodedParameter, T> transformer) {
 
         if (this.parameters.isEmpty()) {
             return Collections.emptyList();
@@ -169,7 +169,7 @@ public final class Binding {
         List<T> transformed = null;
 
         for (int i = 0; i < this.parameters.size(); i++) {
-            Parameter parameter = this.parameters.get(i);
+            EncodedParameter parameter = this.parameters.get(i);
             if (parameter == UNSPECIFIED) {
                 throw new IllegalStateException(String.format("No parameter specified for index %d", i));
             }

@@ -17,13 +17,13 @@
 package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.client.ParameterAssert;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
-import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.LINE;
@@ -137,7 +137,7 @@ final class PathCodecUnitTest {
     @Test
     void encodeNull() {
         ParameterAssert.assertThat(new PathCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(FORMAT_BINARY, dataType, NULL_VALUE));
+            .isEqualTo(new EncodedParameter(FORMAT_BINARY, dataType, NULL_VALUE));
     }
 
 }

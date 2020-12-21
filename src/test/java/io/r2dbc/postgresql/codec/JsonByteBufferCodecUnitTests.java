@@ -16,13 +16,13 @@
 
 package io.r2dbc.postgresql.codec;
 
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 
-import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
@@ -102,7 +102,7 @@ final class JsonByteBufferCodecUnitTests {
     @Test
     void encodeNull() {
         assertThat(new JsonByteBufferCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(FORMAT_BINARY, JSONB.getObjectId(), NULL_VALUE));
+            .isEqualTo(new EncodedParameter(FORMAT_BINARY, JSONB.getObjectId(), NULL_VALUE));
     }
 
 }

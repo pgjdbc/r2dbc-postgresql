@@ -18,7 +18,7 @@ package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.client.Binding;
 import io.r2dbc.postgresql.client.Client;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.client.TestClient;
 import io.r2dbc.postgresql.message.backend.CloseComplete;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
@@ -82,37 +82,37 @@ final class BoundedStatementCacheUnitTests {
 
         BoundedStatementCache statementCache = new BoundedStatementCache(client, 2);
 
-        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(100)))), "test-query-0")
+        statementCache.getName(new Binding(1).add(0, new EncodedParameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(100)))), "test-query-0")
             .as(StepVerifier::create)
             .expectNext("S_0")
             .verifyComplete();
 
-        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200)))), "test-query-0")
+        statementCache.getName(new Binding(1).add(0, new EncodedParameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200)))), "test-query-0")
             .as(StepVerifier::create)
             .expectNext("S_0")
             .verifyComplete();
 
-        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 200, Flux.just(TEST.buffer(2).writeShort(300)))), "test-query-1")
+        statementCache.getName(new Binding(1).add(0, new EncodedParameter(FORMAT_BINARY, 200, Flux.just(TEST.buffer(2).writeShort(300)))), "test-query-1")
             .as(StepVerifier::create)
             .expectNext("S_1")
             .verifyComplete();
 
-        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 200, Flux.just(TEST.buffer(4).writeShort(300)))), "test-query-2")
+        statementCache.getName(new Binding(1).add(0, new EncodedParameter(FORMAT_BINARY, 200, Flux.just(TEST.buffer(4).writeShort(300)))), "test-query-2")
             .as(StepVerifier::create)
             .expectNext("S_2")
             .verifyComplete();
 
-        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 200, Flux.just(TEST.buffer(2).writeShort(300)))), "test-query-1")
+        statementCache.getName(new Binding(1).add(0, new EncodedParameter(FORMAT_BINARY, 200, Flux.just(TEST.buffer(2).writeShort(300)))), "test-query-1")
             .as(StepVerifier::create)
             .expectNext("S_1")
             .verifyComplete();
 
-        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(100)))), "test-query-0")
+        statementCache.getName(new Binding(1).add(0, new EncodedParameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(100)))), "test-query-0")
             .as(StepVerifier::create)
             .expectNext("S_3")
             .verifyComplete();
 
-        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(100)))), "test-query-0")
+        statementCache.getName(new Binding(1).add(0, new EncodedParameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(100)))), "test-query-0")
             .as(StepVerifier::create)
             .expectNext("S_3")
             .verifyComplete();
@@ -131,7 +131,7 @@ final class BoundedStatementCacheUnitTests {
 
         BoundedStatementCache statementCache = new BoundedStatementCache(client, 2);
 
-        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200)))), "test-query")
+        statementCache.getName(new Binding(1).add(0, new EncodedParameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200)))), "test-query")
             .as(StepVerifier::create)
             .verifyError(R2dbcNonTransientResourceException.class);
     }

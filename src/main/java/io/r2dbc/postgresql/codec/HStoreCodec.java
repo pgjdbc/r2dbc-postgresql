@@ -19,7 +19,7 @@ package io.r2dbc.postgresql.codec;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.util.ByteProcessor;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Mono;
@@ -29,7 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static io.netty.util.CharsetUtil.UTF_8;
-import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 
 @SuppressWarnings("rawtypes")
 final class HStoreCodec implements Codec<Map> {
@@ -190,11 +190,11 @@ final class HStoreCodec implements Codec<Map> {
     }
 
     @Override
-    public Parameter encode(Object value) {
+    public EncodedParameter encode(Object value) {
         Assert.requireNonNull(value, "value must not be null");
         Map<?, ?> map = (Map<?, ?>) value;
 
-        return new Parameter(Format.FORMAT_BINARY, this.oid, Mono.fromSupplier(() -> {
+        return new EncodedParameter(Format.FORMAT_BINARY, this.oid, Mono.fromSupplier(() -> {
             ByteBuf buffer = this.byteBufAllocator.buffer(4 + 10 * map.size());
             buffer.writeInt(map.size());
 
@@ -218,8 +218,8 @@ final class HStoreCodec implements Codec<Map> {
     }
 
     @Override
-    public Parameter encodeNull() {
-        return new Parameter(Format.FORMAT_BINARY, this.oid, NULL_VALUE);
+    public EncodedParameter encodeNull() {
+        return new EncodedParameter(Format.FORMAT_BINARY, this.oid, NULL_VALUE);
     }
 
     @Override

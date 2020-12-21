@@ -19,7 +19,7 @@ package io.r2dbc.postgresql.codec;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufUtil;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
@@ -50,7 +50,7 @@ abstract class AbstractBinaryCodec<T> extends AbstractCodec<T> {
     }
 
     @Override
-    public Parameter encodeNull() {
+    public EncodedParameter encodeNull() {
         return createNull(BYTEA, FORMAT_TEXT);
     }
 

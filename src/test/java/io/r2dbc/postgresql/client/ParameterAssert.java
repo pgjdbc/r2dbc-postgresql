@@ -28,15 +28,15 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 /**
- * Assertion utility for {@link Parameter}.
+ * Assertion utility for {@link EncodedParameter}.
  */
-public final class ParameterAssert extends AbstractAssert<ParameterAssert, Parameter> {
+public final class ParameterAssert extends AbstractAssert<ParameterAssert, EncodedParameter> {
 
-    private ParameterAssert(Parameter actual) {
+    private ParameterAssert(EncodedParameter actual) {
         super(actual, ParameterAssert.class);
     }
 
-    public static ParameterAssert assertThat(Parameter actual) {
+    public static ParameterAssert assertThat(EncodedParameter actual) {
         return new ParameterAssert(actual);
     }
 

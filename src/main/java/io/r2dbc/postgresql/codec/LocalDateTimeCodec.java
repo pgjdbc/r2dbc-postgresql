@@ -18,7 +18,7 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
@@ -44,7 +44,7 @@ final class LocalDateTimeCodec extends AbstractTemporalCodec<LocalDateTime> {
     }
 
     @Override
-    public Parameter encodeNull() {
+    public EncodedParameter encodeNull() {
         return createNull(TIMESTAMP, FORMAT_TEXT);
     }
 
@@ -62,7 +62,7 @@ final class LocalDateTimeCodec extends AbstractTemporalCodec<LocalDateTime> {
     }
 
     @Override
-    Parameter doEncode(LocalDateTime value) {
+    EncodedParameter doEncode(LocalDateTime value) {
         Assert.requireNonNull(value, "value must not be null");
 
         return create(TIMESTAMP, FORMAT_TEXT, () -> ByteBufUtils.encode(this.byteBufAllocator, value.toString()));

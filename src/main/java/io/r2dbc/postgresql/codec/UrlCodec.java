@@ -18,7 +18,7 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
@@ -39,14 +39,14 @@ final class UrlCodec extends AbstractCodec<URL> {
     }
 
     @Override
-    public Parameter doEncode(URL value) {
+    public EncodedParameter doEncode(URL value) {
         Assert.requireNonNull(value, "value must not be null");
 
         return this.delegate.doEncode(value.toString());
     }
 
     @Override
-    public Parameter encodeNull() {
+    public EncodedParameter encodeNull() {
         return this.delegate.encodeNull();
     }
 

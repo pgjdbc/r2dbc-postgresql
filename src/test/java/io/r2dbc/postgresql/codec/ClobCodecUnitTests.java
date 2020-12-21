@@ -16,7 +16,7 @@
 
 package io.r2dbc.postgresql.codec;
 
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.client.ParameterAssert;
 import io.r2dbc.spi.Clob;
 import io.r2dbc.spi.test.MockClob;
@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
-import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
@@ -107,7 +107,7 @@ final class ClobCodecUnitTests {
     @Test
     void encodeNull() {
         ParameterAssert.assertThat(new ClobCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(FORMAT_TEXT, TEXT.getObjectId(), NULL_VALUE));
+            .isEqualTo(new EncodedParameter(FORMAT_TEXT, TEXT.getObjectId(), NULL_VALUE));
     }
 
 }

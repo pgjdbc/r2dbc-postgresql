@@ -21,7 +21,7 @@ import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import io.netty.util.ReferenceCountUtil;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
@@ -63,7 +63,7 @@ final class JsonCodec extends AbstractJsonCodec<Json> {
     }
 
     @Override
-    Parameter doEncode(Json value) {
+    EncodedParameter doEncode(Json value) {
         Assert.requireNonNull(value, "value must not be null");
         if (!(value instanceof Json.JsonInput || value instanceof Json.JsonOutput)) {
             throw new IllegalArgumentException("value must be JsonInput or JsonOutput");

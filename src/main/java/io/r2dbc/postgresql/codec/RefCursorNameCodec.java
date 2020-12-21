@@ -17,7 +17,7 @@
 package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
@@ -35,7 +35,7 @@ final class RefCursorNameCodec extends AbstractCodec<String> {
     }
 
     @Override
-    public Parameter encodeNull() {
+    public EncodedParameter encodeNull() {
         throw new UnsupportedOperationException("Cannot encode RefCursor");
     }
 
@@ -55,7 +55,7 @@ final class RefCursorNameCodec extends AbstractCodec<String> {
     }
 
     @Override
-    Parameter doEncode(String value) {
+    EncodedParameter doEncode(String value) {
         throw new UnsupportedOperationException("Cannot encode RefCursor");
     }
 

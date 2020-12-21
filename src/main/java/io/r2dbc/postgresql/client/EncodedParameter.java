@@ -27,7 +27,7 @@ import java.util.Objects;
 /**
  * A parameter bound to an {@link ExtendedQueryMessageFlow}.
  */
-public final class Parameter {
+public final class EncodedParameter {
 
     public static final Flux<? extends ByteBuf> NULL_VALUE = Flux.empty();
 
@@ -45,7 +45,7 @@ public final class Parameter {
      * @param value  the value of the parameter
      * @throws IllegalArgumentException if {@code format}, or {@code type} is {@code null}
      */
-    public Parameter(Format format, int type, Publisher<? extends ByteBuf> value) {
+    public EncodedParameter(Format format, int type, Publisher<? extends ByteBuf> value) {
         this.format = Assert.requireNonNull(format, "format must not be null");
         this.type = type;
         this.value = Assert.requireNonNull(value, "value must not be null");
@@ -59,7 +59,7 @@ public final class Parameter {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        Parameter that = (Parameter) o;
+        EncodedParameter that = (EncodedParameter) o;
         return this.format == that.format &&
             Objects.equals(this.type, that.type) &&
             Objects.equals(this.value, that.value);

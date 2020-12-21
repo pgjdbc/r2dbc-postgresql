@@ -18,7 +18,7 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
@@ -37,7 +37,7 @@ final class IntegerCodec extends AbstractNumericCodec<Integer> {
     }
 
     @Override
-    public Parameter encodeNull() {
+    public EncodedParameter encodeNull() {
         return createNull(INT4, FORMAT_BINARY);
     }
 
@@ -50,7 +50,7 @@ final class IntegerCodec extends AbstractNumericCodec<Integer> {
     }
 
     @Override
-    Parameter doEncode(Integer value) {
+    EncodedParameter doEncode(Integer value) {
         Assert.requireNonNull(value, "value must not be null");
 
         return create(INT4, FORMAT_BINARY, () -> this.byteBufAllocator.buffer(4).writeInt(value));

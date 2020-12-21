@@ -19,32 +19,32 @@ package io.r2dbc.postgresql.client;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
-import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
- * Unit tests for {@link Parameter}.
+ * Unit tests for {@link EncodedParameter}.
  */
 final class ParameterUnitTests {
 
     @Test
     void constructorNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new Parameter(null, 100, NULL_VALUE))
+        assertThatIllegalArgumentException().isThrownBy(() -> new EncodedParameter(null, 100, NULL_VALUE))
             .withMessage("format must not be null");
     }
 
     @Test
     void constructorNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new Parameter(FORMAT_TEXT, 100, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new EncodedParameter(FORMAT_TEXT, 100, null))
             .withMessage("value must not be null");
     }
 
     @Test
     void getters() {
-        Parameter parameter = new Parameter(FORMAT_TEXT, 100, Flux.just(TEST.buffer(4).writeInt(200)));
+        EncodedParameter parameter = new EncodedParameter(FORMAT_TEXT, 100, Flux.just(TEST.buffer(4).writeInt(200)));
 
         assertThat(parameter)
             .hasFormat(FORMAT_TEXT)

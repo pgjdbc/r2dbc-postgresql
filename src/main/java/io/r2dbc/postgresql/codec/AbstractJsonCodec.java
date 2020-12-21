@@ -16,7 +16,7 @@
 
 package io.r2dbc.postgresql.codec;
 
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
@@ -32,7 +32,7 @@ abstract class AbstractJsonCodec<T> extends AbstractCodec<T> {
     }
 
     @Override
-    public Parameter encodeNull() {
+    public EncodedParameter encodeNull() {
         return createNull(JSONB, FORMAT_BINARY);
     }
 

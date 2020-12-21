@@ -51,9 +51,9 @@ final class BindingUnitTests {
     @Test
     void getParameterFormats() {
         Binding binding = new Binding(3);
-        binding.add(2, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))));
-        binding.add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200))));
-        binding.add(1, new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), Flux.just(TEST.buffer().writeBytes("Hello".getBytes()))));
+        binding.add(2, new EncodedParameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))));
+        binding.add(0, new EncodedParameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200))));
+        binding.add(1, new EncodedParameter(FORMAT_TEXT, VARCHAR.getObjectId(), Flux.just(TEST.buffer().writeBytes("Hello".getBytes()))));
 
         assertThat(binding.getParameterFormats()).containsExactly(FORMAT_BINARY, FORMAT_TEXT, FORMAT_BINARY);
     }
@@ -61,7 +61,7 @@ final class BindingUnitTests {
     @Test
     void getParameterFormatsUnbound() {
         Binding binding = new Binding(3);
-        binding.add(2, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))));
+        binding.add(2, new EncodedParameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))));
 
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(binding::getParameterFormats).withMessage("No parameter specified for index 0");
     }
@@ -69,9 +69,9 @@ final class BindingUnitTests {
     @Test
     void getParameterTypes() {
         Binding binding = new Binding(3);
-        binding.add(2, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))));
-        binding.add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200))));
-        binding.add(1, new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), Flux.just(TEST.buffer().writeBytes("Hello".getBytes()))));
+        binding.add(2, new EncodedParameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))));
+        binding.add(0, new EncodedParameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200))));
+        binding.add(1, new EncodedParameter(FORMAT_TEXT, VARCHAR.getObjectId(), Flux.just(TEST.buffer().writeBytes("Hello".getBytes()))));
 
         assertThat(binding.getParameterTypes()).containsExactly(100, VARCHAR.getObjectId(), 100);
     }
@@ -79,7 +79,7 @@ final class BindingUnitTests {
     @Test
     void getParameterTypesUnbound() {
         Binding binding = new Binding(3);
-        binding.add(2, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))));
+        binding.add(2, new EncodedParameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))));
 
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(binding::getParameterTypes).withMessage("No parameter specified for index 0");
     }
@@ -87,9 +87,9 @@ final class BindingUnitTests {
     @Test
     void getParameterValues() {
         Binding binding = new Binding(3);
-        binding.add(2, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))));
-        binding.add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200))));
-        binding.add(1, new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), Flux.just(TEST.buffer().writeBytes("Hello".getBytes()))));
+        binding.add(2, new EncodedParameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))));
+        binding.add(0, new EncodedParameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200))));
+        binding.add(1, new EncodedParameter(FORMAT_TEXT, VARCHAR.getObjectId(), Flux.just(TEST.buffer().writeBytes("Hello".getBytes()))));
 
         Flux.<ByteBuf>from(binding.getParameterValues().get(0))
             .as(StepVerifier::create)
@@ -110,7 +110,7 @@ final class BindingUnitTests {
     @Test
     void getParameterValuesUnbound() {
         Binding binding = new Binding(3);
-        binding.add(2, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))));
+        binding.add(2, new EncodedParameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(300))));
 
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(binding::getParameterValues).withMessage("No parameter specified for index 0");
     }

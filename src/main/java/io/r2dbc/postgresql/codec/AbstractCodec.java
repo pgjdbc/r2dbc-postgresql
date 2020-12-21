@@ -17,7 +17,7 @@
 package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
@@ -28,7 +28,7 @@ import reactor.util.annotation.Nullable;
 
 import java.util.function.Supplier;
 
-import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 
 /**
  * Abstract codec class that provides a basis for all concrete
@@ -84,7 +84,7 @@ abstract class AbstractCodec<T> implements Codec<T> {
 
     @Override
     @SuppressWarnings("unchecked")
-    public final Parameter encode(Object value) {
+    public final EncodedParameter encode(Object value) {
         Assert.requireNonNull(value, "value must not be null");
 
         return doEncode((T) value);
@@ -96,29 +96,29 @@ abstract class AbstractCodec<T> implements Codec<T> {
     }
 
     /**
-     * Create a {@link Parameter}.
+     * Create a {@link EncodedParameter}.
      *
      * @param type   the well-known {@link PostgresqlObjectId type OID}
      * @param format the format to use
      * @param value  {@link Publisher} emitting {@link ByteBuf buffers}
-     * @return the encoded  {@link Parameter}
+     * @return the encoded  {@link EncodedParameter}
      * @implNote use deferred buffer creation instead of {@link Mono#just(Object)} and {@link Flux#just(Object)} to avoid memory
      * leaks
      */
-    static Parameter create(PostgresqlObjectId type, Format format, Publisher<? extends ByteBuf> value) {
-        return new Parameter(format, type.getObjectId(), value);
+    static EncodedParameter create(PostgresqlObjectId type, Format format, Publisher<? extends ByteBuf> value) {
+        return new EncodedParameter(format, type.getObjectId(), value);
     }
 
     /**
-     * Create a {@link Parameter}.
+     * Create a {@link EncodedParameter}.
      *
      * @param type           the well-known {@link PostgresqlObjectId type OID}
      * @param format         the format to use
      * @param bufferSupplier {@link Supplier} supplying the encoded {@link ByteBuf buffer}
-     * @return the encoded  {@link Parameter}
+     * @return the encoded  {@link EncodedParameter}
      */
-    static Parameter create(PostgresqlObjectId type, Format format, Supplier<? extends ByteBuf> bufferSupplier) {
-        return new Parameter(format, type.getObjectId(), Mono.fromSupplier(bufferSupplier));
+    static EncodedParameter create(PostgresqlObjectId type, Format format, Supplier<? extends ByteBuf> bufferSupplier) {
+        return new EncodedParameter(format, type.getObjectId(), Mono.fromSupplier(bufferSupplier));
     }
 
     /**
@@ -128,7 +128,7 @@ abstract class AbstractCodec<T> implements Codec<T> {
      * @param format the data type {@link Format}, text or binary
      * @return the encoded {@code null} value
      */
-    static Parameter createNull(PostgresqlObjectId type, Format format) {
+    static EncodedParameter createNull(PostgresqlObjectId type, Format format) {
         return create(type, format, NULL_VALUE);
     }
 
@@ -156,7 +156,7 @@ abstract class AbstractCodec<T> implements Codec<T> {
      * @param value the  {@code value}
      * @return the encoded value
      */
-    abstract Parameter doEncode(T value);
+    abstract EncodedParameter doEncode(T value);
 
     boolean isTypeAssignable(Class<?> type) {
         Assert.requireNonNull(type, "type must not be null");

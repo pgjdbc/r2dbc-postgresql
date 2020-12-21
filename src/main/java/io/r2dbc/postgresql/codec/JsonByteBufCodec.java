@@ -19,7 +19,7 @@ package io.r2dbc.postgresql.codec;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.util.ReferenceCountUtil;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
@@ -42,7 +42,7 @@ final class JsonByteBufCodec extends AbstractJsonCodec<ByteBuf> {
     }
 
     @Override
-    Parameter doEncode(ByteBuf value) {
+    EncodedParameter doEncode(ByteBuf value) {
         Assert.requireNonNull(value, "value must not be null");
 
         return create(JSONB, FORMAT_BINARY, () -> {

@@ -18,7 +18,7 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
@@ -124,7 +124,7 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
     abstract T doDecodeText(String text);
 
     @Override
-    final Parameter doEncode(Object[] value) {
+    final EncodedParameter doEncode(Object[] value) {
         Assert.requireNonNull(value, "value must not be null");
 
         return encodeArray(() -> {
@@ -138,9 +138,9 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
      * Create the encoded array representation.
      *
      * @param encodedSupplier supplies the
-     * @return encoded {@link Parameter} item
+     * @return encoded {@link EncodedParameter} item
      */
-    abstract Parameter encodeArray(Supplier<ByteBuf> encodedSupplier);
+    abstract EncodedParameter encodeArray(Supplier<ByteBuf> encodedSupplier);
 
     /**
      * Encode a single array item using text format.

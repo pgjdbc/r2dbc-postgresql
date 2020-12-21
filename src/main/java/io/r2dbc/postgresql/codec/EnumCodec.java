@@ -18,7 +18,7 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.extension.CodecRegistrar;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
@@ -33,7 +33,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
 /**
@@ -88,16 +88,16 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
     }
 
     @Override
-    public Parameter encode(Object value) {
+    public EncodedParameter encode(Object value) {
 
         Assert.requireNonNull(value, "value must not be null");
 
-        return new Parameter(FORMAT_TEXT, this.oid, Mono.fromSupplier(() -> ByteBufUtils.encode(this.byteBufAllocator, this.type.cast(value).name())));
+        return new EncodedParameter(FORMAT_TEXT, this.oid, Mono.fromSupplier(() -> ByteBufUtils.encode(this.byteBufAllocator, this.type.cast(value).name())));
     }
 
     @Override
-    public Parameter encodeNull() {
-        return new Parameter(Format.FORMAT_BINARY, this.oid, NULL_VALUE);
+    public EncodedParameter encodeNull() {
+        return new EncodedParameter(Format.FORMAT_BINARY, this.oid, NULL_VALUE);
     }
 
     @Override

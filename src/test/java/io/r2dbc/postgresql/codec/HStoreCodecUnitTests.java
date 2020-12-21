@@ -17,7 +17,7 @@
 package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.client.ParameterAssert;
 import io.r2dbc.postgresql.message.Format;
 import org.assertj.core.api.Assertions;
@@ -27,7 +27,7 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
-import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.JSON;
@@ -116,7 +116,7 @@ final class HStoreCodecUnitTests {
     @Test
     void encodeNull() {
         assertThat(new HStoreCodec(TEST, dataType).encodeNull())
-            .isEqualTo(new Parameter(FORMAT_BINARY, dataType, NULL_VALUE));
+            .isEqualTo(new EncodedParameter(FORMAT_BINARY, dataType, NULL_VALUE));
     }
 
 }

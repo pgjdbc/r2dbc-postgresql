@@ -57,7 +57,7 @@ final class ExtendedQueryMessageFlowUnitTests {
 
     @Test
     void execute() {
-        Binding binding = new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200))));
+        Binding binding = new Binding(1).add(0, new EncodedParameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200))));
 
         Client client = TestClient.builder()
             .expectRequest(
@@ -83,7 +83,7 @@ final class ExtendedQueryMessageFlowUnitTests {
     @Test
     @Disabled("TestClient doesn't work that way")
     void executeWithFetchSize() {
-        Binding binding = new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200))));
+        Binding binding = new Binding(1).add(0, new EncodedParameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200))));
 
         Client client = TestClient.builder()
             .expectRequest(

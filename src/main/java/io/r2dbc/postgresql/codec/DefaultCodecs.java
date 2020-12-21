@@ -18,7 +18,7 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
@@ -158,7 +158,7 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
     }
 
     @Override
-    public Parameter encode(Object value) {
+    public EncodedParameter encode(Object value) {
         Assert.requireNonNull(value, "value must not be null");
 
         for (Codec<?> codec : this.codecs) {
@@ -171,7 +171,7 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
     }
 
     @Override
-    public Parameter encodeNull(Class<?> type) {
+    public EncodedParameter encodeNull(Class<?> type) {
         Assert.requireNonNull(type, "type must not be null");
 
         for (Codec<?> codec : this.codecs) {

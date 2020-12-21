@@ -210,7 +210,7 @@ public final class ExtendedQueryMessageFlow {
 
         return Flux.fromIterable(binding.getParameterValues())
             .flatMap(f -> {
-                if (f == Parameter.NULL_VALUE) {
+                if (f == EncodedParameter.NULL_VALUE) {
                     return Flux.just(Bind.NULL_VALUE);
                 } else {
                     return Flux.from(f)

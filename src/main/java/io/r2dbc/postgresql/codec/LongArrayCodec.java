@@ -18,7 +18,7 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
@@ -35,7 +35,7 @@ final class LongArrayCodec extends AbstractArrayCodec<Long> {
     }
 
     @Override
-    public Parameter encodeNull() {
+    public EncodedParameter encodeNull() {
         return createNull(INT8_ARRAY, FORMAT_TEXT);
     }
 
@@ -57,7 +57,7 @@ final class LongArrayCodec extends AbstractArrayCodec<Long> {
     }
 
     @Override
-    Parameter encodeArray(Supplier<ByteBuf> encodedSupplier) {
+    EncodedParameter encodeArray(Supplier<ByteBuf> encodedSupplier) {
         return create(INT8_ARRAY, FORMAT_TEXT, encodedSupplier);
     }
 

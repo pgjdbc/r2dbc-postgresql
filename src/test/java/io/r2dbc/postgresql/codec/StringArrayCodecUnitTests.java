@@ -17,14 +17,23 @@
 package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import org.junit.jupiter.api.Test;
 
-import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.*;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR_ARRAY;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.CHAR;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.CHAR_ARRAY;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.NAME;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.NAME_ARRAY;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.TEXT;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.TEXT_ARRAY;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR_ARRAY;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -132,7 +141,7 @@ final class StringArrayCodecUnitTests {
     @Test
     void encodeNull() {
         assertThat(new StringArrayCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(FORMAT_TEXT, TEXT_ARRAY.getObjectId(), NULL_VALUE));
+            .isEqualTo(new EncodedParameter(FORMAT_TEXT, TEXT_ARRAY.getObjectId(), NULL_VALUE));
     }
 
 }

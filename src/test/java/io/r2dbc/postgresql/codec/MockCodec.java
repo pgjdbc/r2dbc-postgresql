@@ -17,7 +17,7 @@
 package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
@@ -39,9 +39,9 @@ public final class MockCodec<T> extends AbstractCodec<T> {
 
     private final Map<Decoding, T> decodings;
 
-    private final Map<T, Parameter> encodings;
+    private final Map<T, EncodedParameter> encodings;
 
-    private MockCodec(Set<CanDecode> canDecodes, Map<Decoding, T> decodings, Map<T, Parameter> encodings, Class<T> type) {
+    private MockCodec(Set<CanDecode> canDecodes, Map<Decoding, T> decodings, Map<T, EncodedParameter> encodings, Class<T> type) {
         super(type);
 
         this.canDecodes = Assert.requireNonNull(canDecodes, "canDecodes must not be null");
@@ -58,7 +58,7 @@ public final class MockCodec<T> extends AbstractCodec<T> {
     }
 
     @Override
-    public Parameter encodeNull() {
+    public EncodedParameter encodeNull() {
         return this.encodings.get(null);
     }
 
@@ -96,7 +96,7 @@ public final class MockCodec<T> extends AbstractCodec<T> {
     }
 
     @Override
-    Parameter doEncode(T value) {
+    EncodedParameter doEncode(T value) {
         if (!this.encodings.containsKey(value)) {
             throw new AssertionError(String.format("Unexpected call to doEncode(T) with value '%s'", value));
         }
@@ -110,7 +110,7 @@ public final class MockCodec<T> extends AbstractCodec<T> {
 
         private final Map<Decoding, T> decodings = new HashMap<>();
 
-        private final Map<T, Parameter> encodings = new HashMap<>();
+        private final Map<T, EncodedParameter> encodings = new HashMap<>();
 
         private final Class<T> type;
 
@@ -139,7 +139,7 @@ public final class MockCodec<T> extends AbstractCodec<T> {
             return this;
         }
 
-        public Builder<T> encoding(T value, Parameter parameter) {
+        public Builder<T> encoding(T value, EncodedParameter parameter) {
             Assert.requireNonNull(value, "value must not be null");
             Assert.requireNonNull(parameter, "parameter must not be null");
 

@@ -18,7 +18,7 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
@@ -33,7 +33,7 @@ final class BigDecimalArrayCodec extends AbstractArrayCodec<BigDecimal> {
     }
 
     @Override
-    public Parameter encodeNull() {
+    public EncodedParameter encodeNull() {
         return createNull(PostgresqlObjectId.NUMERIC_ARRAY, Format.FORMAT_TEXT);
     }
 
@@ -62,7 +62,7 @@ final class BigDecimalArrayCodec extends AbstractArrayCodec<BigDecimal> {
     }
 
     @Override
-    Parameter encodeArray(Supplier<ByteBuf> encodedSupplier) {
+    EncodedParameter encodeArray(Supplier<ByteBuf> encodedSupplier) {
         return create(PostgresqlObjectId.NUMERIC_ARRAY, Format.FORMAT_TEXT, encodedSupplier);
     }
 

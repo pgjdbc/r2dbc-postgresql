@@ -18,7 +18,7 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
@@ -41,7 +41,7 @@ final class InetAddressCodec extends AbstractCodec<InetAddress> {
     }
 
     @Override
-    public Parameter encodeNull() {
+    public EncodedParameter encodeNull() {
         return createNull(INET, FORMAT_TEXT);
     }
 
@@ -79,7 +79,7 @@ final class InetAddressCodec extends AbstractCodec<InetAddress> {
     }
 
     @Override
-    Parameter doEncode(InetAddress value) {
+    EncodedParameter doEncode(InetAddress value) {
         Assert.requireNonNull(value, "value must not be null");
 
         return create(INET, FORMAT_TEXT, () -> ByteBufUtils.encode(this.byteBufAllocator, value.getHostAddress()));

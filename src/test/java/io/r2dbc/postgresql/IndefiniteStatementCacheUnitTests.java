@@ -18,7 +18,7 @@ package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.client.Binding;
 import io.r2dbc.postgresql.client.Client;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.client.TestClient;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.ParseComplete;
@@ -63,22 +63,22 @@ final class IndefiniteStatementCacheUnitTests {
 
         IndefiniteStatementCache statementCache = new IndefiniteStatementCache(client);
 
-        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(100)))), "test-query")
+        statementCache.getName(new Binding(1).add(0, new EncodedParameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(100)))), "test-query")
             .as(StepVerifier::create)
             .expectNext("S_0")
             .verifyComplete();
 
-        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200)))), "test-query")
+        statementCache.getName(new Binding(1).add(0, new EncodedParameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200)))), "test-query")
             .as(StepVerifier::create)
             .expectNext("S_0")
             .verifyComplete();
 
-        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 200, Flux.just(TEST.buffer(2).writeShort(300)))), "test-query")
+        statementCache.getName(new Binding(1).add(0, new EncodedParameter(FORMAT_BINARY, 200, Flux.just(TEST.buffer(2).writeShort(300)))), "test-query")
             .as(StepVerifier::create)
             .expectNext("S_1")
             .verifyComplete();
 
-        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 200, Flux.just(TEST.buffer(4).writeShort(300)))), "test-query-2")
+        statementCache.getName(new Binding(1).add(0, new EncodedParameter(FORMAT_BINARY, 200, Flux.just(TEST.buffer(4).writeShort(300)))), "test-query-2")
             .as(StepVerifier::create)
             .expectNext("S_2")
             .verifyComplete();
@@ -95,7 +95,7 @@ final class IndefiniteStatementCacheUnitTests {
 
         IndefiniteStatementCache statementCache = new IndefiniteStatementCache(client);
 
-        statementCache.getName(new Binding(1).add(0, new Parameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200)))), "test-query")
+        statementCache.getName(new Binding(1).add(0, new EncodedParameter(FORMAT_BINARY, 100, Flux.just(TEST.buffer(4).writeInt(200)))), "test-query")
             .as(StepVerifier::create)
             .verifyError(R2dbcNonTransientResourceException.class);
     }

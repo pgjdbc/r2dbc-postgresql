@@ -19,7 +19,7 @@ package io.r2dbc.postgresql;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.api.PostgresqlResult;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.codec.Codec;
 import io.r2dbc.postgresql.codec.CodecRegistry;
 import io.r2dbc.postgresql.extension.CodecRegistrar;
@@ -124,12 +124,12 @@ final class CodecExtensionIntegrationTests extends AbstractIntegrationTests {
         }
 
         @Override
-        public Parameter encode(Object value) {
+        public EncodedParameter encode(Object value) {
             return null;
         }
 
         @Override
-        public Parameter encodeNull() {
+        public EncodedParameter encodeNull() {
             return null;
         }
 

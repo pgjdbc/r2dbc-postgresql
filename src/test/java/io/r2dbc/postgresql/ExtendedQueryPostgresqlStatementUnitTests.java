@@ -19,7 +19,7 @@ package io.r2dbc.postgresql;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.client.Binding;
 import io.r2dbc.postgresql.client.Client;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.client.PortalNameSupplier;
 import io.r2dbc.postgresql.client.TestClient;
 import io.r2dbc.postgresql.codec.MockCodecs;
@@ -47,7 +47,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 
-import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
@@ -62,7 +62,7 @@ import static org.mockito.Mockito.when;
  */
 final class ExtendedQueryPostgresqlStatementUnitTests {
 
-    private final Parameter parameter = new Parameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100)));
+    private final EncodedParameter parameter = new EncodedParameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100)));
 
     private final MockCodecs codecs = MockCodecs.builder().encoding(100, this.parameter).build();
 
@@ -99,13 +99,13 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
     @Test
     void bindNull() {
         MockCodecs codecs = MockCodecs.builder()
-            .encoding(Integer.class, new Parameter(FORMAT_BINARY, INT4.getObjectId(), NULL_VALUE))
+            .encoding(Integer.class, new EncodedParameter(FORMAT_BINARY, INT4.getObjectId(), NULL_VALUE))
             .build();
 
         ExtendedQueryPostgresqlStatement statement = new ExtendedQueryPostgresqlStatement(MockContext.builder().codecs(codecs).build(), "test-query-$1");
 
         assertThat(statement.bindNull("$1", Integer.class).getCurrentBinding())
-            .isEqualTo(new Binding(1).add(0, new Parameter(FORMAT_BINARY, INT4.getObjectId(), NULL_VALUE)));
+            .isEqualTo(new Binding(1).add(0, new EncodedParameter(FORMAT_BINARY, INT4.getObjectId(), NULL_VALUE)));
     }
 
     @Test
@@ -170,8 +170,8 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
             .build();
 
         MockCodecs codecs = MockCodecs.builder()
-            .encoding(100, new Parameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100))))
-            .encoding(200, new Parameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(200))))
+            .encoding(100, new EncodedParameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100))))
+            .encoding(200, new EncodedParameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(200))))
             .build();
 
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
@@ -209,7 +209,7 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
             .build();
 
         MockCodecs codecs = MockCodecs.builder()
-            .encoding(100, new Parameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100))))
+            .encoding(100, new EncodedParameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100))))
             .build();
 
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
@@ -238,7 +238,7 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
             .build();
 
         MockCodecs codecs = MockCodecs.builder()
-            .encoding(100, new Parameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100))))
+            .encoding(100, new EncodedParameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100))))
             .build();
 
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
@@ -267,7 +267,7 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
             .build();
 
         MockCodecs codecs = MockCodecs.builder()
-            .encoding(100, new Parameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100))))
+            .encoding(100, new EncodedParameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100))))
             .build();
 
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
@@ -296,7 +296,7 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
             .build();
 
         MockCodecs codecs = MockCodecs.builder()
-            .encoding(100, new Parameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100))))
+            .encoding(100, new EncodedParameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100))))
             .build();
 
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
@@ -326,7 +326,7 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
             .build();
 
         MockCodecs codecs = MockCodecs.builder()
-            .encoding(100, new Parameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100))))
+            .encoding(100, new EncodedParameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100))))
             .build();
 
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
@@ -356,7 +356,7 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
             .build();
 
         MockCodecs codecs = MockCodecs.builder()
-            .encoding(100, new Parameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100))))
+            .encoding(100, new EncodedParameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100))))
             .build();
 
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;
@@ -388,7 +388,7 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
             .build();
 
         MockCodecs codecs = MockCodecs.builder()
-            .encoding(100, new Parameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100))))
+            .encoding(100, new EncodedParameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100))))
             .build();
 
         PortalNameSupplier portalNameSupplier = new LinkedList<>(Arrays.asList("B_0", "B_1"))::remove;

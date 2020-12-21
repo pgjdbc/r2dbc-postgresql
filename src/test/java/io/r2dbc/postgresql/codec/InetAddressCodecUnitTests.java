@@ -16,13 +16,13 @@
 
 package io.r2dbc.postgresql.codec;
 
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import org.junit.jupiter.api.Test;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
@@ -99,7 +99,7 @@ final class InetAddressCodecUnitTests {
     @Test
     void encodeNull() {
         assertThat(new InetAddressCodec(TEST).encodeNull())
-            .isEqualTo(new Parameter(FORMAT_TEXT, INET.getObjectId(), NULL_VALUE));
+            .isEqualTo(new EncodedParameter(FORMAT_TEXT, INET.getObjectId(), NULL_VALUE));
     }
 
 }

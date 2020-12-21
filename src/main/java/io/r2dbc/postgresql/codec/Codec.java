@@ -17,7 +17,7 @@
 package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import reactor.util.annotation.Nullable;
@@ -79,14 +79,14 @@ public interface Codec<T> {
      * @param value the {@code null} {@code value}
      * @return the encoded value
      */
-    Parameter encode(Object value);
+    EncodedParameter encode(Object value);
 
     /**
      * Encode a {@code null} value.
      *
      * @return the encoded {@code null} value
      */
-    Parameter encodeNull();
+    EncodedParameter encodeNull();
 
     /**
      * Returns the Java {@link Class type} of this codec.

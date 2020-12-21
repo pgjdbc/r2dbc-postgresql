@@ -17,7 +17,7 @@
 package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
-import io.r2dbc.postgresql.client.Parameter;
+import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
@@ -33,11 +33,11 @@ public final class MockCodecs implements Codecs {
 
     private final Map<Decoding, Object> decodings;
 
-    private final Map<Object, Parameter> encodings;
+    private final Map<Object, EncodedParameter> encodings;
 
     private final Map<PreferredType, Class<?>> preferredTypes;
 
-    private MockCodecs(Map<Decoding, Object> decodings, Map<Object, Parameter> encodings, Map<PreferredType, Class<?>> preferredTypes) {
+    private MockCodecs(Map<Decoding, Object> decodings, Map<Object, EncodedParameter> encodings, Map<PreferredType, Class<?>> preferredTypes) {
         this.decodings = Assert.requireNonNull(decodings, "decodings must not be null");
         this.encodings = Assert.requireNonNull(encodings, "encodings must not be null");
         this.preferredTypes = Assert.requireNonNull(preferredTypes, "preferredTypes must not be null");
@@ -68,7 +68,7 @@ public final class MockCodecs implements Codecs {
     }
 
     @Override
-    public Parameter encode(Object value) {
+    public EncodedParameter encode(Object value) {
         Assert.requireNonNull(value, "value must not be null");
 
         if (!this.encodings.containsKey(value)) {
@@ -79,7 +79,7 @@ public final class MockCodecs implements Codecs {
     }
 
     @Override
-    public Parameter encodeNull(Class<?> type) {
+    public EncodedParameter encodeNull(Class<?> type) {
         Assert.requireNonNull(type, "type must not be null");
 
         if (!this.encodings.containsKey(type)) {
@@ -115,7 +115,7 @@ public final class MockCodecs implements Codecs {
 
         private final Map<Decoding, Object> decodings = new HashMap<>();
 
-        private final Map<Object, Parameter> encodings = new HashMap<>();
+        private final Map<Object, EncodedParameter> encodings = new HashMap<>();
 
         private final Map<PreferredType, Class<?>> preferredTypes = new HashMap<>();
 
@@ -134,7 +134,7 @@ public final class MockCodecs implements Codecs {
             return this;
         }
 
-        public Builder encoding(@Nullable Object value, Parameter parameter) {
+        public Builder encoding(@Nullable Object value, EncodedParameter parameter) {
             Assert.requireNonNull(parameter, "parameter must not be null");
 
             this.encodings.put(value, parameter);
