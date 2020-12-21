@@ -17,9 +17,9 @@
 package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.codec.Codecs;
+import io.r2dbc.postgresql.codec.PostgresqlObjectId;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.message.backend.RowDescription.Field;
-import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ColumnMetadata;
 import io.r2dbc.spi.Type;

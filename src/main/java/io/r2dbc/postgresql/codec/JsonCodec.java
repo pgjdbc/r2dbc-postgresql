@@ -23,15 +23,14 @@ import io.netty.buffer.Unpooled;
 import io.netty.util.ReferenceCountUtil;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
-import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.JSONB;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.JSONB;
 
 final class JsonCodec extends AbstractJsonCodec<Json> {
 

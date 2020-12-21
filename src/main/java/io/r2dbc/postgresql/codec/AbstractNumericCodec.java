@@ -20,7 +20,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
-import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
@@ -29,15 +28,15 @@ import java.util.EnumSet;
 import java.util.Set;
 import java.util.function.Function;
 
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.FLOAT4;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.FLOAT8;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT2;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT4;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT8;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.NUMERIC;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.OID;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.FLOAT4;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.FLOAT8;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT2;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT8;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.NUMERIC;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.OID;
 
 /**
  * Codec to decode all known numeric types.

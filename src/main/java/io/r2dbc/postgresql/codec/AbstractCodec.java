@@ -19,7 +19,6 @@ package io.r2dbc.postgresql.codec;
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
-import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;

@@ -20,8 +20,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
-import io.r2dbc.postgresql.type.PostgresTypeIdentifier;
-import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Parameter;
 import io.r2dbc.spi.R2dbcTypes;

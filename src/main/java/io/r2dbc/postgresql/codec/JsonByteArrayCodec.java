@@ -20,11 +20,10 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
-import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.JSON;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.JSON;
 
 final class JsonByteArrayCodec extends AbstractJsonCodec<byte[]> {
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.r2dbc.postgresql.type;
+package io.r2dbc.postgresql.codec;
 
 import io.r2dbc.spi.Type;
 

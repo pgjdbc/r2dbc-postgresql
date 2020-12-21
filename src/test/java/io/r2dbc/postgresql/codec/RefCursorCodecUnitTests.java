@@ -19,10 +19,10 @@ package io.r2dbc.postgresql.codec;
 import io.r2dbc.postgresql.api.RefCursor;
 import org.junit.jupiter.api.Test;
 
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.MONEY;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.REF_CURSOR;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.REF_CURSOR;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;

@@ -22,11 +22,11 @@ import org.junit.jupiter.api.Test;
 
 import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.JSON;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.JSONB;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.JSON;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.JSONB;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;

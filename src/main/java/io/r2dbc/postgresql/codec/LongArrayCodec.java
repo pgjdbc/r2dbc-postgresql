@@ -19,13 +19,12 @@ package io.r2dbc.postgresql.codec;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.EncodedParameter;
-import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 
 import java.util.function.Supplier;
 
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT8_ARRAY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT8_ARRAY;
 
 final class LongArrayCodec extends AbstractArrayCodec<Long> {
 

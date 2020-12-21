@@ -17,7 +17,6 @@
 package io.r2dbc.postgresql.codec;
 
 import io.r2dbc.postgresql.api.PostgresqlConnection;
-import io.r2dbc.postgresql.type.PostgresTypeIdentifier;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;

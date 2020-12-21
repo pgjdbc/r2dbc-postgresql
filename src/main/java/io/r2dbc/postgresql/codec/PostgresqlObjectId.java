@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,21 @@
  * limitations under the License.
  */
 
-package io.r2dbc.postgresql.type;
+package io.r2dbc.postgresql.codec;
 
+import io.r2dbc.postgresql.api.RefCursor;
 import io.r2dbc.postgresql.util.Assert;
+import io.r2dbc.spi.Clob;
 import io.r2dbc.spi.R2dbcTypes;
+
+import java.math.BigDecimal;
+import java.net.InetAddress;
+import java.nio.ByteBuffer;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
 
 /**
  * Object IDs for well know PostgreSQL data types.
@@ -40,162 +51,162 @@ public enum PostgresqlObjectId implements PostgresTypeIdentifier {
     /**
      * The bool object id.
      */
-    BOOL(16),
+    BOOL(16, Boolean.class),
 
     /**
      * The bool array object id.
      */
-    BOOL_ARRAY(1000),
+    BOOL_ARRAY(1000, Boolean[].class),
 
     /**
      * The box object id.
      */
-    BOX(603),
+    BOX(603, Box.class),
 
     /**
      * The bpchar object id.
      */
-    BPCHAR(1042),
+    BPCHAR(1042, String.class),
 
     /**
      * The bpchar array object id.
      */
-    BPCHAR_ARRAY(1014),
+    BPCHAR_ARRAY(1014, String[].class),
 
     /**
      * The bytea object id.
      */
-    BYTEA(17),
+    BYTEA(17, ByteBuffer.class),
 
     /**
      * They bytea array object id.
      */
-    BYTEA_ARRAY(1001),
+    BYTEA_ARRAY(1001, ByteBuffer[].class),
 
     /**
      * The char object id.
      */
-    CHAR(18),
+    CHAR(18, Character.class),
 
     /**
      * The char array object id.
      */
-    CHAR_ARRAY(1002),
+    CHAR_ARRAY(1002, Character[].class),
 
     /**
      * The circle object id
      */
-    CIRCLE(718),
+    CIRCLE(718, Circle.class),
 
     /**
      * The date object id.
      */
-    DATE(1082),
+    DATE(1082, LocalDate.class),
 
     /**
      * The date array object id.
      */
-    DATE_ARRAY(1182),
+    DATE_ARRAY(1182, LocalDate[].class),
 
     /**
      * The float4 object id.
      */
-    FLOAT4(700),
+    FLOAT4(700, Float.class),
 
     /**
      * The float4 array object id.
      */
-    FLOAT4_ARRAY(1021),
+    FLOAT4_ARRAY(1021, Float[].class),
 
     /**
      * The float8 object id.
      */
-    FLOAT8(701),
+    FLOAT8(701, Double.class),
 
     /**
      * The float8 array object id.
      */
-    FLOAT8_ARRAY(1022),
+    FLOAT8_ARRAY(1022, Double[].class),
 
     /**
      * The inet object id.
      */
-    INET(869),
+    INET(869, InetAddress.class),
 
     /**
      * The inet array object id.
      */
-    INET_ARRAY(1041),
+    INET_ARRAY(1041, InetAddress[].class),
 
     /**
      * The int2 object id.
      */
-    INT2(21),
+    INT2(21, Short.class),
 
     /**
      * The int2 array object id.
      */
-    INT2_ARRAY(1005),
+    INT2_ARRAY(1005, Short[].class),
 
     /**
      * The int4 object id.
      */
-    INT4(23),
+    INT4(23, Integer.class),
 
     /**
      * The int4 array object id.
      */
-    INT4_ARRAY(1007),
+    INT4_ARRAY(1007, Integer[].class),
 
     /**
      * The int8 object id.
      */
-    INT8(20),
+    INT8(20, Long.class),
 
     /**
      * The int8 array object id.
      */
-    INT8_ARRAY(1016),
+    INT8_ARRAY(1016, Long[].class),
 
     /**
      * The interval object id.
      */
-    INTERVAL(1186),
+    INTERVAL(1186, Interval.class),
 
     /**
      * The interval array object id.
      */
-    INTERVAL_ARRAY(1187),
+    INTERVAL_ARRAY(1187, Interval[].class),
 
     /**
      * The JSON object id.
      */
-    JSON(114),
+    JSON(114, Json.class),
 
     /**
      * The JSON array object id.
      */
-    JSON_ARRAY(199),
+    JSON_ARRAY(199, Json[].class),
 
     /**
      * The JSONB array object id.
      */
-    JSONB(3802),
+    JSONB(3802, Json.class),
 
     /**
      * The JSONB array object id.
      */
-    JSONB_ARRAY(3807),
+    JSONB_ARRAY(3807, Json.class),
 
     /**
      * The line object id
      */
-    LINE(628),
+    LINE(628, Line.class),
 
     /**
      * The line segment object id
      */
-    LSEG(601),
+    LSEG(601, Lseg.class),
 
     /**
      * The money object id.
@@ -210,112 +221,112 @@ public enum PostgresqlObjectId implements PostgresTypeIdentifier {
     /**
      * The name object id.
      */
-    NAME(19),
+    NAME(19, String.class),
 
     /**
      * The name array object id.
      */
-    NAME_ARRAY(1003),
+    NAME_ARRAY(1003, String[].class),
 
     /**
      * The numberic object id.
      */
-    NUMERIC(1700),
+    NUMERIC(1700, BigDecimal.class),
 
     /**
      * The numeric array object id.
      */
-    NUMERIC_ARRAY(1231),
+    NUMERIC_ARRAY(1231, BigDecimal[].class),
 
     /**
      * The oid object id.
      */
-    OID(26),
+    OID(26, Integer.class),
 
     /**
      * The oid array object id.
      */
-    OID_ARRAY(1028),
+    OID_ARRAY(1028, Integer[].class),
 
     /**
      * the path object id
      */
-    PATH(602),
+    PATH(602, Path.class),
 
     /**
      * The point object id.
      */
-    POINT(600),
+    POINT(600, Point.class),
 
     /**
      * The point array object id.
      */
-    POINT_ARRAY(1017),
+    POINT_ARRAY(1017, Point[].class),
 
     /**
      * the polygon object id
      */
-    POLYGON(604),
+    POLYGON(604, Polygon.class),
 
     /**
      * The ref cursor object id.
      */
-    REF_CURSOR(1790),
+    REF_CURSOR(1790, RefCursor.class),
 
     /**
      * The ref cursor array object id.
      */
-    REF_CURSOR_ARRAY(2201),
+    REF_CURSOR_ARRAY(2201, RefCursor[].class),
 
     /**
      * The text object id.
      */
-    TEXT(25),
+    TEXT(25, Clob.class),
 
     /**
      * The text array object id.
      */
-    TEXT_ARRAY(1009),
+    TEXT_ARRAY(1009, Clob[].class),
 
     /**
      * The time object id.
      */
-    TIME(1083),
+    TIME(1083, LocalTime.class),
 
     /**
      * The time array object id.
      */
-    TIME_ARRAY(1183),
+    TIME_ARRAY(1183, LocalTime[].class),
 
     /**
      * The timestamp object id.
      */
-    TIMESTAMP(1114),
+    TIMESTAMP(1114, LocalDateTime.class),
 
     /**
      * The timestamp array object id.
      */
-    TIMESTAMP_ARRAY(1115),
+    TIMESTAMP_ARRAY(1115, LocalDateTime[].class),
 
     /**
      * The timestamptz object id.
      */
-    TIMESTAMPTZ(1184),
+    TIMESTAMPTZ(1184, OffsetDateTime.class),
 
     /**
      * The timestamptz array object id.
      */
-    TIMESTAMPTZ_ARRAY(1185),
+    TIMESTAMPTZ_ARRAY(1185, OffsetDateTime[].class),
 
     /**
      * The timetz object id.
      */
-    TIMETZ(1266),
+    TIMETZ(1266, OffsetTime.class),
 
     /**
      * The timetz array object id.
      */
-    TIMETZ_ARRAY(1270),
+    TIMETZ_ARRAY(1270, OffsetTime[].class),
 
     /**
      * UNKNOWN type
@@ -336,12 +347,12 @@ public enum PostgresqlObjectId implements PostgresTypeIdentifier {
     /**
      * The UUID object id.
      */
-    UUID(2950),
+    UUID(2950, java.util.UUID.class),
 
     /**
      * The UUID array object id.
      */
-    UUID_ARRAY(2951),
+    UUID_ARRAY(2951, java.util.UUID[].class),
 
     /**
      * The varbit object id.
@@ -356,17 +367,17 @@ public enum PostgresqlObjectId implements PostgresTypeIdentifier {
     /**
      * The varchar object id.
      */
-    VARCHAR(1043),
+    VARCHAR(1043, String.class),
 
     /**
      * The varchar array object id.
      */
-    VARCHAR_ARRAY(1015),
+    VARCHAR_ARRAY(1015, String[].class),
 
     /**
      * The void object id.
      */
-    VOID(2278),
+    VOID(2278, Void.class),
 
     /**
      * The XML object id.
@@ -384,6 +395,8 @@ public enum PostgresqlObjectId implements PostgresTypeIdentifier {
 
     private final int objectId;
 
+    private final Class<?> defaultJavaType;
+
     static {
         for (PostgresqlObjectId oid : values()) {
             CACHE[oid.getObjectId()] = oid;
@@ -391,7 +404,12 @@ public enum PostgresqlObjectId implements PostgresTypeIdentifier {
     }
 
     PostgresqlObjectId(int objectId) {
+        this(objectId, Object.class);
+    }
+
+    PostgresqlObjectId(int objectId, Class<?> defaultJavaType) {
         this.objectId = objectId;
+        this.defaultJavaType = Assert.requireNonNull(defaultJavaType, "defaultJavaType must not be null");
     }
 
     /**
@@ -507,7 +525,7 @@ public enum PostgresqlObjectId implements PostgresTypeIdentifier {
 
     @Override
     public Class<?> getJavaType() {
-        return Object.class;
+        return this.defaultJavaType;
     }
 
     @Override

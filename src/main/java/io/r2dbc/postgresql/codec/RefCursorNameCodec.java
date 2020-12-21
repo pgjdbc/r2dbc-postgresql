@@ -19,12 +19,11 @@ package io.r2dbc.postgresql.codec;
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
-import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.REF_CURSOR;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.REF_CURSOR;
 
 final class RefCursorNameCodec extends AbstractCodec<String> {
 

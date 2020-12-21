@@ -19,14 +19,13 @@ package io.r2dbc.postgresql.codec;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.message.Format;
-import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.NUMERIC;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.NUMERIC;
 
 final class BigIntegerCodec extends AbstractNumericCodec<BigInteger> {
 

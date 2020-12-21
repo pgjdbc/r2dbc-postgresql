@@ -19,7 +19,7 @@ package io.r2dbc.postgresql.codec;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.CIRCLE;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.CIRCLE;
 
 /**
  * @since 0.8.5

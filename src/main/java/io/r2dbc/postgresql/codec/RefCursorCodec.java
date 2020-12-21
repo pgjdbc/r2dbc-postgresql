@@ -21,13 +21,12 @@ import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.api.RefCursor;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
-import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.REF_CURSOR;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.REF_CURSOR;
 
 final class RefCursorCodec extends AbstractCodec<RefCursor> {
 

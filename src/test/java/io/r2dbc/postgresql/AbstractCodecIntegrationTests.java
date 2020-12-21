@@ -30,7 +30,7 @@ import io.r2dbc.postgresql.codec.Lseg;
 import io.r2dbc.postgresql.codec.Path;
 import io.r2dbc.postgresql.codec.Point;
 import io.r2dbc.postgresql.codec.Polygon;
-import io.r2dbc.postgresql.type.PostgresqlObjectId;
+import io.r2dbc.postgresql.codec.PostgresqlObjectId;
 import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.Clob;
 import io.r2dbc.spi.Connection;

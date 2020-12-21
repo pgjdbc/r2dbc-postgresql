@@ -20,14 +20,13 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
-import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 
 import java.time.OffsetTime;
 
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMETZ;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMETZ;
 
 public class OffsetTimeCodec extends AbstractTemporalCodec<OffsetTime> {
 

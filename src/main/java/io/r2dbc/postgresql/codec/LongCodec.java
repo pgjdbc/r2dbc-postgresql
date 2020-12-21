@@ -19,11 +19,10 @@ package io.r2dbc.postgresql.codec;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.message.Format;
-import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT8;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT8;
 
 final class LongCodec extends AbstractNumericCodec<Long> {
 

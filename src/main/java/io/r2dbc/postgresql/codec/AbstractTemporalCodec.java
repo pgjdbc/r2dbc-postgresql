@@ -19,7 +19,6 @@ package io.r2dbc.postgresql.codec;
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
-import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
@@ -36,13 +35,13 @@ import java.util.EnumSet;
 import java.util.Set;
 import java.util.function.Function;
 
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.DATE;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIME;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMESTAMP;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMESTAMPTZ;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMETZ;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.DATE;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIME;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMP;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMPTZ;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMETZ;
 
 /**
  * Codec to decode all known temporal types.

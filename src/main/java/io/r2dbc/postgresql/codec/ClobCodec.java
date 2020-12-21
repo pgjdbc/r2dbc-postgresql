@@ -20,7 +20,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
-import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import io.r2dbc.spi.Clob;
@@ -28,9 +27,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TEXT;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 
 final class ClobCodec extends AbstractCodec<Clob> {
 

@@ -20,18 +20,17 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
-import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 
 import java.util.function.Supplier;
 
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.BPCHAR_ARRAY;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.CHAR_ARRAY;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.NAME_ARRAY;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TEXT_ARRAY;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.VARCHAR_ARRAY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR_ARRAY;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.CHAR_ARRAY;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.NAME_ARRAY;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.TEXT_ARRAY;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR_ARRAY;
 
 final class StringArrayCodec extends AbstractArrayCodec<String> {
 

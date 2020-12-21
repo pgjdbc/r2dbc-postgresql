@@ -24,12 +24,12 @@ import java.time.LocalTime;
 
 import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.MONEY;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIME;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMESTAMP;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.MONEY;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIME;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.TIMESTAMP;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;

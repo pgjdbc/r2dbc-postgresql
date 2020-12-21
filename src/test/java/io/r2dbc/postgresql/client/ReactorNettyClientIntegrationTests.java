@@ -71,7 +71,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT4;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.fail;

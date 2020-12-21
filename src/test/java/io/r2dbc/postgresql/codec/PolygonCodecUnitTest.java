@@ -21,11 +21,11 @@ import io.r2dbc.postgresql.client.ParameterAssert;
 import org.junit.jupiter.api.Test;
 
 import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.LINE;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.PATH;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.POLYGON;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.LINE;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.PATH;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.POLYGON;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;

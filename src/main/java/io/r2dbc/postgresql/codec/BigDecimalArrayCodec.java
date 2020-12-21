@@ -20,13 +20,12 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
-import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 
 import java.math.BigDecimal;
 import java.util.function.Supplier;
 
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.NUMERIC_ARRAY;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.NUMERIC_ARRAY;
 
 final class BigDecimalArrayCodec extends AbstractArrayCodec<BigDecimal> {
 
