@@ -53,7 +53,7 @@ final class BigDecimalArrayCodec extends AbstractArrayCodec<BigDecimal> {
 
     @Override
     EncodedParameter encodeArray(Supplier<ByteBuf> encodedSupplier, PostgresqlObjectId dataType) {
-        return create(dataType, Format.FORMAT_TEXT, encodedSupplier);
+        return create(Format.FORMAT_TEXT, dataType, encodedSupplier);
     }
 
 }

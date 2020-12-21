@@ -111,14 +111,14 @@ abstract class AbstractCodec<T> implements Codec<T> {
     /**
      * Create a {@link EncodedParameter}.
      *
-     * @param type   the well-known {@link PostgresqlObjectId type OID}
      * @param format the format to use
+     * @param type   the well-known {@link PostgresqlObjectId type OID}
      * @param value  {@link Publisher} emitting {@link ByteBuf buffers}
      * @return the encoded  {@link EncodedParameter}
      * @implNote use deferred buffer creation instead of {@link Mono#just(Object)} and {@link Flux#just(Object)} to avoid memory
      * leaks
      */
-    static EncodedParameter create(PostgresqlObjectId type, Format format, Publisher<? extends ByteBuf> value) {
+    static EncodedParameter create(Format format, PostgresqlObjectId type, Publisher<? extends ByteBuf> value) {
         Assert.requireNonNull(type, "type must not be null");
         return new EncodedParameter(format, type.getObjectId(), value);
     }
@@ -126,12 +126,12 @@ abstract class AbstractCodec<T> implements Codec<T> {
     /**
      * Create a {@link EncodedParameter}.
      *
-     * @param type           the well-known {@link PostgresqlObjectId type OID}
      * @param format         the format to use
+     * @param type           the well-known {@link PostgresqlObjectId type OID}
      * @param bufferSupplier {@link Supplier} supplying the encoded {@link ByteBuf buffer}
      * @return the encoded  {@link EncodedParameter}
      */
-    static EncodedParameter create(PostgresqlObjectId type, Format format, Supplier<? extends ByteBuf> bufferSupplier) {
+    static EncodedParameter create(Format format, PostgresqlObjectId type, Supplier<? extends ByteBuf> bufferSupplier) {
         Assert.requireNonNull(type, "type must not be null");
         return new EncodedParameter(format, type.getObjectId(), Mono.fromSupplier(bufferSupplier));
     }
@@ -139,12 +139,12 @@ abstract class AbstractCodec<T> implements Codec<T> {
     /**
      * Encode a {@code null} value.
      *
-     * @param type   the well-known {@link PostgresqlObjectId type OID}
      * @param format the data type {@link Format}, text or binary
+     * @param type   the well-known {@link PostgresqlObjectId type OID}
      * @return the encoded {@code null} value
      */
-    static EncodedParameter createNull(PostgresqlObjectId type, Format format) {
-        return create(type, format, NULL_VALUE);
+    static EncodedParameter createNull(Format format, PostgresqlObjectId type) {
+        return create(format, type, NULL_VALUE);
     }
 
     /**

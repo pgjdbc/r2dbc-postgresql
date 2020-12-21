@@ -46,7 +46,7 @@ final class ShortCodec extends AbstractNumericCodec<Short> {
 
     @Override
     EncodedParameter doEncode(Short value, PostgresqlObjectId dataType) {
-        return create(dataType, FORMAT_BINARY, () -> this.byteBufAllocator.buffer(2).writeShort(value));
+        return create(FORMAT_BINARY, dataType, () -> this.byteBufAllocator.buffer(2).writeShort(value));
     }
 
     @Override

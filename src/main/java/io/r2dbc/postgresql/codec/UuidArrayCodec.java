@@ -49,7 +49,7 @@ final class UuidArrayCodec extends AbstractArrayCodec<UUID> {
 
     @Override
     EncodedParameter encodeArray(Supplier<ByteBuf> encodedSupplier, PostgresqlObjectId dataType) {
-        return create(dataType, Format.FORMAT_TEXT, encodedSupplier);
+        return create(Format.FORMAT_TEXT, dataType, encodedSupplier);
     }
 
     @Override

@@ -58,12 +58,12 @@ final class IntervalCodec extends AbstractCodec<Interval> {
     EncodedParameter doEncode(Interval value, PostgresqlObjectId dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return create(dataType, FORMAT_TEXT,
+        return create(FORMAT_TEXT, dataType,
             () -> ByteBufUtils.encode(this.byteBufAllocator, value.getValue()));
     }
 
     @Override
     public EncodedParameter encodeNull() {
-        return createNull(INTERVAL, FORMAT_TEXT);
+        return createNull(FORMAT_TEXT, INTERVAL);
     }
 }

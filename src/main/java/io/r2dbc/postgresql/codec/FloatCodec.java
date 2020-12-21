@@ -46,7 +46,7 @@ final class FloatCodec extends AbstractNumericCodec<Float> {
 
     @Override
     EncodedParameter doEncode(Float value, PostgresqlObjectId dataType) {
-        return create(dataType, FORMAT_BINARY, () -> this.byteBufAllocator.buffer(4).writeFloat(value));
+        return create(FORMAT_BINARY, dataType, () -> this.byteBufAllocator.buffer(4).writeFloat(value));
     }
 
     @Override

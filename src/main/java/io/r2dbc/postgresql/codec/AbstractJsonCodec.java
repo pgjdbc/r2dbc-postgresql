@@ -38,7 +38,7 @@ abstract class AbstractJsonCodec<T> extends AbstractCodec<T> {
 
     @Override
     public EncodedParameter encodeNull() {
-        return createNull(JSONB, FORMAT_BINARY);
+        return createNull(FORMAT_BINARY, JSONB);
     }
 
     @Override

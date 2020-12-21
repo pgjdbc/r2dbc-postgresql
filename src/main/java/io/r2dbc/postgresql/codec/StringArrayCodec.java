@@ -59,7 +59,7 @@ final class StringArrayCodec extends AbstractArrayCodec<String> {
 
     @Override
     EncodedParameter encodeArray(Supplier<ByteBuf> encodedSupplier, PostgresqlObjectId dataType) {
-        return create(dataType, FORMAT_TEXT, encodedSupplier);
+        return create(FORMAT_TEXT, dataType, encodedSupplier);
     }
 
     @Override

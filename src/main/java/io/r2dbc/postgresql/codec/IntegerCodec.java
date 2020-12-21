@@ -46,7 +46,7 @@ final class IntegerCodec extends AbstractNumericCodec<Integer> {
 
     @Override
     EncodedParameter doEncode(Integer value, PostgresqlObjectId dataType) {
-        return create(dataType, FORMAT_BINARY, () -> this.byteBufAllocator.buffer(4).writeInt(value));
+        return create(FORMAT_BINARY, dataType, () -> this.byteBufAllocator.buffer(4).writeInt(value));
     }
 
     @Override

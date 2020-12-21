@@ -41,7 +41,7 @@ final class BinaryByteArrayCodec extends AbstractBinaryCodec<byte[]> {
     EncodedParameter doEncode(byte[] value, PostgresqlObjectId dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return create(dataType, FORMAT_TEXT, () -> encodeToHex(Unpooled.wrappedBuffer(value)));
+        return create(FORMAT_TEXT, dataType, () -> encodeToHex(Unpooled.wrappedBuffer(value)));
     }
 
 }

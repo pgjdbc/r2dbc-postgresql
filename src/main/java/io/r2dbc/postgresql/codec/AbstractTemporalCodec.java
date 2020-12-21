@@ -112,7 +112,7 @@ abstract class AbstractTemporalCodec<T extends Temporal> extends AbstractCodec<T
             throw new IllegalStateException("Cannot encode null, default type of " + getClass().getName() + " must not be null!");
         }
 
-        return createNull(defaultType, FORMAT_TEXT);
+        return createNull(FORMAT_TEXT, defaultType);
     }
 
     /**

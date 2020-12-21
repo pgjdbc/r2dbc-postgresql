@@ -74,7 +74,7 @@ final class JsonCodec extends AbstractJsonCodec<Json> {
             throw new IllegalArgumentException("value must be JsonInput or JsonOutput");
         }
 
-        return create(dataType, FORMAT_BINARY, () -> {
+        return create(FORMAT_BINARY, dataType, () -> {
 
             Object toEncode;
 

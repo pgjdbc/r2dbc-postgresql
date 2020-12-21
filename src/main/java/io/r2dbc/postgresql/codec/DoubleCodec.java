@@ -46,7 +46,7 @@ final class DoubleCodec extends AbstractNumericCodec<Double> {
 
     @Override
     EncodedParameter doEncode(Double value, PostgresqlObjectId dataType) {
-        return create(dataType, FORMAT_BINARY, () -> this.byteBufAllocator.buffer(8).writeDouble(value));
+        return create(FORMAT_BINARY, dataType, () -> this.byteBufAllocator.buffer(8).writeDouble(value));
     }
 
     @Override

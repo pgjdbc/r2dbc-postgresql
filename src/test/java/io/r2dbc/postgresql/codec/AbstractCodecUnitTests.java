@@ -90,7 +90,7 @@ final class AbstractCodecUnitTests {
 
     @Test
     void create() {
-        EncodedParameter parameter = AbstractCodec.create(INT4, FORMAT_TEXT, Flux.just(TEST.buffer(4).writeInt(100)));
+        EncodedParameter parameter = AbstractCodec.create(FORMAT_TEXT, INT4, Flux.just(TEST.buffer(4).writeInt(100)));
 
         assertThat(parameter)
             .hasFormat(FORMAT_TEXT)
@@ -100,20 +100,20 @@ final class AbstractCodecUnitTests {
 
     @Test
     void createNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> AbstractCodec.create(INT4, null, Mono.empty()))
+        assertThatIllegalArgumentException().isThrownBy(() -> AbstractCodec.create(null, INT4, Mono.empty()))
             .withMessage("format must not be null");
     }
 
     @Test
     void createNull() {
-        EncodedParameter parameter = AbstractCodec.createNull(INT4, FORMAT_TEXT);
+        EncodedParameter parameter = AbstractCodec.createNull(FORMAT_TEXT, INT4);
 
         assertThat(parameter).isEqualTo(new EncodedParameter(FORMAT_TEXT, INT4.getObjectId(), NULL_VALUE));
     }
 
     @Test
     void createNullNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> AbstractCodec.createNull(INT4, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> AbstractCodec.createNull(null, INT4))
             .withMessage("format must not be null");
     }
 

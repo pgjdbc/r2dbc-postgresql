@@ -46,7 +46,7 @@ final class LongCodec extends AbstractNumericCodec<Long> {
 
     @Override
     EncodedParameter doEncode(Long value, PostgresqlObjectId dataType) {
-        return create(dataType, FORMAT_BINARY, () -> this.byteBufAllocator.buffer(8).writeLong(value));
+        return create(FORMAT_BINARY, dataType, () -> this.byteBufAllocator.buffer(8).writeLong(value));
     }
 
     @Override

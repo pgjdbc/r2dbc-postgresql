@@ -92,7 +92,7 @@ abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> {
     EncodedParameter doEncode(T value, PostgresqlObjectId dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return create(dataType, Format.FORMAT_BINARY, () -> doEncodeBinary(value));
+        return create(Format.FORMAT_BINARY, dataType, () -> doEncodeBinary(value));
     }
 
     /**
@@ -105,7 +105,7 @@ abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> {
 
     @Override
     public EncodedParameter encodeNull() {
-        return createNull(this.postgresqlObjectId, Format.FORMAT_BINARY);
+        return createNull(Format.FORMAT_BINARY, this.postgresqlObjectId);
     }
 
     /**

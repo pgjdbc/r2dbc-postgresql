@@ -55,7 +55,7 @@ final class JsonInputStreamCodec extends AbstractJsonCodec<InputStream> {
     EncodedParameter doEncode(InputStream value, PostgresqlObjectId dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return create(dataType, FORMAT_BINARY, () -> doEncode(value, this.byteBufAllocator));
+        return create(FORMAT_BINARY, dataType, () -> doEncode(value, this.byteBufAllocator));
     }
 
     static ByteBuf doEncode(InputStream value, ByteBufAllocator alloc) {

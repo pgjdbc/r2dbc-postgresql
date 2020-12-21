@@ -51,7 +51,7 @@ abstract class AbstractBinaryCodec<T> extends AbstractCodec<T> {
 
     @Override
     public EncodedParameter encodeNull() {
-        return createNull(BYTEA, FORMAT_TEXT);
+        return createNull(FORMAT_TEXT, BYTEA);
     }
 
     @Override

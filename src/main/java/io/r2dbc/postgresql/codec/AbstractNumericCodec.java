@@ -98,7 +98,7 @@ abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> {
 
     @Override
     public EncodedParameter encodeNull() {
-        return createNull(getDefaultType(), FORMAT_BINARY);
+        return createNull(FORMAT_BINARY, getDefaultType());
     }
 
     /**

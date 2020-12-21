@@ -40,7 +40,7 @@ final class BinaryByteBufferCodec extends AbstractBinaryCodec<ByteBuffer> {
 
     @Override
     EncodedParameter doEncode(ByteBuffer value, PostgresqlObjectId dataType) {
-        return create(dataType, FORMAT_TEXT, () -> encodeToHex(Unpooled.wrappedBuffer(value)));
+        return create(FORMAT_TEXT, dataType, () -> encodeToHex(Unpooled.wrappedBuffer(value)));
     }
 
 }

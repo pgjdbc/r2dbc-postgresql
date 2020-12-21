@@ -42,7 +42,7 @@ final class InetAddressCodec extends AbstractCodec<InetAddress> {
 
     @Override
     public EncodedParameter encodeNull() {
-        return createNull(INET, FORMAT_TEXT);
+        return createNull(FORMAT_TEXT, INET);
     }
 
     @Override
@@ -87,7 +87,7 @@ final class InetAddressCodec extends AbstractCodec<InetAddress> {
     EncodedParameter doEncode(InetAddress value, PostgresqlObjectId dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return create(dataType, FORMAT_TEXT, () -> ByteBufUtils.encode(this.byteBufAllocator, value.getHostAddress()));
+        return create(FORMAT_TEXT, dataType, () -> ByteBufUtils.encode(this.byteBufAllocator, value.getHostAddress()));
     }
 
 }
