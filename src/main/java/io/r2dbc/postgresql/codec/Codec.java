@@ -99,15 +99,6 @@ public interface Codec<T> {
     EncodedParameter encodeNull();
 
     /**
-     * Encode a {@code null} value using the given {@code dataType}.
-     *
-     * @param dataType the Postgres OID
-     * @return the encoded {@code null} value
-     * @since 0.9
-     */
-    EncodedParameter encodeNull(int dataType);
-
-    /**
      * Returns the Java {@link Class type} of this codec.
      *
      * @return the Java type

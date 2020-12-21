@@ -98,7 +98,6 @@ abstract class AbstractCodec<T> implements Codec<T> {
         return doEncode((T) value, PostgresqlObjectId.valueOf(dataType));
     }
 
-    @Override
     public EncodedParameter encodeNull(int dataType) {
         return new EncodedParameter(Format.FORMAT_BINARY, dataType, NULL_VALUE);
     }

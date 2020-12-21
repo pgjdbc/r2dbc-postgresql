@@ -138,8 +138,7 @@ final class CodecExtensionIntegrationTests extends AbstractIntegrationTests {
             return null;
         }
 
-        @Override
-        public EncodedParameter encodeNull(int dataType) {
+        private EncodedParameter encodeNull(int dataType) {
             return null;
         }
 

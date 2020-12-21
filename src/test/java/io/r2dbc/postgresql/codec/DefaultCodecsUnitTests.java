@@ -181,8 +181,7 @@ final class DefaultCodecsUnitTests {
             return null;
         }
 
-        @Override
-        public EncodedParameter encodeNull(int dataType) {
+        private EncodedParameter encodeNull(int dataType) {
             return null;
         }
 
