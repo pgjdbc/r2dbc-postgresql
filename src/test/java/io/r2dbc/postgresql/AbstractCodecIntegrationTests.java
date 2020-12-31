@@ -62,6 +62,7 @@ import java.time.OffsetTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Currency;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -251,6 +252,12 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     @Test
     void inetAddress() throws UnknownHostException {
         testCodec(InetAddress.class, InetAddress.getLocalHost(), "INET");
+    }
+
+    @Test
+    void currency() throws UnknownHostException {
+        testCodec(Currency.class, Currency.getInstance("USD"), "BPCHAR");
+        testCodec(Currency.class, Currency.getInstance("USD"), "VARCHAR");
     }
 
     @Test

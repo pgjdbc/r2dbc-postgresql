@@ -343,7 +343,7 @@ This reference table shows the type mapping between [PostgreSQL][p] and Java dat
 | [`box`][psql-box-ref]                           | **`Box`**|
 | [`bytea`][psql-bytea-ref]                       | [**`ByteBuffer`**][java-ByteBuffer-ref], [`byte[]`][java-byte-ref], [`Blob`][r2dbc-blob-ref]|
 | [`character`][psql-character-ref]               | [`String`][java-string-ref]|
-| [`character varying`][psql-character-ref]       | [`String`][java-string-ref]|
+| [`character varying`][psql-character-ref]       | [`String`][java-string-ref], [`Currency`][java-currency-ref]|
 | [`cidr`][psql-cidr-ref]                         | Not yet supported.|
 | [`circle`][psql-circle-ref]                     | **`Circle`**|
 | [`date`][psql-date-ref]                         | [`LocalDate`][java-ld-ref]|
@@ -459,6 +459,7 @@ Support for the following single-dimensional arrays (read and write):
 [java-primitive-ref]: https://docs.oracle.com/javase/tutorial/java/nutsandbolts/datatypes.html
 [java-short-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/Short.html
 [java-string-ref]: https://docs.oracle.com/javase/8/docs/api/java/lang/String.html
+[java-currency-ref]: https://docs.oracle.com/javase/8/docs/api/java/util/Currency.html
 [java-uuid-ref]: https://docs.oracle.com/javase/8/docs/api/java/util/UUID.html
 [java-zdt-ref]: https://docs.oracle.com/javase/8/docs/api/java/time/ZonedDateTime.html
 
