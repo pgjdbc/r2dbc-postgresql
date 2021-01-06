@@ -19,7 +19,7 @@ package io.r2dbc.postgresql.codec;
 import io.r2dbc.postgresql.api.RefCursor;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Clob;
-import io.r2dbc.spi.R2dbcTypes;
+import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.Type;
 
 import java.math.BigDecimal;
@@ -462,7 +462,7 @@ public enum PostgresqlObjectId implements Type, PostgresTypeIdentifier {
     }
 
     /**
-     * Returns the {@link PostgresqlObjectId} matching a given {@link R2dbcTypes R2DBC type}.
+     * Returns the {@link PostgresqlObjectId} matching a given {@link R2dbcType R2DBC type}.
      *
      * @param type the R2DBC type
      * @return the {@link PostgresqlObjectId}
@@ -470,7 +470,7 @@ public enum PostgresqlObjectId implements Type, PostgresTypeIdentifier {
      * @throws UnsupportedOperationException if the given {@code type} is not supported
      * @since 0.9
      */
-    public static PostgresqlObjectId valueOf(R2dbcTypes type) {
+    public static PostgresqlObjectId valueOf(R2dbcType type) {
 
         Assert.requireNonNull(type, "type must not be null");
 

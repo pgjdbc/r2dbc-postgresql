@@ -35,7 +35,7 @@ import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.Clob;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.Parameters;
-import io.r2dbc.spi.R2dbcTypes;
+import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.Type;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
@@ -109,9 +109,9 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(BigDecimal.class, new BigDecimal("100"), "INT8");
         testCodec(BigDecimal.class, new BigDecimal("100"), "FLOAT4");
         testCodec(BigDecimal.class, new BigDecimal("100"), "FLOAT8");
-        testCodec(BigDecimal.class, new BigDecimal("100"), "NUMERIC", R2dbcTypes.NUMERIC);
-        testCodec(BigDecimal.class, new BigDecimal("100"), "FLOAT8", R2dbcTypes.DOUBLE);
-        testCodec(BigDecimal.class, new BigDecimal("100"), "INT8", R2dbcTypes.BIGINT);
+        testCodec(BigDecimal.class, new BigDecimal("100"), "NUMERIC", R2dbcType.NUMERIC);
+        testCodec(BigDecimal.class, new BigDecimal("100"), "FLOAT8", R2dbcType.DOUBLE);
+        testCodec(BigDecimal.class, new BigDecimal("100"), "INT8", R2dbcType.BIGINT);
     }
 
     @Test
@@ -230,9 +230,9 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(Double.class, 100.1, "FLOAT4");
         testCodec(Double.class, 100.1, "FLOAT8");
 
-        testCodec(Double.class, 100.1, "DECIMAL", R2dbcTypes.DECIMAL);
-        testCodec(Double.class, 100.1, "FLOAT4", R2dbcTypes.FLOAT);
-        testCodec(Double.class, 100.1, "FLOAT8", R2dbcTypes.DOUBLE);
+        testCodec(Double.class, 100.1, "DECIMAL", R2dbcType.DECIMAL);
+        testCodec(Double.class, 100.1, "FLOAT4", R2dbcType.FLOAT);
+        testCodec(Double.class, 100.1, "FLOAT8", R2dbcType.DOUBLE);
     }
 
     @Test
@@ -249,9 +249,9 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(Float.class, 100.1f, "FLOAT4");
         testCodec(Float.class, 100.1f, "FLOAT8");
 
-        testCodec(Float.class, 100.1f, "DECIMAL", R2dbcTypes.DECIMAL);
-        testCodec(Float.class, 100.1f, "FLOAT4", R2dbcTypes.FLOAT);
-        testCodec(Float.class, 100.1f, "FLOAT8", R2dbcTypes.DOUBLE);
+        testCodec(Float.class, 100.1f, "DECIMAL", R2dbcType.DECIMAL);
+        testCodec(Float.class, 100.1f, "FLOAT4", R2dbcType.FLOAT);
+        testCodec(Float.class, 100.1f, "FLOAT8", R2dbcType.DOUBLE);
     }
 
     @Test
@@ -289,13 +289,13 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(Integer.class, 100, "FLOAT4");
         testCodec(Integer.class, 100, "FLOAT8");
 
-        testCodec(Integer.class, 100, "INT2", R2dbcTypes.SMALLINT);
-        testCodec(Integer.class, 100, "INT4", R2dbcTypes.INTEGER);
-        testCodec(Integer.class, 100, "INT8", R2dbcTypes.INTEGER);
+        testCodec(Integer.class, 100, "INT2", R2dbcType.SMALLINT);
+        testCodec(Integer.class, 100, "INT4", R2dbcType.INTEGER);
+        testCodec(Integer.class, 100, "INT8", R2dbcType.INTEGER);
         testCodec(Integer.class, 100, "OID");
-        testCodec(Integer.class, 100, "NUMERIC", R2dbcTypes.NUMERIC);
-        testCodec(Integer.class, 100, "FLOAT4", R2dbcTypes.FLOAT);
-        testCodec(Integer.class, 100, "FLOAT8", R2dbcTypes.DOUBLE);
+        testCodec(Integer.class, 100, "NUMERIC", R2dbcType.NUMERIC);
+        testCodec(Integer.class, 100, "FLOAT4", R2dbcType.FLOAT);
+        testCodec(Integer.class, 100, "FLOAT8", R2dbcType.DOUBLE);
     }
 
     @Test

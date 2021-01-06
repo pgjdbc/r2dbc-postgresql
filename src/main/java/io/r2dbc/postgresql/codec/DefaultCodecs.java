@@ -22,7 +22,7 @@ import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Parameter;
-import io.r2dbc.spi.R2dbcTypes;
+import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.Type;
 import reactor.util.annotation.Nullable;
 
@@ -178,9 +178,9 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
                 return encodeNull(parameter.getType().getJavaType());
             }
 
-            if (parameter.getType() instanceof R2dbcTypes) {
+            if (parameter.getType() instanceof R2dbcType) {
 
-                PostgresqlObjectId targetType = PostgresqlObjectId.valueOf((R2dbcTypes) parameter.getType());
+                PostgresqlObjectId targetType = PostgresqlObjectId.valueOf((R2dbcType) parameter.getType());
                 dataType = targetType;
             }
 
