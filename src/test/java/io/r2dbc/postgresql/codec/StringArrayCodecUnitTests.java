@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,16 @@ import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.*;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR_ARRAY;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.CHAR;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.CHAR_ARRAY;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.NAME;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.NAME_ARRAY;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.TEXT;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.TEXT_ARRAY;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
+import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR_ARRAY;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
