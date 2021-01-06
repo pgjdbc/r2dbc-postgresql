@@ -104,7 +104,7 @@ public final class MockCodec<T> extends AbstractCodec<T> {
     }
 
     @Override
-    EncodedParameter doEncode(T value, PostgresqlObjectId dataType) {
+    EncodedParameter doEncode(T value, PostgresTypeIdentifier dataType) {
         if (!this.encodings.containsKey(value)) {
             throw new AssertionError(String.format("Unexpected call to doEncode(T) with value '%s'", value));
         }

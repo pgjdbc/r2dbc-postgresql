@@ -67,7 +67,7 @@ final class DateCodec extends AbstractCodec<Date> {
     }
 
     @Override
-    EncodedParameter doEncode(Date value, PostgresqlObjectId dataType) {
+    EncodedParameter doEncode(Date value, PostgresTypeIdentifier dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
         return this.delegate.doEncode(normalize(value), dataType);

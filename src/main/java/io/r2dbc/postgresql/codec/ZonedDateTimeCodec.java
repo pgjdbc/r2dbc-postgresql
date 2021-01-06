@@ -56,7 +56,7 @@ final class ZonedDateTimeCodec extends AbstractTemporalCodec<ZonedDateTime> {
     }
 
     @Override
-    EncodedParameter doEncode(ZonedDateTime value, PostgresqlObjectId dataType) {
+    EncodedParameter doEncode(ZonedDateTime value, PostgresTypeIdentifier dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
         return create(FORMAT_TEXT, dataType, () -> ByteBufUtils.encode(this.byteBufAllocator, value.toOffsetDateTime().toString()));

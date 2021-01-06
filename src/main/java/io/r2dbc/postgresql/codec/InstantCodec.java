@@ -71,7 +71,7 @@ final class InstantCodec extends AbstractTemporalCodec<Instant> {
     }
 
     @Override
-    EncodedParameter doEncode(Instant value, PostgresqlObjectId dataType) {
+    EncodedParameter doEncode(Instant value, PostgresTypeIdentifier dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
         return create(FORMAT_TEXT, dataType, () -> ByteBufUtils.encode(this.byteBufAllocator, value.toString()));

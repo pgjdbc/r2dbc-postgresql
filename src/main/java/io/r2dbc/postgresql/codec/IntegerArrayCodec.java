@@ -43,7 +43,7 @@ final class IntegerArrayCodec extends AbstractArrayCodec<Integer> {
     }
 
     @Override
-    EncodedParameter encodeArray(Supplier<ByteBuf> encodedSupplier, PostgresqlObjectId dataType) {
+    EncodedParameter encodeArray(Supplier<ByteBuf> encodedSupplier, PostgresTypeIdentifier dataType) {
         return create(FORMAT_TEXT, dataType, encodedSupplier);
     }
 

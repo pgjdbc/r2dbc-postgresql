@@ -43,7 +43,7 @@ final class JsonByteArrayCodec extends AbstractJsonCodec<byte[]> {
     }
 
     @Override
-    EncodedParameter doEncode(byte[] value, PostgresqlObjectId dataType) {
+    EncodedParameter doEncode(byte[] value, PostgresTypeIdentifier dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
         return create(FORMAT_TEXT, JSON, () -> this.byteBufAllocator.buffer(value.length).writeBytes(value));

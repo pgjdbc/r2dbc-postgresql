@@ -81,7 +81,7 @@ abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> {
         return doEncode(value, getDefaultType());
     }
 
-    EncodedParameter doEncode(T value, PostgresqlObjectId dataType) {
+    EncodedParameter doEncode(T value, PostgresTypeIdentifier dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
         if (dataType == NUMERIC) {
@@ -91,9 +91,11 @@ abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> {
         return create(FORMAT_BINARY, dataType, () -> doEncodeNumber(value, dataType));
     }
 
-    private ByteBuf doEncodeNumber(Number value, PostgresqlObjectId dataType) {
+    private ByteBuf doEncodeNumber(Number value, PostgresTypeIdentifier identifier) {
 
-        switch (dataType) {
+        PostgresqlObjectId oid = PostgresqlObjectId.valueOf(identifier.getObjectId());
+
+        switch (oid) {
 
             case FLOAT8:
                 return this.byteBufAllocator.buffer(8).writeDouble(value.doubleValue());
@@ -111,7 +113,7 @@ abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> {
                 return this.byteBufAllocator.buffer(4).writeShort(value.shortValue());
         }
 
-        throw new IllegalArgumentException(String.format("Cannot encode %s to %s", value, dataType));
+        throw new IllegalArgumentException(String.format("Cannot encode %s to %s", value, oid));
 
     }
 

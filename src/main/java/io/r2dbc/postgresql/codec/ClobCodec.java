@@ -66,7 +66,7 @@ final class ClobCodec extends AbstractCodec<Clob> {
     }
 
     @Override
-    EncodedParameter doEncode(Clob value, PostgresqlObjectId dataType) {
+    EncodedParameter doEncode(Clob value, PostgresTypeIdentifier dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
         return create(FORMAT_TEXT, dataType,

@@ -166,7 +166,7 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
     public EncodedParameter encode(Object value) {
         Assert.requireNonNull(value, "value must not be null");
 
-        int dataType = -1;
+        PostgresTypeIdentifier dataType = null;
         Object parameterValue = value;
 
         if (value instanceof Parameter) {
@@ -181,15 +181,15 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
             if (parameter.getType() instanceof R2dbcTypes) {
 
                 PostgresqlObjectId targetType = PostgresqlObjectId.valueOf((R2dbcTypes) parameter.getType());
-                dataType = targetType.getObjectId();
+                dataType = targetType;
             }
 
             if (parameter.getType() instanceof PostgresTypeIdentifier) {
-                dataType = ((PostgresTypeIdentifier) parameter.getType()).getObjectId();
+                dataType = (PostgresTypeIdentifier) parameter.getType();
             }
         }
 
-        if (dataType == -1) {
+        if (dataType == null) {
 
             if (parameterValue == null) {
                 throw new IllegalArgumentException(String.format("Cannot encode null value %s using type inference", value));
@@ -203,14 +203,13 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
         } else {
 
             if (parameterValue == null) {
-                return new EncodedParameter(Format.FORMAT_BINARY, dataType, NULL_VALUE);
-            } else {
+                return new EncodedParameter(Format.FORMAT_BINARY, dataType.getObjectId(), NULL_VALUE);
+            }
 
-                for (Codec<?> codec : this.codecs) {
+            for (Codec<?> codec : this.codecs) {
 
-                    if (codec.canEncode(parameterValue)) {
-                        return codec.encode(parameterValue, dataType);
-                    }
+                if (codec.canEncode(parameterValue)) {
+                    return codec.encode(parameterValue, dataType.getObjectId());
                 }
             }
         }

@@ -54,7 +54,7 @@ final class IntervalCodec extends AbstractCodec<Interval> {
     }
 
     @Override
-    EncodedParameter doEncode(Interval value, PostgresqlObjectId dataType) {
+    EncodedParameter doEncode(Interval value, PostgresTypeIdentifier dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
         return create(FORMAT_TEXT, dataType,

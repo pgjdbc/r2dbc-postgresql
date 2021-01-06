@@ -16,15 +16,13 @@
 
 package io.r2dbc.postgresql.codec;
 
-import io.r2dbc.spi.Type;
-
 /**
  * Represents a Postgres type identifier identified by {@link #getObjectId() OID}.
  *
  * @see PostgresqlObjectId
  * @since 0.9
  */
-public interface PostgresTypeIdentifier extends Type {
+public interface PostgresTypeIdentifier {
 
     /**
      * Postgres type identifier.

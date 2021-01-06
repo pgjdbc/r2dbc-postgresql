@@ -45,6 +45,7 @@ import org.springframework.util.StreamUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import reactor.util.annotation.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -577,7 +578,7 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(javaType, value, equality, sqlType, "$1", null);
     }
 
-    private <T> void testCodec(Class<T> javaType, T value, BiConsumer<T, T> equality, String sqlType, String insertPlaceholder, Type parameterType) {
+    private <T> void testCodec(Class<T> javaType, T value, BiConsumer<T, T> equality, String sqlType, String insertPlaceholder, @Nullable Type parameterType) {
         SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS test");
         SERVER.getJdbcOperations().execute(String.format("CREATE TABLE test ( value %s )", sqlType));
 

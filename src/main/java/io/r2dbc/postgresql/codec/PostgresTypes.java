@@ -18,6 +18,7 @@ package io.r2dbc.postgresql.codec;
 
 import io.r2dbc.postgresql.api.PostgresqlConnection;
 import io.r2dbc.postgresql.util.Assert;
+import io.r2dbc.spi.Type;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
@@ -71,7 +72,7 @@ public class PostgresTypes {
             throw new IllegalArgumentException(String.format("Invalid typename %s", typeName));
         }
 
-        return this.connection.createStatement(String.format(SELECT_PG_TYPE, "=", typeName, "LIMIT 1")).execute()
+        return this.connection.createStatement(String.format(SELECT_PG_TYPE, "=", "'" + typeName + "'", "LIMIT 1")).execute()
             .flatMap(it -> it.map((row, rowMetadata) -> {
                 return new PostgresType(row.get("oid", Integer.class), row.get("typname", String.class), row.get("typcategory", String.class));
             })).singleOrEmpty();
@@ -96,7 +97,7 @@ public class PostgresTypes {
             }));
     }
 
-    public static class PostgresType implements PostgresTypeIdentifier {
+    public static class PostgresType implements Type, PostgresTypeIdentifier {
 
         private final int oid;
 

@@ -62,7 +62,7 @@ final class ByteCodec extends AbstractCodec<Byte> {
     }
 
     @Override
-    EncodedParameter doEncode(Byte value, PostgresqlObjectId dataType) {
+    EncodedParameter doEncode(Byte value, PostgresTypeIdentifier dataType) {
         return this.delegate.doEncode((short) value, dataType);
     }
 

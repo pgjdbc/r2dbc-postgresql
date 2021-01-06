@@ -67,7 +67,7 @@ final class JsonCodec extends AbstractJsonCodec<Json> {
     }
 
     @Override
-    EncodedParameter doEncode(Json value, PostgresqlObjectId dataType) {
+    EncodedParameter doEncode(Json value, PostgresTypeIdentifier dataType) {
         Assert.requireNonNull(value, "value must not be null");
         if (!(value instanceof Json.JsonInput || value instanceof Json.JsonOutput)) {
             throw new IllegalArgumentException("value must be JsonInput or JsonOutput");

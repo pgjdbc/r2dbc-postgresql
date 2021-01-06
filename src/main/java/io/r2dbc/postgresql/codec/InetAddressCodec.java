@@ -83,7 +83,7 @@ final class InetAddressCodec extends AbstractCodec<InetAddress> {
     }
 
     @Override
-    EncodedParameter doEncode(InetAddress value, PostgresqlObjectId dataType) {
+    EncodedParameter doEncode(InetAddress value, PostgresTypeIdentifier dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
         return create(FORMAT_TEXT, dataType, () -> ByteBufUtils.encode(this.byteBufAllocator, value.getHostAddress()));

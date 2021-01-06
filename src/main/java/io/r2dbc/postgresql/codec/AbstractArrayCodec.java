@@ -144,7 +144,7 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
     }
 
     @Override
-    EncodedParameter doEncode(Object[] value, PostgresqlObjectId dataType) {
+    EncodedParameter doEncode(Object[] value, PostgresTypeIdentifier dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
         return encodeArray(() -> {
@@ -161,7 +161,7 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
      * @param dataType        the Postgres data type
      * @return encoded {@link EncodedParameter} item
      */
-    abstract EncodedParameter encodeArray(Supplier<ByteBuf> encodedSupplier, PostgresqlObjectId dataType);
+    abstract EncodedParameter encodeArray(Supplier<ByteBuf> encodedSupplier, PostgresTypeIdentifier dataType);
 
     /**
      * Encode a single array item using text format.

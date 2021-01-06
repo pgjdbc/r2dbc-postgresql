@@ -62,7 +62,7 @@ final class RefCursorCodec extends AbstractCodec<RefCursor> {
     }
 
     @Override
-    EncodedParameter doEncode(RefCursor value, PostgresqlObjectId dataType) {
+    EncodedParameter doEncode(RefCursor value, PostgresTypeIdentifier dataType) {
         throw new UnsupportedOperationException("RefCursor cannot be encoded");
     }
 

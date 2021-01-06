@@ -20,6 +20,7 @@ import io.r2dbc.postgresql.api.RefCursor;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Clob;
 import io.r2dbc.spi.R2dbcTypes;
+import io.r2dbc.spi.Type;
 
 import java.math.BigDecimal;
 import java.net.InetAddress;
@@ -36,7 +37,7 @@ import java.time.OffsetTime;
  * <p>
  * Lightweight {@link PostgresTypeIdentifier} identifier returning {@code Object.class} when calling {@link #getJavaType()}.
  */
-public enum PostgresqlObjectId implements PostgresTypeIdentifier {
+public enum PostgresqlObjectId implements Type, PostgresTypeIdentifier {
 
     /**
      * The bit object id.
