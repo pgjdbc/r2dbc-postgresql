@@ -42,10 +42,9 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.CoreSubscriber;
 import reactor.core.Disposable;
-import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
 import reactor.util.Logger;
 import reactor.util.Loggers;
 import reactor.util.annotation.Nullable;
@@ -454,9 +453,7 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
      */
     static class NotificationAdapter {
 
-        private final DirectProcessor<Notification> processor = DirectProcessor.create();
-
-        private final FluxSink<Notification> sink = this.processor.sink();
+        private final Sinks.Many<Notification> sink = Sinks.many().multicast().directBestEffort();
 
         @Nullable
         private volatile Disposable subscription = null;
@@ -479,23 +476,23 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
 
                 @Override
                 public void onNext(NotificationResponse notificationResponse) {
-                    NotificationAdapter.this.sink.next(new NotificationResponseWrapper(notificationResponse));
+                    NotificationAdapter.this.sink.emitNext(new NotificationResponseWrapper(notificationResponse), Sinks.EmitFailureHandler.FAIL_FAST);
                 }
 
                 @Override
                 public void onError(Throwable throwable) {
-                    NotificationAdapter.this.sink.error(throwable);
+                    NotificationAdapter.this.sink.emitError(throwable, Sinks.EmitFailureHandler.FAIL_FAST);
                 }
 
                 @Override
                 public void onComplete() {
-                    NotificationAdapter.this.sink.complete();
+                    NotificationAdapter.this.sink.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
                 }
             });
         }
 
         Flux<Notification> getEvents() {
-            return this.processor;
+            return this.sink.asFlux();
         }
 
     }

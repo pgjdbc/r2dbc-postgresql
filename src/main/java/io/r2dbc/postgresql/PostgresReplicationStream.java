@@ -30,7 +30,6 @@ import io.r2dbc.postgresql.replication.ReplicationStream;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import reactor.core.Disposable;
-import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
@@ -42,6 +41,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
+@SuppressWarnings("deprecation")
 final class PostgresReplicationStream implements ReplicationStream {
 
     public static final long POSTGRES_EPOCH_2000_01_01 = 946684800000L;
@@ -50,9 +50,9 @@ final class PostgresReplicationStream implements ReplicationStream {
 
     private static final char X_LOG_DATA = 'w';
 
-    private final EmitterProcessor<CopyData> responseProcessor = EmitterProcessor.create(false);
+    private final reactor.core.publisher.EmitterProcessor<CopyData> responseProcessor = reactor.core.publisher.EmitterProcessor.create(false);
 
-    private final EmitterProcessor<FrontendMessage> requestProcessor;
+    private final reactor.core.publisher.EmitterProcessor<FrontendMessage> requestProcessor;
 
     private final AtomicReference<Disposable> subscription = new AtomicReference<>();
 
@@ -70,7 +70,8 @@ final class PostgresReplicationStream implements ReplicationStream {
 
     private volatile LogSequenceNumber lastFlushedLSN = LogSequenceNumber.INVALID_LSN;
 
-    PostgresReplicationStream(ByteBufAllocator allocator, ReplicationRequest replicationRequest, EmitterProcessor<FrontendMessage> requestProcessor, Flux<BackendMessage> messages) {
+    PostgresReplicationStream(ByteBufAllocator allocator, ReplicationRequest replicationRequest, reactor.core.publisher.EmitterProcessor<FrontendMessage> requestProcessor,
+                              Flux<BackendMessage> messages) {
         this.allocator = allocator;
         this.replicationRequest = replicationRequest;
         this.requestProcessor = requestProcessor;

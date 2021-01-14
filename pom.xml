@@ -43,12 +43,12 @@
         <mbr.version>0.2.0.RELEASE</mbr.version>
         <logback.version>1.2.3</logback.version>
         <mockito.version>3.5.15</mockito.version>
-        <netty.version>4.1.53.Final</netty.version>
+        <netty.version>4.1.56.Final</netty.version>
         <postgresql.version>42.2.18</postgresql.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <r2dbc-spi.version>0.9.0.BUILD-SNAPSHOT</r2dbc-spi.version>
-        <reactor.version>Dysprosium-SR12</reactor.version>
+        <reactor.version>2020.0.3</reactor.version>
         <scram-client.version>2.1</scram-client.version>
         <spring-framework.version>5.2.9.RELEASE</spring-framework.version>
         <testcontainers.version>1.15.0</testcontainers.version>

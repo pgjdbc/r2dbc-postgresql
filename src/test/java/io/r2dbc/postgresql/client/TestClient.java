@@ -25,7 +25,6 @@ import io.r2dbc.postgresql.util.TestByteBufAllocator;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.Disposable;
-import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
@@ -43,6 +42,7 @@ import static io.r2dbc.postgresql.client.TransactionStatus.IDLE;
 /**
  * Test {@link Client} implementation that allows specification of expectations and assertions.
  */
+@SuppressWarnings("deprecation")
 public final class TestClient implements Client {
 
     public static final TestClient NO_OP = new TestClient(false, true, null, null, Flux.empty(), IDLE, new Version("9.4"));
@@ -51,15 +51,15 @@ public final class TestClient implements Client {
 
     private final boolean connected;
 
-    private final EmitterProcessor<NotificationResponse> notificationProcessor = EmitterProcessor.create(false);
+    private final reactor.core.publisher.EmitterProcessor<NotificationResponse> notificationProcessor = reactor.core.publisher.EmitterProcessor.create(false);
 
     private final Integer processId;
 
-    private final EmitterProcessor<FrontendMessage> requestProcessor = EmitterProcessor.create(false);
+    private final reactor.core.publisher.EmitterProcessor<FrontendMessage> requestProcessor = reactor.core.publisher.EmitterProcessor.create(false);
 
     private final FluxSink<FrontendMessage> requests = this.requestProcessor.sink();
 
-    private final EmitterProcessor<Flux<BackendMessage>> responseProcessor = EmitterProcessor.create(false);
+    private final reactor.core.publisher.EmitterProcessor<Flux<BackendMessage>> responseProcessor = reactor.core.publisher.EmitterProcessor.create(false);
 
     private final Integer secretKey;
 

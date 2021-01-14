@@ -49,8 +49,6 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.CoreSubscriber;
 import reactor.core.Disposable;
-import reactor.core.publisher.DirectProcessor;
-import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
@@ -90,6 +88,7 @@ import static io.r2dbc.postgresql.client.TransactionStatus.IDLE;
  *
  * @see TcpClient
  */
+@SuppressWarnings("deprecation")
 public final class ReactorNettyClient implements Client {
 
     private static final Logger logger = Loggers.getLogger(ReactorNettyClient.class);
@@ -108,11 +107,11 @@ public final class ReactorNettyClient implements Client {
 
     private ConnectionContext context;
 
-    private final EmitterProcessor<Publisher<FrontendMessage>> requestProcessor = EmitterProcessor.create(false);
+    private final reactor.core.publisher.EmitterProcessor<Publisher<FrontendMessage>> requestProcessor = reactor.core.publisher.EmitterProcessor.create(false);
 
     private final FluxSink<Publisher<FrontendMessage>> requests = this.requestProcessor.sink();
 
-    private final DirectProcessor<NotificationResponse> notificationProcessor = DirectProcessor.create();
+    private final reactor.core.publisher.DirectProcessor<NotificationResponse> notificationProcessor = reactor.core.publisher.DirectProcessor.create();
 
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
@@ -521,9 +520,9 @@ public final class ReactorNettyClient implements Client {
 
     private final class EnsureSubscribersCompleteChannelHandler extends ChannelDuplexHandler {
 
-        private final EmitterProcessor<Publisher<FrontendMessage>> requestProcessor;
+        private final reactor.core.publisher.EmitterProcessor<Publisher<FrontendMessage>> requestProcessor;
 
-        private EnsureSubscribersCompleteChannelHandler(EmitterProcessor<Publisher<FrontendMessage>> requestProcessor) {
+        private EnsureSubscribersCompleteChannelHandler(reactor.core.publisher.EmitterProcessor<Publisher<FrontendMessage>> requestProcessor) {
             this.requestProcessor = requestProcessor;
         }
 
@@ -620,20 +619,6 @@ public final class ReactorNettyClient implements Client {
             } catch (ClassNotFoundException e) {
                 return null;
             }
-        }
-
-        @Override
-        public Class<? extends Channel> onChannel(EventLoopGroup group) {
-
-            if (epoll && EPOLL_SOCKET != null) {
-                return EPOLL_SOCKET;
-            }
-
-            if (kqueue && KQUEUE_SOCKET != null) {
-                return KQUEUE_SOCKET;
-            }
-
-            return this.delegate.onChannel(group);
         }
 
         @Override

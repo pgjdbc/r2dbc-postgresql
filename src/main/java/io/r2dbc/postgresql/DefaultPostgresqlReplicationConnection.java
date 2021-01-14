@@ -31,7 +31,6 @@ import io.r2dbc.postgresql.replication.ReplicationSlotRequest;
 import io.r2dbc.postgresql.replication.ReplicationStream;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Row;
-import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Mono;
 
 import java.util.function.Predicate;
@@ -79,6 +78,7 @@ final class DefaultPostgresqlReplicationConnection implements io.r2dbc.postgresq
             row.get("output_plugin", String.class));
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public Mono<ReplicationStream> startReplication(ReplicationRequest request) {
 
@@ -87,7 +87,7 @@ final class DefaultPostgresqlReplicationConnection implements io.r2dbc.postgresq
         String sql = request.asSQL();
         ExceptionFactory exceptionFactory = ExceptionFactory.withSql(sql);
 
-        EmitterProcessor<FrontendMessage> requestProcessor = EmitterProcessor.create();
+        reactor.core.publisher.EmitterProcessor<FrontendMessage> requestProcessor = reactor.core.publisher.EmitterProcessor.create();
 
         return Mono.fromDirect(this.client.exchange(requestProcessor.startWith(new Query(sql)))
             .handle(exceptionFactory::handleErrorResponse)

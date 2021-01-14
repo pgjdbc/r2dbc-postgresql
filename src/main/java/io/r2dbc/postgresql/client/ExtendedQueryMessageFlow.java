@@ -39,9 +39,8 @@ import io.r2dbc.postgresql.message.frontend.Parse;
 import io.r2dbc.postgresql.message.frontend.Sync;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.Operators;
-import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
+import reactor.core.publisher.Sinks;
 import reactor.core.publisher.SynchronousSink;
 
 import java.util.Collection;
@@ -127,29 +126,28 @@ public final class ExtendedQueryMessageFlow {
      */
     private static Flux<BackendMessage> fetchCursored(Flux<FrontendMessage> bindFlow, Client client, String portal, int fetchSize) {
 
-        DirectProcessor<FrontendMessage> requestsProcessor = DirectProcessor.create();
-        FluxSink<FrontendMessage> requestsSink = requestsProcessor.sink();
+        Sinks.Many<FrontendMessage> requestsSink = Sinks.many().unicast().onBackpressureBuffer();
         AtomicBoolean isCanceled = new AtomicBoolean(false);
 
-        return client.exchange(bindFlow.concatWithValues(new CompositeFrontendMessage(new Execute(portal, fetchSize), Flush.INSTANCE)).concatWith(requestsProcessor))
+        return client.exchange(bindFlow.concatWithValues(new CompositeFrontendMessage(new Execute(portal, fetchSize), Flush.INSTANCE)).concatWith(requestsSink.asFlux()))
             .handle((BackendMessage message, SynchronousSink<BackendMessage> sink) -> {
                 if (message instanceof CommandComplete) {
-                    requestsSink.next(new Close(portal, PORTAL));
-                    requestsSink.next(Sync.INSTANCE);
-                    requestsSink.complete();
+                    requestsSink.emitNext(new Close(portal, PORTAL), Sinks.EmitFailureHandler.FAIL_FAST);
+                    requestsSink.emitNext(Sync.INSTANCE, Sinks.EmitFailureHandler.FAIL_FAST);
+                    requestsSink.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
                     sink.next(message);
                 } else if (message instanceof ErrorResponse) {
-                    requestsSink.next(Sync.INSTANCE);
-                    requestsSink.complete();
+                    requestsSink.emitNext(Sync.INSTANCE, Sinks.EmitFailureHandler.FAIL_FAST);
+                    requestsSink.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
                     sink.next(message);
                 } else if (message instanceof PortalSuspended) {
                     if (isCanceled.get()) {
-                        requestsSink.next(new Close(portal, PORTAL));
-                        requestsSink.next(Sync.INSTANCE);
-                        requestsSink.complete();
+                        requestsSink.emitNext(new Close(portal, PORTAL), Sinks.EmitFailureHandler.FAIL_FAST);
+                        requestsSink.emitNext(Sync.INSTANCE, Sinks.EmitFailureHandler.FAIL_FAST);
+                        requestsSink.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
                     } else {
-                        requestsSink.next(new Execute(portal, fetchSize));
-                        requestsSink.next(Flush.INSTANCE);
+                        requestsSink.emitNext(new Execute(portal, fetchSize), Sinks.EmitFailureHandler.FAIL_FAST);
+                        requestsSink.emitNext(Flush.INSTANCE, Sinks.EmitFailureHandler.FAIL_FAST);
                     }
                 } else {
                     sink.next(message);

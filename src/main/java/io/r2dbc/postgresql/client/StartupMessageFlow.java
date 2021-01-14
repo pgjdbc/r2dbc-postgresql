@@ -23,9 +23,8 @@ import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.message.frontend.StartupMessage;
 import io.r2dbc.postgresql.util.Assert;
-import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
+import reactor.core.publisher.Sinks;
 import reactor.util.annotation.Nullable;
 
 import java.util.Map;
@@ -60,14 +59,13 @@ public final class StartupMessageFlow {
         Assert.requireNonNull(client, "client must not be null");
         Assert.requireNonNull(username, "username must not be null");
 
-        EmitterProcessor<FrontendMessage> requestProcessor = EmitterProcessor.create();
-        FluxSink<FrontendMessage> requests = requestProcessor.sink();
+        Sinks.Many<FrontendMessage> requests = Sinks.many().unicast().onBackpressureBuffer();
         AtomicReference<AuthenticationHandler> authenticationHandler = new AtomicReference<>(null);
 
-        return client.exchange(requestProcessor.startWith(new StartupMessage(applicationName, database, username, options)))
+        return client.exchange(requests.asFlux().startWith(new StartupMessage(applicationName, database, username, options)))
             .handle((message, sink) -> {
                 if (message instanceof AuthenticationOk) {
-                    requests.complete();
+                    requests.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
                 } else if (message instanceof AuthenticationMessage) {
                     try {
                         AuthenticationMessage authenticationMessage = (AuthenticationMessage) message;
@@ -78,10 +76,10 @@ public final class StartupMessageFlow {
 
                         FrontendMessage response = authenticationHandler.get().handle(authenticationMessage);
                         if (response != null) {
-                            requests.next(response);
+                            requests.emitNext(response, Sinks.EmitFailureHandler.FAIL_FAST);
                         }
                     } catch (Exception e) {
-                        requests.error(e);
+                        requests.emitError(e, Sinks.EmitFailureHandler.FAIL_FAST);
                         sink.error(e);
                     }
                 } else {

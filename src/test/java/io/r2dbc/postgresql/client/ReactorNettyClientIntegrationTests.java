@@ -48,10 +48,9 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.util.ReflectionUtils;
-import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.UnicastProcessor;
+import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Schedulers;
 import reactor.netty.Connection;
 import reactor.test.StepVerifier;
@@ -120,7 +119,7 @@ final class ReactorNettyClientIntegrationTests {
         this.client
             .exchange(Mono.just(new Query("SELECT value FROM test")))
             .limitRate(1)
-            .publishOn(Schedulers.elastic())
+            .publishOn(Schedulers.parallel())
             .doOnNext(ReferenceCountUtil::release)
             .as(StepVerifier::create)
             .thenConsumeWhile((t) -> true)
@@ -148,11 +147,12 @@ final class ReactorNettyClientIntegrationTests {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void shouldCancelExchangeOnCloseFirstMessage() throws Exception {
 
         Connection connection = (Connection) ReflectionUtils.getField(CONNECTION, this.client);
 
-        EmitterProcessor<FrontendMessage> messages = EmitterProcessor.create();
+        reactor.core.publisher.EmitterProcessor<FrontendMessage> messages = reactor.core.publisher.EmitterProcessor.create();
         Flux<BackendMessage> query = this.client.exchange(messages);
         CompletableFuture<List<BackendMessage>> future = query.collectList().toFuture();
 
@@ -171,11 +171,12 @@ final class ReactorNettyClientIntegrationTests {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void shouldCancelExchangeOnCloseInFlight() throws Exception {
 
         Connection connection = (Connection) ReflectionUtils.getField(CONNECTION, this.client);
 
-        EmitterProcessor<FrontendMessage> messages = EmitterProcessor.create();
+        reactor.core.publisher.EmitterProcessor<FrontendMessage> messages = reactor.core.publisher.EmitterProcessor.create();
         Flux<BackendMessage> query = this.client.exchange(messages);
         CompletableFuture<List<BackendMessage>> future = query.doOnNext(ignore -> {
             connection.channel().close();
@@ -820,8 +821,8 @@ final class ReactorNettyClientIntegrationTests {
 
     @Test
     void handleNotify() {
-        UnicastProcessor<NotificationResponse> response = UnicastProcessor.create();
-        this.client.addNotificationListener(response::onNext);
+        Sinks.Many<NotificationResponse> sink = Sinks.many().unicast().onBackpressureBuffer();
+        this.client.addNotificationListener(sink::tryEmitNext);
 
         this.client
             .exchange(Mono.just(new Query("LISTEN events")))
@@ -829,7 +830,7 @@ final class ReactorNettyClientIntegrationTests {
 
         SERVER.getJdbcOperations().execute("NOTIFY events, 'test'");
 
-        StepVerifier.create(response)
+        StepVerifier.create(sink.asFlux())
             .assertNext(message -> assertThat(message.getPayload()).isEqualTo("test"))
             .thenCancel()
             .verify();
@@ -853,8 +854,8 @@ final class ReactorNettyClientIntegrationTests {
                 "AFTER INSERT OR UPDATE OR DELETE ON test\n" +
                 "  FOR EACH ROW EXECUTE PROCEDURE notify_event();");
 
-        UnicastProcessor<NotificationResponse> response = UnicastProcessor.create();
-        this.client.addNotificationListener(response::onNext);
+        Sinks.Many<NotificationResponse> sink = Sinks.many().unicast().onBackpressureBuffer();
+        this.client.addNotificationListener(sink::tryEmitNext);
 
         this.client
             .exchange(Mono.just(new Query("LISTEN events")))
@@ -865,7 +866,7 @@ final class ReactorNettyClientIntegrationTests {
         SERVER.getJdbcOperations().execute("INSERT INTO test VALUES (100)");
         SERVER.getJdbcOperations().execute("INSERT INTO test VALUES (1000)");
 
-        StepVerifier.create(response)
+        StepVerifier.create(sink.asFlux())
             .assertNext(message -> assertThat(message.getPayload()).isEqualTo("{\"value\":100}"))
             .assertNext(message -> assertThat(message.getPayload()).isEqualTo("{\"value\":1000}"))
             .thenCancel()
