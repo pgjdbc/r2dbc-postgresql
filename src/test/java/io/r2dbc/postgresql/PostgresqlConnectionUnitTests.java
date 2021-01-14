@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql;
 
+import io.r2dbc.postgresql.api.PostgresTransactionDefinition;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.TestClient;
 import io.r2dbc.postgresql.client.Version;
@@ -58,6 +59,31 @@ final class PostgresqlConnectionUnitTests {
         assertThat(connection.isAutoCommit()).isTrue();
 
         connection.beginTransaction()
+            .as(StepVerifier::create)
+            .verifyComplete();
+    }
+
+    @Test
+    void beginTransactionExtendedTransaction() {
+        Client client = TestClient.builder()
+            .expectRequest(new Query("BEGIN ISOLATION LEVEL SERIALIZABLE, READ ONLY, NOT DEFERRABLE")).thenRespond(new CommandComplete("BEGIN", null, null))
+            .build();
+
+        PostgresqlConnection connection = createConnection(client, MockCodecs.empty(), this.statementCache);
+
+        connection.beginTransaction(PostgresTransactionDefinition.from(IsolationLevel.SERIALIZABLE).readOnly().notDeferrable())
+            .as(StepVerifier::create)
+            .verifyComplete();
+
+        assertThat(connection.getTransactionIsolationLevel()).isEqualTo(IsolationLevel.SERIALIZABLE);
+
+        client = TestClient.builder()
+            .expectRequest(new Query("BEGIN READ WRITE, DEFERRABLE")).thenRespond(new CommandComplete("BEGIN", null, null))
+            .build();
+
+        connection = createConnection(client, MockCodecs.empty(), this.statementCache);
+
+        connection.beginTransaction(PostgresTransactionDefinition.mutability(true).deferrable())
             .as(StepVerifier::create)
             .verifyComplete();
     }

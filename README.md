@@ -4,6 +4,7 @@ This project contains the [PostgreSQL][p] implementation of the [R2DBC SPI][r]. 
 
 This driver provides the following features:
 
+* Implements R2DBC 0.9
 * Login with username/password (MD5, SASL/SCRAM) or implicit trust
 * SCRAM authentication
 * Unix Domain Socket transport
@@ -174,20 +175,39 @@ PostgresqlConnection receiver = …;
 Flux<Notification> listen = receiver.createStatement("LISTEN mymessage")
                                 .execute()
                                 .flatMap(PostgresqlResult::getRowsUpdated)
-                                .thenMany(receiver.getNotifications());
+        .thenMany(receiver.getNotifications());
 
-Mono<Void> notify = sender.createStatement("NOTIFY mymessage, 'Hello World'")
-                            .execute()
-                            .flatMap(PostgresqlResult::getRowsUpdated)
-                            .then();
+        Mono<Void> notify=sender.createStatement("NOTIFY mymessage, 'Hello World'")
+        .execute()
+        .flatMap(PostgresqlResult::getRowsUpdated)
+        .then();
 ```                                                                                                                       
 
-Upon subscription, the first connection enters listen mode and publishes incoming `Notification`s as `Flux`.
-The second connection broadcasts a notification to the `mymessage` channel upon subscription.
+Upon subscription, the first connection enters listen mode and publishes incoming `Notification`s as `Flux`. The second connection broadcasts a notification to the `mymessage` channel upon
+subscription.
+
+## Transaction Definitions
+
+Postgres supports additional options when starting a transaction. In particular, the following options can be specified:
+
+* Isolation Level (`isolationLevel`)
+* Transaction Mutability (`readOnly`)
+* Deferrable Mode (`deferrable`)
+
+These options can be specified upon transaction begin to start the transaction and apply options in a single command roundtrip:
+
+```java
+PostgresqlConnection connection= …;
+
+        connection.beginTransaction(PostgresTransactionDefinition.from(IsolationLevel.SERIALIZABLE).readOnly().notDeferrable());
+```
+
+See also: https://www.postgresql.org/docs/current/sql-begin.html
 
 ## JSON/JSONB support
 
-PostgreSQL supports JSON by storing values in `JSON`/`JSONB` columns. These values can be consumed and written using the regular R2DBC SPI and by using driver-specific extensions with the `io.r2dbc.postgresql.codec.Json` type.
+PostgreSQL supports JSON by storing values in `JSON`/`JSONB` columns. These values can be consumed and written using the regular R2DBC SPI and by using driver-specific extensions with
+the `io.r2dbc.postgresql.codec.Json` type.
 
 You can choose from two approaches:
 

@@ -18,6 +18,7 @@ package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.api.ErrorDetails;
 import io.r2dbc.postgresql.api.Notification;
+import io.r2dbc.postgresql.api.PostgresTransactionDefinition;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.postgresql.client.Client;
@@ -33,6 +34,8 @@ import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.Operators;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.IsolationLevel;
+import io.r2dbc.spi.Option;
+import io.r2dbc.spi.TransactionDefinition;
 import io.r2dbc.spi.ValidationDepth;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -74,6 +77,8 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
 
     private volatile IsolationLevel isolationLevel;
 
+    private volatile IsolationLevel previousIsolationLevel;
+
     PostgresqlConnection(Client client, Codecs codecs, PortalNameSupplier portalNameSupplier, StatementCache statementCache, IsolationLevel isolationLevel,
                          PostgresqlConnectionConfiguration configuration) {
         this.client = Assert.requireNonNull(client, "client must not be null");
@@ -90,14 +95,74 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
 
     @Override
     public Mono<Void> beginTransaction() {
+        return beginTransaction(EmptyTransactionDefinition.INSTANCE);
+    }
+
+    @Override
+    public Mono<Void> beginTransaction(TransactionDefinition definition) {
+        Assert.requireNonNull(definition, "definition must not be null");
+
         return useTransactionStatus(transactionStatus -> {
             if (IDLE == transactionStatus) {
-                return exchange("BEGIN");
+
+                IsolationLevel isolationLevel = definition.getAttribute(TransactionDefinition.ISOLATION_LEVEL);
+                Boolean readOnly = definition.getAttribute(TransactionDefinition.READ_ONLY);
+                Boolean deferrable = definition.getAttribute(PostgresTransactionDefinition.DEFERRABLE);
+
+                String begin = "BEGIN";
+                String transactionMode = "";
+
+                if (isolationLevel != null) {
+                    transactionMode = appendTransactionMode(transactionMode, "ISOLATION LEVEL", isolationLevel.asSql());
+                }
+
+                if (readOnly != null) {
+                    transactionMode = appendTransactionMode(transactionMode, readOnly ? "READ ONLY" : "READ WRITE");
+                }
+
+                if (deferrable != null) {
+                    transactionMode = appendTransactionMode(transactionMode, deferrable ? "" : "NOT", "DEFERRABLE");
+                }
+
+                return exchange(transactionMode.isEmpty() ? begin : (begin + " " + transactionMode)).doOnComplete(() -> {
+
+                    this.previousIsolationLevel = this.isolationLevel;
+
+                    if (isolationLevel != null) {
+                        this.isolationLevel = isolationLevel;
+                    }
+                });
             } else {
                 this.logger.debug(this.connectionContext.getMessage("Skipping begin transaction because status is {}"), transactionStatus);
                 return Mono.empty();
             }
         });
+    }
+
+    private static String appendTransactionMode(String transactionMode, String... tokens) {
+
+        StringBuilder builder = new StringBuilder(transactionMode);
+
+        boolean first = true;
+        if (builder.length() != 0) {
+            builder.append(", ");
+        }
+
+        for (String token : tokens) {
+
+            if (token.isEmpty()) {
+                continue;
+            }
+
+            if (first) {
+                first = false;
+            } else {
+                builder.append(" ");
+            }
+            builder.append(token);
+        }
+
+        return builder.toString();
     }
 
     @Override
@@ -122,6 +187,7 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
         return useTransactionStatus(transactionStatus -> {
             if (IDLE != transactionStatus) {
                 return Flux.from(exchange("COMMIT"))
+                    .doOnComplete(this::cleanupIsolationLevel)
                     .filter(CommandComplete.class::isInstance)
                     .cast(CommandComplete.class)
                     .<BackendMessage>handle((message, sink) -> {
@@ -243,7 +309,7 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
     public Mono<Void> rollbackTransaction() {
         return useTransactionStatus(transactionStatus -> {
             if (IDLE != transactionStatus) {
-                return exchange("ROLLBACK");
+                return exchange("ROLLBACK").doOnComplete(this::cleanupIsolationLevel);
             } else {
                 this.logger.debug(this.connectionContext.getMessage("Skipping rollback transaction because status is {}"), transactionStatus);
                 return Mono.empty();
@@ -368,11 +434,19 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
     }
 
     @SuppressWarnings("unchecked")
-    private <T> Publisher<T> exchange(String sql) {
+    private <T> Flux<T> exchange(String sql) {
         ExceptionFactory exceptionFactory = ExceptionFactory.withSql(sql);
-        return (Publisher<T>) SimpleQueryMessageFlow.exchange(this.client, sql)
+        return (Flux<T>) SimpleQueryMessageFlow.exchange(this.client, sql)
             .handle(exceptionFactory::handleErrorResponse)
             .as(Operators::discardOnCancel);
+    }
+
+    private void cleanupIsolationLevel() {
+        if (this.previousIsolationLevel != null) {
+            this.isolationLevel = this.previousIsolationLevel;
+        }
+
+        this.previousIsolationLevel = null;
     }
 
     /**
@@ -424,6 +498,16 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
             return this.processor;
         }
 
+    }
+
+    enum EmptyTransactionDefinition implements TransactionDefinition {
+
+        INSTANCE;
+
+        @Override
+        public <T> T getAttribute(Option<T> option) {
+            return null;
+        }
     }
 
 }

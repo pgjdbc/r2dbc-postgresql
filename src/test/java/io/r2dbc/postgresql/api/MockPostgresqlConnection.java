@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.api;
 
 import io.r2dbc.spi.IsolationLevel;
+import io.r2dbc.spi.TransactionDefinition;
 import io.r2dbc.spi.ValidationDepth;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -31,6 +32,11 @@ public final class MockPostgresqlConnection implements PostgresqlConnection {
 
     @Override
     public Mono<Void> beginTransaction() {
+        return Mono.empty();
+    }
+
+    @Override
+    public Mono<Void> beginTransaction(TransactionDefinition definition) {
         return Mono.empty();
     }
 

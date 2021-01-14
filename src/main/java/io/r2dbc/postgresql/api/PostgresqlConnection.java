@@ -20,6 +20,7 @@ import io.r2dbc.postgresql.message.frontend.CancelRequest;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.IsolationLevel;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
+import io.r2dbc.spi.TransactionDefinition;
 import io.r2dbc.spi.ValidationDepth;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
@@ -35,6 +36,14 @@ public interface PostgresqlConnection extends Connection {
      */
     @Override
     Mono<Void> beginTransaction();
+
+    /**
+     * {@inheritDoc}
+     *
+     * @see PostgresTransactionDefinition
+     */
+    @Override
+    Mono<Void> beginTransaction(TransactionDefinition definition);
 
     /**
      * {@inheritDoc}
