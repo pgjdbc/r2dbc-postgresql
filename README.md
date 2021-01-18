@@ -190,7 +190,7 @@ subscription.
 
 Postgres supports additional options when starting a transaction. In particular, the following options can be specified:
 
-* Isolation Level (`isolationLevel`)
+* Isolation Level (`isolationLevel`) (reset after the transaction to previous value)
 * Transaction Mutability (`readOnly`)
 * Deferrable Mode (`deferrable`)
 

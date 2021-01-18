@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @SuppressWarnings("unchecked")
-class SimpleTransactionDefinition implements PostgresTransactionDefinition {
+final class SimpleTransactionDefinition implements PostgresTransactionDefinition {
 
     public static final SimpleTransactionDefinition EMPTY = new SimpleTransactionDefinition(Collections.emptyMap());
 
@@ -49,13 +49,13 @@ class SimpleTransactionDefinition implements PostgresTransactionDefinition {
     }
 
     @Override
-    public PostgresTransactionDefinition readOnly() {
-        return with(PostgresTransactionDefinition.READ_ONLY, true);
+    public PostgresTransactionDefinition deferrable() {
+        return with(PostgresTransactionDefinition.DEFERRABLE, true);
     }
 
     @Override
-    public PostgresTransactionDefinition readWrite() {
-        return with(PostgresTransactionDefinition.READ_ONLY, false);
+    public PostgresTransactionDefinition notDeferrable() {
+        return with(PostgresTransactionDefinition.DEFERRABLE, false);
     }
 
     @Override
@@ -64,13 +64,13 @@ class SimpleTransactionDefinition implements PostgresTransactionDefinition {
     }
 
     @Override
-    public PostgresTransactionDefinition deferrable() {
-        return with(PostgresTransactionDefinition.DEFERRABLE, true);
+    public PostgresTransactionDefinition readOnly() {
+        return with(PostgresTransactionDefinition.READ_ONLY, true);
     }
 
     @Override
-    public PostgresTransactionDefinition notDeferrable() {
-        return with(PostgresTransactionDefinition.DEFERRABLE, false);
+    public PostgresTransactionDefinition readWrite() {
+        return with(PostgresTransactionDefinition.READ_ONLY, false);
     }
 
 }

@@ -47,36 +47,11 @@ public interface PostgresTransactionDefinition extends TransactionDefinition {
      * Creates a {@link PostgresTransactionDefinition} specifying transaction mutability.
      *
      * @param readWrite {@code true} for read-write transactions; {@code false} to use a read-only transaction.
-     * @return a new {@link PostgresTransactionDefinition} using {@link IsolationLevel}.
+     * @return a new {@link PostgresTransactionDefinition} using the specified transaction mutability.
      */
     static PostgresTransactionDefinition mutability(boolean readWrite) {
         return readWrite ? SimpleTransactionDefinition.EMPTY.readWrite() : SimpleTransactionDefinition.EMPTY.readOnly();
     }
-
-    /**
-     * Creates a {@link PostgresTransactionDefinition} retaining all configured options and using read-only transaction semantics.
-     * Overrides transaction muatbility if configured already.
-     *
-     * @return a new {@link PostgresTransactionDefinition} retaining all configured options and using read-only transaction semantics.
-     */
-    PostgresTransactionDefinition readOnly();
-
-    /**
-     * Creates a {@link PostgresTransactionDefinition} retaining all configured options and using read-write transaction semantics.
-     * Overrides transaction muatbility if configured already.
-     *
-     * @return a new {@link PostgresTransactionDefinition} retaining all configured options and using read-write transaction semantics.
-     */
-    PostgresTransactionDefinition readWrite();
-
-    /**
-     * Creates a {@link PostgresTransactionDefinition} retaining all configured options and applying {@link IsolationLevel}.
-     *
-     * @param isolationLevel the isolation level to use during the transaction.
-     * @return a new {@link PostgresTransactionDefinition} retaining all configured options and applying {@link IsolationLevel}.
-     * @throws IllegalArgumentException if {@code isolationLevel} is {@code null}.
-     */
-    PostgresTransactionDefinition isolationLevel(IsolationLevel isolationLevel);
 
     /**
      * Creates a {@link PostgresTransactionDefinition} retaining all configured options and using deferrable transaction semantics.
@@ -93,5 +68,30 @@ public interface PostgresTransactionDefinition extends TransactionDefinition {
      * @return a new {@link PostgresTransactionDefinition} retaining all configured options and using not deferrable transaction semantics.
      */
     PostgresTransactionDefinition notDeferrable();
+
+    /**
+     * Creates a {@link PostgresTransactionDefinition} retaining all configured options and applying {@link IsolationLevel}.
+     *
+     * @param isolationLevel the isolation level to use during the transaction.
+     * @return a new {@link PostgresTransactionDefinition} retaining all configured options and applying {@link IsolationLevel}.
+     * @throws IllegalArgumentException if {@code isolationLevel} is {@code null}.
+     */
+    PostgresTransactionDefinition isolationLevel(IsolationLevel isolationLevel);
+
+    /**
+     * Creates a {@link PostgresTransactionDefinition} retaining all configured options and using read-only transaction semantics.
+     * Overrides transaction muatbility if configured already.
+     *
+     * @return a new {@link PostgresTransactionDefinition} retaining all configured options and using read-only transaction semantics.
+     */
+    PostgresTransactionDefinition readOnly();
+
+    /**
+     * Creates a {@link PostgresTransactionDefinition} retaining all configured options and using read-write transaction semantics.
+     * Overrides transaction mutability if configured already.
+     *
+     * @return a new {@link PostgresTransactionDefinition} retaining all configured options and using read-write transaction semantics.
+     */
+    PostgresTransactionDefinition readWrite();
 
 }
