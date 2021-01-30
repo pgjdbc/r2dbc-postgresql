@@ -29,7 +29,7 @@ public final class GeneratedValuesUtils {
 
     private static final Pattern INSERT = Pattern.compile(".*INSERT.*", CASE_INSENSITIVE | Pattern.DOTALL);
 
-    private static final Pattern RETURNING = Pattern.compile(".*RETURNING.*", CASE_INSENSITIVE | Pattern.DOTALL);
+    private static final Pattern RETURNING = Pattern.compile(".*\\bRETURNING\\b.*", CASE_INSENSITIVE | Pattern.DOTALL);
 
     private static final Pattern UPDATE = Pattern.compile(".*UPDATE.*", CASE_INSENSITIVE | Pattern.DOTALL);
 
