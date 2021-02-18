@@ -52,6 +52,8 @@ final class GeneratedValuesUtilsUnitTests {
     void hasReturning() {
         assertThat(GeneratedValuesUtils.hasReturningClause("test-sql")).isFalse();
         assertThat(GeneratedValuesUtils.hasReturningClause("test-sql RETURNING *")).isTrue();
+        assertThat(GeneratedValuesUtils.hasReturningClause("select * from userReturning")).isFalse();
+        assertThat(GeneratedValuesUtils.hasReturningClause("select * from ReturningUser")).isFalse();
     }
 
     @Test
