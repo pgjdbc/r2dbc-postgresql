@@ -37,7 +37,11 @@ import reactor.util.annotation.Nullable;
 
 import javax.net.ssl.HostnameVerifier;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.Socket;
+import java.net.URL;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -360,12 +364,12 @@ public final class PostgresqlConnectionConfiguration {
         private String socket;
 
         @Nullable
-        private String sslCert = null;
+        private URL sslCert = null;
 
         private HostnameVerifier sslHostnameVerifier = DefaultHostnameVerifier.INSTANCE;
 
         @Nullable
-        private String sslKey = null;
+        private URL sslKey = null;
 
         private SSLMode sslMode = SSLMode.DISABLE;
 
@@ -373,7 +377,7 @@ public final class PostgresqlConnectionConfiguration {
         private CharSequence sslPassword = null;
 
         @Nullable
-        private String sslRootCert = null;
+        private URL sslRootCert = null;
 
         private Function<SslContextBuilder, SslContextBuilder> sslContextBuilderCustomizer = Function.identity();
 
@@ -702,13 +706,24 @@ public final class PostgresqlConnectionConfiguration {
         }
 
         /**
-         * Configure ssl cert for client certificate authentication.
+         * Configure ssl cert for client certificate authentication. Can point to either a resource within the classpath or a file.
          *
          * @param sslCert an X.509 certificate chain file in PEM format
          * @return this {@link Builder}
          */
         public Builder sslCert(String sslCert) {
-            this.sslCert = Assert.requireFileExistsOrNull(sslCert, "sslCert must not be null and must exist");
+            return sslCert(requireExistingFilePath(sslCert, "sslCert must not be null and must exist"));
+        }
+
+        /**
+         * Configure ssl cert for client certificate authentication.
+         *
+         * @param sslCert an X.509 certificate chain file in PEM format
+         * @return this {@link Builder}
+         * @since 0.8.7
+         */
+        public Builder sslCert(URL sslCert) {
+            this.sslCert = Assert.requireNonNull(sslCert, "sslCert must not be null");
             return this;
         }
 
@@ -724,13 +739,24 @@ public final class PostgresqlConnectionConfiguration {
         }
 
         /**
-         * Configure ssl key for client certificate authentication.
+         * Configure ssl key for client certificate authentication.  Can point to either a resource within the classpath or a file.
          *
          * @param sslKey a PKCS#8 private key file in PEM format
          * @return this {@link Builder}
          */
         public Builder sslKey(String sslKey) {
-            this.sslKey = Assert.requireFileExistsOrNull(sslKey, "sslKey must not be null and must exist");
+            return sslKey(requireExistingFilePath(sslKey, "sslKey must not be null and must exist"));
+        }
+
+        /**
+         * Configure ssl key for client certificate authentication.
+         *
+         * @param sslKey a PKCS#8 private key file in PEM format
+         * @return this {@link Builder}
+         * @since 0.8.7
+         */
+        public Builder sslKey(URL sslKey) {
+            this.sslKey = Assert.requireNonNull(sslKey, "sslKey must not be null");
             return this;
         }
 
@@ -757,13 +783,24 @@ public final class PostgresqlConnectionConfiguration {
         }
 
         /**
-         * Configure ssl root cert for server certificate validation.
+         * Configure ssl root cert for server certificate validation. Can point to either a resource within the classpath or a file.
          *
          * @param sslRootCert an X.509 certificate chain file in PEM format
          * @return this {@link Builder}
          */
         public Builder sslRootCert(String sslRootCert) {
-            this.sslRootCert = Assert.requireFileExistsOrNull(sslRootCert, "sslRootCert must not be null and must exist");
+            return sslRootCert(requireExistingFilePath(sslRootCert, "sslRootCert must not be null and must exist"));
+        }
+
+        /**
+         * Configure ssl root cert for server certificate validation.
+         *
+         * @param sslRootCert an X.509 certificate chain file in PEM format
+         * @return this {@link Builder}
+         * @since 0.8.7
+         */
+        public Builder sslRootCert(URL sslRootCert) {
+            this.sslRootCert = Assert.requireNonNull(sslRootCert, "sslRootCert must not be null and must exist");
             return this;
         }
 
@@ -851,14 +888,14 @@ public final class PostgresqlConnectionConfiguration {
             SslContextBuilder sslContextBuilder = SslContextBuilder.forClient();
             if (this.sslMode.verifyCertificate()) {
                 if (this.sslRootCert != null) {
-                    sslContextBuilder.trustManager(new File(this.sslRootCert));
+                    doWithStream(this.sslRootCert, sslContextBuilder::trustManager);
                 }
             } else {
                 sslContextBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
             }
 
-            String sslKey = this.sslKey;
-            String sslCert = this.sslCert;
+            URL sslKey = this.sslKey;
+            URL sslCert = this.sslCert;
 
             // Emulate Libpq behavior
             // Determining the default file location
@@ -872,27 +909,78 @@ public final class PostgresqlConnectionConfiguration {
 
             if (sslCert == null) {
                 String pathname = defaultDir + "postgresql.crt";
-                if (new File(pathname).exists()) {
-                    sslCert = pathname;
-                }
+                sslCert = resolveUrlFromFile(pathname);
             }
 
             if (sslKey == null) {
                 String pathname = defaultDir + "postgresql.pk8";
-                if (new File(pathname).exists()) {
-                    sslKey = pathname;
-                }
+                sslKey = resolveUrlFromFile(pathname);
             }
+
+            URL sslKeyToUse = sslKey;
 
             if (sslKey != null && sslCert != null) {
                 String sslPassword = this.sslPassword == null ? null : this.sslPassword.toString();
-                sslContextBuilder.keyManager(new File(sslCert), new File(sslKey), sslPassword);
+
+                doWithStream(sslCert, certStream -> {
+                    doWithStream(sslKeyToUse, keyStream -> {
+                        sslContextBuilder.keyManager(certStream, keyStream, sslPassword);
+                    });
+                });
             }
 
             return () -> SslProvider.builder()
                 .sslContext(this.sslContextBuilderCustomizer.apply(sslContextBuilder))
                 .defaultConfiguration(TCP)
                 .build();
+        }
+
+        interface StreamConsumer {
+
+            void doWithStream(InputStream is) throws IOException;
+
+        }
+
+        private void doWithStream(URL url, StreamConsumer consumer) {
+
+            try (InputStream is = url.openStream()) {
+
+                consumer.doWithStream(is);
+            } catch (IOException e) {
+                throw new IllegalStateException("Error while reading " + url, e);
+            }
+        }
+
+        private URL requireExistingFilePath(String path, String message) {
+
+            Assert.requireNonNull(path, message);
+
+            URL resource = getClass().getClassLoader().getResource(path);
+
+            if (resource != null) {
+                return resource;
+            }
+
+            if (!new File(path).exists()) {
+                throw new IllegalArgumentException(message);
+            }
+
+            return resolveUrlFromFile(path);
+        }
+
+        private URL resolveUrlFromFile(String pathname) {
+
+            File file = new File(pathname);
+
+            if (file.exists()) {
+                try {
+                    return file.toURI().toURL();
+                } catch (MalformedURLException e) {
+                    throw new IllegalArgumentException(String.format("Malformed error occurred during creating URL from %s", pathname));
+                }
+            }
+
+            return null;
         }
 
     }

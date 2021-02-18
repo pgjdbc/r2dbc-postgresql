@@ -190,4 +190,96 @@ final class PostgresqlConnectionConfigurationUnitTests {
             .withMessage("sslContextBuilderCustomizer must not be null");
     }
 
+    @Test
+    void constructorNoSslCert() {
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder()
+            .host("test-host")
+            .password("test-password")
+            .sslCert((String) null)
+            .build())
+            .withMessage("sslCert must not be null and must exist");
+    }
+
+    @Test
+    void constructorNotExistSslCert() {
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder()
+            .host("test-host")
+            .username("test-username")
+            .password("test-password")
+            .sslCert("no-client.crt")
+            .build())
+            .withMessage("sslCert must not be null and must exist");
+    }
+
+    @Test
+    void constructorSslCert() {
+        PostgresqlConnectionConfiguration.builder()
+            .host("test-host")
+            .username("test-username")
+            .password("test-password")
+            .sslCert("client.crt")
+            .build();
+    }
+
+    @Test
+    void constructorNoSslKey() {
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder()
+            .host("test-host")
+            .password("test-password")
+            .sslKey((String) null)
+            .build())
+            .withMessage("sslKey must not be null and must exist");
+    }
+
+    @Test
+    void constructorNotExistSslKey() {
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder()
+            .host("test-host")
+            .username("test-username")
+            .password("test-password")
+            .sslKey("no-client.key")
+            .build())
+            .withMessage("sslKey must not be null and must exist");
+    }
+
+    @Test
+    void constructorSslKey() {
+        PostgresqlConnectionConfiguration.builder()
+            .host("test-host")
+            .username("test-username")
+            .password("test-password")
+            .sslKey("client.key")
+            .build();
+    }
+
+    @Test
+    void constructorNullSslRootCert() {
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder()
+            .host("test-host")
+            .password("test-password")
+            .sslRootCert((String) null)
+            .build())
+            .withMessage("sslRootCert must not be null and must exist");
+    }
+
+    @Test
+    void constructorNotExistSslRootCert() {
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder()
+            .host("test-host")
+            .password("test-password")
+            .sslRootCert("no-server.crt")
+            .build())
+            .withMessage("sslRootCert must not be null and must exist");
+    }
+
+    @Test
+    void constructorSslRootCert() {
+        PostgresqlConnectionConfiguration.builder()
+            .host("test-host")
+            .username("test-username")
+            .password("test-password")
+            .sslRootCert("client.crt")
+            .build();
+    }
+
 }

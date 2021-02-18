@@ -144,7 +144,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<Function<SslContextBuilder, SslContextBuilder>> SSL_CONTEXT_BUILDER_CUSTOMIZER = Option.valueOf("sslContextBuilderCustomizer");
 
     /**
-     * Full path for the certificate file.
+     * Path for the certificate file. Can point to either a resource within the classpath or a file.
      */
     public static final Option<String> SSL_CERT = Option.valueOf("sslCert");
 
@@ -154,7 +154,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<HostnameVerifier> SSL_HOSTNAME_VERIFIER = Option.valueOf("sslHostnameVerifier");
 
     /**
-     * Full path for the key file.
+     * File path for the key file. Can point to either a resource within the classpath or a file.
      */
     public static final Option<String> SSL_KEY = Option.valueOf("sslKey");
 
@@ -169,7 +169,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<String> SSL_PASSWORD = Option.valueOf("sslPassword");
 
     /**
-     * File name of the SSL root certificate.
+     * File path of the SSL root certificate. Can point to either a resource within the classpath or a file.
      */
     public static final Option<String> SSL_ROOT_CERT = Option.valueOf("sslRootCert");
 
