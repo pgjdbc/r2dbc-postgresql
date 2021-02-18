@@ -621,15 +621,14 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
                     .flatMapMany(connection -> connection
 
                         .createStatement("INSERT INTO test VALUES (" + insertPlaceholder + ")")
-                        .bind("$1", Parameters.in(parameterType)).add()
-                        .bind("$1", Parameters.in(javaType))
+                        .bind("$1", Parameters.in(parameterType))
                         .execute()
 
                         .flatMap(PostgresqlResult::getRowsUpdated)
 
                         .concatWith(close(connection)))
                     .as(StepVerifier::create)
-                    .expectNext(1, 1)
+                    .expectNext(1)
                     .verifyComplete();
 
                 SERVER.getJdbcOperations().execute("DELETE FROM test");
