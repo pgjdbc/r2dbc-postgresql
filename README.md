@@ -79,16 +79,17 @@ Mono<Connection> connectionMono = Mono.from(connectionFactory.create());
 | `autodetectExtensions` | Whether to auto-detect and register `Extension`s from the class path. Defaults to `true`. _(Optional)_
 | `compatibilityMode` | Enable compatibility mode for cursored fetching. Required when using newer pgpool versions. Defaults to `false`. _(Optional)_
 | `fetchSize`       | The default number of rows to return when fetching results. Defaults to `0` for unlimited. _(Optional)_
-| `forceBinary`     | Whether to force binary transfer.  Defaults to `false`. _(Optional)_
+| `forceBinary`     | Whether to force binary transfer. Defaults to `false`. _(Optional)_
 | `loopResources`   | TCP/Socket LoopResources (depends on the endpoint connection type). _(Optional)_
 | `preferAttachedBuffers` |Configure whether codecs should prefer attached data buffers. The default is `false`, meaning that codecs will copy data from the input buffer into a byte array. Enabling attached buffers requires consumption of values such as `Json`  to avoid memory leaks.
 | `preparedStatementCacheQueries` | Determine the number of queries that are cached in each connection. The default is `-1`, meaning there's no limit. The value of `0` disables the cache. Any other value specifies the cache size.
-| `options`         | A `Map<String, String>` of connection parameters. These are applied to each database connection created by the `ConnectionFactory`. Useful for setting generic [PostgreSQL connection parameters][psql-runtime-config]. _(Optional)_
+| `options`         | A `Map<String, String>` of connection parameters. These are applied to each database connection created by the `ConnectionFactory`. Useful for setting generic [PostgreSQL connection parameters][psql-runtime-config]. _(
+Optional)_
 | `schema`          | The search path to set. _(Optional)_
 | `sslMode`         | SSL mode to use, see `SSLMode` enum. Supported values: `DISABLE`, `ALLOW`, `PREFER`, `REQUIRE`, `VERIFY_CA`, `VERIFY_FULL`, `TUNNEL`. _(Optional)_
-| `sslRootCert`     | Path to SSL CA certificate in PEM format. _(Optional)_
-| `sslKey`          | Path to SSL key for TLS authentication in PEM format. _(Optional)_
-| `sslCert`         | Path to SSL certificate for TLS authentication in PEM format. _(Optional)_
+| `sslRootCert`     | Path to SSL CA certificate in PEM format. Can be also a resource path. _(Optional)_
+| `sslKey`          | Path to SSL key for TLS authentication in PEM format. Can be also a resource path. _(Optional)_
+| `sslCert`         | Path to SSL certificate for TLS authentication in PEM format. Can be also a resource path. _(Optional)_
 | `sslPassword`     | Key password to decrypt SSL key. _(Optional)_
 | `sslHostnameVerifier` | `javax.net.ssl.HostnameVerifier` implementation. _(Optional)_
 | `tcpNoDelay`      | Enable/disable TCP NoDelay. Enabled by default. _(Optional)_
