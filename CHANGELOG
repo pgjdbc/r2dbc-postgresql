@@ -1,6 +1,196 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+0.9.0.M1
+-----------------------------------------
+* Upgrade to R2DBC SPI 0.9.0.M1 #388
+* Upgrade to Reactor 2020.0.3 #380
+* Add support for extended transaction definitions #379
+* Add support for SPI Parameters #378
+* Unable to insert a new entity in a table containing name "returning" #377
+* Update license headers to report the inception year instead of start-end range #369
+* Decoding CopyOutResponse message does not comply with postgres documentation #367
+* Make JsonIntegrationTests extend AbstractIntegrationTests #364
+* Upgrade to Testcontainers 1.15.0 #363
+* Unable to decode array_agg(varchar) type. #361
+* Remove travis build file as we no longer need travis-ci #359
+* Map postgres' 40001 error code to PostgresqlRollbackException #355
+* Add BigDecimal array codec #349
+* Refactor dead if branch into single return flow #348
+* Restrict CI and release task to pgjdbc/r2dbc-postgresql repo #347
+* Add Interval Codec #345
+* Upgrade dependencies #343
+* Extended flow queries hang with pgpool 4.1 #341
+* Replace casts to ByteBuffer after ByteBuffer.flip #340
+* Introduce connection context to allow correlation of log statements to the actual connection #339
+* Use RoundRobinInetAddressResolver for DNS resolution #338
+* RowMetadata.getColumnNames() iteration order doesn't match result set column order #337
+* Add UUID array codec #336
+* Occasional delays caused by TCP NoDelay config option defaulting to false #334
+* Upgrade to R2DBC SPI 0.8.3 #333
+* Use detached byte buffers by default for decoded values #330
+* JsonCodec.encode(…) doesn't release input buffer #329
+* Upgrade to Assertj 3.17.2 #328
+* Upgrade to Netty 4.1.51.Final #327
+* Upgrade to Reactor Dysprosium SR11 #326
+* Use GitHub actions to deploy to OSS Sonatype/Maven Central #325
+* Issue parsing UTC timestamptz from CockroachDB #320
+* Possibility to configure LoopResources  inside ReactorNettyClient  #319
+* Accept SSL certificates by providing a URL to use cert from within a jar #313
+* Add priority to EnumCodec registrar #310
+* EnumCodec's canDecode method fix (Issue #302) #308
+* Support for geospatial types - point, line, box, polygon etc #306
+* NullPointerExceptionwhen adding SSL handler via SSLTunnelHandlerAdapter #304
+* Add priority to EnumCodec registrar #303
+* EnumCodec decoding fails if the requested value type is Object #302
+* Row.decode(…) fails for enum type with IllegalArgumentException: 72093 is not a valid object id #301
+* Ensure no snapshots get referenced in release builds #299
+* Add config options for TCP nodelay and keepalive #296
+* Add support for SSL tunnels #295
+* Support for "time with time zone" type #294
+* Query doesn't complete #292
+* Upgrade to Reactor Dysprosium SR9 #291
+* Rename master branch to main #290
+* Upgrade to Reactor Dysprosium SR8 #289
+* Move repository to pgjdbc organization #287
+* SSL Mode configuration is not working anymore with v0.8.3.RELEASE #286
+* Infinite drainLoop call in BackendMessageSubscriber #285
+* Add support for point type #283
+* Support for geospatial types - point, line, box, polygon etc #282
+* Upgrade dependencies #281
+* Introduce OptionMapper for option mapping #279
+* add capability to log query parameters (bindings) values #278
+* Add BlockHound to integration tests #276
+* static initializers of StartupMessage cause blocking calls #275
+* Connection in unstable state when rollback after a failed commit #274
+* adds capability to specify connections options via URL #273
+* add support for providing "search_path" connection option #271
+* Fix typo #270
+* Support hstore as default codec #268
+* Upgrade build plugin and test dependencies #266
+* Upgrade to netty 4.1.47.Final #265
+* Upgrade to Reactor Dysprosium-SR6 #264
+* Upgrade to testcontainers 1.13.0 #261
+* Stage releases directly on maven central #259
+* Default fetch size #256
+* IllegalStateException when reading empty byte array #253
+* Allow configuration of ErrorResponse and NoticeResponse logging #249
+* Canceling requests in progress with CancelRequest #246
+* Fetch size implementation #245
+* Add codec for Postgres enumerated types #244
+* Add fast-path emission of incoming frames #243
+* High CPU usage when cancelled query #242
+* Allow configuration of ErrorResponse and NoticeResponse logging #239
+* Update license header years to 2020 #236
+* Add a codec for BigInteger #233
+* Reinstantiate backpressure propagation to NettyInbound #231
+* Fix for concurrent exchanging on one client #230
+* Add support for RefCursor #229
+* Terminate Notification stream on disconnect #227
+* Capability to disable prepared statement caching #223
+* Insertion of too many rows do not complete #222
+* Upgrade to Testcontainers 1.12.4 #218
+* Enable Travis for pull requests #214
+* Migrate to Jenkins CI #213
+* On error not triggered when listen connection terminated #212
+* Simplify factory provider #210
+* Fails to startup with forceBinary=true using Spring Boot #208
+* rowsUpdated() returns more than one item. #207
+* Readme cleanup #206
+* Fix typo in project url #205
+* Enable consumption of REFCURSOR #173
+* Combine extended flow messages into a single composite message #138
+* Send cancelation packet to Postgres server in order to interrupt running query  #121
+
+0.8.7.RELEASE
+-----------------------------------------
+* Upgrade to R2DBC SPI 0.8.4.RELEASE #387
+* Unable to insert a new entity in a table containing name "returning" #377
+* Update license headers to report the inception year instead of start-end range #369
+* Decoding CopyOutResponse message does not comply with postgres documentation #367
+* Make JsonIntegrationTests extend AbstractIntegrationTests #364
+* Upgrade to Testcontainers 1.15.0 #363
+* Unable to decode array_agg(varchar) type. #361
+* Map postgres' 40001 error code to PostgresqlRollbackException #355
+* Add BigDecimal array codec #349
+* Refactor dead if branch into single return flow #348
+* Add Interval Codec #345
+* Extended flow queries hang with pgpool 4.1 #341
+* Accept SSL certificates by providing a URL to use cert from within a jar #313
+
+0.8.6.RELEASE
+-----------------------------------------
+* Upgrade dependencies #343
+* Replace casts to ByteBuffer after ByteBuffer.flip #340
+* Introduce connection context to allow correlation of log statements to the actual connection #339
+* Use RoundRobinInetAddressResolver for DNS resolution #338
+* RowMetadata.getColumnNames() iteration order doesn't match result set column order #337
+* Add UUID array codec #336
+* Occasional delays caused by TCP NoDelay config option defaulting to false #334
+* Upgrade to R2DBC SPI 0.8.3 #333
+* Use GitHub actions to deploy to OSS Sonatype/Maven Central #325
+* add capability to log query parameters (bindings) values #278
+* Combine extended flow messages into a single composite message #138
+
+0.8.5.RELEASE
+-----------------------------------------
+* Use detached byte buffers by default for decoded values #330
+* JsonCodec.encode(…) doesn't release input buffer #329
+* Upgrade to Assertj 3.17.2 #328
+* Upgrade to Netty 4.1.51.Final #327
+* Upgrade to Reactor Dysprosium SR11 #326
+* Issue parsing UTC timestamptz from CockroachDB #320
+* Possibility to configure LoopResources  inside ReactorNettyClient  #319
+* Add priority to EnumCodec registrar #310
+* EnumCodec's canDecode method fix (Issue #302) #308
+* Support for geospatial types - point, line, box, polygon etc #306
+* NullPointerExceptionwhen adding SSL handler via SSLTunnelHandlerAdapter #304
+* Add priority to EnumCodec registrar #303
+* EnumCodec decoding fails if the requested value type is Object #302
+* Row.decode(…) fails for enum type with IllegalArgumentException: 72093 is not a valid object id #301
+* Support for geospatial types - point, line, box, polygon etc #282
+
+0.8.4.RELEASE
+-----------------------------------------
+* Ensure no snapshots get referenced in release builds #299
+* Add config options for TCP nodelay and keepalive #296
+* Add support for SSL tunnels #295
+* Support for "time with time zone" type #294
+* Query doesn't complete #292
+* Upgrade to Reactor Dysprosium SR9 #291
+* Upgrade to Reactor Dysprosium SR8 #289
+* SSL Mode configuration is not working anymore with v0.8.3.RELEASE #286
+* Infinite drainLoop call in BackendMessageSubscriber #285
+* Add support for point type #283
+* Connection in unstable state when rollback after a failed commit #274
+* Add codec for Postgres enumerated types #244
+
+0.8.3.RELEASE
+-----------------------------------------
+* Upgrade dependencies #281
+* Introduce OptionMapper for option mapping #279
+* Add BlockHound to integration tests #276
+* Static initializers of StartupMessage cause blocking calls #275
+* Adds capability to specify connections options via URL #273
+* Add support for providing "search_path" connection option #271
+* Support hstore as default codec #268
+* Capability to disable prepared statement caching #223
+* Simplify factory provider #210
+
+0.8.2.RELEASE
+-----------------------------------------
+* Upgrade build plugin and test dependencies #266
+* Upgrade to netty 4.1.47.Final #265
+* Upgrade to Reactor Dysprosium-SR6 #264
+* Backport usage of testcontainers 1.13.0 #262
+* Stage releases directly on maven central #260
+* Default fetch size #256
+* IllegalStateException when reading empty byte array #253
+* Fetch size implementation #245
+* Add fast-path emission of incoming frames #243
+* High CPU usage when cancelled query #242
+* Enable consumption of REFCURSOR #173
+
 0.8.1.RELEASE
 -----------------------------------------
 * Upgrade dependencies #238
