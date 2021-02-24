@@ -465,8 +465,8 @@ Support for the following single-dimensional arrays (read and write):
 [psql-xml-ref]: https://www.postgresql.org/docs/current/datatype-xml.html
 [psql-runtime-config]: https://www.postgresql.org/docs/current/runtime-config-client.html
 
-[r2dbc-blob-ref]: https://r2dbc.io/spec/0.8.0.RELEASE/api/io/r2dbc/spi/Blob.html
-[r2dbc-clob-ref]: https://r2dbc.io/spec/0.8.0.RELEASE/api/io/r2dbc/spi/Clob.html
+[r2dbc-blob-ref]: https://r2dbc.io/spec/0.9.0.M1/api/io/r2dbc/spi/Blob.html
+[r2dbc-clob-ref]: https://r2dbc.io/spec/0.9.0.M1/api/io/r2dbc/spi/Clob.html
 
 [java-bigdecimal-ref]: https://docs.oracle.com/javase/8/docs/api/java/math/BigDecimal.html
 [java-biginteger-ref]: https://docs.oracle.com/javase/8/docs/api/java/math/BigInteger.html
@@ -520,8 +520,8 @@ Logging that is associated with a connection reports the logical connection id (
 
 Having trouble with R2DBC? We'd love to help!
 
-* Check the [spec documentation](https://r2dbc.io/spec/0.8.0.RELEASE/spec/html/), and [Javadoc](https://r2dbc.io/spec/0.8.0.RELEASE/api/).
-* If you are upgrading, check out the [changelog](https://r2dbc.io/spec/0.8.0.RELEASE/CHANGELOG.txt) for "new and noteworthy" features.
+* Check the [spec documentation](https://r2dbc.io/spec/0.9.0.M1/spec/html/), and [Javadoc](https://r2dbc.io/spec/0.9.0.M1/api/).
+* If you are upgrading, check out the [changelog](https://r2dbc.io/spec/0.9.0.M1/CHANGELOG.txt) for "new and noteworthy" features.
 * Ask a question - we monitor [stackoverflow.com](https://stackoverflow.com) for questions
   tagged with [`r2dbc`](https://stackoverflow.com/tags/r2dbc). 
   You can also chat with the community on [Gitter](https://gitter.im/r2dbc/r2dbc).
