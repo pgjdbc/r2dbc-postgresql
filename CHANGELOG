@@ -1,6 +1,22 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+0.8.7.RELEASE
+-----------------------------------------
+* Upgrade to R2DBC SPI 0.8.4.RELEASE #387
+* Unable to insert a new entity in a table containing name "returning" #377
+* Update license headers to report the inception year instead of start-end range #369
+* Decoding CopyOutResponse message does not comply with postgres documentation #367
+* Make JsonIntegrationTests extend AbstractIntegrationTests #364
+* Upgrade to Testcontainers 1.15.0 #363
+* Unable to decode array_agg(varchar) type. #361
+* Map postgres' 40001 error code to PostgresqlRollbackException #355
+* Add BigDecimal array codec #349
+* Refactor dead if branch into single return flow #348
+* Add Interval Codec #345
+* Extended flow queries hang with pgpool 4.1 #341
+* Accept SSL certificates by providing a URL to use cert from within a jar #313
+
 0.8.6.RELEASE
 -----------------------------------------
 * Upgrade dependencies #343
