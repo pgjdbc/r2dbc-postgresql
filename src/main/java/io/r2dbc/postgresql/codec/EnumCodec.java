@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
@@ -52,18 +53,23 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
 
     private final Class<T> type;
 
-    private final int oid;
+    private final PostgresTypeIdentifier postgresTypeIdentifier;
 
-    public EnumCodec(ByteBufAllocator byteBufAllocator, Class<T> type, int oid) {
+    public EnumCodec(ByteBufAllocator byteBufAllocator, Class<T> type, PostgresTypeIdentifier postgresTypeIdentifier) {
         this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
         this.type = Assert.requireNonNull(type, "type must not be null");
-        this.oid = oid;
+        this.postgresTypeIdentifier = postgresTypeIdentifier;
+    }
+
+    @Deprecated
+    public EnumCodec(ByteBufAllocator byteBufAllocator, Class<T> type, int oid) {
+        this(byteBufAllocator, type, () -> oid);
     }
 
     @Override
     public boolean canDecode(int dataType, Format format, Class<?> type) {
         Assert.requireNonNull(type, "type must not be null");
-        return type.isAssignableFrom(this.type) && dataType == this.oid;
+        return type.isAssignableFrom(this.type) && dataType == postgresTypeIdentifier.getObjectId();
     }
 
     @Override
@@ -89,7 +95,7 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
 
     @Override
     public EncodedParameter encode(Object value) {
-        return encode(value, this.oid);
+        return encode(value, postgresTypeIdentifier.getObjectId());
     }
 
     @Override
@@ -102,7 +108,7 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
 
     @Override
     public EncodedParameter encodeNull() {
-        return encodeNull(this.oid);
+        return encodeNull(postgresTypeIdentifier.getObjectId());
     }
 
     private EncodedParameter encodeNull(int dataType) {
@@ -196,10 +202,15 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
                         missing.remove(it.getName());
                         logger.debug(String.format("Registering codec for type '%s' with oid %d using Java enum type '%s'", it.getName(), it.getOid(), enumClass.getName()));
 
+                        EnumCodec enumCodec = new EnumCodec(allocator, enumClass, it);
+                        EnumCodec.EnumArrayCodec enumArrayCodec = enumCodec.new EnumArrayCodec();
+
                         if (this.registrationPriority == RegistrationPriority.LAST) {
-                            registry.addLast(new EnumCodec(allocator, enumClass, it.getOid()));
+                            registry.addLast(enumCodec);
+                            registry.addLast(enumArrayCodec);
                         } else {
-                            registry.addFirst(new EnumCodec(allocator, enumClass, it.getOid()));
+                            registry.addFirst(enumArrayCodec);
+                            registry.addFirst(enumCodec);
                         }
                     }).doOnComplete(() -> {
 
@@ -216,6 +227,34 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
         public enum RegistrationPriority {
             FIRST,
             LAST
+        }
+
+    }
+
+    public class EnumArrayCodec extends AbstractArrayCodec<T> {
+
+        public EnumArrayCodec() {
+            super(byteBufAllocator, type, postgresTypeIdentifier);
+        }
+
+        @Override
+        T doDecodeBinary(ByteBuf byteBuffer) {
+            return doDecodeText(ByteBufUtils.decode(byteBuffer));
+        }
+
+        @Override
+        T doDecodeText(String text) {
+            return Enum.valueOf(type, text);
+        }
+
+        @Override
+        EncodedParameter encodeArray(Supplier<ByteBuf> encodedSupplier, PostgresTypeIdentifier dataType) {
+            return create(Format.FORMAT_TEXT, dataType, encodedSupplier);
+        }
+
+        @Override
+        String doEncodeText(T value) {
+            return value.name();
         }
 
     }
