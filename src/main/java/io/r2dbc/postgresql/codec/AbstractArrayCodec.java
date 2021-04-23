@@ -161,7 +161,9 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
      * @param dataType        the Postgres data type
      * @return encoded {@link EncodedParameter} item
      */
-    abstract EncodedParameter encodeArray(Supplier<ByteBuf> encodedSupplier, PostgresTypeIdentifier dataType);
+    EncodedParameter encodeArray(Supplier<ByteBuf> encodedSupplier, PostgresTypeIdentifier dataType) {
+        return create(Format.FORMAT_TEXT, dataType, encodedSupplier);
+    }
 
     /**
      * Encode a single array item using text format.

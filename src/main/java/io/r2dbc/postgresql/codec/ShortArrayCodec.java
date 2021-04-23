@@ -18,13 +18,9 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.util.Assert;
 
-import java.util.function.Supplier;
-
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT2_ARRAY;
-import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
 final class ShortArrayCodec extends AbstractArrayCodec<Short> {
 
@@ -40,11 +36,6 @@ final class ShortArrayCodec extends AbstractArrayCodec<Short> {
     @Override
     Short doDecodeText(String text) {
         return Short.parseShort(text);
-    }
-
-    @Override
-    EncodedParameter encodeArray(Supplier<ByteBuf> encodedSupplier, PostgresTypeIdentifier dataType) {
-        return create(FORMAT_TEXT, dataType, encodedSupplier);
     }
 
     @Override

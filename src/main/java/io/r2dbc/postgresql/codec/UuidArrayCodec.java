@@ -18,12 +18,9 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.EncodedParameter;
-import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 
 import java.util.UUID;
-import java.util.function.Supplier;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.UUID_ARRAY;
 
@@ -44,11 +41,6 @@ final class UuidArrayCodec extends AbstractArrayCodec<UUID> {
     @Override
     UUID doDecodeText(String text) {
         return UUID.fromString(text);
-    }
-
-    @Override
-    EncodedParameter encodeArray(Supplier<ByteBuf> encodedSupplier, PostgresTypeIdentifier dataType) {
-        return create(Format.FORMAT_TEXT, dataType, encodedSupplier);
     }
 
     @Override
