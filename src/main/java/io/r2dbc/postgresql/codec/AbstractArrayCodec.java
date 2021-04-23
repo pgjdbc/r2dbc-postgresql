@@ -52,20 +52,20 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
 
     private final Class<T> componentType;
 
-    private final PostgresqlObjectId oid;
+    private final PostgresTypeIdentifier postgresTypeIdentifier;
 
     /**
      * Create a new {@link AbstractArrayCodec}.
      *
      * @param byteBufAllocator the buffer allocator
      * @param componentType    the type handled by this codec
-     * @param oid              the Postgres OID handled by this codec
+     * @param postgresTypeIdentifier              the Postgres OID handled by this codec
      */
-    AbstractArrayCodec(ByteBufAllocator byteBufAllocator, Class<T> componentType, PostgresqlObjectId oid) {
+    AbstractArrayCodec(ByteBufAllocator byteBufAllocator, Class<T> componentType, PostgresTypeIdentifier postgresTypeIdentifier) {
         super(Object[].class);
         this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
         this.componentType = Assert.requireNonNull(componentType, "componentType must not be null");
-        this.oid = Assert.requireNonNull(oid, "oid must not be null");
+        this.postgresTypeIdentifier = Assert.requireNonNull(postgresTypeIdentifier, "oid must not be null");
     }
 
     @Override
@@ -84,7 +84,7 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
 
     @Override
     public EncodedParameter encodeNull() {
-        return encodeNull(this.oid.getObjectId());
+        return encodeNull(this.postgresTypeIdentifier.getObjectId());
     }
 
     static String escapeArrayElement(String s) {
@@ -119,7 +119,7 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
     boolean doCanDecode(PostgresqlObjectId type, Format format) {
         Assert.requireNonNull(type, "type must not be null");
 
-        return this.oid == type;
+        return this.postgresTypeIdentifier == type || this.postgresTypeIdentifier.getObjectId() == type.getObjectId();
     }
 
     /**
@@ -140,7 +140,7 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
 
     @Override
     final EncodedParameter doEncode(Object[] value) {
-        return doEncode(value, this.oid);
+        return doEncode(value, this.postgresTypeIdentifier);
     }
 
     @Override
