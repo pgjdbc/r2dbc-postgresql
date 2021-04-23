@@ -130,8 +130,18 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     }
 
     @Test
+    void booleanArray() {
+        testCodec(Boolean[].class, new Boolean[]{true, false, true}, "BOOL[]");
+    }
+
+    @Test
     void booleanPrimitive() {
         testCodec(Boolean.class, true, "BOOL");
+    }
+
+    @Test
+    void booleanTwoDimensionalArray() {
+        testCodec(Boolean[][].class, new Boolean[][]{{false, true}, {true, null}}, "BOOL[][]");
     }
 
     @Test
