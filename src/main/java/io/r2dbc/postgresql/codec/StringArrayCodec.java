@@ -18,19 +18,15 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
-
-import java.util.function.Supplier;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.BPCHAR_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.CHAR_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.NAME_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TEXT_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.VARCHAR_ARRAY;
-import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
 final class StringArrayCodec extends AbstractArrayCodec<String> {
 
@@ -54,11 +50,6 @@ final class StringArrayCodec extends AbstractArrayCodec<String> {
         Assert.requireNonNull(type, "type must not be null");
 
         return (BPCHAR_ARRAY == type || CHAR_ARRAY == type || TEXT_ARRAY == type || VARCHAR_ARRAY == type | NAME_ARRAY == type);
-    }
-
-    @Override
-    EncodedParameter encodeArray(Supplier<ByteBuf> encodedSupplier, PostgresTypeIdentifier dataType) {
-        return create(FORMAT_TEXT, dataType, encodedSupplier);
     }
 
     @Override
