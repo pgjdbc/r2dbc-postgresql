@@ -38,17 +38,15 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.only;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link EnumCodec}.
  */
 final class EnumCodecUnitTests {
+
+    static final int OID = 1;
+    static final PostgresTypeIdentifier POSTGRES_TYPE_IDENTIFIER = () -> OID;
 
     @Test
     void shouldRejectMultipleMappingForJavaType() {
@@ -67,11 +65,11 @@ final class EnumCodecUnitTests {
     @Test
     void canDecode() {
         EnumCodec<EnumCodecUnitTests.MyEnum> codec =
-            new EnumCodec<>(TestByteBufAllocator.TEST, MyEnum.class, 1);
+            new EnumCodec<>(TestByteBufAllocator.TEST, MyEnum.class, POSTGRES_TYPE_IDENTIFIER);
 
-        assertThat(codec.canDecode(1, Format.FORMAT_TEXT, MyEnum.class)).isTrue();
-        assertThat(codec.canDecode(1, FORMAT_BINARY, MyEnum.class)).isTrue();
-        assertThat(codec.canDecode(1, FORMAT_BINARY, Object.class)).isTrue();
+        assertThat(codec.canDecode(OID, Format.FORMAT_TEXT, MyEnum.class)).isTrue();
+        assertThat(codec.canDecode(OID, FORMAT_BINARY, MyEnum.class)).isTrue();
+        assertThat(codec.canDecode(OID, FORMAT_BINARY, Object.class)).isTrue();
         assertThat(codec.canDecode(VARCHAR.getObjectId(), FORMAT_BINARY, MyEnum.class)).isFalse();
         assertThat(codec.canDecode(JSON.getObjectId(), FORMAT_TEXT, MyEnum.class)).isFalse();
         assertThat(codec.canDecode(JSONB.getObjectId(), FORMAT_BINARY, MyEnum.class)).isFalse();
@@ -79,9 +77,11 @@ final class EnumCodecUnitTests {
 
     @Test
     void canDecodeWithoutClassShouldThrowException() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new EnumCodec<>(
-            TestByteBufAllocator.TEST, MyEnum.class, 1).canDecode(1, Format.FORMAT_TEXT, null))
-            .withMessage("type must not be null");
+        assertThatIllegalArgumentException()
+                .isThrownBy(() ->
+                        new EnumCodec<>(TestByteBufAllocator.TEST, MyEnum.class, POSTGRES_TYPE_IDENTIFIER)
+                                .canDecode(OID, Format.FORMAT_TEXT, null)
+                ).withMessage("type must not be null");
     }
 
     @Test
@@ -110,8 +110,9 @@ final class EnumCodecUnitTests {
         Publisher<Void> register = codecRegistrar.register(mockPostgresqlConnection, mockByteBufAllocator, mockCodecRegistry);
         StepVerifier.create(register).verifyComplete();
 
-        verify(mockCodecRegistry, only()).addFirst(any(EnumCodec.class));
-        verify(mockCodecRegistry, never()).addLast(any(EnumCodec.class));
+        verify(mockCodecRegistry).addFirst(any(EnumCodec.class));
+        verify(mockCodecRegistry).addFirst(any(EnumCodec.EnumArrayCodec.class));
+        verifyNoMoreInteractions(mockCodecRegistry);
     }
 
     @Test
@@ -147,7 +148,9 @@ final class EnumCodecUnitTests {
         StepVerifier.create(register).verifyComplete();
 
         verify(mockCodecRegistry, never()).addFirst(any(EnumCodec.class));
+        verify(mockCodecRegistry, never()).addFirst(any(EnumCodec.EnumArrayCodec.class));
         verify(mockCodecRegistry, times(2)).addLast(any(EnumCodec.class));
+        verify(mockCodecRegistry, times(2)).addLast(any(EnumCodec.EnumArrayCodec.class));
     }
 
     enum MyEnum {
