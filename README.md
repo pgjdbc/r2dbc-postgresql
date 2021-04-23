@@ -423,6 +423,7 @@ Support for the following single-dimensional arrays (read and write):
 |[`integer[] or int[]`][psql-integer-ref]        |[`Integer[]`][java-integer-ref], [`Long[]`][java-long-ref], [`Short[]`][java-short-ref]|
 |[`numeric[]`][psql-bignumeric-ref]              |[`BigDecimal[]`][java-bigdecimal-ref] |
 |[`uuid[]`][psql-uuid-ref]                       |[`UUID[]`][java-uuid-ref]|
+|[`boolean[] or bool[]`][psql-boolean-ref]       |[`Boolean[]`][java-boolean-ref]       |
 
 [psql-bigint-ref]: https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-INT
 [psql-bit-ref]: https://www.postgresql.org/docs/current/datatype-numeric.html
