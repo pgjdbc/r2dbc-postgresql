@@ -424,6 +424,7 @@ Support for the following single-dimensional arrays (read and write):
 |[`numeric[]`][psql-bignumeric-ref]              |[`BigDecimal[]`][java-bigdecimal-ref] |
 |[`uuid[]`][psql-uuid-ref]                       |[`UUID[]`][java-uuid-ref]|
 |[`boolean[] or bool[]`][psql-boolean-ref]       |[`Boolean[]`][java-boolean-ref]       |
+|[`real[]`][psql-real-ref]                       |[`Float[]`][java-float-ref]           |
 
 [psql-bigint-ref]: https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-INT
 [psql-bit-ref]: https://www.postgresql.org/docs/current/datatype-numeric.html
