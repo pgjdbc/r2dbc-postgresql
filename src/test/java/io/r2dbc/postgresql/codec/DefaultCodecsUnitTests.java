@@ -28,6 +28,7 @@ import java.time.OffsetDateTime;
 import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.BOOL_ARRAY;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.FLOAT4_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT2;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT2_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT4;
@@ -100,6 +101,7 @@ final class DefaultCodecsUnitTests {
         assertThat(codecs.decode(ByteBufUtils.encode(TEST, "2018-11-04 15:35:00.847108"), TIMESTAMP.getObjectId(), FORMAT_TEXT, Object.class)).isInstanceOf(LocalDateTime.class);
         assertThat(codecs.decode(ByteBufUtils.encode(TEST, "2018-11-05 00:35:43.048593+09"), TIMESTAMPTZ.getObjectId(), FORMAT_TEXT, Object.class)).isInstanceOf(OffsetDateTime.class);
         assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{t,f}"), BOOL_ARRAY.getObjectId(), FORMAT_TEXT, Object.class)).isEqualTo(new Boolean[]{true, false});
+        assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{100.5,200.25}"), FLOAT4_ARRAY.getObjectId(), FORMAT_TEXT, Object.class)).isEqualTo(new Float[]{100.5f, 200.25f});
         assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{100,200}"), INT2_ARRAY.getObjectId(), FORMAT_TEXT, Object.class)).isEqualTo(new Short[]{100, 200});
         assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{100,200}"), INT4_ARRAY.getObjectId(), FORMAT_TEXT, Object.class)).isEqualTo(new Integer[]{100, 200});
         assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{100,200}"), INT8_ARRAY.getObjectId(), FORMAT_TEXT, Object.class)).isEqualTo(new Long[]{100L, 200L});
