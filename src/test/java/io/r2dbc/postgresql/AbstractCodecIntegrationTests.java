@@ -240,7 +240,7 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(MyEnum.class, MyEnum.HELLO, "my_enum");
     }
 
-    @Test
+    @Test // gh-391
     void simpleMappedEnumArray() {
         testCodec(MyEnum.class, MyEnum.WORLD, "my_enum[]");
     }
