@@ -57,9 +57,9 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
     /**
      * Create a new {@link AbstractArrayCodec}.
      *
-     * @param byteBufAllocator the buffer allocator
-     * @param componentType    the type handled by this codec
-     * @param postgresTypeIdentifier              the Postgres OID handled by this codec
+     * @param byteBufAllocator       the buffer allocator
+     * @param componentType          the type handled by this codec
+     * @param postgresTypeIdentifier the Postgres OID handled by this codec
      */
     AbstractArrayCodec(ByteBufAllocator byteBufAllocator, Class<T> componentType, PostgresTypeIdentifier postgresTypeIdentifier) {
         super(Object[].class);
