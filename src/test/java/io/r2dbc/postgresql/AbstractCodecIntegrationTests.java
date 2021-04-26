@@ -232,6 +232,11 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     }
 
     @Test
+    void doubleArray() {
+        testCodec(Double[].class, new Double[]{100.5, 200.25, 300.125}, "FLOAT8[]");
+    }
+
+    @Test
     void doublePrimitive() {
         testCodec(Double.class, 100.0, "INT2");
         testCodec(Double.class, 100.0, "INT4");
@@ -243,6 +248,11 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(Double.class, 100.1, "DECIMAL", R2dbcType.DECIMAL);
         testCodec(Double.class, 100.1, "FLOAT4", R2dbcType.FLOAT);
         testCodec(Double.class, 100.1, "FLOAT8", R2dbcType.DOUBLE);
+    }
+
+    @Test
+    void doubleTwoDimensionalArray() {
+        testCodec(Double[][].class, new Double[][]{{100.5, 200.25}, {300.125, null}}, "FLOAT8[][]");
     }
 
     @Test
