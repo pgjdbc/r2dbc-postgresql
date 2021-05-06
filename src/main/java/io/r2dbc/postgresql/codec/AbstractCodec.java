@@ -191,6 +191,14 @@ abstract class AbstractCodec<T> implements Codec<T> {
      */
     abstract EncodedParameter doEncode(T value, PostgresTypeIdentifier dataType);
 
+    /**
+     * Encode an item using text format.
+     *
+     * @param value the value to encode
+     * @return encoded value as string
+     */
+    abstract String doEncodeText(T value);
+
     boolean isTypeAssignable(Class<?> type) {
         Assert.requireNonNull(type, "type must not be null");
 

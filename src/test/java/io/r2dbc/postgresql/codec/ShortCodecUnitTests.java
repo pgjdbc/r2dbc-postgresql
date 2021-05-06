@@ -92,6 +92,17 @@ final class ShortCodecUnitTests {
     }
 
     @Test
+    void encodeItem() {
+        assertThat(new ShortCodec(TEST).doEncodeText((short) 100)).isEqualTo("100");
+    }
+
+    @Test
+    void encodeItemNoValue() {
+        assertThatIllegalArgumentException().isThrownBy(() -> new ShortCodec(TEST).doEncodeText(null))
+            .withMessage("value must not be null");
+    }
+
+    @Test
     void encodeNull() {
         assertThat(new ShortCodec(TEST).encodeNull())
             .isEqualTo(new EncodedParameter(FORMAT_BINARY, INT2.getObjectId(), NULL_VALUE));

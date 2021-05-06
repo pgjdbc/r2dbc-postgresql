@@ -21,7 +21,6 @@ import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
-import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
 import java.time.Instant;
@@ -35,11 +34,8 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
 final class InstantCodec extends AbstractTemporalCodec<Instant> {
 
-    private final ByteBufAllocator byteBufAllocator;
-
     InstantCodec(ByteBufAllocator byteBufAllocator) {
-        super(Instant.class);
-        this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        super(Instant.class, byteBufAllocator);
     }
 
     @Override
@@ -68,13 +64,6 @@ final class InstantCodec extends AbstractTemporalCodec<Instant> {
     @Override
     EncodedParameter doEncode(Instant value) {
         return doEncode(value, TIMESTAMPTZ);
-    }
-
-    @Override
-    EncodedParameter doEncode(Instant value, PostgresTypeIdentifier dataType) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return create(FORMAT_TEXT, dataType, () -> ByteBufUtils.encode(this.byteBufAllocator, value.toString()));
     }
 
     @Override

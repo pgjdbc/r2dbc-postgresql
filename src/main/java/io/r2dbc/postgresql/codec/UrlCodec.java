@@ -52,6 +52,13 @@ final class UrlCodec extends AbstractCodec<URL> {
     }
 
     @Override
+    String doEncodeText(URL value) {
+        Assert.requireNonNull(value, "value must not be null");
+
+        return value.toString();
+    }
+
+    @Override
     public EncodedParameter encodeNull() {
         return this.delegate.encodeNull();
     }

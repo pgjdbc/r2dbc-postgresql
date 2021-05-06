@@ -21,7 +21,6 @@ import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
-import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
 import java.time.ZonedDateTime;
@@ -31,11 +30,8 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
 final class ZonedDateTimeCodec extends AbstractTemporalCodec<ZonedDateTime> {
 
-    private final ByteBufAllocator byteBufAllocator;
-
     ZonedDateTimeCodec(ByteBufAllocator byteBufAllocator) {
-        super(ZonedDateTime.class);
-        this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        super(ZonedDateTime.class, byteBufAllocator);
     }
 
     @Override
@@ -56,10 +52,10 @@ final class ZonedDateTimeCodec extends AbstractTemporalCodec<ZonedDateTime> {
     }
 
     @Override
-    EncodedParameter doEncode(ZonedDateTime value, PostgresTypeIdentifier dataType) {
+    String doEncodeText(ZonedDateTime value) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return create(FORMAT_TEXT, dataType, () -> ByteBufUtils.encode(this.byteBufAllocator, value.toOffsetDateTime().toString()));
+        return value.toOffsetDateTime().toString();
     }
 
     @Override

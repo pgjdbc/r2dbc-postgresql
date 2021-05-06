@@ -78,4 +78,9 @@ final class ClobCodec extends AbstractCodec<Clob> {
         );
     }
 
+    @Override
+    String doEncodeText(Clob value) {
+        throw new UnsupportedOperationException();
+    }
+
 }

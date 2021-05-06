@@ -90,12 +90,18 @@ final class BooleanCodecUnitTests {
         assertThat(codec.doEncode(true))
             .hasFormat(FORMAT_TEXT)
             .hasType(BOOL.getObjectId())
-            .hasValue(encode(TEST, "TRUE"));
+            .hasValue(encode(TEST, "t"));
 
         assertThat(codec.doEncode(false))
             .hasFormat(FORMAT_TEXT)
             .hasType(BOOL.getObjectId())
-            .hasValue(encode(TEST, "FALSE"));
+            .hasValue(encode(TEST, "f"));
+    }
+
+    @Test
+    void encodeItemNoValue() {
+        assertThatIllegalArgumentException().isThrownBy(() -> new BooleanCodec(TEST).doEncodeText(null))
+            .withMessage("value must not be null");
     }
 
     @Test

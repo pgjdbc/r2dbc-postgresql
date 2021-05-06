@@ -79,6 +79,11 @@ final class BlobCodec extends AbstractCodec<Blob> {
         );
     }
 
+    @Override
+    String doEncodeText(Blob value) {
+        throw new UnsupportedOperationException("Cannot encode Blob");
+    }
+
     private static final class ByteABlob implements Blob {
 
         private final ByteBuf byteBuf;

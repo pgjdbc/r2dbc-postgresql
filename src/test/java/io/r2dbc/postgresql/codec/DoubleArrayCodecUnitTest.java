@@ -18,6 +18,7 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.client.EncodedParameter;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
@@ -32,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
- * Unit tests for {@link DoubleArrayCodec}.
+ * Unit tests for {@link GenericArrayCodec<Double>}.
  */
 class DoubleArrayCodecUnitTest {
 
@@ -63,18 +64,25 @@ class DoubleArrayCodecUnitTest {
         .writeDouble(100.5) // value
         .writeInt(-1); // length of null element
 
+    GenericArrayCodec<Double> codec;
+
+    @BeforeEach
+    void setup() {
+        codec = new GenericArrayCodec<>(TEST, FLOAT8_ARRAY, new DoubleCodec(TEST));
+    }
+
     @Test
     void decodeItem() {
         Double[] expected = {100.5, 200.25};
-        assertThat(new DoubleArrayCodec(TEST).decode(SINGLE_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Double[].class))
+        assertThat(codec.decode(SINGLE_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Double[].class))
             .isEqualTo(expected);
-        assertThat(new DoubleArrayCodec(TEST).decode(encode(TEST, "{100.5,200.25}"), dataType, FORMAT_TEXT, Double[].class))
+        assertThat(codec.decode(encode(TEST, "{100.5,200.25}"), dataType, FORMAT_TEXT, Double[].class))
             .isEqualTo(expected);
     }
 
     @Test
     void decodeItem_emptyArray() {
-        assertThat(new DoubleArrayCodec(TEST).decode(encode(TEST, "{}"), dataType, FORMAT_TEXT, Double[][].class))
+        assertThat(codec.decode(encode(TEST, "{}"), dataType, FORMAT_TEXT, Double[][].class))
             .isEqualTo(new Double[][]{});
     }
 
@@ -86,95 +94,84 @@ class DoubleArrayCodecUnitTest {
             .writeInt(0)
             .writeInt(701);
 
-        assertThat(new DoubleArrayCodec(TEST).decode(buf, dataType, FORMAT_BINARY, Double[][].class))
+        assertThat(codec.decode(buf, dataType, FORMAT_BINARY, Double[][].class))
             .isEqualTo(new Double[][]{});
     }
 
     @Test
     void decodeItem_expectedLessDimensionsInArray() {
         assertThatIllegalArgumentException()
-            .isThrownBy(() -> new DoubleArrayCodec(TEST).decode(encode(TEST, "{{100.5}}"), dataType, FORMAT_TEXT, Double[].class))
+            .isThrownBy(() -> codec.decode(encode(TEST, "{{100.5}}"), dataType, FORMAT_TEXT, Double[].class))
             .withMessage("Dimensions mismatch: 1 expected, but 2 returned from DB");
     }
 
     @Test
     void decodeItem_expectedLessDimensionsInBinaryArray() {
         assertThatIllegalArgumentException()
-            .isThrownBy(() -> new DoubleArrayCodec(TEST).decode(TWO_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Double[].class))
+            .isThrownBy(() -> codec.decode(TWO_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Double[].class))
             .withMessage("Dimensions mismatch: 1 expected, but 2 returned from DB");
     }
 
     @Test
     void decodeItem_expectedMoreDimensionsInArray() {
         assertThatIllegalArgumentException()
-            .isThrownBy(() -> new DoubleArrayCodec(TEST).decode(encode(TEST, "{100.5,200.25}"), dataType, FORMAT_TEXT, Double[][].class))
+            .isThrownBy(() -> codec.decode(encode(TEST, "{100.5,200.25}"), dataType, FORMAT_TEXT, Double[][].class))
             .withMessage("Dimensions mismatch: 2 expected, but 1 returned from DB");
     }
 
     @Test
     void decodeItem_expectedMoreDimensionsInBinaryArray() {
         assertThatIllegalArgumentException()
-            .isThrownBy(() -> new DoubleArrayCodec(TEST).decode(SINGLE_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Float[][].class))
+            .isThrownBy(() -> codec.decode(SINGLE_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Float[][].class))
             .withMessage("Dimensions mismatch: 2 expected, but 1 returned from DB");
     }
 
     @Test
     void decodeItem_twoDimensionalArrayWithNull() {
-        assertThat(new DoubleArrayCodec(TEST).decode(encode(TEST, "{{100.5},{NULL}}"), dataType, FORMAT_TEXT, Double[][].class))
+        assertThat(codec.decode(encode(TEST, "{{100.5},{NULL}}"), dataType, FORMAT_TEXT, Double[][].class))
             .isEqualTo(new Double[][]{{100.5}, {null}});
     }
 
     @Test
     void decodeItem_twoDimensionalBinaryArrayWithNull() {
-        assertThat(new DoubleArrayCodec(TEST).decode(TWO_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Double[][].class))
+        assertThat(codec.decode(TWO_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Double[][].class))
             .isEqualTo(new Double[][]{{100.5}, {null}});
     }
 
     @Test
     @SuppressWarnings({"rawtypes", "unchecked"})
     void decodeObject() {
-        Codec codec = new DoubleArrayCodec(TEST);
-        codec.canDecode(dataType, FORMAT_TEXT, Object.class);
+        Codec genericCodec = codec;
+        genericCodec.canDecode(dataType, FORMAT_TEXT, Object.class);
 
-        assertThat(codec.decode(SINGLE_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Object.class)).isEqualTo(new Double[]{100.5, 200.25});
-        assertThat(codec.decode(encode(TEST, "{100.5,200.25}"), dataType, FORMAT_TEXT, Object.class)).isEqualTo(new Double[]{100.5, 200.25});
+        assertThat(genericCodec.decode(SINGLE_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Object.class)).isEqualTo(new Double[]{100.5, 200.25});
+        assertThat(genericCodec.decode(encode(TEST, "{100.5,200.25}"), dataType, FORMAT_TEXT, Object.class)).isEqualTo(new Double[]{100.5, 200.25});
     }
 
     @Test
     void doCanDecode() {
-        assertThat(new DoubleArrayCodec(TEST).doCanDecode(FLOAT8, FORMAT_TEXT)).isFalse();
-        assertThat(new DoubleArrayCodec(TEST).doCanDecode(FLOAT8_ARRAY, FORMAT_TEXT)).isTrue();
-        assertThat(new DoubleArrayCodec(TEST).doCanDecode(FLOAT8_ARRAY, FORMAT_BINARY)).isTrue();
+        assertThat(codec.doCanDecode(FLOAT8, FORMAT_TEXT)).isFalse();
+        assertThat(codec.doCanDecode(FLOAT8_ARRAY, FORMAT_TEXT)).isTrue();
+        assertThat(codec.doCanDecode(FLOAT8_ARRAY, FORMAT_BINARY)).isTrue();
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new DoubleArrayCodec(TEST).doCanDecode(null, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> codec.doCanDecode(null, null))
             .withMessage("type must not be null");
     }
 
     @Test
     void encodeArray() {
-        assertThat(new DoubleArrayCodec(TEST).encodeArray(() -> encode(TEST, "{100.5,200.25}"), FLOAT8_ARRAY))
+        assertThat(codec.encodeArray(() -> encode(TEST, "{100.5,200.25}"), FLOAT8_ARRAY))
             .hasFormat(FORMAT_TEXT)
             .hasType(FLOAT8_ARRAY.getObjectId())
             .hasValue(encode(TEST, "{100.5,200.25}"));
     }
 
     @Test
-    void encodeItem() {
-        assertThat(new DoubleArrayCodec(TEST).doEncodeText(100.5)).isEqualTo("100.5");
-    }
-
-    @Test
-    void encodeItemNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new DoubleArrayCodec(TEST).doEncodeText(null))
-            .withMessage("value must not be null");
-    }
-
-    @Test
     void encodeNull() {
-        assertThat(new DoubleArrayCodec(TEST).encodeNull())
+        assertThat(codec.encodeNull())
             .isEqualTo(new EncodedParameter(FORMAT_BINARY, dataType, NULL_VALUE));
     }
 

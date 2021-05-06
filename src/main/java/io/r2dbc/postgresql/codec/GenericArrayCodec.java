@@ -21,6 +21,7 @@ import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
+import io.r2dbc.postgresql.util.ByteBufUtils;
 
 import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
@@ -31,14 +32,16 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
 /**
- * Abstract codec class that provides a basis for all concrete
- * implementations of a array-typed {@link Codec}.
+ * Generic codec class that provides a basis for implementations
+ * of a array-typed {@link Codec}. It uses a {@link AbstractCodec delegate}
+ * that can encode/decode the underlying type of the array.
  *
  * @param <T> the type that is handled by this {@link Codec}
  */
-abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
+class GenericArrayCodec<T> extends AbstractCodec<Object[]> {
 
     private static final byte[] CLOSE_CURLY = "}".getBytes();
 
@@ -48,6 +51,8 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
 
     private static final byte[] OPEN_CURLY = "{".getBytes();
 
+    private final AbstractCodec<T> delegate;
+
     private final ByteBufAllocator byteBufAllocator;
 
     private final Class<T> componentType;
@@ -55,17 +60,19 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
     private final PostgresqlObjectId oid;
 
     /**
-     * Create a new {@link AbstractArrayCodec}.
+     * Create a new {@link GenericArrayCodec}.
      *
      * @param byteBufAllocator the buffer allocator
-     * @param componentType    the type handled by this codec
      * @param oid              the Postgres OID handled by this codec
+     * @param delegate         the underlying {@link AbstractCodec} used to encode/decode data
      */
-    AbstractArrayCodec(ByteBufAllocator byteBufAllocator, Class<T> componentType, PostgresqlObjectId oid) {
+    @SuppressWarnings("unchecked")
+    GenericArrayCodec(ByteBufAllocator byteBufAllocator, PostgresqlObjectId oid, AbstractCodec<T> delegate) {
         super(Object[].class);
         this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
-        this.componentType = Assert.requireNonNull(componentType, "componentType must not be null");
         this.oid = Assert.requireNonNull(oid, "oid must not be null");
+        this.delegate = (AbstractCodec<T>) Assert.requireNonType(delegate, GenericArrayCodec.class, "delegate must not be of type GenericArrayCodec");
+        this.componentType = Assert.requireNonNull((Class<T>) delegate.type(), "componentType must not be null");
     }
 
     @Override
@@ -88,14 +95,12 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
     }
 
     static String escapeArrayElement(String s) {
-        StringBuilder b = new StringBuilder();
-        b.append('"');
+        StringBuilder b = new StringBuilder("\"");
         for (int j = 0; j < s.length(); j++) {
             char c = s.charAt(j);
             if (c == '"' || c == '\\') {
                 b.append('\\');
             }
-
             b.append(c);
         }
         b.append('"');
@@ -122,22 +127,6 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
         return this.oid == type;
     }
 
-    /**
-     * Decode value using binary format.
-     *
-     * @param byteBuffer buffer containing the binary representation of the value to decode
-     * @return decoded value
-     */
-    abstract T doDecodeBinary(ByteBuf byteBuffer);
-
-    /**
-     * Decode value using text format.
-     *
-     * @param text string containing the textual representation of the value to decode
-     * @return decoded value
-     */
-    abstract T doDecodeText(String text);
-
     @Override
     final EncodedParameter doEncode(Object[] value) {
         return doEncode(value, this.oid);
@@ -149,7 +138,7 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
 
         return encodeArray(() -> {
             ByteBuf byteBuf = this.byteBufAllocator.buffer();
-            encodeAsText(byteBuf, value, this::doEncodeText);
+            encodeAsText(byteBuf, value, delegate::doEncodeText);
             return byteBuf;
         }, dataType);
     }
@@ -165,13 +154,10 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
         return create(Format.FORMAT_TEXT, dataType, encodedSupplier);
     }
 
-    /**
-     * Encode a single array item using text format.
-     *
-     * @param value the value to encode
-     * @return encoded array item
-     */
-    abstract String doEncodeText(T value);
+    @Override
+    String doEncodeText(Object[] value) {
+        throw new UnsupportedOperationException();
+    }
 
     boolean isTypeAssignable(Class<?> type) {
         Assert.requireNonNull(type, "type must not be null");
@@ -288,7 +274,7 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
                 || i == chars.length() - 1) {
                 // array end or element end
                 // when character that is a part of array element
-                if (currentChar != '"' && currentChar != '}' && currentChar != delim && buffer != null) {
+                if (currentChar != '}' && currentChar != delim && buffer != null) {
                     buffer.append(currentChar);
                 }
 
@@ -296,7 +282,11 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
 
                 // add element to current array
                 if (b != null && (!b.isEmpty() || wasInsideString)) {
-                    curArray.add(!wasInsideString && b.equals("NULL") ? null : doDecodeText(b));
+                    if (!wasInsideString && "NULL".equals(b)) {
+                        curArray.add(null);
+                    } else {
+                        curArray.add(delegate.doDecode(ByteBufUtils.encode(byteBufAllocator, b), oid, FORMAT_TEXT, componentType));
+                    }
                 }
 
                 wasInsideString = false;
@@ -401,9 +391,8 @@ abstract class AbstractArrayCodec<T> extends AbstractCodec<Object[]> {
                 int len = buffer.readInt();
                 if (len == -1) {
                     continue;
-
                 }
-                array[i] = doDecodeBinary(buffer.readSlice(len));
+                array[i] = delegate.doDecode(buffer.readSlice(len), oid, FORMAT_BINARY, componentType);
             }
         } else {
             for (int i = 0; i < dims[thisDimension]; ++i) {

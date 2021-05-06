@@ -68,4 +68,11 @@ final class CharacterCodec extends AbstractCodec<Character> {
         return this.delegate.doEncode(value.toString(), dataType);
     }
 
+    @Override
+    String doEncodeText(Character value) {
+        Assert.requireNonNull(value, "value must not be null");
+
+        return value.toString();
+    }
+
 }

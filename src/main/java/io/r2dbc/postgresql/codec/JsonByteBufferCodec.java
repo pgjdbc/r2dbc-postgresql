@@ -52,4 +52,9 @@ final class JsonByteBufferCodec extends AbstractJsonCodec<ByteBuffer> {
         return create(FORMAT_TEXT, dataType, () -> this.byteBufAllocator.buffer(value.remaining()).writeBytes(value));
     }
 
+    @Override
+    String doEncodeText(ByteBuffer value) {
+        throw new UnsupportedOperationException("Cannot encode JsonByteBuffer as text");
+    }
+
 }

@@ -112,6 +112,15 @@ public final class MockCodec<T> extends AbstractCodec<T> {
         return this.encodings.get(value);
     }
 
+    @Override
+    String doEncodeText(T value) {
+        if (!this.encodings.containsKey(value)) {
+            throw new AssertionError(String.format("Unexpected call to doEncode(T) with value '%s'", value));
+        }
+
+        return value.toString();
+    }
+
     public static final class Builder<T> {
 
         private final Set<CanDecode> canDecodes = new HashSet<>();

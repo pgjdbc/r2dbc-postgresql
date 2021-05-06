@@ -16,11 +16,9 @@
 
 package io.r2dbc.postgresql.codec;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
-import io.r2dbc.postgresql.util.ByteBufUtils;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.BPCHAR_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.CHAR_ARRAY;
@@ -28,20 +26,10 @@ import static io.r2dbc.postgresql.codec.PostgresqlObjectId.NAME_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TEXT_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.VARCHAR_ARRAY;
 
-final class StringArrayCodec extends AbstractArrayCodec<String> {
+final class StringArrayCodec extends GenericArrayCodec<String> {
 
     StringArrayCodec(ByteBufAllocator byteBufAllocator) {
-        super(byteBufAllocator, String.class, TEXT_ARRAY);
-    }
-
-    @Override
-    String doDecodeBinary(ByteBuf byteBuffer) {
-        return ByteBufUtils.decode(byteBuffer);
-    }
-
-    @Override
-    String doDecodeText(String text) {
-        return text;
+        super(byteBufAllocator, TEXT_ARRAY, new StringCodec(byteBufAllocator));
     }
 
     @Override
@@ -50,13 +38,6 @@ final class StringArrayCodec extends AbstractArrayCodec<String> {
         Assert.requireNonNull(type, "type must not be null");
 
         return (BPCHAR_ARRAY == type || CHAR_ARRAY == type || TEXT_ARRAY == type || VARCHAR_ARRAY == type | NAME_ARRAY == type);
-    }
-
-    @Override
-    String doEncodeText(String value) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return AbstractArrayCodec.escapeArrayElement(value);
     }
 
 }

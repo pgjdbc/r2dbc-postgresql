@@ -70,4 +70,11 @@ final class UriCodec extends AbstractCodec<URI> {
         return this.delegate.doEncode(value.toString(), dataType);
     }
 
+    @Override
+    String doEncodeText(URI value) {
+        Assert.requireNonNull(value, "value must not be null");
+
+        return value.toString();
+    }
+
 }

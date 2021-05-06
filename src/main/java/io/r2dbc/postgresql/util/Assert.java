@@ -115,6 +115,29 @@ public final class Assert {
     }
 
     /**
+     * Checks that the specified value is not of a specific type.
+     *
+     * @param value   the value to check
+     * @param type    the type to exclude
+     * @param message the message to use in exception if type is not as excluded
+     * @param <T>     the type being excluded
+     * @return the value casted to the required type
+     * @throws IllegalArgumentException if {@code value} is of the excluded type
+     * @throws IllegalArgumentException if {@code value}, {@code type}, or {@code message} is {@code null}
+     */
+    public static <T> Object requireNonType(Object value, Class<T> type, String message) {
+        requireNonNull(value, "value must not be null");
+        requireNonNull(type, "type must not be null");
+        requireNonNull(message, "message must not be null");
+
+        if (type.isInstance(value)) {
+            throw new IllegalArgumentException(message);
+        }
+
+        return value;
+    }
+
+    /**
      * Checks that the provided file exists or null.
      *
      * @param file    file to check

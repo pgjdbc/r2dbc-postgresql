@@ -92,6 +92,17 @@ final class DoubleCodecUnitTests {
     }
 
     @Test
+    void encodeItem() {
+        assertThat(new DoubleCodec(TEST).doEncodeText(100.5)).isEqualTo("100.5");
+    }
+
+    @Test
+    void encodeItemNoValue() {
+        assertThatIllegalArgumentException().isThrownBy(() -> new DoubleCodec(TEST).doEncodeText(null))
+            .withMessage("value must not be null");
+    }
+
+    @Test
     void encodeNull() {
         assertThat(new DoubleCodec(TEST).encodeNull())
             .isEqualTo(new EncodedParameter(FORMAT_BINARY, FLOAT8.getObjectId(), NULL_VALUE));

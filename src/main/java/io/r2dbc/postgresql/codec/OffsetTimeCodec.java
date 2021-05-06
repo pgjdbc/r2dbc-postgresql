@@ -18,23 +18,17 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
-import io.r2dbc.postgresql.util.ByteBufUtils;
 
 import java.time.OffsetTime;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMETZ;
-import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
 public class OffsetTimeCodec extends AbstractTemporalCodec<OffsetTime> {
 
-    private final ByteBufAllocator byteBufAllocator;
-
     OffsetTimeCodec(ByteBufAllocator byteBufAllocator) {
-        super(OffsetTime.class);
-        this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        super(OffsetTime.class, byteBufAllocator);
     }
 
     @Override
@@ -42,13 +36,6 @@ public class OffsetTimeCodec extends AbstractTemporalCodec<OffsetTime> {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         return decodeTemporal(buffer, dataType, format, OffsetTime.class, OffsetTime::from);
-    }
-
-    @Override
-    EncodedParameter doEncode(OffsetTime value, PostgresTypeIdentifier dataType) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return create(FORMAT_TEXT, dataType, () -> ByteBufUtils.encode(this.byteBufAllocator, value.toString()));
     }
 
     @Override

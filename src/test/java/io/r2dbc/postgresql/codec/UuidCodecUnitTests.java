@@ -39,6 +39,8 @@ final class UuidCodecUnitTests {
 
     private static final int dataType = PostgresqlObjectId.UUID.getObjectId();
 
+    private static final UUID u1 = UUID.randomUUID();
+
     @Test
     void constructorNoByteBufAllocator() {
         assertThatIllegalArgumentException().isThrownBy(() -> new UuidCodec(null))
@@ -92,6 +94,17 @@ final class UuidCodecUnitTests {
     @Test
     void doEncodeNoValue() {
         assertThatIllegalArgumentException().isThrownBy(() -> new UuidCodec(TEST).doEncode(null))
+            .withMessage("value must not be null");
+    }
+
+    @Test
+    void encodeItem() {
+        assertThat(new UuidCodec(TEST).doEncodeText(u1)).isEqualTo(u1.toString());
+    }
+
+    @Test
+    void encodeItemNoValue() {
+        assertThatIllegalArgumentException().isThrownBy(() -> new UuidCodec(TEST).doEncodeText(null))
             .withMessage("value must not be null");
     }
 

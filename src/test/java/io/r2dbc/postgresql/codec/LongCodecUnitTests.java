@@ -92,6 +92,17 @@ final class LongCodecUnitTests {
     }
 
     @Test
+    void encodeItem() {
+        assertThat(new LongCodec(TEST).doEncodeText(100L)).isEqualTo("100");
+    }
+
+    @Test
+    void encodeItemNoValue() {
+        assertThatIllegalArgumentException().isThrownBy(() -> new LongCodec(TEST).doEncodeText(null))
+            .withMessage("value must not be null");
+    }
+
+    @Test
     void encodeNull() {
         assertThat(new LongCodec(TEST).encodeNull())
             .isEqualTo(new EncodedParameter(FORMAT_BINARY, INT8.getObjectId(), NULL_VALUE));
