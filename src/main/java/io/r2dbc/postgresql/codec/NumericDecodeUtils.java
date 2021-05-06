@@ -49,33 +49,39 @@ final class NumericDecodeUtils {
         switch (dataType) {
 
             case NUMERIC:
+            case NUMERIC_ARRAY:
                 if (format == FORMAT_BINARY) {
                     return decodeBinary(buffer);
                 }
                 return new BigDecimal(ByteBufUtils.decode(buffer));
-
             case INT2:
+            case INT2_ARRAY:
                 if (FORMAT_BINARY == format) {
                     return buffer.readShort();
                 }
                 return Short.parseShort(ByteBufUtils.decode(buffer));
             case INT4:
+            case INT4_ARRAY:
             case OID:
+            case OID_ARRAY:
                 if (FORMAT_BINARY == format) {
                     return buffer.readInt();
                 }
                 return Integer.parseInt(ByteBufUtils.decode(buffer));
             case INT8:
+            case INT8_ARRAY:
                 if (FORMAT_BINARY == format) {
                     return buffer.readLong();
                 }
                 return Long.parseLong(ByteBufUtils.decode(buffer));
             case FLOAT4:
+            case FLOAT4_ARRAY:
                 if (FORMAT_BINARY == format) {
                     return buffer.readFloat();
                 }
                 return Float.parseFloat(ByteBufUtils.decode(buffer));
             case FLOAT8:
+            case FLOAT8_ARRAY:
                 if (FORMAT_BINARY == format) {
                     return buffer.readDouble();
                 }

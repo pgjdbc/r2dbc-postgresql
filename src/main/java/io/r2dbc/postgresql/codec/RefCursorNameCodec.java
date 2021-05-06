@@ -63,4 +63,9 @@ final class RefCursorNameCodec extends AbstractCodec<String> {
         throw new UnsupportedOperationException("Cannot encode RefCursor");
     }
 
+    @Override
+    String doEncodeText(String value) {
+        throw new UnsupportedOperationException("Cannot encode RefCursor");
+    }
+
 }

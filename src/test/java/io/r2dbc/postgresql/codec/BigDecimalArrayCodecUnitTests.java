@@ -19,6 +19,7 @@ package io.r2dbc.postgresql.codec;
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.client.ParameterAssert;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -34,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
- * Unit tests for {@link BigDecimalArrayCodec}.
+ * Unit tests for {@link GenericArrayCodec<BigDecimal>}.
  */
 final class BigDecimalArrayCodecUnitTests {
 
@@ -60,28 +61,35 @@ final class BigDecimalArrayCodecUnitTests {
         .writeShort(2)
         .writeShort(200);
 
+    GenericArrayCodec<BigDecimal> codec;
+
+    @BeforeEach
+    void setup() {
+        codec = new GenericArrayCodec<>(TEST, NUMERIC_ARRAY, new BigDecimalCodec(TEST));
+    }
+
     @Test
     void decode() {
-        assertThat(new BigDecimalArrayCodec(TEST).decode(BINARY_ARRAY, dataType, FORMAT_BINARY, BigDecimal[].class))
+        assertThat(codec.decode(BINARY_ARRAY, dataType, FORMAT_BINARY, BigDecimal[].class))
             .isEqualTo(new BigDecimal[]{new BigDecimal("100.00"), new BigDecimal("200.00")});
 
-        assertThat(new BigDecimalArrayCodec(TEST).decode(encode(TEST, "{100.00,200.00}"), dataType, FORMAT_TEXT, BigDecimal[].class))
+        assertThat(codec.decode(encode(TEST, "{100.00,200.00}"), dataType, FORMAT_TEXT, BigDecimal[].class))
             .isEqualTo(new BigDecimal[]{new BigDecimal("100.00"), new BigDecimal("200.00")});
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new BigDecimalArrayCodec(TEST).decode(null, dataType, FORMAT_TEXT, BigDecimal[].class)).isNull();
+        assertThat(codec.decode(null, dataType, FORMAT_TEXT, BigDecimal[].class)).isNull();
     }
 
     @Test
     void doCanDecode() {
-        assertThat(new BigDecimalArrayCodec(TEST).doCanDecode(NUMERIC_ARRAY, FORMAT_BINARY)).isTrue();
+        assertThat(codec.doCanDecode(NUMERIC_ARRAY, FORMAT_BINARY)).isTrue();
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new BigDecimalArrayCodec(TEST).doCanDecode(null, FORMAT_TEXT))
+        assertThatIllegalArgumentException().isThrownBy(() -> codec.doCanDecode(null, FORMAT_TEXT))
             .withMessage("type must not be null");
     }
 
@@ -92,7 +100,7 @@ final class BigDecimalArrayCodecUnitTests {
             new BigDecimal("200.00")
         };
 
-        ParameterAssert.assertThat(new BigDecimalArrayCodec(TEST).doEncode(value))
+        ParameterAssert.assertThat(codec.doEncode(value))
             .hasFormat(FORMAT_TEXT)
             .hasType(NUMERIC_ARRAY.getObjectId())
             .hasValue(encode(TEST, "{100.00,200.00}"));
@@ -100,13 +108,13 @@ final class BigDecimalArrayCodecUnitTests {
 
     @Test
     void doEncodeNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new BigDecimalArrayCodec(TEST).doEncode(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> codec.doEncode(null))
             .withMessage("value must not be null");
     }
 
     @Test
     void encodeNull() {
-        ParameterAssert.assertThat(new BigDecimalArrayCodec(TEST).encodeNull())
+        ParameterAssert.assertThat(codec.encodeNull())
             .isEqualTo(new EncodedParameter(FORMAT_BINARY, NUMERIC_ARRAY.getObjectId(), NULL_VALUE));
     }
 

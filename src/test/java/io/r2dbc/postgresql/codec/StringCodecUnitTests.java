@@ -99,6 +99,32 @@ final class StringCodecUnitTests {
     }
 
     @Test
+    void encodeItem() {
+        assertThat(new StringCodec(TEST).doEncodeText("alpha")).isEqualTo("\"alpha\"");
+    }
+
+    @Test
+    void encodeItemMultibyte() {
+        assertThat(new StringCodec(TEST).doEncodeText("АБ")).isEqualTo("\"АБ\"");
+    }
+
+    @Test
+    void encodeItemNULL() {
+        assertThat(new StringCodec(TEST).doEncodeText("NULL")).isEqualTo("\"NULL\"");
+    }
+
+    @Test
+    void encodeItemNoValue() {
+        assertThatIllegalArgumentException().isThrownBy(() -> new StringCodec(TEST).doEncodeText(null))
+            .withMessage("value must not be null");
+    }
+
+    @Test
+    void encodeItemWithEscapes() {
+        assertThat(new StringCodec(TEST).doEncodeText("R \"2\" DBC")).isEqualTo("\"R \\\"2\\\" DBC\"");
+    }
+
+    @Test
     void encodeNull() {
         assertThat(new StringCodec(TEST).encodeNull())
             .isEqualTo(new EncodedParameter(FORMAT_TEXT, VARCHAR.getObjectId(), NULL_VALUE));

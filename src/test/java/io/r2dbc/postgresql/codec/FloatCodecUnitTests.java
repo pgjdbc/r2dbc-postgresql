@@ -92,6 +92,17 @@ final class FloatCodecUnitTests {
     }
 
     @Test
+    void encodeItem() {
+        assertThat(new FloatCodec(TEST).doEncodeText(100.5f)).isEqualTo("100.5");
+    }
+
+    @Test
+    void encodeItemNoValue() {
+        assertThatIllegalArgumentException().isThrownBy(() -> new FloatCodec(TEST).doEncodeText(null))
+            .withMessage("value must not be null");
+    }
+
+    @Test
     void encodeNull() {
         assertThat(new FloatCodec(TEST).encodeNull())
             .isEqualTo(new EncodedParameter(FORMAT_BINARY, FLOAT4.getObjectId(), NULL_VALUE));

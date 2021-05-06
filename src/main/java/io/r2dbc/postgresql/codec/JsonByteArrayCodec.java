@@ -49,4 +49,9 @@ final class JsonByteArrayCodec extends AbstractJsonCodec<byte[]> {
         return create(FORMAT_TEXT, JSON, () -> this.byteBufAllocator.buffer(value.length).writeBytes(value));
     }
 
+    @Override
+    String doEncodeText(byte[] value) {
+        throw new UnsupportedOperationException("Cannot encode JsonByteArray as text");
+    }
+
 }

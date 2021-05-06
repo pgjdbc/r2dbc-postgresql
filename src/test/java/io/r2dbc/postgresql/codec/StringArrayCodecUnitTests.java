@@ -113,32 +113,6 @@ final class StringArrayCodecUnitTests {
     }
 
     @Test
-    void encodeItem() {
-        assertThat(new StringArrayCodec(TEST).doEncodeText("alpha")).isEqualTo("\"alpha\"");
-    }
-
-    @Test
-    void encodeItemMultibyte() {
-        assertThat(new StringArrayCodec(TEST).doEncodeText("АБ")).isEqualTo("\"АБ\"");
-    }
-
-    @Test
-    void encodeItemNULL() {
-        assertThat(new StringArrayCodec(TEST).doEncodeText("NULL")).isEqualTo("\"NULL\"");
-    }
-
-    @Test
-    void encodeItemNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new StringArrayCodec(TEST).doEncodeText(null))
-            .withMessage("value must not be null");
-    }
-
-    @Test
-    void encodeItemWithEscapes() {
-        assertThat(new StringArrayCodec(TEST).doEncodeText("R \"2\" DBC")).isEqualTo("\"R \\\"2\\\" DBC\"");
-    }
-
-    @Test
     void encodeNull() {
         assertThat(new StringArrayCodec(TEST).encodeNull())
             .isEqualTo(new EncodedParameter(FORMAT_BINARY, TEXT_ARRAY.getObjectId(), NULL_VALUE));

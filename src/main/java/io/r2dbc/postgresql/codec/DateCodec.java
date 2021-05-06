@@ -73,6 +73,13 @@ final class DateCodec extends AbstractCodec<Date> {
         return this.delegate.doEncode(normalize(value), dataType);
     }
 
+    @Override
+    String doEncodeText(Date value) {
+        Assert.requireNonNull(value, "value must not be null");
+
+        return normalize(value).toString();
+    }
+
     private static LocalDateTime normalize(Date value) {
         return value.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
     }

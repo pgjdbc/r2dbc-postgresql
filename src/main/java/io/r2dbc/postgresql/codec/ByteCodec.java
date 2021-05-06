@@ -66,4 +66,11 @@ final class ByteCodec extends AbstractCodec<Byte> {
         return this.delegate.doEncode((short) value, dataType);
     }
 
+    @Override
+    String doEncodeText(Byte value) {
+        Assert.requireNonNull(value, "value must not be null");
+
+        return value.toString();
+    }
+
 }

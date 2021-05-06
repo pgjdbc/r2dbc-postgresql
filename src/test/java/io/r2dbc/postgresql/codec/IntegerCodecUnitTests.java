@@ -97,6 +97,17 @@ final class IntegerCodecUnitTests {
     }
 
     @Test
+    void encodeItem() {
+        assertThat(new IntegerCodec(TEST).doEncodeText(100)).isEqualTo("100");
+    }
+
+    @Test
+    void encodeItemNoValue() {
+        assertThatIllegalArgumentException().isThrownBy(() -> new IntegerCodec(TEST).doEncodeText(null))
+            .withMessage("value must not be null");
+    }
+
+    @Test
     void encodeNull() {
         assertThat(new IntegerCodec(TEST).encodeNull())
             .isEqualTo(new EncodedParameter(FORMAT_BINARY, INT4.getObjectId(), NULL_VALUE));

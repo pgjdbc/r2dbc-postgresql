@@ -18,6 +18,7 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.client.EncodedParameter;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
@@ -32,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
- * Unit tests for {@link BooleanArrayCodec}.
+ * Unit tests for {@link GenericArrayCodec<Boolean>}.
  */
 class BooleanArrayCodecUnitTest {
 
@@ -69,32 +70,39 @@ class BooleanArrayCodecUnitTest {
         .writeBoolean(true) // value
         .writeInt(-1); // length of null element
 
+    private GenericArrayCodec<Boolean> codec;
+
+    @BeforeEach
+    void setup() {
+        codec = new GenericArrayCodec<>(TEST, BOOL_ARRAY, new BooleanCodec(TEST));
+    }
+
     @Test
     void decodeItem() {
-        assertThat(new BooleanArrayCodec(TEST).decode(SINGLE_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Boolean[].class))
+        assertThat(codec.decode(SINGLE_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Boolean[].class))
             .isEqualTo(new Boolean[]{false, false, true, true, false});
     }
 
     @Test
     void decodeItem_textArray() {
         Boolean[] expected = {false, false, true, true, false};
-        assertThat(new BooleanArrayCodec(TEST).decode(encode(TEST, "{f,F,t,T,f}"), dataType, FORMAT_TEXT, Boolean[].class))
+        assertThat(codec.decode(encode(TEST, "{f,F,t,T,f}"), dataType, FORMAT_TEXT, Boolean[].class))
             .isEqualTo(expected);
-        assertThat(new BooleanArrayCodec(TEST).decode(encode(TEST, "{false,FALSE,TRUE,true,false}"), dataType, FORMAT_TEXT, Boolean[].class))
+        assertThat(codec.decode(encode(TEST, "{false,FALSE,TRUE,true,false}"), dataType, FORMAT_TEXT, Boolean[].class))
             .isEqualTo(expected);
-        assertThat(new BooleanArrayCodec(TEST).decode(encode(TEST, "{0,0,1,1,0}"), dataType, FORMAT_TEXT, Boolean[].class))
+        assertThat(codec.decode(encode(TEST, "{0,0,1,1,0}"), dataType, FORMAT_TEXT, Boolean[].class))
             .isEqualTo(expected);
-        assertThat(new BooleanArrayCodec(TEST).decode(encode(TEST, "{no,NO,YES,yes,no}"), dataType, FORMAT_TEXT, Boolean[].class))
+        assertThat(codec.decode(encode(TEST, "{no,NO,YES,yes,no}"), dataType, FORMAT_TEXT, Boolean[].class))
             .isEqualTo(expected);
-        assertThat(new BooleanArrayCodec(TEST).decode(encode(TEST, "{n,N,Y,y,n}"), dataType, FORMAT_TEXT, Boolean[].class))
+        assertThat(codec.decode(encode(TEST, "{n,N,Y,y,n}"), dataType, FORMAT_TEXT, Boolean[].class))
             .isEqualTo(expected);
-        assertThat(new BooleanArrayCodec(TEST).decode(encode(TEST, "{off,OFF,ON,on,off}"), dataType, FORMAT_TEXT, Boolean[].class))
+        assertThat(codec.decode(encode(TEST, "{off,OFF,ON,on,off}"), dataType, FORMAT_TEXT, Boolean[].class))
             .isEqualTo(expected);
     }
 
     @Test
     void decodeItem_emptyArray() {
-        assertThat(new BooleanArrayCodec(TEST).decode(encode(TEST, "{}"), dataType, FORMAT_TEXT, Boolean[][].class))
+        assertThat(codec.decode(encode(TEST, "{}"), dataType, FORMAT_TEXT, Boolean[][].class))
             .isEqualTo(new Boolean[][]{});
     }
 
@@ -106,99 +114,87 @@ class BooleanArrayCodecUnitTest {
             .writeInt(0)
             .writeInt(16);
 
-        assertThat(new BooleanArrayCodec(TEST).decode(buf, dataType, FORMAT_BINARY, Boolean[][].class))
+        assertThat(codec.decode(buf, dataType, FORMAT_BINARY, Boolean[][].class))
             .isEqualTo(new Boolean[][]{});
     }
 
     @Test
     void decodeItem_expectedLessDimensionsInArray() {
         assertThatIllegalArgumentException()
-            .isThrownBy(() -> new BooleanArrayCodec(TEST).decode(encode(TEST, "{{f}}"), dataType, FORMAT_TEXT, Boolean[].class))
+            .isThrownBy(() -> codec.decode(encode(TEST, "{{f}}"), dataType, FORMAT_TEXT, Boolean[].class))
             .withMessage("Dimensions mismatch: 1 expected, but 2 returned from DB");
     }
 
     @Test
     void decodeItem_expectedLessDimensionsInBinaryArray() {
         assertThatIllegalArgumentException()
-            .isThrownBy(() -> new BooleanArrayCodec(TEST).decode(TWO_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Boolean[].class))
+            .isThrownBy(() -> codec.decode(TWO_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Boolean[].class))
             .withMessage("Dimensions mismatch: 1 expected, but 2 returned from DB");
     }
 
     @Test
     void decodeItem_expectedMoreDimensionsInArray() {
         assertThatIllegalArgumentException()
-            .isThrownBy(() -> new BooleanArrayCodec(TEST).decode(encode(TEST, "{f,t}"), dataType, FORMAT_TEXT, Boolean[][].class))
+            .isThrownBy(() -> codec.decode(encode(TEST, "{f,t}"), dataType, FORMAT_TEXT, Boolean[][].class))
             .withMessage("Dimensions mismatch: 2 expected, but 1 returned from DB");
     }
 
     @Test
     void decodeItem_expectedMoreDimensionsInBinaryArray() {
         assertThatIllegalArgumentException()
-            .isThrownBy(() -> new BooleanArrayCodec(TEST).decode(SINGLE_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Boolean[][].class))
+            .isThrownBy(() -> codec.decode(SINGLE_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Boolean[][].class))
             .withMessage("Dimensions mismatch: 2 expected, but 1 returned from DB");
     }
 
     @Test
     void decodeItem_twoDimensionalArrayWithNull() {
-        assertThat(new BooleanArrayCodec(TEST).decode(encode(TEST, "{{f},{NULL}}"), dataType, FORMAT_TEXT, Boolean[][].class))
+        assertThat(codec.decode(encode(TEST, "{{f},{NULL}}"), dataType, FORMAT_TEXT, Boolean[][].class))
             .isEqualTo(new Boolean[][]{{false}, {null}});
     }
 
     @Test
     void decodeItem_twoDimensionalBinaryArrayWithNull() {
-        assertThat(new BooleanArrayCodec(TEST).decode(TWO_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Boolean[][].class))
+        assertThat(codec.decode(TWO_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Boolean[][].class))
             .isEqualTo(new Boolean[][]{{true}, {null}});
     }
 
     @Test
     @SuppressWarnings({"rawtypes", "unchecked"})
     void decodeObject() {
-        Codec codec = new BooleanArrayCodec(TEST);
-        assertThat(codec.canDecode(BOOL_ARRAY.getObjectId(), FORMAT_TEXT, Object.class)).isTrue();
+        Codec genericCodec = codec;
+        assertThat(genericCodec.canDecode(BOOL_ARRAY.getObjectId(), FORMAT_TEXT, Object.class)).isTrue();
         Boolean[] expected = {false, false, true, true, false};
 
-        assertThat(codec.decode(SINGLE_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Object.class))
+        assertThat(genericCodec.decode(SINGLE_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Object.class))
             .isEqualTo(expected);
-        assertThat(codec.decode(encode(TEST, "{f,f,t,t,f}"), dataType, FORMAT_TEXT, Object.class))
+        assertThat(genericCodec.decode(encode(TEST, "{f,f,t,t,f}"), dataType, FORMAT_TEXT, Object.class))
             .isEqualTo(expected);
     }
 
     @Test
     void doCanDecode() {
-        assertThat(new BooleanArrayCodec(TEST).doCanDecode(BOOL, FORMAT_TEXT)).isFalse();
-        assertThat(new BooleanArrayCodec(TEST).doCanDecode(BOOL_ARRAY, FORMAT_TEXT)).isTrue();
-        assertThat(new BooleanArrayCodec(TEST).doCanDecode(BOOL_ARRAY, FORMAT_BINARY)).isTrue();
+        assertThat(codec.doCanDecode(BOOL, FORMAT_TEXT)).isFalse();
+        assertThat(codec.doCanDecode(BOOL_ARRAY, FORMAT_TEXT)).isTrue();
+        assertThat(codec.doCanDecode(BOOL_ARRAY, FORMAT_BINARY)).isTrue();
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new BooleanArrayCodec(TEST).doCanDecode(null, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> codec.doCanDecode(null, null))
             .withMessage("type must not be null");
     }
 
     @Test
     void encodeArray() {
-        assertThat(new BooleanArrayCodec(TEST).encodeArray(() -> encode(TEST, "{f,t}"), BOOL_ARRAY))
+        assertThat(codec.encodeArray(() -> encode(TEST, "{f,t}"), BOOL_ARRAY))
             .hasFormat(FORMAT_TEXT)
             .hasType(BOOL_ARRAY.getObjectId())
             .hasValue(encode(TEST, "{f,t}"));
     }
 
     @Test
-    void encodeItem() {
-        assertThat(new BooleanArrayCodec(TEST).doEncodeText(false)).isEqualTo("f");
-        assertThat(new BooleanArrayCodec(TEST).doEncodeText(true)).isEqualTo("t");
-    }
-
-    @Test
-    void encodeItemNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new BooleanArrayCodec(TEST).doEncodeText(null))
-            .withMessage("value must not be null");
-    }
-
-    @Test
     void encodeNull() {
-        assertThat(new BooleanArrayCodec(TEST).encodeNull())
+        assertThat(codec.encodeNull())
             .isEqualTo(new EncodedParameter(FORMAT_BINARY, BOOL_ARRAY.getObjectId(), NULL_VALUE));
     }
 

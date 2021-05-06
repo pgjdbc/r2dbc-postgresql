@@ -18,6 +18,7 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.client.EncodedParameter;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
@@ -33,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
- * Unit tests for {@link UuidArrayCodec}.
+ * Unit tests for {@link GenericArrayCodec<UUID>}.
  */
 final class UuidArrayCodecUnitTests {
 
@@ -59,54 +60,50 @@ final class UuidArrayCodecUnitTests {
         .writeLong(u2.getMostSignificantBits())
         .writeLong(u2.getLeastSignificantBits());
 
+    GenericArrayCodec<UUID> codec;
+
+    @BeforeEach
+    void setup() {
+        codec = new GenericArrayCodec<>(TEST, UUID_ARRAY, new UuidCodec(TEST));
+    }
+
     @Test
     void decodeItem() {
-        assertThat(new UuidArrayCodec(TEST).decode(BINARY_ARRAY, dataType, FORMAT_BINARY, UUID[].class)).isEqualTo(new UUID[]{u1, u2});
-        assertThat(new UuidArrayCodec(TEST).decode(encode(TEST, parms), dataType, FORMAT_TEXT, UUID[].class)).isEqualTo(new UUID[]{u1, u2});
+        assertThat(codec.decode(BINARY_ARRAY, dataType, FORMAT_BINARY, UUID[].class)).isEqualTo(new UUID[]{u1, u2});
+        assertThat(codec.decode(encode(TEST, parms), dataType, FORMAT_TEXT, UUID[].class)).isEqualTo(new UUID[]{u1, u2});
     }
 
     @Test
     @SuppressWarnings({"rawtypes", "unchecked"})
     void decodeObject() {
-        assertThat(((Codec) new UuidArrayCodec(TEST)).decode(BINARY_ARRAY, dataType, FORMAT_BINARY, Object.class)).isEqualTo(new UUID[]{u1, u2});
-        assertThat(((Codec) new UuidArrayCodec(TEST)).decode(encode(TEST, parms), dataType, FORMAT_TEXT, Object.class)).isEqualTo(new UUID[]{u1, u2});
+        assertThat(((Codec) codec).decode(BINARY_ARRAY, dataType, FORMAT_BINARY, Object.class)).isEqualTo(new UUID[]{u1, u2});
+        assertThat(((Codec) codec).decode(encode(TEST, parms), dataType, FORMAT_TEXT, Object.class)).isEqualTo(new UUID[]{u1, u2});
     }
 
     @Test
     void doCanDecode() {
-        assertThat(new UuidArrayCodec(TEST).doCanDecode(PostgresqlObjectId.UUID, FORMAT_TEXT)).isFalse();
-        assertThat(new UuidArrayCodec(TEST).doCanDecode(UUID_ARRAY, FORMAT_TEXT)).isTrue();
-        assertThat(new UuidArrayCodec(TEST).doCanDecode(UUID_ARRAY, FORMAT_BINARY)).isTrue();
+        assertThat(codec.doCanDecode(PostgresqlObjectId.UUID, FORMAT_TEXT)).isFalse();
+        assertThat(codec.doCanDecode(UUID_ARRAY, FORMAT_TEXT)).isTrue();
+        assertThat(codec.doCanDecode(UUID_ARRAY, FORMAT_BINARY)).isTrue();
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new UuidArrayCodec(TEST).doCanDecode(null, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> codec.doCanDecode(null, null))
             .withMessage("type must not be null");
     }
 
     @Test
     void encodeArray() {
-        assertThat(new UuidArrayCodec(TEST).encodeArray(() -> encode(TEST, parms), UUID_ARRAY))
+        assertThat(codec.encodeArray(() -> encode(TEST, parms), UUID_ARRAY))
             .hasFormat(FORMAT_TEXT)
             .hasType(UUID_ARRAY.getObjectId())
             .hasValue(encode(TEST, parms));
     }
 
     @Test
-    void encodeItem() {
-        assertThat(new UuidArrayCodec(TEST).doEncodeText(u1)).isEqualTo(u1.toString());
-    }
-
-    @Test
-    void encodeItemNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new UuidArrayCodec(TEST).doEncodeText(null))
-            .withMessage("value must not be null");
-    }
-
-    @Test
     void encodeNull() {
-        assertThat(new UuidArrayCodec(TEST).encodeNull())
+        assertThat(codec.encodeNull())
             .isEqualTo(new EncodedParameter(FORMAT_BINARY, UUID_ARRAY.getObjectId(), NULL_VALUE));
     }
 

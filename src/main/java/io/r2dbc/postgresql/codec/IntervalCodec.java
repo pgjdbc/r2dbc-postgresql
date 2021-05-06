@@ -58,11 +58,19 @@ final class IntervalCodec extends AbstractCodec<Interval> {
         Assert.requireNonNull(value, "value must not be null");
 
         return create(FORMAT_TEXT, dataType,
-            () -> ByteBufUtils.encode(this.byteBufAllocator, value.getValue()));
+            () -> ByteBufUtils.encode(this.byteBufAllocator, doEncodeText(value)));
+    }
+
+    @Override
+    String doEncodeText(Interval value) {
+        Assert.requireNonNull(value, "value must not be null");
+
+        return value.getValue();
     }
 
     @Override
     public EncodedParameter encodeNull() {
         return createNull(FORMAT_TEXT, INTERVAL);
     }
+
 }

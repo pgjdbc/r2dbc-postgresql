@@ -21,6 +21,8 @@ import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
+import io.r2dbc.postgresql.util.Assert;
+import io.r2dbc.postgresql.util.ByteBufUtils;
 
 import java.nio.ByteBuffer;
 
@@ -40,6 +42,13 @@ final class BinaryByteBufferCodec extends AbstractBinaryCodec<ByteBuffer> {
     @Override
     EncodedParameter doEncode(ByteBuffer value, PostgresTypeIdentifier dataType) {
         return create(FORMAT_TEXT, dataType, () -> encodeToHex(Unpooled.wrappedBuffer(value)));
+    }
+
+    @Override
+    String doEncodeText(ByteBuffer value) {
+        Assert.requireNonNull(value, "value must not be null");
+
+        return ByteBufUtils.decode(encodeToHex(Unpooled.wrappedBuffer(value)));
     }
 
 }

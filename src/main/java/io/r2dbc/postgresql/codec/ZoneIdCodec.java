@@ -70,4 +70,11 @@ final class ZoneIdCodec extends AbstractCodec<ZoneId> {
         return this.delegate.doEncode(value.getId(), dataType);
     }
 
+    @Override
+    String doEncodeText(ZoneId value) {
+        Assert.requireNonNull(value, "value must not be null");
+
+        return value.getId();
+    }
+
 }

@@ -18,6 +18,7 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.client.EncodedParameter;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
@@ -34,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
- * Unit tests for {@link ShortArrayCodec}.
+ * Unit tests for {@link GenericArrayCodec<Short>}.
  */
 final class ShortArrayCodecUnitTests {
 
@@ -52,66 +53,62 @@ final class ShortArrayCodecUnitTests {
         .writeInt(2)
         .writeShort(200);
 
+    GenericArrayCodec<Short> codec;
+
+    @BeforeEach
+    void setup() {
+        codec = new GenericArrayCodec<>(TEST, INT2_ARRAY, new ShortCodec(TEST));
+    }
+
     @Test
     void decodeItem() {
-        assertThat(new ShortArrayCodec(TEST).decode(BINARY_ARRAY, dataType, FORMAT_BINARY, Short[].class)).isEqualTo(new Short[]{100, 200});
-        assertThat(new ShortArrayCodec(TEST).decode(encode(TEST, "{100,200}"), dataType, FORMAT_TEXT, Short[].class)).isEqualTo(new Short[]{100, 200});
+        assertThat(codec.decode(BINARY_ARRAY, dataType, FORMAT_BINARY, Short[].class)).isEqualTo(new Short[]{100, 200});
+        assertThat(codec.decode(encode(TEST, "{100,200}"), dataType, FORMAT_TEXT, Short[].class)).isEqualTo(new Short[]{100, 200});
     }
 
     @Test
     @SuppressWarnings({"rawtypes", "unchecked"})
     void decodeObject() {
-        assertThat(((Codec) new ShortArrayCodec(TEST)).decode(BINARY_ARRAY, dataType, FORMAT_BINARY, Object.class)).isEqualTo(new Short[]{100, 200});
-        assertThat(((Codec) new ShortArrayCodec(TEST)).decode(encode(TEST, "{100,200}"), dataType, FORMAT_TEXT, Object.class)).isEqualTo(new Short[]{100, 200});
+        assertThat(((Codec) codec).decode(BINARY_ARRAY, dataType, FORMAT_BINARY, Object.class)).isEqualTo(new Short[]{100, 200});
+        assertThat(((Codec) codec).decode(encode(TEST, "{100,200}"), dataType, FORMAT_TEXT, Object.class)).isEqualTo(new Short[]{100, 200});
     }
 
     @Test
     void doCanDecode() {
-        assertThat(new ShortArrayCodec(TEST).doCanDecode(INT2, FORMAT_TEXT)).isFalse();
-        assertThat(new ShortArrayCodec(TEST).doCanDecode(INT2_ARRAY, FORMAT_TEXT)).isTrue();
-        assertThat(new ShortArrayCodec(TEST).doCanDecode(INT2_ARRAY, FORMAT_BINARY)).isTrue();
+        assertThat(codec.doCanDecode(INT2, FORMAT_TEXT)).isFalse();
+        assertThat(codec.doCanDecode(INT2_ARRAY, FORMAT_TEXT)).isTrue();
+        assertThat(codec.doCanDecode(INT2_ARRAY, FORMAT_BINARY)).isTrue();
     }
 
     @Test
     void canEncode() {
-        assertThat(new ShortArrayCodec(TEST).canEncode(new Short[0])).isTrue();
-        assertThat(new ShortArrayCodec(TEST).canEncode(new UUID[0])).isFalse();
+        assertThat(codec.canEncode(new Short[0])).isTrue();
+        assertThat(codec.canEncode(new UUID[0])).isFalse();
     }
 
     @Test
     void canEncodeNull() {
-        assertThat(new ShortArrayCodec(TEST).canEncodeNull(Short[].class)).isTrue();
-        assertThat(new ShortArrayCodec(TEST).canEncodeNull(UUID[].class)).isFalse();
+        assertThat(codec.canEncodeNull(Short[].class)).isTrue();
+        assertThat(codec.canEncodeNull(UUID[].class)).isFalse();
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new ShortArrayCodec(TEST).doCanDecode(null, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> codec.doCanDecode(null, null))
             .withMessage("type must not be null");
     }
 
     @Test
     void encodeArray() {
-        assertThat(new ShortArrayCodec(TEST).encodeArray(() -> encode(TEST, "{100,200}"), INT2_ARRAY))
+        assertThat(codec.encodeArray(() -> encode(TEST, "{100,200}"), INT2_ARRAY))
             .hasFormat(FORMAT_TEXT)
             .hasType(INT2_ARRAY.getObjectId())
             .hasValue(encode(TEST, "{100,200}"));
     }
 
     @Test
-    void encodeItem() {
-        assertThat(new ShortArrayCodec(TEST).doEncodeText((short) 100)).isEqualTo("100");
-    }
-
-    @Test
-    void encodeItemNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new ShortArrayCodec(TEST).doEncodeText(null))
-            .withMessage("value must not be null");
-    }
-
-    @Test
     void encodeNull() {
-        assertThat(new ShortArrayCodec(TEST).encodeNull())
+        assertThat(codec.encodeNull())
             .isEqualTo(new EncodedParameter(FORMAT_BINARY, INT2_ARRAY.getObjectId(), NULL_VALUE));
     }
 

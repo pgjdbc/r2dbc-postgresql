@@ -48,4 +48,9 @@ abstract class AbstractJsonCodec<T> extends AbstractCodec<T> {
         return JSONB == type || JSON == type;
     }
 
+    @Override
+    String doEncodeText(T value) {
+        throw new UnsupportedOperationException();
+    }
+
 }

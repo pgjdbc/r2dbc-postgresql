@@ -33,6 +33,14 @@ import java.util.Iterator;
 import java.util.List;
 
 import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.BOOL_ARRAY;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.FLOAT4_ARRAY;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.FLOAT8_ARRAY;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT2_ARRAY;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT4_ARRAY;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT8_ARRAY;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.NUMERIC_ARRAY;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.UUID_ARRAY;
 
 /**
  * The default {@link Codec} implementation.  Delegates to type-specific codec implementations.
@@ -108,17 +116,18 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
             RefCursorCodec.INSTANCE,
             RefCursorNameCodec.INSTANCE,
 
-            new BigDecimalArrayCodec(byteBufAllocator),
-            new BooleanArrayCodec(byteBufAllocator),
-            new DoubleArrayCodec(byteBufAllocator),
-            new FloatArrayCodec(byteBufAllocator),
-            new ShortArrayCodec(byteBufAllocator),
+            // Array
+            new GenericArrayCodec<>(byteBufAllocator, NUMERIC_ARRAY, new BigDecimalCodec(byteBufAllocator)),
+            new GenericArrayCodec<>(byteBufAllocator, BOOL_ARRAY, new BooleanCodec(byteBufAllocator)),
+            new GenericArrayCodec<>(byteBufAllocator, FLOAT4_ARRAY, new FloatCodec(byteBufAllocator)),
+            new GenericArrayCodec<>(byteBufAllocator, FLOAT8_ARRAY, new DoubleCodec(byteBufAllocator)),
+            new GenericArrayCodec<>(byteBufAllocator, INT2_ARRAY, new ShortCodec(byteBufAllocator)),
+            new GenericArrayCodec<>(byteBufAllocator, INT4_ARRAY, new IntegerCodec(byteBufAllocator)),
+            new GenericArrayCodec<>(byteBufAllocator, INT8_ARRAY, new LongCodec(byteBufAllocator)),
+            new GenericArrayCodec<>(byteBufAllocator, UUID_ARRAY, new UuidCodec(byteBufAllocator)),
             new StringArrayCodec(byteBufAllocator),
-            new IntegerArrayCodec(byteBufAllocator),
-            new LongArrayCodec(byteBufAllocator),
-            new UuidArrayCodec(byteBufAllocator),
 
-            //Geometry
+            // Geometry
             new CircleCodec(byteBufAllocator),
             new PointCodec(byteBufAllocator),
             new BoxCodec(byteBufAllocator),

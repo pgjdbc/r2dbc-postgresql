@@ -103,6 +103,11 @@ abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> {
     abstract ByteBuf doEncodeBinary(T value);
 
     @Override
+    String doEncodeText(T value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public EncodedParameter encodeNull() {
         return createNull(Format.FORMAT_BINARY, this.postgresqlObjectId);
     }

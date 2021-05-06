@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
@@ -52,13 +53,16 @@ abstract class AbstractTemporalCodec<T extends Temporal> extends AbstractCodec<T
 
     private static final Set<PostgresqlObjectId> SUPPORTED_TYPES = EnumSet.of(DATE, TIMESTAMP, TIMESTAMPTZ, TIME, TIMETZ);
 
+    private final ByteBufAllocator byteBufAllocator;
+
     /**
      * Create a new {@link AbstractTemporalCodec}.
      *
      * @param type the type handled by this codec
      */
-    AbstractTemporalCodec(Class<T> type) {
+    AbstractTemporalCodec(Class<T> type, ByteBufAllocator byteBufAllocator) {
         super(type);
+        this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
     }
 
     @Override
@@ -100,6 +104,20 @@ abstract class AbstractTemporalCodec<T extends Temporal> extends AbstractCodec<T
     @Override
     EncodedParameter doEncode(T value) {
         return doEncode(value, getDefaultType());
+    }
+
+    @Override
+    EncodedParameter doEncode(T value, PostgresTypeIdentifier dataType) {
+        Assert.requireNonNull(value, "value must not be null");
+
+        return create(FORMAT_TEXT, dataType, () -> ByteBufUtils.encode(this.byteBufAllocator, doEncodeText(value)));
+    }
+
+    @Override
+    String doEncodeText(T value) {
+        Assert.requireNonNull(value, "value must not be null");
+
+        return value.toString();
     }
 
     @Override

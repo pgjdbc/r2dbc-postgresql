@@ -18,10 +18,8 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
-import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
 import java.time.Instant;
@@ -31,15 +29,11 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMESTAMP;
-import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
 final class LocalDateTimeCodec extends AbstractTemporalCodec<LocalDateTime> {
 
-    private final ByteBufAllocator byteBufAllocator;
-
     LocalDateTimeCodec(ByteBufAllocator byteBufAllocator) {
-        super(LocalDateTime.class);
-        this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        super(LocalDateTime.class, byteBufAllocator);
     }
 
     @Override
@@ -53,13 +47,6 @@ final class LocalDateTimeCodec extends AbstractTemporalCodec<LocalDateTime> {
 
             return Instant.from(temporal).atOffset(ZoneOffset.UTC).toLocalDateTime();
         });
-    }
-
-    @Override
-    EncodedParameter doEncode(LocalDateTime value, PostgresTypeIdentifier dataType) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return create(FORMAT_TEXT, dataType, () -> ByteBufUtils.encode(this.byteBufAllocator, value.toString()));
     }
 
     @Override

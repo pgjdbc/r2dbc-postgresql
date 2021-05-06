@@ -73,4 +73,11 @@ final class StringCodec extends AbstractCodec<String> {
         return create(FORMAT_TEXT, dataType, () -> ByteBufUtils.encode(this.byteBufAllocator, value));
     }
 
+    @Override
+    String doEncodeText(String value) {
+        Assert.requireNonNull(value, "value must not be null");
+
+        return GenericArrayCodec.escapeArrayElement(value);
+    }
+
 }

@@ -91,6 +91,13 @@ abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> {
         return create(FORMAT_BINARY, dataType, () -> doEncodeNumber(value, dataType));
     }
 
+    @Override
+    String doEncodeText(T value) {
+        Assert.requireNonNull(value, "value must not be null");
+
+        return value.toString();
+    }
+
     private ByteBuf doEncodeNumber(Number value, PostgresTypeIdentifier identifier) {
 
         PostgresqlObjectId oid = PostgresqlObjectId.valueOf(identifier.getObjectId());
