@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
- * Unit tests for {@link GenericArrayCodec<Float>}.
+ * Unit tests for {@link ArrayCodec <Float>}.
  */
 class FloatArrayCodecUnitTest {
 
@@ -64,11 +64,11 @@ class FloatArrayCodecUnitTest {
         .writeFloat(100.5f) // value
         .writeInt(-1); // length of null element
 
-    GenericArrayCodec<Float> codec;
+    ArrayCodec<Float> codec;
 
     @BeforeEach
     void setup() {
-        codec = new GenericArrayCodec<>(TEST, FLOAT4_ARRAY, new FloatCodec(TEST));
+        codec = new ArrayCodec<>(TEST, new FloatCodec(TEST), Float.class);
     }
 
     @Test

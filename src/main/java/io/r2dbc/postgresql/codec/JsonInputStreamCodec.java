@@ -41,7 +41,7 @@ final class JsonInputStreamCodec extends AbstractJsonCodec<InputStream> {
     }
 
     @Override
-    InputStream doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, Class<? extends InputStream> type) {
+    InputStream doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, Format format, Class<? extends InputStream> type) {
         return new ByteBufInputStream(buffer.retain().touch("Decoded by JsonInputStreamCodec"), true);
     }
 

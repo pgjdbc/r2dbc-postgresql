@@ -33,14 +33,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
-import static io.r2dbc.postgresql.codec.PostgresqlObjectId.BOOL_ARRAY;
-import static io.r2dbc.postgresql.codec.PostgresqlObjectId.FLOAT4_ARRAY;
-import static io.r2dbc.postgresql.codec.PostgresqlObjectId.FLOAT8_ARRAY;
-import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT2_ARRAY;
-import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT4_ARRAY;
-import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT8_ARRAY;
-import static io.r2dbc.postgresql.codec.PostgresqlObjectId.NUMERIC_ARRAY;
-import static io.r2dbc.postgresql.codec.PostgresqlObjectId.UUID_ARRAY;
 
 /**
  * The default {@link Codec} implementation.  Delegates to type-specific codec implementations.
@@ -66,6 +58,7 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
      * @param byteBufAllocator      the {@link ByteBufAllocator} to use for encoding
      * @param preferAttachedBuffers whether to prefer attached (pooled) {@link ByteBuf buffers}. Use {@code false} (default) to use detached buffers which minimize the risk of memory leaks.
      */
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public DefaultCodecs(ByteBufAllocator byteBufAllocator, boolean preferAttachedBuffers) {
         Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
 
@@ -117,14 +110,6 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
             RefCursorNameCodec.INSTANCE,
 
             // Array
-            new GenericArrayCodec<>(byteBufAllocator, NUMERIC_ARRAY, new BigDecimalCodec(byteBufAllocator)),
-            new GenericArrayCodec<>(byteBufAllocator, BOOL_ARRAY, new BooleanCodec(byteBufAllocator)),
-            new GenericArrayCodec<>(byteBufAllocator, FLOAT4_ARRAY, new FloatCodec(byteBufAllocator)),
-            new GenericArrayCodec<>(byteBufAllocator, FLOAT8_ARRAY, new DoubleCodec(byteBufAllocator)),
-            new GenericArrayCodec<>(byteBufAllocator, INT2_ARRAY, new ShortCodec(byteBufAllocator)),
-            new GenericArrayCodec<>(byteBufAllocator, INT4_ARRAY, new IntegerCodec(byteBufAllocator)),
-            new GenericArrayCodec<>(byteBufAllocator, INT8_ARRAY, new LongCodec(byteBufAllocator)),
-            new GenericArrayCodec<>(byteBufAllocator, UUID_ARRAY, new UuidCodec(byteBufAllocator)),
             new StringArrayCodec(byteBufAllocator),
 
             // Geometry
@@ -136,6 +121,20 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
             new PathCodec(byteBufAllocator),
             new PolygonCodec(byteBufAllocator)
         ));
+
+        List<Codec<?>> defaultArrayCodecs = new ArrayList<>();
+
+        for (Codec<?> codec : this.codecs) {
+
+            if (codec instanceof ArrayCodecDelegate<?>) {
+
+                Assert.requireType(codec, AbstractCodec.class, "Codec " + codec + " must be a subclass of AbstractCodec to be registered as generic array codec");
+                Class<?> componentType = codec.type();
+                defaultArrayCodecs.add(new ArrayCodec(byteBufAllocator, (ArrayCodecDelegate<?>) codec, componentType));
+            }
+        }
+
+        this.codecs.addAll(defaultArrayCodecs);
     }
 
     @Override

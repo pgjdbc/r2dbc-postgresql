@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
- * Unit tests for {@link GenericArrayCodec<UUID>}.
+ * Unit tests for {@link ArrayCodec <UUID>}.
  */
 final class UuidArrayCodecUnitTests {
 
@@ -60,11 +60,11 @@ final class UuidArrayCodecUnitTests {
         .writeLong(u2.getMostSignificantBits())
         .writeLong(u2.getLeastSignificantBits());
 
-    GenericArrayCodec<UUID> codec;
+    ArrayCodec<UUID> codec;
 
     @BeforeEach
     void setup() {
-        codec = new GenericArrayCodec<>(TEST, UUID_ARRAY, new UuidCodec(TEST));
+        codec = new ArrayCodec<>(TEST, new UuidCodec(TEST), UUID.class);
     }
 
     @Test

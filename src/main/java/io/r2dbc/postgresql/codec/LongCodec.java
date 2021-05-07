@@ -23,6 +23,7 @@ import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT8;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT8_ARRAY;
 
 final class LongCodec extends AbstractNumericCodec<Long> {
 
@@ -32,7 +33,7 @@ final class LongCodec extends AbstractNumericCodec<Long> {
     }
 
     @Override
-    Long doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, @Nullable Class<? extends Long> type) {
+    Long doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, Format format, @Nullable Class<? extends Long> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
         Assert.requireNonNull(format, "format must not be null");
 
@@ -42,6 +43,11 @@ final class LongCodec extends AbstractNumericCodec<Long> {
     @Override
     PostgresqlObjectId getDefaultType() {
         return INT8;
+    }
+
+    @Override
+    public PostgresTypeIdentifier getArrayDataType() {
+        return INT8_ARRAY;
     }
 
 }

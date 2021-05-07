@@ -23,6 +23,7 @@ import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.FLOAT4;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.FLOAT4_ARRAY;
 
 final class FloatCodec extends AbstractNumericCodec<Float> {
 
@@ -31,7 +32,7 @@ final class FloatCodec extends AbstractNumericCodec<Float> {
     }
 
     @Override
-    Float doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, @Nullable Class<? extends Float> type) {
+    Float doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, Format format, @Nullable Class<? extends Float> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
         Assert.requireNonNull(format, "format must not be null");
 
@@ -41,6 +42,11 @@ final class FloatCodec extends AbstractNumericCodec<Float> {
     @Override
     PostgresqlObjectId getDefaultType() {
         return FLOAT4;
+    }
+
+    @Override
+    public PostgresTypeIdentifier getArrayDataType() {
+        return FLOAT4_ARRAY;
     }
 
 }

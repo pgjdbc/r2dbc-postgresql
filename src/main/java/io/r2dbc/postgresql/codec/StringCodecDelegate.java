@@ -23,24 +23,37 @@ import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
-final class CharacterCodec extends AbstractCodec<Character> implements ArrayCodecDelegate<Character> {
+import java.util.function.Function;
+
+/**
+ * Delegate utility for types using {@link StringCodec}.
+ *
+ * @since 0.8.8
+ */
+class StringCodecDelegate<T> extends AbstractCodec<T> implements ArrayCodecDelegate<T> {
 
     private final StringCodec delegate;
 
-    CharacterCodec(ByteBufAllocator byteBufAllocator) {
-        super(Character.class);
+    private final Function<T, String> toTextEncoder;
 
-        Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+    private final Function<String, T> fromTextDecoder;
+
+    StringCodecDelegate(Class<T> type, ByteBufAllocator byteBufAllocator, Function<T, String> toTextEncoder, Function<String, T> fromTextDecoder) {
+        super(type);
+
         this.delegate = new StringCodec(byteBufAllocator);
+
+        this.toTextEncoder = Assert.requireNonNull(toTextEncoder, "toTextEncoder must not be null");
+        this.fromTextDecoder = Assert.requireNonNull(fromTextDecoder, "fromTextDecoder must not be null");
     }
 
     @Override
-    public EncodedParameter encodeNull() {
+    final public EncodedParameter encodeNull() {
         return this.delegate.encodeNull();
     }
 
     @Override
-    boolean doCanDecode(PostgresqlObjectId type, Format format) {
+    final boolean doCanDecode(PostgresqlObjectId type, Format format) {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
@@ -48,36 +61,36 @@ final class CharacterCodec extends AbstractCodec<Character> implements ArrayCode
     }
 
     @Override
-    Character doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, @Nullable Format format, @Nullable Class<? extends Character> type) {
+    final T doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, @Nullable Format format, @Nullable Class<? extends T> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
-        return this.delegate.doDecode(buffer, dataType, format, String.class).charAt(0);
+        return this.fromTextDecoder.apply(this.delegate.doDecode(buffer, dataType, format, String.class).trim());
     }
 
     @Override
-    EncodedParameter doEncode(Character value) {
+    final EncodedParameter doEncode(T value) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return this.delegate.doEncode(value.toString());
+        return this.delegate.doEncode(encodeToText(value));
     }
 
     @Override
-    EncodedParameter doEncode(Character value, PostgresTypeIdentifier dataType) {
+    final EncodedParameter doEncode(T value, PostgresTypeIdentifier dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return this.delegate.doEncode(value.toString(), dataType);
+        return this.delegate.doEncode(encodeToText(value), dataType);
     }
 
     @Override
-    public String encodeToText(Character value) {
+    public final String encodeToText(T value) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return value.toString();
+        return this.toTextEncoder.apply(value);
     }
 
     @Override
-    public PostgresTypeIdentifier getArrayDataType() {
-        return PostgresqlObjectId.CHAR_ARRAY;
+    public final PostgresTypeIdentifier getArrayDataType() {
+        return PostgresqlObjectId.VARCHAR_ARRAY;
     }
 
 }

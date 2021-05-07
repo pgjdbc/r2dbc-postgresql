@@ -79,7 +79,7 @@ public final class MockCodec<T> extends AbstractCodec<T> {
     }
 
     @Override
-    T doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, Class<? extends T> type) {
+    T doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, Format format, Class<? extends T> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
@@ -110,15 +110,6 @@ public final class MockCodec<T> extends AbstractCodec<T> {
         }
 
         return this.encodings.get(value);
-    }
-
-    @Override
-    String doEncodeText(T value) {
-        if (!this.encodings.containsKey(value)) {
-            throw new AssertionError(String.format("Unexpected call to doEncode(T) with value '%s'", value));
-        }
-
-        return value.toString();
     }
 
     public static final class Builder<T> {

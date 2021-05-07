@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
- * Unit tests for {@link GenericArrayCodec<Long>}.
+ * Unit tests for {@link ArrayCodec <Long>}.
  */
 final class LongArrayCodecUnitTests {
 
@@ -49,11 +49,11 @@ final class LongArrayCodecUnitTests {
         .writeInt(8)
         .writeLong(200L);
 
-    GenericArrayCodec<Long> codec;
+    ArrayCodec<Long> codec;
 
     @BeforeEach
     void setup() {
-        codec = new GenericArrayCodec<>(TEST, INT8_ARRAY, new LongCodec(TEST));
+        codec = new ArrayCodec<>(TEST, new LongCodec(TEST), Long.class);
     }
 
     @Test

@@ -18,7 +18,6 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
@@ -42,27 +41,26 @@ import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMESTAMP;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMESTAMPTZ;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMETZ;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
-import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
 /**
  * Codec to decode all known temporal types.
  *
  * @param <T>
  */
-abstract class AbstractTemporalCodec<T extends Temporal> extends AbstractCodec<T> {
+abstract class AbstractTemporalCodec<T extends Temporal> extends BuiltinCodecSupport<T> {
 
     private static final Set<PostgresqlObjectId> SUPPORTED_TYPES = EnumSet.of(DATE, TIMESTAMP, TIMESTAMPTZ, TIME, TIMETZ);
 
-    private final ByteBufAllocator byteBufAllocator;
+    private final PostgresqlObjectId postgresType;
 
     /**
      * Create a new {@link AbstractTemporalCodec}.
      *
      * @param type the type handled by this codec
      */
-    AbstractTemporalCodec(Class<T> type, ByteBufAllocator byteBufAllocator) {
-        super(type);
-        this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+    AbstractTemporalCodec(Class<T> type, ByteBufAllocator byteBufAllocator, PostgresqlObjectId postgresType, PostgresqlObjectId postgresArrayType, Function<T, String> toTextEncoder) {
+        super(type, byteBufAllocator, postgresType, postgresArrayType, toTextEncoder);
+        this.postgresType = postgresType;
     }
 
     @Override
@@ -96,40 +94,9 @@ abstract class AbstractTemporalCodec<T extends Temporal> extends AbstractCodec<T
      * @param converter    converter to convert from {@link Temporal} into {@code expectedType}
      * @return the decoded value
      */
-    T decodeTemporal(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, Class<T> expectedType, Function<Temporal, T> converter) {
-        Temporal number = decodeTemporal(buffer, dataType, format);
+    T decodeTemporal(ByteBuf buffer, PostgresTypeIdentifier dataType, @Nullable Format format, Class<T> expectedType, Function<Temporal, T> converter) {
+        Temporal number = decodeTemporal(buffer, PostgresqlObjectId.from(dataType), format);
         return potentiallyConvert(number, expectedType, converter);
-    }
-
-    @Override
-    EncodedParameter doEncode(T value) {
-        return doEncode(value, getDefaultType());
-    }
-
-    @Override
-    EncodedParameter doEncode(T value, PostgresTypeIdentifier dataType) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return create(FORMAT_TEXT, dataType, () -> ByteBufUtils.encode(this.byteBufAllocator, doEncodeText(value)));
-    }
-
-    @Override
-    String doEncodeText(T value) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return value.toString();
-    }
-
-    @Override
-    public EncodedParameter encodeNull() {
-
-        PostgresqlObjectId defaultType = getDefaultType();
-
-        if (defaultType == null) {
-            throw new IllegalStateException("Cannot encode null, default type of " + getClass().getName() + " must not be null!");
-        }
-
-        return createNull(FORMAT_TEXT, defaultType);
     }
 
     /**
@@ -188,7 +155,9 @@ abstract class AbstractTemporalCodec<T extends Temporal> extends AbstractCodec<T
      * @return the {@link PostgresqlObjectId} for to identify whether this codec is the default codec
      */
     @Nullable
-    abstract PostgresqlObjectId getDefaultType();
+    PostgresqlObjectId getDefaultType() {
+        return this.postgresType;
+    }
 
     static <T> T potentiallyConvert(Temporal temporal, Class<T> expectedType, Function<Temporal, T> converter) {
         return expectedType.isInstance(temporal) ? expectedType.cast(temporal) : converter.apply(temporal);

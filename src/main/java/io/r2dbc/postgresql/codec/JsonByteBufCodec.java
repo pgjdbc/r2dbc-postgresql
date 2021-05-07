@@ -36,7 +36,7 @@ final class JsonByteBufCodec extends AbstractJsonCodec<ByteBuf> {
     }
 
     @Override
-    ByteBuf doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, Class<? extends ByteBuf> type) {
+    ByteBuf doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, Format format, Class<? extends ByteBuf> type) {
         return buffer.readRetainedSlice(buffer.readableBytes()).touch("Decoded by JsonByteBufCodec");
     }
 

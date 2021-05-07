@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
- * Unit tests for {@link GenericArrayCodec<Boolean>}.
+ * Unit tests for {@link ArrayCodec <Boolean>}.
  */
 class BooleanArrayCodecUnitTest {
 
@@ -70,11 +70,11 @@ class BooleanArrayCodecUnitTest {
         .writeBoolean(true) // value
         .writeInt(-1); // length of null element
 
-    private GenericArrayCodec<Boolean> codec;
+    private ArrayCodec<Boolean> codec;
 
     @BeforeEach
     void setup() {
-        codec = new GenericArrayCodec<>(TEST, BOOL_ARRAY, new BooleanCodec(TEST));
+        codec = new ArrayCodec<>(TEST, BOOL_ARRAY, new BooleanCodec(TEST), Boolean.class);
     }
 
     @Test

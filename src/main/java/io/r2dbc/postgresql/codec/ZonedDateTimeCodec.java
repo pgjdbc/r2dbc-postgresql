@@ -18,7 +18,6 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
@@ -26,38 +25,22 @@ import reactor.util.annotation.Nullable;
 import java.time.ZonedDateTime;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMESTAMPTZ;
-import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMESTAMPTZ_ARRAY;
 
-final class ZonedDateTimeCodec extends AbstractTemporalCodec<ZonedDateTime> {
+final class ZonedDateTimeCodec extends AbstractTemporalCodec<ZonedDateTime> implements ArrayCodecDelegate<ZonedDateTime> {
 
     ZonedDateTimeCodec(ByteBufAllocator byteBufAllocator) {
-        super(ZonedDateTime.class, byteBufAllocator);
+        super(ZonedDateTime.class, byteBufAllocator, TIMESTAMPTZ, TIMESTAMPTZ_ARRAY, value -> value.toOffsetDateTime().toString());
     }
 
     @Override
-    public EncodedParameter encodeNull() {
-        return createNull(FORMAT_TEXT, TIMESTAMPTZ);
-    }
-
-    @Override
-    ZonedDateTime doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, Class<? extends ZonedDateTime> type) {
+    ZonedDateTime doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, @Nullable Format format, Class<? extends ZonedDateTime> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         return decodeTemporal(buffer, dataType, format, ZonedDateTime.class, ZonedDateTime::from);
     }
 
-    @Override
-    EncodedParameter doEncode(ZonedDateTime value) {
-        return doEncode(value, TIMESTAMPTZ);
-    }
-
-    @Override
-    String doEncodeText(ZonedDateTime value) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return value.toOffsetDateTime().toString();
-    }
-
+    // Avoid defaulting, use OffsetDateTime as default instead.
     @Override
     PostgresqlObjectId getDefaultType() {
         return null;

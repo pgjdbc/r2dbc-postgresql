@@ -47,7 +47,7 @@ final class RefCursorNameCodec extends AbstractCodec<String> {
     }
 
     @Override
-    String doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends String> type) {
+    String doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, @Nullable Format format, @Nullable Class<? extends String> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         return ByteBufUtils.decode(buffer);
@@ -60,11 +60,6 @@ final class RefCursorNameCodec extends AbstractCodec<String> {
 
     @Override
     EncodedParameter doEncode(String value, PostgresTypeIdentifier dataType) {
-        throw new UnsupportedOperationException("Cannot encode RefCursor");
-    }
-
-    @Override
-    String doEncodeText(String value) {
         throw new UnsupportedOperationException("Cannot encode RefCursor");
     }
 

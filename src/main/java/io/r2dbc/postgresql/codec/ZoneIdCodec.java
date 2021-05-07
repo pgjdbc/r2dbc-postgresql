@@ -16,65 +16,14 @@
 
 package io.r2dbc.postgresql.codec;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.EncodedParameter;
-import io.r2dbc.postgresql.message.Format;
-import io.r2dbc.postgresql.util.Assert;
-import reactor.util.annotation.Nullable;
 
 import java.time.ZoneId;
 
-final class ZoneIdCodec extends AbstractCodec<ZoneId> {
-
-    private final StringCodec delegate;
+final class ZoneIdCodec extends StringCodecDelegate<ZoneId> {
 
     ZoneIdCodec(ByteBufAllocator byteBufAllocator) {
-        super(ZoneId.class);
-
-        Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
-        this.delegate = new StringCodec(byteBufAllocator);
-    }
-
-    @Override
-    public EncodedParameter encodeNull() {
-        return this.delegate.encodeNull();
-    }
-
-    @Override
-    boolean doCanDecode(PostgresqlObjectId type, Format format) {
-        Assert.requireNonNull(format, "format must not be null");
-        Assert.requireNonNull(type, "type must not be null");
-
-        return this.delegate.doCanDecode(type, format);
-    }
-
-    @Override
-    ZoneId doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends ZoneId> type) {
-        Assert.requireNonNull(buffer, "byteBuf must not be null");
-
-        return ZoneId.of(this.delegate.doDecode(buffer, dataType, format, String.class).trim());
-    }
-
-    @Override
-    EncodedParameter doEncode(ZoneId value) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return this.delegate.doEncode(value.getId());
-    }
-
-    @Override
-    EncodedParameter doEncode(ZoneId value, PostgresTypeIdentifier dataType) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return this.delegate.doEncode(value.getId(), dataType);
-    }
-
-    @Override
-    String doEncodeText(ZoneId value) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return value.getId();
+        super(ZoneId.class, byteBufAllocator, ZoneId::getId, ZoneId::of);
     }
 
 }

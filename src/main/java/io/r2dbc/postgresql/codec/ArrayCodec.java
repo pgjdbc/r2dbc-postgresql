@@ -18,10 +18,10 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
-import io.r2dbc.postgresql.util.ByteBufUtils;
 
 import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
@@ -41,7 +41,7 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
  *
  * @param <T> the type that is handled by this {@link Codec}
  */
-class GenericArrayCodec<T> extends AbstractCodec<Object[]> {
+class ArrayCodec<T> extends AbstractCodec<Object[]> {
 
     private static final byte[] CLOSE_CURLY = "}".getBytes();
 
@@ -51,28 +51,48 @@ class GenericArrayCodec<T> extends AbstractCodec<Object[]> {
 
     private static final byte[] OPEN_CURLY = "{".getBytes();
 
-    private final AbstractCodec<T> delegate;
+    private final ArrayCodecDelegate<T> delegate;
 
     private final ByteBufAllocator byteBufAllocator;
 
     private final Class<T> componentType;
 
-    private final PostgresqlObjectId oid;
+    private final PostgresTypeIdentifier dataType;
 
     /**
-     * Create a new {@link GenericArrayCodec}.
+     * Create a new {@link ArrayCodec}.
      *
      * @param byteBufAllocator the buffer allocator
-     * @param oid              the Postgres OID handled by this codec
-     * @param delegate         the underlying {@link AbstractCodec} used to encode/decode data
+     * @param dataType         the Postgres OID handled by this codec
+     * @param delegate         the underlying {@link ArrayCodecDelegate} used to encode/decode data
+     * @param componentType    the target component type
      */
-    @SuppressWarnings("unchecked")
-    GenericArrayCodec(ByteBufAllocator byteBufAllocator, PostgresqlObjectId oid, AbstractCodec<T> delegate) {
+    ArrayCodec(ByteBufAllocator byteBufAllocator, ArrayCodecDelegate<T> delegate, Class<T> componentType) {
         super(Object[].class);
         this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
-        this.oid = Assert.requireNonNull(oid, "oid must not be null");
-        this.delegate = (AbstractCodec<T>) Assert.requireNonType(delegate, GenericArrayCodec.class, "delegate must not be of type GenericArrayCodec");
-        this.componentType = Assert.requireNonNull((Class<T>) delegate.type(), "componentType must not be null");
+        this.delegate = Assert.requireNonNull(delegate, "delegate must not be null");
+        this.dataType = delegate.getArrayDataType();
+        this.componentType = Assert.requireNonNull(componentType, "componentType must not be null");
+    }
+
+    /**
+     * Create a new {@link ArrayCodec}.
+     *
+     * @param byteBufAllocator the buffer allocator
+     * @param dataType         the Postgres OID handled by this codec
+     * @param delegate         the underlying {@link ArrayCodecDelegate} used to encode/decode data
+     * @param componentType    the target component type
+     */
+    ArrayCodec(ByteBufAllocator byteBufAllocator, PostgresTypeIdentifier dataType, ArrayCodecDelegate<T> delegate, Class<T> componentType) {
+        super(Object[].class);
+        this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        this.dataType = Assert.requireNonNull(dataType, "dataType must not be null");
+        this.delegate = Assert.requireNonNull(delegate, "delegate must not be null");
+        this.componentType = Assert.requireNonNull(componentType, "componentType must not be null");
+    }
+
+    public ArrayCodecDelegate<T> getDelegate() {
+        return this.delegate;
     }
 
     @Override
@@ -91,7 +111,7 @@ class GenericArrayCodec<T> extends AbstractCodec<Object[]> {
 
     @Override
     public EncodedParameter encodeNull() {
-        return encodeNull(this.oid.getObjectId());
+        return encodeNull(this.dataType.getObjectId());
     }
 
     static String escapeArrayElement(String s) {
@@ -108,7 +128,7 @@ class GenericArrayCodec<T> extends AbstractCodec<Object[]> {
     }
 
     @Override
-    final Object[] doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, Class<? extends Object[]> type) {
+    final Object[] doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, Format format, Class<? extends Object[]> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
@@ -121,15 +141,21 @@ class GenericArrayCodec<T> extends AbstractCodec<Object[]> {
     }
 
     @Override
+    public boolean canDecode(int dataType, Format format, Class<?> type) {
+        // TODO check requested type, unwrap deepest component type and check for assignability.
+        return this.dataType.getObjectId() == dataType && (type == Object.class || type.isArray());
+    }
+
+    @Override
     boolean doCanDecode(PostgresqlObjectId type, Format format) {
         Assert.requireNonNull(type, "type must not be null");
 
-        return this.oid == type;
+        return this.dataType.equals(type);
     }
 
     @Override
     final EncodedParameter doEncode(Object[] value) {
-        return doEncode(value, this.oid);
+        return doEncode(value, this.dataType);
     }
 
     @Override
@@ -138,7 +164,7 @@ class GenericArrayCodec<T> extends AbstractCodec<Object[]> {
 
         return encodeArray(() -> {
             ByteBuf byteBuf = this.byteBufAllocator.buffer();
-            encodeAsText(byteBuf, value, delegate::doEncodeText);
+            encodeAsText(byteBuf, value, this.delegate::encodeToText);
             return byteBuf;
         }, dataType);
     }
@@ -154,15 +180,19 @@ class GenericArrayCodec<T> extends AbstractCodec<Object[]> {
         return create(Format.FORMAT_TEXT, dataType, encodedSupplier);
     }
 
-    @Override
-    String doEncodeText(Object[] value) {
-        throw new UnsupportedOperationException();
-    }
-
     boolean isTypeAssignable(Class<?> type) {
         Assert.requireNonNull(type, "type must not be null");
 
         return this.componentType.equals(getBaseComponentType(type));
+    }
+
+    @Override
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        sb.append(getClass().getSimpleName());
+        sb.append(" [delegate=").append(this.delegate);
+        sb.append(']');
+        return sb.toString();
     }
 
     private static Class<?> getBaseComponentType(Class<?> type) {
@@ -285,7 +315,9 @@ class GenericArrayCodec<T> extends AbstractCodec<Object[]> {
                     if (!wasInsideString && "NULL".equals(b)) {
                         curArray.add(null);
                     } else {
-                        curArray.add(delegate.doDecode(ByteBufUtils.encode(byteBufAllocator, b), oid, FORMAT_TEXT, componentType));
+
+                        // TODO Avoid string parsing but rather try use the already existing buffer, similar to binary parsing.
+                        curArray.add(this.delegate.decode(Unpooled.wrappedBuffer(b.getBytes(StandardCharsets.UTF_8)), this.dataType, FORMAT_TEXT, this.componentType));
                     }
                 }
 
@@ -392,7 +424,7 @@ class GenericArrayCodec<T> extends AbstractCodec<Object[]> {
                 if (len == -1) {
                     continue;
                 }
-                array[i] = delegate.doDecode(buffer.readSlice(len), oid, FORMAT_BINARY, componentType);
+                array[i] = this.delegate.decode(buffer.readSlice(len), this.dataType, FORMAT_BINARY, this.componentType);
             }
         } else {
             for (int i = 0; i < dims[thisDimension]; ++i) {

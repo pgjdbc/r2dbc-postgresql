@@ -30,6 +30,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.BYTEA;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.BYTEA_ARRAY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
 /**
@@ -37,7 +38,7 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
  *
  * @param <T> the type that is handled by this {@link Codec}
  */
-abstract class AbstractBinaryCodec<T> extends AbstractCodec<T> {
+abstract class AbstractBinaryCodec<T> extends AbstractCodec<T> implements ArrayCodecDelegate<T> {
 
     private static final Pattern BLOB_PATTERN = Pattern.compile("\\\\x([\\p{XDigit}]+)?");
 
@@ -66,6 +67,11 @@ abstract class AbstractBinaryCodec<T> extends AbstractCodec<T> {
         Assert.requireNonNull(value, "value must not be null");
 
         return doEncode(value, BYTEA);
+    }
+
+    @Override
+    public PostgresTypeIdentifier getArrayDataType() {
+        return BYTEA_ARRAY;
     }
 
     byte[] decode(Format format, ByteBuf byteBuf) {

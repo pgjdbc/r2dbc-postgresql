@@ -93,12 +93,6 @@ final class StringArrayCodecUnitTests {
     }
 
     @Test
-    void doCanDecodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new StringArrayCodec(TEST).doCanDecode(VARCHAR_ARRAY, null))
-            .withMessage("format must not be null");
-    }
-
-    @Test
     void doCanDecodeNoType() {
         assertThatIllegalArgumentException().isThrownBy(() -> new StringArrayCodec(TEST).doCanDecode(null, FORMAT_TEXT))
             .withMessage("type must not be null");

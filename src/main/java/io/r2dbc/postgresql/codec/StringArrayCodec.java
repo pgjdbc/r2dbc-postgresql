@@ -26,10 +26,15 @@ import static io.r2dbc.postgresql.codec.PostgresqlObjectId.NAME_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TEXT_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.VARCHAR_ARRAY;
 
-final class StringArrayCodec extends GenericArrayCodec<String> {
+final class StringArrayCodec extends ArrayCodec<String> {
 
     StringArrayCodec(ByteBufAllocator byteBufAllocator) {
-        super(byteBufAllocator, TEXT_ARRAY, new StringCodec(byteBufAllocator));
+        super(byteBufAllocator, TEXT_ARRAY, new StringCodec(byteBufAllocator), String.class);
+    }
+
+    @Override
+    public boolean canDecode(int dataType, Format format, Class<?> type) {
+        return PostgresqlObjectId.isValid(dataType) && doCanDecode(PostgresqlObjectId.valueOf(dataType), format);
     }
 
     @Override

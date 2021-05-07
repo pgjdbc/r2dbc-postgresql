@@ -27,6 +27,7 @@ import reactor.util.annotation.Nullable;
 import java.math.BigDecimal;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.NUMERIC;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.NUMERIC_ARRAY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
 final class BigDecimalCodec extends AbstractNumericCodec<BigDecimal> {
@@ -39,7 +40,7 @@ final class BigDecimalCodec extends AbstractNumericCodec<BigDecimal> {
     }
 
     @Override
-    BigDecimal doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends BigDecimal> type) {
+    BigDecimal doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, @Nullable Format format, @Nullable Class<? extends BigDecimal> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         return decodeNumber(buffer, dataType, format, BigDecimal.class, it -> new BigDecimal(it.doubleValue()));
@@ -55,6 +56,11 @@ final class BigDecimalCodec extends AbstractNumericCodec<BigDecimal> {
     @Override
     PostgresqlObjectId getDefaultType() {
         return NUMERIC;
+    }
+
+    @Override
+    public PostgresTypeIdentifier getArrayDataType() {
+        return NUMERIC_ARRAY;
     }
 
 }

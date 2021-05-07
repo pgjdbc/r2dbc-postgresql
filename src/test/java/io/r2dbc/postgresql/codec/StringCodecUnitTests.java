@@ -100,28 +100,28 @@ final class StringCodecUnitTests {
 
     @Test
     void encodeItem() {
-        assertThat(new StringCodec(TEST).doEncodeText("alpha")).isEqualTo("\"alpha\"");
+        assertThat(new StringCodec(TEST).encodeToText("alpha")).isEqualTo("\"alpha\"");
     }
 
     @Test
     void encodeItemMultibyte() {
-        assertThat(new StringCodec(TEST).doEncodeText("АБ")).isEqualTo("\"АБ\"");
+        assertThat(new StringCodec(TEST).encodeToText("АБ")).isEqualTo("\"АБ\"");
     }
 
     @Test
     void encodeItemNULL() {
-        assertThat(new StringCodec(TEST).doEncodeText("NULL")).isEqualTo("\"NULL\"");
+        assertThat(new StringCodec(TEST).encodeToText("NULL")).isEqualTo("\"NULL\"");
     }
 
     @Test
     void encodeItemNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new StringCodec(TEST).doEncodeText(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new StringCodec(TEST).encodeToText(null))
             .withMessage("value must not be null");
     }
 
     @Test
     void encodeItemWithEscapes() {
-        assertThat(new StringCodec(TEST).doEncodeText("R \"2\" DBC")).isEqualTo("\"R \\\"2\\\" DBC\"");
+        assertThat(new StringCodec(TEST).encodeToText("R \"2\" DBC")).isEqualTo("\"R \\\"2\\\" DBC\"");
     }
 
     @Test
