@@ -45,7 +45,7 @@ final class JsonCodec extends AbstractJsonCodec<Json> {
     }
 
     @Override
-    Json doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, Class<? extends Json> type) {
+    Json doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, Format format, Class<? extends Json> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");

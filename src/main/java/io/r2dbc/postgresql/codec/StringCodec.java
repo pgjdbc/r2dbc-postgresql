@@ -30,9 +30,10 @@ import static io.r2dbc.postgresql.codec.PostgresqlObjectId.NAME;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TEXT;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.UNKNOWN;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.VARCHAR;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.VARCHAR_ARRAY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
-final class StringCodec extends AbstractCodec<String> {
+final class StringCodec extends AbstractCodec<String> implements ArrayCodecDelegate<String> {
 
     private final ByteBufAllocator byteBufAllocator;
 
@@ -55,7 +56,7 @@ final class StringCodec extends AbstractCodec<String> {
     }
 
     @Override
-    String doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends String> type) {
+    String doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, @Nullable Format format, @Nullable Class<? extends String> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         return ByteBufUtils.decode(buffer);
@@ -74,10 +75,15 @@ final class StringCodec extends AbstractCodec<String> {
     }
 
     @Override
-    String doEncodeText(String value) {
+    public String encodeToText(String value) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return GenericArrayCodec.escapeArrayElement(value);
+        return ArrayCodec.escapeArrayElement(value);
+    }
+
+    @Override
+    public PostgresTypeIdentifier getArrayDataType() {
+        return VARCHAR_ARRAY;
     }
 
 }

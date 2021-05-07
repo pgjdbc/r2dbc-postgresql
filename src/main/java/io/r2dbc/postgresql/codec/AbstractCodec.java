@@ -94,7 +94,11 @@ abstract class AbstractCodec<T> implements Codec<T> {
     public EncodedParameter encode(Object value, int dataType) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return doEncode((T) value, PostgresqlObjectId.isValid(dataType) ? PostgresqlObjectId.valueOf(dataType) : new SimplePostgresTypeIdentifier(dataType));
+        return doEncode((T) value, getDataType(dataType));
+    }
+
+    PostgresTypeIdentifier getDataType(int dataType) {
+        return PostgresqlObjectId.isValid(dataType) ? PostgresqlObjectId.valueOf(dataType) : new SimplePostgresTypeIdentifier(dataType);
     }
 
     public EncodedParameter encodeNull(int dataType) {
@@ -175,7 +179,20 @@ abstract class AbstractCodec<T> implements Codec<T> {
      * @param type     the desired value type
      * @return the decoded value, can be {@code null} if the column value is {@code null}
      */
-    abstract T doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, Class<? extends T> type);
+    abstract T doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, Format format, Class<? extends T> type);
+
+    /**
+     * Forwarding method to {@link #decode(ByteBuf, PostgresTypeIdentifier, Format, Class)} for subclasses that want to implement {@link ArrayCodecDelegate}.
+     *
+     * @param buffer
+     * @param dataType
+     * @param format
+     * @param type
+     * @return
+     */
+    public T decode(ByteBuf buffer, PostgresTypeIdentifier dataType, Format format, Class<? extends T> type) {
+        return doDecode(buffer, dataType, format, type);
+    }
 
     /**
      * @param value the  {@code value}
@@ -190,14 +207,6 @@ abstract class AbstractCodec<T> implements Codec<T> {
      * @since 0.9
      */
     abstract EncodedParameter doEncode(T value, PostgresTypeIdentifier dataType);
-
-    /**
-     * Encode an item using text format.
-     *
-     * @param value the value to encode
-     * @return encoded value as string
-     */
-    abstract String doEncodeText(T value);
 
     boolean isTypeAssignable(Class<?> type) {
         Assert.requireNonNull(type, "type must not be null");

@@ -26,6 +26,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.NUMERIC;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.NUMERIC_ARRAY;
 
 final class BigIntegerCodec extends AbstractNumericCodec<BigInteger> {
 
@@ -34,7 +35,7 @@ final class BigIntegerCodec extends AbstractNumericCodec<BigInteger> {
     }
 
     @Override
-    BigInteger doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends BigInteger> type) {
+    BigInteger doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, @Nullable Format format, @Nullable Class<? extends BigInteger> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         return this.decodeNumber(buffer, dataType, format, BigInteger.class, it -> {
@@ -45,6 +46,11 @@ final class BigIntegerCodec extends AbstractNumericCodec<BigInteger> {
     @Override
     PostgresqlObjectId getDefaultType() {
         return NUMERIC;
+    }
+
+    @Override
+    public PostgresTypeIdentifier getArrayDataType() {
+        return NUMERIC_ARRAY;
     }
 
 }

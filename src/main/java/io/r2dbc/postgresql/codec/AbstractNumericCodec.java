@@ -43,7 +43,7 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
  *
  * @param <T> the type that is handled by this {@link Codec}.
  */
-abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> {
+abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> implements ArrayCodecDelegate<T> {
 
     private static final Set<PostgresqlObjectId> SUPPORTED_TYPES = EnumSet.of(INT2, INT4, INT8, FLOAT4, FLOAT8, NUMERIC, OID);
 
@@ -92,7 +92,7 @@ abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> {
     }
 
     @Override
-    String doEncodeText(T value) {
+    public String encodeToText(T value) {
         Assert.requireNonNull(value, "value must not be null");
 
         return value.toString();
@@ -134,8 +134,8 @@ abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> {
      * @param converter    the converter function to convert from {@link Number} to {@code expectedType}
      * @return the decoded number
      */
-    T decodeNumber(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, Class<T> expectedType, Function<Number, T> converter) {
-        Number number = NumericDecodeUtils.decodeNumber(buffer, dataType, format);
+    T decodeNumber(ByteBuf buffer, PostgresTypeIdentifier dataType, @Nullable Format format, Class<T> expectedType, Function<Number, T> converter) {
+        Number number = NumericDecodeUtils.decodeNumber(buffer, PostgresqlObjectId.from(dataType), format);
         return potentiallyConvert(number, expectedType, converter);
     }
 

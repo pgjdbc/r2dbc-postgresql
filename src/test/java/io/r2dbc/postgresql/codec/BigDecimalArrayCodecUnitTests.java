@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
- * Unit tests for {@link GenericArrayCodec<BigDecimal>}.
+ * Unit tests for {@link ArrayCodec <BigDecimal>}.
  */
 final class BigDecimalArrayCodecUnitTests {
 
@@ -61,11 +61,11 @@ final class BigDecimalArrayCodecUnitTests {
         .writeShort(2)
         .writeShort(200);
 
-    GenericArrayCodec<BigDecimal> codec;
+    ArrayCodec<BigDecimal> codec;
 
     @BeforeEach
     void setup() {
-        codec = new GenericArrayCodec<>(TEST, NUMERIC_ARRAY, new BigDecimalCodec(TEST));
+        codec = new ArrayCodec<>(TEST, new BigDecimalCodec(TEST), BigDecimal.class);
     }
 
     @Test

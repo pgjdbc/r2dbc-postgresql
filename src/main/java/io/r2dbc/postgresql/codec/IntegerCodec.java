@@ -23,6 +23,7 @@ import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT4;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT4_ARRAY;
 
 final class IntegerCodec extends AbstractNumericCodec<Integer> {
 
@@ -31,7 +32,7 @@ final class IntegerCodec extends AbstractNumericCodec<Integer> {
     }
 
     @Override
-    Integer doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends Integer> type) {
+    Integer doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, @Nullable Format format, @Nullable Class<? extends Integer> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
         Assert.requireNonNull(format, "format must not be null");
 
@@ -41,6 +42,11 @@ final class IntegerCodec extends AbstractNumericCodec<Integer> {
     @Override
     PostgresqlObjectId getDefaultType() {
         return INT4;
+    }
+
+    @Override
+    public PostgresTypeIdentifier getArrayDataType() {
+        return INT4_ARRAY;
     }
 
 }

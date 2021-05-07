@@ -55,7 +55,7 @@ final class BlobCodec extends AbstractCodec<Blob> {
     }
 
     @Override
-    Blob doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends Blob> type) {
+    Blob doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, @Nullable Format format, @Nullable Class<? extends Blob> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         return new ByteABlob(buffer, format);
@@ -77,11 +77,6 @@ final class BlobCodec extends AbstractCodec<Blob> {
                 .concatWith(Flux.from(value.discard())
                     .then(Mono.empty()))
         );
-    }
-
-    @Override
-    String doEncodeText(Blob value) {
-        throw new UnsupportedOperationException("Cannot encode Blob");
     }
 
     private static final class ByteABlob implements Blob {

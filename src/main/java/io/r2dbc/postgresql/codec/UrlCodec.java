@@ -16,67 +16,21 @@
 
 package io.r2dbc.postgresql.codec;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.EncodedParameter;
-import io.r2dbc.postgresql.message.Format;
-import io.r2dbc.postgresql.util.Assert;
-import reactor.util.annotation.Nullable;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 
-final class UrlCodec extends AbstractCodec<URL> {
-
-    private final StringCodec delegate;
+final class UrlCodec extends StringCodecDelegate<URL> {
 
     UrlCodec(ByteBufAllocator byteBufAllocator) {
-        super(URL.class);
-
-        Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
-        this.delegate = new StringCodec(byteBufAllocator);
+        super(URL.class, byteBufAllocator, URL::toString, UrlCodec::from);
     }
 
-    @Override
-    public EncodedParameter doEncode(URL value) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return this.delegate.doEncode(value.toString());
-    }
-
-    @Override
-    public EncodedParameter doEncode(URL value, PostgresTypeIdentifier dataType) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return this.delegate.doEncode(value.toString(), dataType);
-    }
-
-    @Override
-    String doEncodeText(URL value) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return value.toString();
-    }
-
-    @Override
-    public EncodedParameter encodeNull() {
-        return this.delegate.encodeNull();
-    }
-
-    @Override
-    boolean doCanDecode(PostgresqlObjectId type, Format format) {
-        Assert.requireNonNull(format, "format must not be null");
-        Assert.requireNonNull(type, "type must not be null");
-
-        return this.delegate.doCanDecode(type, format);
-    }
-
-    @Override
-    URL doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends URL> type) {
-        Assert.requireNonNull(buffer, "byteBuf must not be null");
+    private static URL from(String text) {
 
         try {
-            return new URL(this.delegate.doDecode(buffer, dataType, format, String.class).trim());
+            return new URL(text);
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException(e);
         }

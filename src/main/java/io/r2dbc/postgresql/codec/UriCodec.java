@@ -16,65 +16,14 @@
 
 package io.r2dbc.postgresql.codec;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.EncodedParameter;
-import io.r2dbc.postgresql.message.Format;
-import io.r2dbc.postgresql.util.Assert;
-import reactor.util.annotation.Nullable;
 
 import java.net.URI;
 
-final class UriCodec extends AbstractCodec<URI> {
-
-    private final StringCodec delegate;
+final class UriCodec extends StringCodecDelegate<URI> {
 
     UriCodec(ByteBufAllocator byteBufAllocator) {
-        super(URI.class);
-
-        Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
-        this.delegate = new StringCodec(byteBufAllocator);
-    }
-
-    @Override
-    public EncodedParameter encodeNull() {
-        return this.delegate.encodeNull();
-    }
-
-    @Override
-    boolean doCanDecode(PostgresqlObjectId type, Format format) {
-        Assert.requireNonNull(format, "format must not be null");
-        Assert.requireNonNull(type, "type must not be null");
-
-        return this.delegate.doCanDecode(type, format);
-    }
-
-    @Override
-    URI doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends URI> type) {
-        Assert.requireNonNull(buffer, "byteBuf must not be null");
-
-        return URI.create(this.delegate.doDecode(buffer, dataType, format, String.class).trim());
-    }
-
-    @Override
-    EncodedParameter doEncode(URI value) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return this.delegate.doEncode(value.toString());
-    }
-
-    @Override
-    EncodedParameter doEncode(URI value, PostgresTypeIdentifier dataType) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return this.delegate.doEncode(value.toString(), dataType);
-    }
-
-    @Override
-    String doEncodeText(URI value) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return value.toString();
+        super(URI.class, byteBufAllocator, URI::toString, URI::create);
     }
 
 }

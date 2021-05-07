@@ -27,7 +27,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 
-final class DateCodec extends AbstractCodec<Date> {
+final class DateCodec extends AbstractCodec<Date> implements ArrayCodecDelegate<Date> {
 
     private final LocalDateTimeCodec delegate;
 
@@ -52,7 +52,7 @@ final class DateCodec extends AbstractCodec<Date> {
     }
 
     @Override
-    Date doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends Date> type) {
+    Date doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, @Nullable Format format, @Nullable Class<? extends Date> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         LocalDateTime intermediary = this.delegate.doDecode(buffer, dataType, format, LocalDateTime.class);
@@ -74,10 +74,15 @@ final class DateCodec extends AbstractCodec<Date> {
     }
 
     @Override
-    String doEncodeText(Date value) {
+    public String encodeToText(Date value) {
         Assert.requireNonNull(value, "value must not be null");
 
         return normalize(value).toString();
+    }
+
+    @Override
+    public PostgresTypeIdentifier getArrayDataType() {
+        return this.delegate.getArrayDataType();
     }
 
     private static LocalDateTime normalize(Date value) {

@@ -54,7 +54,7 @@ final class ClobCodec extends AbstractCodec<Clob> {
     }
 
     @Override
-    Clob doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends Clob> type) {
+    Clob doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, @Nullable Format format, @Nullable Class<? extends Clob> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         return Clob.from(Mono.just(ByteBufUtils.decode(buffer)));
@@ -77,10 +77,4 @@ final class ClobCodec extends AbstractCodec<Clob> {
                     .then(Mono.empty()))
         );
     }
-
-    @Override
-    String doEncodeText(Clob value) {
-        throw new UnsupportedOperationException();
-    }
-
 }

@@ -18,39 +18,22 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.BOOL;
-import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.BOOL_ARRAY;
 
-final class BooleanCodec extends AbstractCodec<Boolean> {
-
-    private final ByteBufAllocator byteBufAllocator;
+final class BooleanCodec extends BuiltinCodecSupport<Boolean> {
 
     BooleanCodec(ByteBufAllocator byteBufAllocator) {
-        super(Boolean.class);
-        this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        super(Boolean.class, byteBufAllocator, BOOL, BOOL_ARRAY, it -> it ? "t" : "f");
     }
 
     @Override
-    public EncodedParameter encodeNull() {
-        return createNull(FORMAT_TEXT, BOOL);
-    }
-
-    @Override
-    boolean doCanDecode(PostgresqlObjectId type, Format format) {
-        Assert.requireNonNull(format, "format must not be null");
-        Assert.requireNonNull(type, "type must not be null");
-
-        return BOOL == type;
-    }
-
-    @Override
-    Boolean doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends Boolean> type) {
+    Boolean doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, @Nullable Format format, @Nullable Class<? extends Boolean> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         if (format == Format.FORMAT_BINARY) {
@@ -64,25 +47,6 @@ final class BooleanCodec extends AbstractCodec<Boolean> {
             || "yes".equalsIgnoreCase(decoded)
             || "y".equalsIgnoreCase(decoded)
             || "on".equalsIgnoreCase(decoded);
-    }
-
-    @Override
-    EncodedParameter doEncode(Boolean value) {
-        return doEncode(value, BOOL);
-    }
-
-    @Override
-    EncodedParameter doEncode(Boolean value, PostgresTypeIdentifier dataType) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return create(FORMAT_TEXT, dataType, () -> ByteBufUtils.encode(this.byteBufAllocator, doEncodeText(value)));
-    }
-
-    @Override
-    String doEncodeText(Boolean value) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return value ? "t" : "f";
     }
 
 }

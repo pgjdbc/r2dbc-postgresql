@@ -93,12 +93,12 @@ final class ShortCodecUnitTests {
 
     @Test
     void encodeItem() {
-        assertThat(new ShortCodec(TEST).doEncodeText((short) 100)).isEqualTo("100");
+        assertThat(new ShortCodec(TEST).encodeToText((short) 100)).isEqualTo("100");
     }
 
     @Test
     void encodeItemNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new ShortCodec(TEST).doEncodeText(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new ShortCodec(TEST).encodeToText(null))
             .withMessage("value must not be null");
     }
 

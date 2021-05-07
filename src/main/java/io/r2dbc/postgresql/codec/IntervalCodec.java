@@ -18,21 +18,18 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INTERVAL;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INTERVAL_ARRAY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
-final class IntervalCodec extends AbstractCodec<Interval> {
-
-    private final ByteBufAllocator byteBufAllocator;
+final class IntervalCodec extends BuiltinCodecSupport<Interval> {
 
     IntervalCodec(ByteBufAllocator byteBufAllocator) {
-        super(Interval.class);
-        this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        super(Interval.class, byteBufAllocator, INTERVAL, INTERVAL_ARRAY, Interval::getValue);
     }
 
     @Override
@@ -44,33 +41,8 @@ final class IntervalCodec extends AbstractCodec<Interval> {
     }
 
     @Override
-    Interval doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, Class<? extends Interval> type) {
+    Interval doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, Format format, Class<? extends Interval> type) {
         return Interval.parse(ByteBufUtils.decode(buffer));
-    }
-
-    @Override
-    EncodedParameter doEncode(Interval value) {
-        return doEncode(value, INTERVAL);
-    }
-
-    @Override
-    EncodedParameter doEncode(Interval value, PostgresTypeIdentifier dataType) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return create(FORMAT_TEXT, dataType,
-            () -> ByteBufUtils.encode(this.byteBufAllocator, doEncodeText(value)));
-    }
-
-    @Override
-    String doEncodeText(Interval value) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return value.getValue();
-    }
-
-    @Override
-    public EncodedParameter encodeNull() {
-        return createNull(FORMAT_TEXT, INTERVAL);
     }
 
 }

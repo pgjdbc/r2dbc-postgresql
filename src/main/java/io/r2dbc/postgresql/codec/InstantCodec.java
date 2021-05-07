@@ -18,7 +18,6 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
@@ -30,21 +29,16 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMESTAMPTZ;
-import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMESTAMPTZ_ARRAY;
 
 final class InstantCodec extends AbstractTemporalCodec<Instant> {
 
     InstantCodec(ByteBufAllocator byteBufAllocator) {
-        super(Instant.class, byteBufAllocator);
+        super(Instant.class, byteBufAllocator, TIMESTAMPTZ, TIMESTAMPTZ_ARRAY, Instant::toString);
     }
 
     @Override
-    public EncodedParameter encodeNull() {
-        return createNull(FORMAT_TEXT, TIMESTAMPTZ);
-    }
-
-    @Override
-    Instant doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, Class<? extends Instant> type) {
+    Instant doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, @Nullable Format format, Class<? extends Instant> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         return decodeTemporal(buffer, dataType, format, Instant.class, temporal -> {
@@ -61,11 +55,7 @@ final class InstantCodec extends AbstractTemporalCodec<Instant> {
         });
     }
 
-    @Override
-    EncodedParameter doEncode(Instant value) {
-        return doEncode(value, TIMESTAMPTZ);
-    }
-
+    // Avoid defaulting, use OffsetDateTime as default instead.
     @Override
     PostgresqlObjectId getDefaultType() {
         return null;

@@ -36,7 +36,7 @@ final class JsonByteBufferCodec extends AbstractJsonCodec<ByteBuffer> {
     }
 
     @Override
-    ByteBuffer doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, Class<? extends ByteBuffer> type) {
+    ByteBuffer doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, Format format, Class<? extends ByteBuffer> type) {
 
         ByteBuffer result = ByteBuffer.allocate(buffer.readableBytes());
         buffer.readBytes(result);
@@ -50,11 +50,6 @@ final class JsonByteBufferCodec extends AbstractJsonCodec<ByteBuffer> {
         Assert.requireNonNull(value, "value must not be null");
 
         return create(FORMAT_TEXT, dataType, () -> this.byteBufAllocator.buffer(value.remaining()).writeBytes(value));
-    }
-
-    @Override
-    String doEncodeText(ByteBuffer value) {
-        throw new UnsupportedOperationException("Cannot encode JsonByteBuffer as text");
     }
 
 }

@@ -33,7 +33,7 @@ final class BinaryByteArrayCodec extends AbstractBinaryCodec<byte[]> {
     }
 
     @Override
-    byte[] doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, Class<? extends byte[]> type) {
+    byte[] doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, Format format, Class<? extends byte[]> type) {
         return decode(format, buffer);
     }
 
@@ -45,7 +45,7 @@ final class BinaryByteArrayCodec extends AbstractBinaryCodec<byte[]> {
     }
 
     @Override
-    String doEncodeText(byte[] value) {
+    public String encodeToText(byte[] value) {
         Assert.requireNonNull(value, "value must not be null");
 
         return ByteBufUtils.decode(encodeToHex(Unpooled.wrappedBuffer(value)));

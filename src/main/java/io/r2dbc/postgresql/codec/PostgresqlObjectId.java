@@ -413,6 +413,15 @@ public enum PostgresqlObjectId implements Type, PostgresTypeIdentifier {
         this.defaultJavaType = Assert.requireNonNull(defaultJavaType, "defaultJavaType must not be null");
     }
 
+    public static PostgresqlObjectId from(PostgresTypeIdentifier dataType) {
+
+        if (dataType instanceof PostgresqlObjectId) {
+            return (PostgresqlObjectId) dataType;
+        }
+
+        return valueOf(dataType.getObjectId());
+    }
+
     /**
      * Returns if the {@code objectId} is a known and valid {@code objectId}.
      *

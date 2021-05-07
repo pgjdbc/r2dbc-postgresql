@@ -28,15 +28,16 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.DATE;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.DATE_ARRAY;
 
 final class LocalDateCodec extends AbstractTemporalCodec<LocalDate> {
 
     LocalDateCodec(ByteBufAllocator byteBufAllocator) {
-        super(LocalDate.class, byteBufAllocator);
+        super(LocalDate.class, byteBufAllocator, DATE, DATE_ARRAY, LocalDate::toString);
     }
 
     @Override
-    LocalDate doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, Class<? extends LocalDate> type) {
+    LocalDate doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, @Nullable Format format, Class<? extends LocalDate> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         return decodeTemporal(buffer, dataType, format, LocalDate.class, temporal -> {
@@ -45,11 +46,6 @@ final class LocalDateCodec extends AbstractTemporalCodec<LocalDate> {
             }
             return Instant.from(temporal).atOffset(ZoneOffset.UTC).toLocalDate();
         });
-    }
-
-    @Override
-    PostgresqlObjectId getDefaultType() {
-        return DATE;
     }
 
 }

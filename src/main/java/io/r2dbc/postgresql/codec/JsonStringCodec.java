@@ -36,7 +36,7 @@ final class JsonStringCodec extends AbstractJsonCodec<String> {
     }
 
     @Override
-    String doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, Class<? extends String> type) {
+    String doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, Format format, Class<? extends String> type) {
         return ByteBufUtils.decode(buffer);
     }
 
@@ -50,13 +50,6 @@ final class JsonStringCodec extends AbstractJsonCodec<String> {
         Assert.requireNonNull(value, "value must not be null");
 
         return create(FORMAT_TEXT, dataType, () -> ByteBufUtils.encode(this.byteBufAllocator, value));
-    }
-
-    @Override
-    String doEncodeText(String value) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return GenericArrayCodec.escapeArrayElement(value);
     }
 
 }

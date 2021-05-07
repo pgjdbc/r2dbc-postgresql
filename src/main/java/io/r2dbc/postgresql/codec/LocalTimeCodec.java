@@ -28,15 +28,16 @@ import java.time.LocalTime;
 import java.time.ZoneOffset;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIME;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMETZ_ARRAY;
 
 final class LocalTimeCodec extends AbstractTemporalCodec<LocalTime> {
 
     LocalTimeCodec(ByteBufAllocator byteBufAllocator) {
-        super(LocalTime.class, byteBufAllocator);
+        super(LocalTime.class, byteBufAllocator, TIME, TIMETZ_ARRAY, LocalTime::toString);
     }
 
     @Override
-    LocalTime doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, Class<? extends LocalTime> type) {
+    LocalTime doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, @Nullable Format format, Class<? extends LocalTime> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         return decodeTemporal(buffer, dataType, format, LocalTime.class, temporal -> {
@@ -46,11 +47,6 @@ final class LocalTimeCodec extends AbstractTemporalCodec<LocalTime> {
             }
             return Instant.from(temporal).atOffset(ZoneOffset.UTC).toLocalTime();
         });
-    }
-
-    @Override
-    PostgresqlObjectId getDefaultType() {
-        return TIME;
     }
 
 }

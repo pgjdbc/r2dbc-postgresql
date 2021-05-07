@@ -18,7 +18,6 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
@@ -28,32 +27,16 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INET;
-import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INET_ARRAY;
 
-final class InetAddressCodec extends AbstractCodec<InetAddress> {
-
-    private final ByteBufAllocator byteBufAllocator;
+final class InetAddressCodec extends BuiltinCodecSupport<InetAddress> {
 
     InetAddressCodec(ByteBufAllocator byteBufAllocator) {
-        super(InetAddress.class);
-        this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        super(InetAddress.class, byteBufAllocator, INET, INET_ARRAY, InetAddress::getHostAddress);
     }
 
     @Override
-    public EncodedParameter encodeNull() {
-        return createNull(FORMAT_TEXT, INET);
-    }
-
-    @Override
-    boolean doCanDecode(PostgresqlObjectId type, Format format) {
-        Assert.requireNonNull(format, "format must not be null");
-        Assert.requireNonNull(type, "type must not be null");
-
-        return INET == type;
-    }
-
-    @Override
-    InetAddress doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends InetAddress> type) {
+    InetAddress doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, @Nullable Format format, @Nullable Class<? extends InetAddress> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         try {
@@ -75,25 +58,6 @@ final class InetAddressCodec extends AbstractCodec<InetAddress> {
         } catch (UnknownHostException e) {
             throw new IllegalArgumentException(e);
         }
-    }
-
-    @Override
-    EncodedParameter doEncode(InetAddress value) {
-        return doEncode(value, INET);
-    }
-
-    @Override
-    EncodedParameter doEncode(InetAddress value, PostgresTypeIdentifier dataType) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return create(FORMAT_TEXT, dataType, () -> ByteBufUtils.encode(this.byteBufAllocator, doEncodeText(value)));
-    }
-
-    @Override
-    String doEncodeText(InetAddress value) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return value.getHostAddress();
     }
 
 }

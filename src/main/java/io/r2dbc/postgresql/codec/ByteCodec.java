@@ -23,7 +23,7 @@ import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
-final class ByteCodec extends AbstractCodec<Byte> {
+final class ByteCodec extends AbstractCodec<Byte> implements ArrayCodecDelegate<Byte> {
 
     private final ShortCodec delegate;
 
@@ -47,7 +47,7 @@ final class ByteCodec extends AbstractCodec<Byte> {
     }
 
     @Override
-    Byte doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, @Nullable Class<? extends Byte> type) {
+    Byte doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, Format format, @Nullable Class<? extends Byte> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
         Assert.requireNonNull(format, "format must not be null");
 
@@ -67,10 +67,15 @@ final class ByteCodec extends AbstractCodec<Byte> {
     }
 
     @Override
-    String doEncodeText(Byte value) {
+    public String encodeToText(Byte value) {
         Assert.requireNonNull(value, "value must not be null");
 
         return value.toString();
+    }
+
+    @Override
+    public PostgresTypeIdentifier getArrayDataType() {
+        return PostgresqlObjectId.INT2_ARRAY;
     }
 
 }

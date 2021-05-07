@@ -18,7 +18,6 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
@@ -27,51 +26,15 @@ import reactor.util.annotation.Nullable;
 import java.util.UUID;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
-import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
-final class UuidCodec extends AbstractCodec<UUID> {
-
-    private final ByteBufAllocator byteBufAllocator;
+final class UuidCodec extends BuiltinCodecSupport<UUID> {
 
     UuidCodec(ByteBufAllocator byteBufAllocator) {
-        super(UUID.class);
-        this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        super(UUID.class, byteBufAllocator, PostgresqlObjectId.UUID, PostgresqlObjectId.UUID_ARRAY, UUID::toString);
     }
 
     @Override
-    EncodedParameter doEncode(UUID value) {
-        return doEncode(value, PostgresqlObjectId.UUID);
-    }
-
-    @Override
-    public EncodedParameter doEncode(UUID value, PostgresTypeIdentifier dataType) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return create(FORMAT_TEXT, dataType, () -> ByteBufUtils.encode(this.byteBufAllocator, doEncodeText(value)));
-    }
-
-    @Override
-    String doEncodeText(UUID value) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        return value.toString();
-    }
-
-    @Override
-    public EncodedParameter encodeNull() {
-        return createNull(FORMAT_TEXT, PostgresqlObjectId.UUID);
-    }
-
-    @Override
-    boolean doCanDecode(PostgresqlObjectId type, Format format) {
-        Assert.requireNonNull(format, "format must not be null");
-        Assert.requireNonNull(type, "type must not be null");
-
-        return PostgresqlObjectId.UUID == type;
-    }
-
-    @Override
-    UUID doDecode(ByteBuf buffer, PostgresqlObjectId dataType, @Nullable Format format, @Nullable Class<? extends UUID> type) {
+    UUID doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, @Nullable Format format, @Nullable Class<? extends UUID> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         if (format == FORMAT_BINARY) {

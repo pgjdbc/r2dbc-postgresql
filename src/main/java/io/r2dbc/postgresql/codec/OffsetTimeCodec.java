@@ -24,23 +24,20 @@ import io.r2dbc.postgresql.util.Assert;
 import java.time.OffsetTime;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMETZ;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMETZ_ARRAY;
 
 public class OffsetTimeCodec extends AbstractTemporalCodec<OffsetTime> {
 
     OffsetTimeCodec(ByteBufAllocator byteBufAllocator) {
-        super(OffsetTime.class, byteBufAllocator);
+        super(OffsetTime.class, byteBufAllocator, TIMETZ, TIMETZ_ARRAY, OffsetTime::toString);
     }
 
     @Override
-    OffsetTime doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, Class<? extends OffsetTime> type) {
+    OffsetTime doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, Format format, Class<? extends OffsetTime> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         return decodeTemporal(buffer, dataType, format, OffsetTime.class, OffsetTime::from);
     }
 
-    @Override
-    PostgresqlObjectId getDefaultType() {
-        return TIMETZ;
-    }
 
 }

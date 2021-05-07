@@ -75,7 +75,7 @@ public interface Codec<T> {
     /**
      * Encode the {@code value} to be used as RPC parameter.
      *
-     * @param value the {@code null} {@code value}
+     * @param value the {@code value}
      * @return the encoded value
      */
     EncodedParameter encode(Object value);
@@ -83,7 +83,7 @@ public interface Codec<T> {
     /**
      * Encode the {@code value} to be used as RPC parameter.
      *
-     * @param value    the {@code null} {@code value}
+     * @param value    the {@code value}
      * @param dataType the Postgres OID to encode
      * @return the encoded value
      * @since 0.9

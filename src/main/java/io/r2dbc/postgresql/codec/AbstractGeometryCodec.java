@@ -54,7 +54,7 @@ abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> {
     }
 
     @Override
-    T doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, Class<? extends T> type) {
+    T doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, Format format, Class<? extends T> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
         Assert.requireNonNull(type, "type must not be null");
         Assert.requireNonNull(format, "format must not be null");
@@ -101,11 +101,6 @@ abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> {
      * @return encoded value
      */
     abstract ByteBuf doEncodeBinary(T value);
-
-    @Override
-    String doEncodeText(T value) {
-        throw new UnsupportedOperationException();
-    }
 
     @Override
     public EncodedParameter encodeNull() {

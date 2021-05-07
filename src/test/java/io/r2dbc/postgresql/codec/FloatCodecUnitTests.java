@@ -93,12 +93,12 @@ final class FloatCodecUnitTests {
 
     @Test
     void encodeItem() {
-        assertThat(new FloatCodec(TEST).doEncodeText(100.5f)).isEqualTo("100.5");
+        assertThat(new FloatCodec(TEST).encodeToText(100.5f)).isEqualTo("100.5");
     }
 
     @Test
     void encodeItemNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new FloatCodec(TEST).doEncodeText(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new FloatCodec(TEST).encodeToText(null))
             .withMessage("value must not be null");
     }
 

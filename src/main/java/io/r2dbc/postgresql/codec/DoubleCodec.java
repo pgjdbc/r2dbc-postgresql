@@ -23,6 +23,7 @@ import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.FLOAT8;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.FLOAT8_ARRAY;
 
 final class DoubleCodec extends AbstractNumericCodec<Double> {
 
@@ -31,7 +32,7 @@ final class DoubleCodec extends AbstractNumericCodec<Double> {
     }
 
     @Override
-    Double doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, @Nullable Class<? extends Double> type) {
+    Double doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, Format format, @Nullable Class<? extends Double> type) {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
         Assert.requireNonNull(format, "format must not be null");
 
@@ -41,6 +42,11 @@ final class DoubleCodec extends AbstractNumericCodec<Double> {
     @Override
     PostgresqlObjectId getDefaultType() {
         return FLOAT8;
+    }
+
+    @Override
+    public PostgresTypeIdentifier getArrayDataType() {
+        return FLOAT8_ARRAY;
     }
 
 }
