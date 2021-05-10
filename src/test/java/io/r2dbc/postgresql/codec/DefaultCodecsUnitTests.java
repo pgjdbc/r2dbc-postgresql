@@ -153,6 +153,26 @@ final class DefaultCodecsUnitTests {
         assertThat(codecs).endsWith(DummyCodec.INSTANCE);
     }
 
+    @Test
+    void decodeDoubleAsFloatArray() {
+
+        DefaultCodecs codecs = new DefaultCodecs(TEST);
+
+        Float[] expected = {100.5f, 200.25f};
+        assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{100.5,200.25}"), PostgresqlObjectId.FLOAT8_ARRAY.getObjectId(), FORMAT_TEXT, Float[].class))
+            .isEqualTo(expected);
+    }
+
+    @Test
+    void decodeFloatAsDoubleArray() {
+
+        DefaultCodecs codecs = new DefaultCodecs(TEST);
+
+        Double[] expected = {100.5, 200.25};
+        assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{100.5,200.25}"), FLOAT4_ARRAY.getObjectId(), FORMAT_TEXT, Double[].class))
+            .isEqualTo(expected);
+    }
+
     enum DummyCodec implements Codec<Object> {
 
         INSTANCE;

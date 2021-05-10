@@ -17,12 +17,15 @@
 package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
+import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.FLOAT4_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.FLOAT8;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.FLOAT8_ARRAY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
@@ -68,7 +71,7 @@ class DoubleArrayCodecUnitTest {
 
     @BeforeEach
     void setup() {
-        codec = new ArrayCodec<>(TEST, new DoubleCodec(TEST), Double.class);
+        codec = new ConvertingArrayCodec<>(TEST, new DoubleCodec(TEST), Double.class, ConvertingArrayCodec.NUMERIC_ARRAY_TYPES);
     }
 
     @Test
@@ -77,6 +80,14 @@ class DoubleArrayCodecUnitTest {
         assertThat(codec.decode(SINGLE_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Double[].class))
             .isEqualTo(expected);
         assertThat(codec.decode(encode(TEST, "{100.5,200.25}"), dataType, FORMAT_TEXT, Double[].class))
+            .isEqualTo(expected);
+    }
+
+    @Test
+    void decodeItemFromFloat4Array() {
+        Double[] expected = new Double[]{100.5, 200.25, 300.125};
+        byte[] data = ByteBufUtil.decodeHexDump("0000000100000000000002bc00000003000000010000000442c9000000000004434840000000000443961000");
+        assertThat(codec.decode(Unpooled.wrappedBuffer(data), FLOAT4_ARRAY, FORMAT_BINARY, Double[].class))
             .isEqualTo(expected);
     }
 

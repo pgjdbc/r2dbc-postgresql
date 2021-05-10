@@ -130,7 +130,14 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
 
                 Assert.requireType(codec, AbstractCodec.class, "Codec " + codec + " must be a subclass of AbstractCodec to be registered as generic array codec");
                 Class<?> componentType = codec.type();
-                defaultArrayCodecs.add(new ArrayCodec(byteBufAllocator, (ArrayCodecDelegate<?>) codec, componentType));
+
+                if (codec instanceof AbstractNumericCodec) {
+                    defaultArrayCodecs.add(new ConvertingArrayCodec(byteBufAllocator, (ArrayCodecDelegate<?>) codec, componentType, ConvertingArrayCodec.NUMERIC_ARRAY_TYPES));
+                } else if (codec instanceof AbstractTemporalCodec) {
+                    defaultArrayCodecs.add(new ConvertingArrayCodec(byteBufAllocator, (ArrayCodecDelegate<?>) codec, componentType, ConvertingArrayCodec.DATE_ARRAY_TYPES));
+                } else {
+                    defaultArrayCodecs.add(new ArrayCodec(byteBufAllocator, (ArrayCodecDelegate<?>) codec, componentType));
+                }
             }
         }
 
@@ -218,7 +225,6 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
             }
 
             for (Codec<?> codec : this.codecs) {
-
                 if (codec.canEncode(parameterValue)) {
                     return codec.encode(parameterValue, dataType.getObjectId());
                 }

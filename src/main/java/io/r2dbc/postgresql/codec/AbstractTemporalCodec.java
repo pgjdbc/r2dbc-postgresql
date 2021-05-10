@@ -113,30 +113,35 @@ abstract class AbstractTemporalCodec<T extends Temporal> extends BuiltinCodecSup
         switch (dataType) {
 
             case TIMESTAMP:
+            case TIMESTAMP_ARRAY:
                 if (FORMAT_BINARY == format) {
                     return EpochTime.fromLong(buffer.readLong()).toLocalDateTime();
                 }
 
                 return PostgresqlDateTimeFormatter.INSTANCE.parse(ByteBufUtils.decode(buffer), LocalDateTime::from);
             case DATE:
+            case DATE_ARRAY:
                 if (FORMAT_BINARY == format) {
                     return LocalDate.ofEpochDay(EpochTime.fromInt(buffer.readInt()).getJavaDays());
                 }
 
                 return LocalDate.parse(ByteBufUtils.decode(buffer));
             case TIME:
+            case TIME_ARRAY:
                 if (FORMAT_BINARY == format) {
                     return LocalTime.ofNanoOfDay(buffer.readLong() * 1000);
                 }
 
                 return LocalTime.parse(ByteBufUtils.decode(buffer));
             case TIMESTAMPTZ:
+            case TIMESTAMPTZ_ARRAY:
                 if (FORMAT_BINARY == format) {
                     return EpochTime.fromLong(buffer.readLong()).toInstant().atOffset(OffsetDateTime.now().getOffset());
                 }
 
                 return PostgresqlDateTimeFormatter.INSTANCE.parse(ByteBufUtils.decode(buffer), ZonedDateTime::from);
             case TIMETZ:
+            case TIMETZ_ARRAY:
                 if (FORMAT_BINARY == format) {
                     long timeNano = buffer.readLong() * 1000;
                     int offsetSec = -buffer.readInt();
