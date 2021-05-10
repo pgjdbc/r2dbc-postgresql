@@ -44,7 +44,7 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
  * @param <T> enum type
  * @since 0.8.4
  */
-public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
+public class EnumCodec<T extends Enum<T>> implements Codec<T> {
 
     private static final Logger logger = Loggers.getLogger(EnumCodec.class);
 
@@ -105,6 +105,7 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
         return encodeNull(this.oid);
     }
 
+
     private EncodedParameter encodeNull(int dataType) {
         return new EncodedParameter(Format.FORMAT_BINARY, dataType, NULL_VALUE);
     }
@@ -121,6 +122,32 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
      */
     public static EnumCodec.Builder builder() {
         return new Builder();
+    }
+
+    static class EnumArrayCodec<T extends Enum<T>> extends EnumCodec<T> implements ArrayCodecDelegate<T> {
+
+        private final PostgresTypeIdentifier arrayType;
+
+        public EnumArrayCodec(ByteBufAllocator byteBufAllocator, Class<T> type, int oid, PostgresTypeIdentifier arrayType) {
+            super(byteBufAllocator, type, oid);
+            this.arrayType = arrayType;
+        }
+
+        @Override
+        public String encodeToText(T value) {
+            return value.name();
+        }
+
+        @Override
+        public PostgresTypeIdentifier getArrayDataType() {
+            return this.arrayType;
+        }
+
+        @Override
+        public T decode(ByteBuf buffer, PostgresTypeIdentifier dataType, Format format, Class<? extends T> type) {
+            return decode(buffer, dataType.getObjectId(), format, type);
+        }
+
     }
 
     /**
@@ -197,8 +224,18 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
                         logger.debug(String.format("Registering codec for type '%s' with oid %d using Java enum type '%s'", it.getName(), it.getOid(), enumClass.getName()));
 
                         if (this.registrationPriority == RegistrationPriority.LAST) {
+
+                            if (it.getArrayObjectId() > 0) {
+                                registry.addLast(new ArrayCodec(allocator, new EnumArrayCodec(allocator, enumClass, it.getOid(), it.asArrayType()), enumClass));
+                            }
+
                             registry.addLast(new EnumCodec(allocator, enumClass, it.getOid()));
                         } else {
+
+                            if (it.getArrayObjectId() > 0) {
+                                registry.addFirst(new ArrayCodec(allocator, new EnumArrayCodec(allocator, enumClass, it.getOid(), it.asArrayType()), enumClass));
+                            }
+
                             registry.addFirst(new EnumCodec(allocator, enumClass, it.getOid()));
                         }
                     }).doOnComplete(() -> {

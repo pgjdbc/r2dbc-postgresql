@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 public class PostgresTypes {
 
     // parameterized with %s for the comparator (=, IN), %s for the actual criteria value and %s for a potential LIMIT 1 statement
-    private static final String SELECT_PG_TYPE = "SELECT pg_type.oid, typname, typcategory "
+    private static final String SELECT_PG_TYPE = "SELECT pg_type.oid, typarray, typname, typcategory "
         + "  FROM pg_catalog.pg_type "
         + "  LEFT "
         + "  JOIN (select ns.oid as nspoid, ns.nspname, r.r "
@@ -74,7 +74,7 @@ public class PostgresTypes {
 
         return this.connection.createStatement(String.format(SELECT_PG_TYPE, "=", "'" + typeName + "'", "LIMIT 1")).execute()
             .flatMap(it -> it.map((row, rowMetadata) -> {
-                return new PostgresType(row.get("oid", Integer.class), row.get("typname", String.class), row.get("typcategory", String.class));
+                return new PostgresType(row.get("oid", Integer.class), row.get("typarray", Integer.class), row.get("typname", String.class), row.get("typcategory", String.class));
             })).singleOrEmpty();
     }
 
@@ -93,13 +93,15 @@ public class PostgresTypes {
 
         return this.connection.createStatement(String.format(SELECT_PG_TYPE, "IN", joiner, "")).execute()
             .flatMap(it -> it.map((row, rowMetadata) -> {
-                return new PostgresType(row.get("oid", Integer.class), row.get("typname", String.class), row.get("typcategory", String.class));
+                return new PostgresType(row.get("oid", Integer.class), row.get("typarray", Integer.class), row.get("typname", String.class), row.get("typcategory", String.class));
             }));
     }
 
     public static class PostgresType implements Type, PostgresTypeIdentifier {
 
         private final int oid;
+
+        private final int typarray;
 
         private final String name;
 
@@ -108,8 +110,9 @@ public class PostgresTypes {
         @Nullable
         private final PostgresqlObjectId objectId;
 
-        public PostgresType(int oid, String name, String category) {
+        public PostgresType(int oid, int typarray, String name, String category) {
             this.oid = oid;
+            this.typarray = typarray;
             this.name = name;
             this.category = category;
             this.objectId = PostgresqlObjectId.isValid(oid) ? PostgresqlObjectId.valueOf(oid) : null;
@@ -118,6 +121,29 @@ public class PostgresTypes {
         @Override
         public int getObjectId() {
             return getOid();
+        }
+
+        public int getArrayObjectId() {
+            return this.typarray;
+        }
+
+        /**
+         * Return the type as array type.
+         *
+         * @return
+         */
+        public PostgresType asArrayType() {
+
+            if (isArray()) {
+                return this;
+            }
+
+            if (this.typarray > 0) {
+
+                return new PostgresType(this.typarray, this.typarray, this.name, this.category);
+            }
+
+            throw new IllegalStateException("No array type available for " + this);
         }
 
         public int getOid() {
