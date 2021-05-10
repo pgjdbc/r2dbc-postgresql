@@ -22,11 +22,11 @@ import reactor.util.Loggers;
 /**
  * Query logger to log queries.
  */
-final class QueryLogger {
+public final class QueryLogger {
 
     private static final Logger QUERY_LOGGER = Loggers.getLogger("io.r2dbc.postgresql.QUERY");
 
-    static void logQuery(ConnectionContext context, String query) {
+    public static void logQuery(ConnectionContext context, String query) {
         QUERY_LOGGER.debug(context.getMessage("Executing query: {}"), query);
     }
 
