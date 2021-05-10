@@ -101,11 +101,14 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
             new BlobCodec(byteBufAllocator),
             new ClobCodec(byteBufAllocator),
 
+            new BooleanArrayCodec(byteBufAllocator),
             new BigDecimalArrayCodec(byteBufAllocator),
             new ShortArrayCodec(byteBufAllocator),
             new StringArrayCodec(byteBufAllocator),
             new IntegerArrayCodec(byteBufAllocator),
             new LongArrayCodec(byteBufAllocator),
+            new FloatArrayCodec(byteBufAllocator),
+            new DoubleArrayCodec(byteBufAllocator),
             new UuidArrayCodec(byteBufAllocator),
 
             //Geometry

@@ -377,10 +377,14 @@ Support for the following single-dimensional arrays (read and write):
 
 | PostgreSQL Type                                | Supported Data Type                  |
 |:-----------------------------------------------|:-------------------------------------|
-|[`text[]`][psql-text-ref]                       |[`String[]`][java-string-ref]         |
-|[`integer[] or int[]`][psql-integer-ref]        |[`Integer[]`][java-integer-ref], [`Long[]`][java-long-ref], [`Short[]`][java-short-ref]|
+|[`bool[]`][psql-boolean-ref]                    |[`Boolean[]`][java-boolean-ref]       |
+|[`double precision`][psql-floating-point-ref]   |[`Double`][java-double-ref]           |
+|[`integer[] or int[]`][psql-integer-ref]        |[`Integer[]`][java-integer-ref]       |
 |[`numeric[]`][psql-bignumeric-ref]              |[`BigDecimal[]`][java-bigdecimal-ref] |
-|[`uuid[]`][psql-uuid-ref]                       |[`UUID[]`][java-uuid-ref]|
+|[`real`][psql-real-ref]                         |[`Float[]`][java-float-ref]           |
+|[`serial[]`][psql-serial-ref]                   |[`Long[]`][java-long-ref]             |
+|[`text[]`][psql-text-ref]                       |[`String[]`][java-string-ref]         |
+|[`uuid[]`][psql-uuid-ref]                       |[`UUID[]`][java-uuid-ref]             |
 
 [psql-bigint-ref]: https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-INT
 [psql-bit-ref]: https://www.postgresql.org/docs/current/datatype-numeric.html

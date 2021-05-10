@@ -127,6 +127,11 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     }
 
     @Test
+    void booleanArray() {
+        testCodec(Boolean[].class, new Boolean[]{true, false}, "BOOL[]");
+    }
+
+    @Test
     void binary() {
         testCodec(ByteBuffer.class, ByteBuffer.wrap(new byte[]{1, 2, 3, 4}), "BYTEA");
         testCodec(ByteBuffer.class, ByteBuffer.wrap(new byte[]{}), "BYTEA");
@@ -224,6 +229,11 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     }
 
     @Test
+    void doubleArray() {
+        testCodec(Double[].class, new Double[]{100.0, 200.1}, "FLOAT8[]");
+    }
+
+    @Test
     void simpleMappedEnum() {
         testCodec(MyEnum.class, MyEnum.HELLO, "my_enum");
     }
@@ -236,6 +246,11 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(Float.class, 100.1f, "DECIMAL");
         testCodec(Float.class, 100.1f, "FLOAT4");
         testCodec(Float.class, 100.1f, "FLOAT8");
+    }
+
+    @Test
+    void floatArray() {
+        testCodec(Float[].class, new Float[]{100.0f, 200.1f}, "FLOAT4[]");
     }
 
     @Test
