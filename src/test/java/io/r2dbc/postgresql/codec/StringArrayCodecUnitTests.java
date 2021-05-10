@@ -61,8 +61,16 @@ final class StringArrayCodecUnitTests {
     @Test
     void decodeItem() {
         assertThat(new StringArrayCodec(TEST).decode(BINARY_ARRAY, dataType, FORMAT_BINARY, String[].class)).isEqualTo(new String[]{"abc", "def"});
+        assertThat(new StringArrayCodec(TEST).decode(encode(TEST, "{}"), dataType, FORMAT_TEXT, String[].class))
+            .isEqualTo(new String[]{});
+        assertThat(new StringArrayCodec(TEST).decode(encode(TEST, "{\"\"}"), dataType, FORMAT_TEXT, String[].class))
+            .isEqualTo(new String[]{""});
         assertThat(new StringArrayCodec(TEST).decode(encode(TEST, "{alpha,bravo}"), dataType, FORMAT_TEXT, String[].class))
             .isEqualTo(new String[]{"alpha", "bravo"});
+        assertThat(new StringArrayCodec(TEST).decode(encode(TEST, "{\"NULL\",\"\",\"test value3\",\"hello\\\\world\"}"), dataType, FORMAT_TEXT, String[].class))
+            .isEqualTo(new String[]{"NULL", "", "test value3", "hello\\world"});
+        assertThat(new StringArrayCodec(TEST).decode(encode(TEST, "{\"NULL\",NULL,\"R \\\"2\\\" DBC\",АБ}"), dataType, FORMAT_TEXT, String[].class))
+            .isEqualTo(new String[]{"NULL", null, "R \"2\" DBC", "АБ"});
         assertThat(new StringArrayCodec(TEST).decode(encode(TEST, "{}"), dataType, FORMAT_TEXT, String[].class))
             .isEqualTo(new String[]{});
     }

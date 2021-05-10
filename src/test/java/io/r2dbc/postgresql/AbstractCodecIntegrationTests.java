@@ -488,6 +488,8 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
 
     @Test
     void stringArray() {
+        testCodec(String[].class, new String[]{""}, "BPCHAR[]");
+        testCodec(String[].class, new String[]{}, "BPCHAR[]");
         testCodec(String[].class, new String[]{"test-value1", "test-value2", "test-value3"}, "BPCHAR[]");
         testCodec(String[].class, new String[]{"test-value1", "test-value2", "test-value3"}, "VARCHAR[]");
         testCodec(String[].class, new String[]{"NULL", "", "test value3", "hello\\world"}, "VARCHAR[]");

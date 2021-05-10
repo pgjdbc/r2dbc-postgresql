@@ -18,7 +18,6 @@ package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
@@ -232,140 +231,6 @@ class ArrayCodec<T> extends AbstractCodec<Object[]> {
         return dims;
     }
 
-    private static Object[] toArray(List<?> list, Class<?> returnType) {
-        List<Object> result = new ArrayList<>(list.size());
-
-        for (Object e : list) {
-            Object o = (e instanceof List ? toArray((List<?>) e, returnType.getComponentType()) : e);
-            result.add(o);
-        }
-
-        return result.toArray((Object[]) Array.newInstance(returnType, list.size()));
-    }
-
-    private List<Object> buildArrayList(ByteBuf buf, PostgresTypeIdentifier dataType) {
-        List<Object> arrayList = new ArrayList<>();
-
-        char delim = ','; // todo parametrize
-
-        StringBuilder buffer = null;
-        boolean insideString = false;
-        boolean wasInsideString = false; // needed for checking if NULL
-        // value occurred
-        List<List<Object>> dims = new ArrayList<>(); // array dimension arrays
-        List<Object> curArray = arrayList; // currently processed array
-
-        CharSequence chars = buf.readCharSequence(buf.readableBytes(), StandardCharsets.UTF_8);
-
-        // Starting with 8.0 non-standard (beginning index
-        // isn't 1) bounds the dimensions are returned in the
-        // data formatted like so "[0:3]={0,1,2,3,4}".
-        // Older versions simply do not return the bounds.
-        //
-        // Right now we ignore these bounds, but we could
-        // consider allowing these index values to be used
-        // even though the JDBC spec says 1 is the first
-        // index. I'm not sure what a client would like
-        // to see, so we just retain the old behavior.
-        int startOffset = 0;
-
-        {
-            if (chars.charAt(0) == '[') {
-                while (chars.charAt(startOffset) != '=') {
-                    startOffset++;
-                }
-                startOffset++; // skip =
-            }
-        }
-
-        char currentChar;
-
-        for (int i = startOffset; i < chars.length(); i++) {
-            currentChar = chars.charAt(i);
-            // escape character that we need to skip
-            if (currentChar == '\\') {
-                i++;
-                currentChar = chars.charAt(i);
-            } else if (!insideString && currentChar == '{') {
-                // subarray start
-                if (dims.isEmpty()) {
-                    dims.add(arrayList);
-                } else {
-                    List<Object> a = new ArrayList<>();
-                    List<Object> p = dims.get(dims.size() - 1);
-                    p.add(a);
-                    dims.add(a);
-                }
-                curArray = dims.get(dims.size() - 1);
-
-                for (int t = i + 1; t < chars.length(); t++) {
-                    if (!Character.isWhitespace(chars.charAt(t)) && chars.charAt(t) != '{') {
-                        break;
-                    }
-                }
-
-                buffer = new StringBuilder();
-                continue;
-            } else if (currentChar == '"') {
-                // quoted element
-                insideString = !insideString;
-                wasInsideString = true;
-                continue;
-            } else if (!insideString && Character.isWhitespace(currentChar)) {
-                // white space
-                continue;
-            } else if ((!insideString && (currentChar == delim || currentChar == '}'))
-                || i == chars.length() - 1) {
-                // array end or element end
-                // when character that is a part of array element
-                if (currentChar != '}' && currentChar != delim && buffer != null) {
-                    buffer.append(currentChar);
-                }
-
-                String b = buffer == null ? null : buffer.toString();
-
-                // add element to current array
-                if (b != null && (!b.isEmpty() || wasInsideString)) {
-                    if (!wasInsideString && "NULL".equals(b)) {
-                        curArray.add(null);
-                    } else {
-
-                        // TODO Avoid string parsing but rather try use the already existing buffer, similar to binary parsing.
-                        curArray.add(this.delegate.decode(Unpooled.wrappedBuffer(b.getBytes(StandardCharsets.UTF_8)), dataType, FORMAT_TEXT, this.componentType));
-                    }
-                }
-
-                wasInsideString = false;
-                buffer = new StringBuilder();
-
-                // when end of an array
-                if (currentChar == '}') {
-                    dims.remove(dims.size() - 1);
-
-                    // when multi-dimension
-                    if (!dims.isEmpty()) {
-                        curArray = dims.get(dims.size() - 1);
-                    }
-
-                    buffer = null;
-                }
-
-                continue;
-            }
-
-            if (buffer != null) {
-                buffer.append(currentChar);
-            }
-        }
-
-        return arrayList;
-    }
-
-    private Class<?> createArrayType(int dims) {
-        int[] size = new int[dims];
-        Arrays.fill(size, 1);
-        return Array.newInstance(this.componentType, size).getClass();
-    }
 
     Object[] decodeBinary(ByteBuf buffer, PostgresTypeIdentifier dataType, Class<?> returnType) {
         if (!buffer.isReadable()) {
@@ -398,7 +263,7 @@ class ArrayCodec<T> extends AbstractCodec<Object[]> {
     }
 
     Object[] decodeText(ByteBuf buffer, PostgresTypeIdentifier dataType, Class<?> returnType) {
-        List<?> elements = buildArrayList(buffer, dataType);
+        List<?> elements = decodeText(buffer, dataType);
 
         if (elements.isEmpty()) {
             return (Object[]) Array.newInstance(this.componentType, 0);
@@ -411,6 +276,150 @@ class ArrayCodec<T> extends AbstractCodec<Object[]> {
         }
 
         return toArray(elements, createArrayType(dimensions).getComponentType());
+    }
+
+    private Class<?> createArrayType(int dims) {
+        int[] size = new int[dims];
+        Arrays.fill(size, 1);
+        return Array.newInstance(this.componentType, size).getClass();
+    }
+
+    private static Object[] toArray(List<?> list, Class<?> returnType) {
+        List<Object> result = new ArrayList<>(list.size());
+
+        for (Object e : list) {
+            Object o = (e instanceof List ? toArray((List<?>) e, returnType.getComponentType()) : e);
+            result.add(o);
+        }
+
+        return result.toArray((Object[]) Array.newInstance(returnType, list.size()));
+    }
+
+    private List<Object> decodeText(ByteBuf buf, PostgresTypeIdentifier dataType) {
+        List<Object> arrayList = new ArrayList<>();
+
+        char delim = ',';
+
+        boolean insideString = false;
+        boolean wasInsideString = false; // needed for checking if NULL
+        // value occurred
+        List<List<Object>> dims = new ArrayList<>(); // array dimension arrays
+        List<Object> currentArray = arrayList; // currently processed array
+
+        // Starting with 8.0 non-standard (beginning index
+        // isn't 1) bounds the dimensions are returned in the
+        // data formatted like so "[0:3]={0,1,2,3,4}".
+        // Older versions simply do not return the bounds.
+        //
+        // Right now we ignore these bounds, but we could
+        // consider allowing these index values to be used
+        // even though the JDBC spec says 1 is the first
+        // index. I'm not sure what a client would like
+        // to see, so we just retain the old behavior.
+
+        if (buf.isReadable() && buf.getByte(0) == '[') {
+            while (buf.readByte() != '=') {
+                //
+            }
+        }
+
+        int indentEscape = 0;
+        int readFrom = 0;
+        boolean requiresEscapeCharFiltering = false;
+        while (buf.isReadable()) {
+
+            byte currentChar = buf.readByte();
+            // escape character that we need to skip
+            if (currentChar == '\\') {
+                indentEscape++;
+                buf.skipBytes(1);
+                requiresEscapeCharFiltering = true;
+            } else if (!insideString && currentChar == '{') {
+                // subarray start
+                if (dims.isEmpty()) {
+                    dims.add(arrayList);
+                } else {
+                    List<Object> a = new ArrayList<>();
+                    List<Object> p = dims.get(dims.size() - 1);
+                    p.add(a);
+                    dims.add(a);
+                }
+                currentArray = dims.get(dims.size() - 1);
+
+                for (int t = indentEscape + 1; t < buf.writerIndex(); t++) {
+                    if (!Character.isWhitespace(buf.getByte(t)) && buf.getByte(t) != '{') {
+                        break;
+                    }
+                }
+
+                readFrom = buf.readerIndex();
+            } else if (currentChar == '"') {
+                // quoted element
+                insideString = !insideString;
+                wasInsideString = true;
+            } else if (!insideString && Character.isWhitespace(currentChar)) {
+                // white space
+                continue;
+            } else if ((!insideString && (currentChar == delim || currentChar == '}'))
+                || indentEscape == buf.writerIndex() - 1) {
+                // array end or element end
+                // when character that is a part of array element
+                int skipTrailingBytes = 0;
+                if (currentChar != '}' && currentChar != delim && readFrom > 0) {
+                    skipTrailingBytes++;
+                }
+
+                if (wasInsideString) {
+                    readFrom++;
+                    skipTrailingBytes++;
+                }
+
+                ByteBuf slice = buf.slice(readFrom, (buf.readerIndex() - readFrom) - (skipTrailingBytes + /* skip current char as we've over-read */ 1));
+                try {
+                    if (requiresEscapeCharFiltering) {
+                        ByteBuf filtered = slice.alloc().buffer(slice.readableBytes());
+                        while (slice.isReadable()) {
+                            byte ch = slice.readByte();
+                            if (ch == '\\') {
+                                ch = slice.readByte();
+                            }
+                            filtered.writeByte(ch);
+                        }
+                        slice = filtered;
+                    }
+
+                    // add element to current array
+                    if (slice.isReadable() || wasInsideString) {
+                        if (!wasInsideString && slice.readableBytes() == 4 && slice.getByte(0) == 'N' && "NULL".equals(slice.toString(StandardCharsets.US_ASCII))) {
+                            currentArray.add(null);
+                        } else {
+                            currentArray.add(this.delegate.decode(slice, dataType, FORMAT_TEXT, this.componentType));
+                        }
+                    }
+                } finally {
+
+                    if (requiresEscapeCharFiltering) {
+                        slice.release();
+                    }
+                }
+
+                wasInsideString = false;
+                requiresEscapeCharFiltering = false;
+                readFrom = buf.readerIndex();
+
+                // when end of an array
+                if (currentChar == '}') {
+                    dims.remove(dims.size() - 1);
+
+                    // when multi-dimension
+                    if (!dims.isEmpty()) {
+                        currentArray = dims.get(dims.size() - 1);
+                    }
+                }
+            }
+        }
+
+        return arrayList;
     }
 
     @SuppressWarnings("unchecked")
