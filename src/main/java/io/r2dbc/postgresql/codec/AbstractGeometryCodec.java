@@ -154,22 +154,22 @@ abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> {
 
         List<String> tokens = new ArrayList<>();
 
-        for (int i = 0, s = 0; i < content.length(); i++) {
+        int length = content.length();
+        for (int i = 0, tokenStart = 0; i < length; i++) {
 
             char c = content.charAt(i);
-
             if (c == '(' || c == '[' || c == '<' || c == '{') {
-                s++;
-                continue;
-            }
-
-            if (c == ',' || c == ')' || c == ']' || c == '>' || c == '}') {
-                if (s != i) {
-                    tokens.add(content.substring(s, i));
-                    s = i + 1;
+                tokenStart++;
+            } else if (c == ',' || c == ')' || c == ']' || c == '>' || c == '}') {
+                if (tokenStart != i) {
+                    tokens.add(content.substring(tokenStart, i));
+                    tokenStart = i + 1;
                 } else {
-                    s++;
+                    tokenStart++;
                 }
+            } else if (i == length - 1) {
+                // for cases where there is no token at the end of the string (i.e. "(1.2,123.1),10")
+                tokens.add(content.substring(tokenStart));
             }
         }
 

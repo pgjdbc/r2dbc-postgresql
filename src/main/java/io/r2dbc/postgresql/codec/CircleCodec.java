@@ -20,11 +20,12 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.CIRCLE;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.CIRCLE_ARRAY;
 
 /**
  * @since 0.8.5
  */
-final class CircleCodec extends AbstractGeometryCodec<Circle> {
+final class CircleCodec extends AbstractGeometryCodec<Circle> implements ArrayCodecDelegate<Circle> {
 
     CircleCodec(ByteBufAllocator byteBufAllocator) {
         super(Circle.class, CIRCLE, byteBufAllocator);
@@ -48,6 +49,16 @@ final class CircleCodec extends AbstractGeometryCodec<Circle> {
             .writeDouble(center.getX())
             .writeDouble(center.getY())
             .writeDouble(value.getRadius());
+    }
+
+    @Override
+    public String encodeToText(Circle value) {
+        return String.format("\"%s\"", value);
+    }
+
+    @Override
+    public PostgresTypeIdentifier getArrayDataType() {
+        return CIRCLE_ARRAY;
     }
 
     int lengthInBytes() {

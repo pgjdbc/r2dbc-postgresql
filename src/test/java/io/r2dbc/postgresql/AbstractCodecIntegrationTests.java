@@ -196,9 +196,20 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     }
 
     @Test
+    void circleArray() {
+        testCodec(Circle[].class, new Circle[]{Circle.of(Point.of(1.12, 2.12), 3.12), Circle.of(Point.of(Double.MIN_VALUE, Double.MIN_VALUE), Double.MAX_VALUE)}, "CIRCLE[]");
+    }
+
+    @Test
     void circle() {
         testCodec(Circle.class, Circle.of(Point.of(1.12, 2.12), 3.12), "CIRCLE");
         testCodec(Circle.class, Circle.of(Point.of(Double.MIN_VALUE, Double.MIN_VALUE), Double.MAX_VALUE), "CIRCLE");
+    }
+
+    @Test
+    void circleTwoDimensionalArray() {
+        testCodec(Circle[][].class, new Circle[][]{{Circle.of(Point.of(1.12, 2.12), 3.12), Circle.of(Point.of(Double.MIN_VALUE, Double.MIN_VALUE), Double.MAX_VALUE)},
+            {Circle.of(Point.of(-2.4, -456.2), 20), null}}, "CIRCLE[][]");
     }
 
     @Test

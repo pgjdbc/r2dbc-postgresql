@@ -427,6 +427,7 @@ Support for the following single-dimensional arrays (read and write):
 | [`bytea[]`][psql-bytea-ref]                     | [**`ByteBuffer[]`**][java-ByteBuffer-ref], [`byte[][]`][java-byte-ref]|
 | [`character`][psql-character-ref]               | [`String[]`][java-string-ref]|
 | [`character varying`][psql-character-ref]       | [`String[]`][java-string-ref]|
+| [`circle[]`][psql-circle-ref]                   | **`Circle[]`**|
 | [`date[]`][psql-date-ref]                       | [`LocalDate[]`][java-ld-ref]|
 | [`double precision[]`][psql-floating-point-ref] | [**`Double[]`**][java-double-ref], [`Float[]`][java-float-ref], [`Boolean[]`][java-boolean-ref], [`Byte[]`][java-byte-ref], [`Short[]`][java-short-ref], [`Integer[]`][java-integer-ref], [`Long[]`][java-long-ref], [`BigDecimal[]`][java-bigdecimal-ref], [`BigInteger[]`][java-biginteger-ref]|
 | [enumerated type arrays][psql-enum-ref]         | Client code `Enum[]` types through `EnumCodec`|

@@ -100,6 +100,11 @@ public enum PostgresqlObjectId implements Type, PostgresTypeIdentifier {
     CIRCLE(718, Circle.class),
 
     /**
+     * The circle array object id
+     */
+    CIRCLE_ARRAY(719, Circle[].class),
+
+    /**
      * The date object id.
      */
     DATE(1082, LocalDate.class),
