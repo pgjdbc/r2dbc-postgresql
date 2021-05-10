@@ -327,7 +327,13 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
 
     @Test
     void intArray() {
+        testCodec(Integer[].class, new Integer[]{100, 200, 300}, "INT2[]");
         testCodec(Integer[].class, new Integer[]{100, 200, 300}, "INT4[]");
+        testCodec(Integer[].class, new Integer[]{100, 200, 300}, "INT8[]");
+        testCodec(Integer[].class, new Integer[]{100, 200, 300}, "OID[]");
+        testCodec(Integer[].class, new Integer[]{100, 200, 300}, "NUMERIC[]");
+        testCodec(Integer[].class, new Integer[]{100, 200, 300}, "FLOAT4[]");
+        testCodec(Integer[].class, new Integer[]{100, 200, 300}, "FLOAT8[]");
     }
 
     @Test
