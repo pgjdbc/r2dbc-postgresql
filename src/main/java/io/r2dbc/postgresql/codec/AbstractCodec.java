@@ -78,7 +78,7 @@ abstract class AbstractCodec<T> implements Codec<T> {
             return null;
         }
 
-        return doDecode(buffer, PostgresqlObjectId.valueOf(dataType), format, type);
+        return doDecode(buffer, getDataType(dataType), format, type);
     }
 
     @Override
@@ -182,13 +182,13 @@ abstract class AbstractCodec<T> implements Codec<T> {
     abstract T doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, Format format, Class<? extends T> type);
 
     /**
-     * Forwarding method to {@link #decode(ByteBuf, PostgresTypeIdentifier, Format, Class)} for subclasses that want to implement {@link ArrayCodecDelegate}.
+     * Forwarding method to {@link #doDecode(ByteBuf, PostgresTypeIdentifier, Format, Class)} for subclasses that want to implement {@link ArrayCodecDelegate}.
      *
-     * @param buffer
-     * @param dataType
-     * @param format
-     * @param type
-     * @return
+     * @param buffer   the data buffer
+     * @param dataType the well-known {@link PostgresTypeIdentifier type OID}
+     * @param format   data type format
+     * @param type     the desired value type
+     * @return the decoded value, can be {@code null} if the column value is {@code null}
      */
     public T decode(ByteBuf buffer, PostgresTypeIdentifier dataType, Format format, Class<? extends T> type) {
         return doDecode(buffer, dataType, format, type);

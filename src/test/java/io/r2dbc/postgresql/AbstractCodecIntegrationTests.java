@@ -272,6 +272,11 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     }
 
     @Test
+    void mappedEnumArray() {
+        testCodec(MyEnum[].class, MyEnum.values(), "my_enum[]");
+    }
+
+    @Test
     void floatArray() {
         testCodec(Float[].class, new Float[]{100.5f, 200.25f, 300.125f}, "FLOAT4[]");
     }
