@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 the original author or authors.
+ * Copyright 2019-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ public final class PgBouncer implements AutoCloseable {
     private final GenericContainer<?> container;
 
     public PgBouncer(PostgresqlServerExtension server, String poolMode) {
-        this.container = new GenericContainer<>("edoburu/pgbouncer")
+        this.container = new GenericContainer<>("edoburu/pgbouncer:1.9.0")
             .withExposedPorts(PostgreSQLContainer.POSTGRESQL_PORT)
             .withEnv("POOL_MODE", poolMode)
             .withEnv("SERVER_RESET_QUERY_ALWAYS", "1")
