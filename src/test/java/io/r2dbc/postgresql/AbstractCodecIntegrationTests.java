@@ -79,7 +79,7 @@ import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Integrations tests for our built-in codecs. Executed typicall in text and binary mode.
+ * Integrations tests for our built-in codecs. Executed typically in text and binary mode.
  *
  * @see CodecBinaryFormatIntegrationTests
  * @see CodecTextFormatIntegrationTests
@@ -232,8 +232,19 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     }
 
     @Test
+    void dateArray() {
+        testCodec(Date[].class, new Date[]{new Date(0), new Date()}, "TIMESTAMP[]");
+        testCodec(Date[].class, new Date[]{new Date(0), new Date()}, LocalDateTime[].class, (actual, expected) -> {
+            assertThat(actual[0]).isAfter(LocalDateTime.of(1969, 1, 1, 0, 0)).isBefore(LocalDateTime.of(1971, 1, 1, 0, 0));
+        }, "TIMESTAMP[]", "$1", null);
+    }
+
+    @Test
     void doubleArray() {
         testCodec(Double[].class, new Double[]{100.5, 200.25, 300.125}, "FLOAT8[]");
+        testCodec(Double[].class, new Double[]{100.5, 200.25, 300.125}, Float[].class, (actual, expected) -> {
+            assertThat(actual).isEqualTo(new Float[]{100.5f, 200.25f, 300.125f});
+        }, "FLOAT4[]", "$1", null);
     }
 
     @Test
@@ -297,6 +308,11 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     @Test
     void inetAddress() throws UnknownHostException {
         testCodec(InetAddress.class, InetAddress.getLocalHost(), "INET");
+    }
+
+    @Test
+    void inetAddressArray() throws UnknownHostException {
+        testCodec(InetAddress[].class, new InetAddress[]{InetAddress.getLocalHost()}, "INET[]");
     }
 
     @Test
@@ -609,6 +625,10 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     }
 
     private <T> void testCodec(Class<T> javaType, T value, BiConsumer<T, T> equality, String sqlType, String insertPlaceholder, @Nullable Type parameterType) {
+        testCodec(javaType, value, javaType, equality, sqlType, insertPlaceholder, parameterType);
+    }
+
+    private <IN, OUT> void testCodec(Class<IN> javaType, IN value, Class<OUT> outType, BiConsumer<OUT, IN> equality, String sqlType, String insertPlaceholder, @Nullable Type parameterType) {
         SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS test");
         SERVER.getJdbcOperations().execute(String.format("CREATE TABLE test ( value %s )", sqlType));
 
@@ -696,7 +716,7 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
                     }
                     return statement.execute()
 
-                        .map(result -> result.map((row, metadata) -> row.get("value", javaType)))
+                        .map(result -> result.map((row, metadata) -> row.get("value", outType)))
                         .flatMap(Function.identity())
 
                         .concatWith(close(connection));
