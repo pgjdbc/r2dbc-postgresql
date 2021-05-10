@@ -35,7 +35,7 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
 /**
  * Generic codec class that provides a basis for implementations
- * of a array-typed {@link Codec}. It uses a {@link AbstractCodec delegate}
+ * of a array-typed {@link Codec}. It uses a {@link ArrayCodecDelegate delegate}
  * that can encode/decode the underlying type of the array.
  *
  * @param <T> the type that is handled by this {@link Codec}
@@ -62,7 +62,6 @@ class ArrayCodec<T> extends AbstractCodec<Object[]> {
      * Create a new {@link ArrayCodec}.
      *
      * @param byteBufAllocator the buffer allocator
-     * @param dataType         the Postgres OID handled by this codec
      * @param delegate         the underlying {@link ArrayCodecDelegate} used to encode/decode data
      * @param componentType    the target component type
      */
@@ -145,7 +144,6 @@ class ArrayCodec<T> extends AbstractCodec<Object[]> {
 
     @Override
     public boolean canDecode(int dataType, Format format, Class<?> type) {
-        // TODO check requested type, unwrap deepest component type and check for assignability.
         return this.dataType.getObjectId() == dataType && (type == Object.class || (type.isArray() && getActualComponentType(type).isAssignableFrom(this.componentType)));
     }
 
