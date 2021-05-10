@@ -22,6 +22,7 @@ import io.netty.util.ReferenceCounted;
 import io.r2dbc.postgresql.client.Binding;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.ExtendedQueryMessageFlow;
+import io.r2dbc.postgresql.client.QueryLogger;
 import io.r2dbc.postgresql.client.TransactionStatus;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.BindComplete;
@@ -130,7 +131,7 @@ class ExtendedFlowDelegate {
             });
         }
 
-        return exchange.doOnDiscard(ReferenceCounted.class, ReferenceCountUtil::release).filter(RESULT_FRAME_FILTER).handle(factory::handleErrorResponse);
+        return exchange.doOnSubscribe(it -> QueryLogger.logQuery(client.getContext(), query)).doOnDiscard(ReferenceCounted.class, ReferenceCountUtil::release).filter(RESULT_FRAME_FILTER).handle(factory::handleErrorResponse);
     }
 
     /**
