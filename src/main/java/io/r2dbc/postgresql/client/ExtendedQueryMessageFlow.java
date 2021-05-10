@@ -21,7 +21,6 @@ import io.netty.util.ReferenceCountUtil;
 import io.netty.util.ReferenceCounted;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
-import io.r2dbc.postgresql.message.backend.CloseComplete;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.ParseComplete;
@@ -39,10 +38,11 @@ import io.r2dbc.postgresql.message.frontend.Parse;
 import io.r2dbc.postgresql.message.frontend.Sync;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.Operators;
-import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.SynchronousSink;
+import reactor.core.publisher.UnicastProcessor;
+import reactor.util.concurrent.Queues;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -129,7 +129,7 @@ public final class ExtendedQueryMessageFlow {
      */
     private static Flux<BackendMessage> fetchCursored(Flux<FrontendMessage> bindFlow, Client client, String portal, int fetchSize) {
 
-        DirectProcessor<FrontendMessage> requestsProcessor = DirectProcessor.create();
+        UnicastProcessor<FrontendMessage> requestsProcessor = UnicastProcessor.create(Queues.<FrontendMessage>small().get());
         FluxSink<FrontendMessage> requestsSink = requestsProcessor.sink();
         AtomicBoolean isCanceled = new AtomicBoolean(false);
 

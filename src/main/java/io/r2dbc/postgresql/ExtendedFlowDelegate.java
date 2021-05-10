@@ -43,11 +43,12 @@ import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.message.frontend.Parse;
 import io.r2dbc.postgresql.message.frontend.Sync;
 import io.r2dbc.postgresql.util.Operators;
-import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.SynchronousSink;
+import reactor.core.publisher.UnicastProcessor;
+import reactor.util.concurrent.Queues;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -163,7 +164,7 @@ class ExtendedFlowDelegate {
      */
     private static Flux<BackendMessage> fetchCursoredWithSync(List<FrontendMessage.DirectEncoder> messagesToSend, Client client, String portal, int fetchSize) {
 
-        DirectProcessor<FrontendMessage> requestsProcessor = DirectProcessor.create();
+        UnicastProcessor<FrontendMessage> requestsProcessor = UnicastProcessor.create(Queues.<FrontendMessage>small().get());
         FluxSink<FrontendMessage> requestsSink = requestsProcessor.sink();
         AtomicBoolean isCanceled = new AtomicBoolean(false);
         AtomicBoolean done = new AtomicBoolean(false);
@@ -226,7 +227,7 @@ class ExtendedFlowDelegate {
      */
     private static Flux<BackendMessage> fetchCursoredWithFlush(List<FrontendMessage.DirectEncoder> messagesToSend, Client client, String portal, int fetchSize) {
 
-        DirectProcessor<FrontendMessage> requestsProcessor = DirectProcessor.create();
+        UnicastProcessor<FrontendMessage> requestsProcessor = UnicastProcessor.create(Queues.<FrontendMessage>small().get());
         FluxSink<FrontendMessage> requestsSink = requestsProcessor.sink();
         AtomicBoolean isCanceled = new AtomicBoolean(false);
 
