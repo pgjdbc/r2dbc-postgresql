@@ -43,11 +43,11 @@ import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.message.frontend.Parse;
 import io.r2dbc.postgresql.message.frontend.Sync;
 import io.r2dbc.postgresql.util.Operators;
-import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
 import reactor.core.publisher.SynchronousSink;
+import reactor.util.concurrent.Queues;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -163,54 +163,53 @@ class ExtendedFlowDelegate {
      */
     private static Flux<BackendMessage> fetchCursoredWithSync(List<FrontendMessage.DirectEncoder> messagesToSend, Client client, String portal, int fetchSize) {
 
-        DirectProcessor<FrontendMessage> requestsProcessor = DirectProcessor.create();
-        FluxSink<FrontendMessage> requestsSink = requestsProcessor.sink();
+        Sinks.Many<FrontendMessage> requests = Sinks.many().unicast().onBackpressureBuffer(Queues.<FrontendMessage>small().get());
         AtomicBoolean isCanceled = new AtomicBoolean(false);
         AtomicBoolean done = new AtomicBoolean(false);
 
         messagesToSend.add(new Execute(portal, fetchSize));
         messagesToSend.add(Sync.INSTANCE);
 
-        return client.exchange(it -> done.get() && it instanceof ReadyForQuery, Flux.<FrontendMessage>just(new CompositeFrontendMessage(messagesToSend)).concatWith(requestsProcessor))
+        return client.exchange(it -> done.get() && it instanceof ReadyForQuery, Flux.<FrontendMessage>just(new CompositeFrontendMessage(messagesToSend)).concatWith(requests.asFlux()))
             .handle((BackendMessage message, SynchronousSink<BackendMessage> sink) -> {
 
                 if (message instanceof CommandComplete) {
-                    requestsSink.next(new Close(portal, PORTAL));
-                    requestsSink.next(Sync.INSTANCE);
-                    requestsSink.complete();
+                    requests.emitNext(new Close(portal, PORTAL), Sinks.EmitFailureHandler.FAIL_FAST);
+                    requests.emitNext(Sync.INSTANCE, Sinks.EmitFailureHandler.FAIL_FAST);
+                    requests.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
                     sink.next(message);
                 } else if (message instanceof CloseComplete) {
-                    requestsSink.complete();
+                    requests.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
                     done.set(true);
                     sink.next(message);
                 } else if (message instanceof ErrorResponse) {
                     done.set(true);
-                    requestsSink.next(Sync.INSTANCE);
-                    requestsSink.complete();
+                    requests.emitNext(Sync.INSTANCE, Sinks.EmitFailureHandler.FAIL_FAST);
+                    requests.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
                     sink.next(message);
                 } else if (message instanceof PortalSuspended) {
 
                     if (isCanceled.get()) {
-                        requestsSink.next(new Close(portal, PORTAL));
-                        requestsSink.next(Sync.INSTANCE);
-                        requestsSink.complete();
+                        requests.emitNext(new Close(portal, PORTAL), Sinks.EmitFailureHandler.FAIL_FAST);
+                        requests.emitNext(Sync.INSTANCE, Sinks.EmitFailureHandler.FAIL_FAST);
+                        requests.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
                     } else {
-                        requestsSink.next(new Execute(portal, fetchSize));
-                        requestsSink.next(Sync.INSTANCE);
+                        requests.emitNext(new Execute(portal, fetchSize), Sinks.EmitFailureHandler.FAIL_FAST);
+                        requests.emitNext(Sync.INSTANCE, Sinks.EmitFailureHandler.FAIL_FAST);
                     }
                 } else if (message instanceof NoData) {
 
                     if (isCanceled.get()) {
-                        requestsSink.next(new Close(portal, PORTAL));
-                        requestsSink.next(Sync.INSTANCE);
-                        requestsSink.complete();
+                        requests.emitNext(new Close(portal, PORTAL), Sinks.EmitFailureHandler.FAIL_FAST);
+                        requests.emitNext(Sync.INSTANCE, Sinks.EmitFailureHandler.FAIL_FAST);
+                        requests.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
                     } else {
                         done.set(true);
                     }
                 } else {
                     sink.next(message);
                 }
-            }).doFinally(ignore -> requestsSink.complete())
+            }).doFinally(ignore -> requests.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST))
             .as(flux -> Operators.discardOnCancel(flux, () -> isCanceled.set(true)));
     }
 
@@ -226,38 +225,37 @@ class ExtendedFlowDelegate {
      */
     private static Flux<BackendMessage> fetchCursoredWithFlush(List<FrontendMessage.DirectEncoder> messagesToSend, Client client, String portal, int fetchSize) {
 
-        DirectProcessor<FrontendMessage> requestsProcessor = DirectProcessor.create();
-        FluxSink<FrontendMessage> requestsSink = requestsProcessor.sink();
+        Sinks.Many<FrontendMessage> requests = Sinks.many().unicast().onBackpressureBuffer(Queues.<FrontendMessage>small().get());
         AtomicBoolean isCanceled = new AtomicBoolean(false);
 
         messagesToSend.add(new Execute(portal, fetchSize));
         messagesToSend.add(Flush.INSTANCE);
 
-        return client.exchange(Flux.<FrontendMessage>just(new CompositeFrontendMessage(messagesToSend)).concatWith(requestsProcessor))
+        return client.exchange(Flux.<FrontendMessage>just(new CompositeFrontendMessage(messagesToSend)).concatWith(requests.asFlux()))
             .handle((BackendMessage message, SynchronousSink<BackendMessage> sink) -> {
 
                 if (message instanceof CommandComplete) {
-                    requestsSink.next(new Close(portal, PORTAL));
-                    requestsSink.next(Sync.INSTANCE);
-                    requestsSink.complete();
+                    requests.emitNext(new Close(portal, PORTAL), Sinks.EmitFailureHandler.FAIL_FAST);
+                    requests.emitNext(Sync.INSTANCE, Sinks.EmitFailureHandler.FAIL_FAST);
+                    requests.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
                     sink.next(message);
                 } else if (message instanceof ErrorResponse) {
-                    requestsSink.next(Sync.INSTANCE);
-                    requestsSink.complete();
+                    requests.emitNext(Sync.INSTANCE, Sinks.EmitFailureHandler.FAIL_FAST);
+                    requests.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
                     sink.next(message);
                 } else if (message instanceof PortalSuspended) {
                     if (isCanceled.get()) {
-                        requestsSink.next(new Close(portal, PORTAL));
-                        requestsSink.next(Sync.INSTANCE);
-                        requestsSink.complete();
+                        requests.emitNext(new Close(portal, PORTAL), Sinks.EmitFailureHandler.FAIL_FAST);
+                        requests.emitNext(Sync.INSTANCE, Sinks.EmitFailureHandler.FAIL_FAST);
+                        requests.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
                     } else {
-                        requestsSink.next(new Execute(portal, fetchSize));
-                        requestsSink.next(Flush.INSTANCE);
+                        requests.emitNext(new Execute(portal, fetchSize), Sinks.EmitFailureHandler.FAIL_FAST);
+                        requests.emitNext(Flush.INSTANCE, Sinks.EmitFailureHandler.FAIL_FAST);
                     }
                 } else {
                     sink.next(message);
                 }
-            }).doFinally(ignore -> requestsSink.complete())
+            }).doFinally(ignore -> requests.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST))
             .as(flux -> Operators.discardOnCancel(flux, () -> isCanceled.set(true)));
     }
 
