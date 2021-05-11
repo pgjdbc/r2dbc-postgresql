@@ -625,11 +625,25 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     }
 
     @Test
+    void pathArray() {
+        testCodec(Path[].class, new Path[]{Path.closed(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(1.1, 2.2)), Path.open(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(0.42, 5.3)),
+            Path.closed(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(0.42, 5.3), Point.of(1.1, 2.2)), Path.open(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(0.42, 5.3),
+            Point.of(-3.5, 0.0))}, "PATH[]");
+    }
+
+    @Test
     void path() {
         testCodec(Path.class, Path.closed(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(1.1, 2.2)), "PATH");
         testCodec(Path.class, Path.open(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(0.42, 5.3)), "PATH");
         testCodec(Path.class, Path.closed(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(0.42, 5.3), Point.of(1.1, 2.2)), "PATH");
         testCodec(Path.class, Path.open(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(0.42, 5.3), Point.of(-3.5, 0.0)), "PATH");
+    }
+
+    @Test
+    void pathTwoDimensionalArray() {
+        testCodec(Path[][].class, new Path[][]{{Path.closed(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(1.1, 2.2)), null, Path.open(Point.of(1.1, 2.2), Point.of(10.10, 10.10),
+            Point.of(0.42, 5.3))}, {Path.closed(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(0.42, 5.3), Point.of(1.1, 2.2)), Path.open(Point.of(1.1, 2.2), Point.of(10.10, 10.10),
+            Point.of(0.42, 5.3), Point.of(-3.5, 0.0)), null}}, "PATH[][]");
     }
 
     @Test
