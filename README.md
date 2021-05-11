@@ -438,7 +438,8 @@ Support for the following single-dimensional arrays (read and write):
 | [`uuid[]`][psql-uuid-ref]                       | [`UUID[]`][java-uuid-ref]|
 | [`boolean[] or bool[]`][psql-boolean-ref]       | [`Boolean[]`][java-boolean-ref]       |
 | [`double precision[]`][psql-floating-point-ref] | [`Double[]`][java-double-ref]         |
-| [`real[]`][psql-real-ref]                         | [**`Float[]`**][java-float-ref], [`Double[]`][java-double-ref], [`Boolean[]`][java-boolean-ref], [`Byte[]`][java-byte-ref], [`Short[]`][java-short-ref], [`Integer[]`][java-integer-ref], [`Long[]`][java-long-ref], [`BigDecimal[]`][java-bigdecimal-ref], [`BigInteger[]`][java-biginteger-ref]|
+| [`polygon[]`][psql-polygon-ref]                 | **`Polygon[]`**|
+| [`real[]`][psql-real-ref]                       | [**`Float[]`**][java-float-ref], [`Double[]`][java-double-ref], [`Boolean[]`][java-boolean-ref], [`Byte[]`][java-byte-ref], [`Short[]`][java-short-ref], [`Integer[]`][java-integer-ref], [`Long[]`][java-long-ref], [`BigDecimal[]`][java-bigdecimal-ref], [`BigInteger[]`][java-biginteger-ref]|
 | [`smallint[]`][psql-smallint-ref]               | [**`Short[]`**][java-short-ref], [`Boolean[]`][java-boolean-ref], [`Byte[]`][java-byte-ref], [`Integer[]`][java-integer-ref], [`Long[]`][java-long-ref], [`BigDecimal[]`][java-bigdecimal-ref], [`BigInteger[]`][java-biginteger-ref]|
 | [`smallserial[]`][psql-smallserial-ref]         | [**`Integer[]`**][java-integer-ref], [`Boolean[]`][java-boolean-ref], [`Byte[]`][java-byte-ref], [`Short[]`][java-short-ref], [`Long[]`][java-long-ref], [`BigDecimal[]`][java-bigdecimal-ref], [`BigInteger[]`][java-biginteger-ref]|
 | [`serial[]`][psql-serial-ref]                   | [**`Long[]`**][java-long-ref], [`Boolean[]`][java-boolean-ref], [`Byte[]`][java-byte-ref], [`Short[]`][java-short-ref], [`Integer[]`][java-integer-ref], [`BigDecimal[]`][java-bigdecimal-ref], [`BigInteger[]`][java-biginteger-ref]|

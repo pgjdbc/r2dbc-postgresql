@@ -36,6 +36,7 @@ import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT2_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT4_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT8_ARRAY;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.POLYGON_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMESTAMP;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMESTAMPTZ;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.VARCHAR;
@@ -111,6 +112,8 @@ final class DefaultCodecsUnitTests {
         assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{alpha,bravo}"), VARCHAR_ARRAY.getObjectId(), FORMAT_TEXT, Object.class)).isEqualTo(new String[]{"alpha", "bravo"});
         assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{\"((1.2, 123.1), 10)\",NULL}"), CIRCLE_ARRAY.getObjectId(), FORMAT_TEXT, Object.class))
             .isEqualTo(new Circle[]{Circle.of(Point.of(1.2, 123.1), 10), null});
+        assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{\"((-10.42,3.14),(10.42,-3.14))\",NULL}"), POLYGON_ARRAY.getObjectId(), FORMAT_TEXT, Object.class))
+            .isEqualTo(new Polygon[]{Polygon.of(Point.of(-10.42, 3.14), Point.of(10.42, -3.14)), null});
     }
 
     @Test

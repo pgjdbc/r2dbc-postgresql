@@ -270,9 +270,14 @@ public enum PostgresqlObjectId implements Type, PostgresTypeIdentifier {
     POINT_ARRAY(1017, Point[].class),
 
     /**
-     * the polygon object id
+     * the polygon object id.
      */
     POLYGON(604, Polygon.class),
+
+    /**
+     * the polygon array object id.
+     */
+    POLYGON_ARRAY( 1027, Polygon[].class),
 
     /**
      * The ref cursor object id.
