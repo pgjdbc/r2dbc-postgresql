@@ -54,6 +54,11 @@ final class BoxCodec extends AbstractGeometryCodec<Box> {
     }
 
     @Override
+    public String encodeToText(Box value) {
+        return value.toString();
+    }
+
+    @Override
     public PostgresTypeIdentifier getArrayDataType() {
         return BOX_ARRAY;
     }

@@ -578,9 +578,19 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     }
 
     @Test
+    void boxArray() {
+        testCodec(Box[].class, new Box[]{Box.of(Point.of(1.9, 2.8), Point.of(3.7, 4.6)), Box.of(Point.of(1.5, 3.3), Point.of(5., 7.))}, "BOX[]");
+    }
+
+    @Test
     void box() {
         testCodec(Box.class, Box.of(Point.of(1.9, 2.8), Point.of(3.7, 4.6)), "BOX");
         testCodec(Box.class, Box.of(Point.of(1.5, 3.3), Point.of(5., 7.)), "BOX");
+    }
+
+    @Test
+    void boxTwoDimensionalArray() {
+        testCodec(Box[][].class, new Box[][]{{null, Box.of(Point.of(1.9, 2.8), Point.of(3.7, 4.6))}, {Box.of(Point.of(1.5, 3.3), Point.of(5., 7.)), null}}, "BOX[][]");
     }
 
     @Test

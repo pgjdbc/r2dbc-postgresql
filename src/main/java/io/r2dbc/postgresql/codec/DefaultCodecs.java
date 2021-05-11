@@ -130,13 +130,17 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
 
                 Assert.requireType(codec, AbstractCodec.class, "Codec " + codec + " must be a subclass of AbstractCodec to be registered as generic array codec");
                 Class<?> componentType = codec.type();
+                ArrayCodecDelegate<?> delegate = (ArrayCodecDelegate<?>) codec;
 
-                if (codec instanceof AbstractNumericCodec) {
-                    defaultArrayCodecs.add(new ConvertingArrayCodec(byteBufAllocator, (ArrayCodecDelegate<?>) codec, componentType, ConvertingArrayCodec.NUMERIC_ARRAY_TYPES));
+                if (codec instanceof BoxCodec) {
+                    // BOX[] uses a ';' as a delimiter (i.e. "{(3.7,4.6),(1.9,2.8);(5,7),(1.5,3.3)}")
+                    defaultArrayCodecs.add(new ArrayCodec(byteBufAllocator, delegate.getArrayDataType(), delegate, componentType, (byte) ';'));
+                } else if (codec instanceof AbstractNumericCodec) {
+                    defaultArrayCodecs.add(new ConvertingArrayCodec(byteBufAllocator, delegate, componentType, ConvertingArrayCodec.NUMERIC_ARRAY_TYPES));
                 } else if (codec instanceof AbstractTemporalCodec) {
-                    defaultArrayCodecs.add(new ConvertingArrayCodec(byteBufAllocator, (ArrayCodecDelegate<?>) codec, componentType, ConvertingArrayCodec.DATE_ARRAY_TYPES));
+                    defaultArrayCodecs.add(new ConvertingArrayCodec(byteBufAllocator, delegate, componentType, ConvertingArrayCodec.DATE_ARRAY_TYPES));
                 } else {
-                    defaultArrayCodecs.add(new ArrayCodec(byteBufAllocator, (ArrayCodecDelegate<?>) codec, componentType));
+                    defaultArrayCodecs.add(new ArrayCodec(byteBufAllocator, delegate, componentType));
                 }
             }
         }

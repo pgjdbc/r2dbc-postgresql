@@ -108,6 +108,25 @@ final class BoxCodecUnitTest {
     }
 
     @Test
+    void decodeText() {
+        BoxCodec codec = new BoxCodec(TEST);
+
+        // Boxes are represented by pairs of points that are opposite corners of the box.
+        // Values of type box are specified using any of the following syntaxes:
+        //  ( ( x1 , y1 ) , ( x2 , y2 ) )
+        //    ( x1 , y1 ) , ( x2 , y2 )
+        //      x1 , y1   ,   x2 , y2
+        assertThat(codec.decode(encode(TEST, "( ( 1.9 , 2.8 ) , ( 3.7 , 4.6 ) )"), dataType, FORMAT_TEXT, Box.class))
+            .isEqualTo(Box.of(Point.of(1.9, 2.8), Point.of(3.7, 4.6)));
+
+        assertThat(codec.decode(encode(TEST, "( 1.9 , 2.8 ) , ( 3.7 , 4.6 )"), dataType, FORMAT_TEXT, Box.class))
+            .isEqualTo(Box.of(Point.of(1.9, 2.8), Point.of(3.7, 4.6)));
+
+        assertThat(codec.decode(encode(TEST, "1.9 , 2.8 , 3.7 , 4.6"), dataType, FORMAT_TEXT, Box.class))
+            .isEqualTo(Box.of(Point.of(1.9, 2.8), Point.of(3.7, 4.6)));
+    }
+
+    @Test
     void encodeNull() {
         ParameterAssert.assertThat(new BoxCodec(TEST).encodeNull())
             .isEqualTo(new EncodedParameter(FORMAT_BINARY, dataType, NULL_VALUE));
