@@ -17,27 +17,17 @@
 package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
-import io.r2dbc.postgresql.client.EncodedParameter;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
-import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
-import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT8;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT8_ARRAY;
-import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
-import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
-import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
- * Unit tests for {@link ArrayCodec <Long>}.
+ * Unit tests for {@link ArrayCodec<Long>}.
  */
-final class LongArrayCodecUnitTests {
+final class LongArrayCodecUnitTests extends AbstractArrayCodecUnitTests<Long> {
 
-    private final ByteBuf BINARY_ARRAY = TEST
+    private final ByteBuf SINGLE_DIM_BINARY_ARRAY = TEST
         .buffer()
         .writeInt(1)
         .writeInt(0)
@@ -49,53 +39,72 @@ final class LongArrayCodecUnitTests {
         .writeInt(8)
         .writeLong(200L);
 
-    ArrayCodec<Long> codec;
+    private final ByteBuf TWO_DIM_BINARY_ARRAY = TEST
+        .buffer()
+        .writeInt(2) // num of dims
+        .writeInt(1) // flag: has nulls
+        .writeInt(20) // oid
+        .writeInt(2) // dim 1 length
+        .writeInt(1) // dim 1 lower bound
+        .writeInt(1) // dim 2 length
+        .writeInt(1) // dim 2 lower bound
+        .writeInt(8) // length of element
+        .writeLong(100L) // value
+        .writeInt(-1); // length of null element
 
-    @BeforeEach
-    void setup() {
-        codec = new ArrayCodec<>(TEST, new LongCodec(TEST), Long.class);
+    @Override
+    ArrayCodec<Long> createInstance() {
+        return new ArrayCodec<>(TEST, new LongCodec(TEST), Long.class);
     }
 
-    @Test
-    void decodeItem() {
-        assertThat(codec.decode(BINARY_ARRAY, 0, FORMAT_BINARY, Long[].class)).isEqualTo(new Long[]{100L, 200L});
-        assertThat(codec.decode(TEST.buffer(), 0, FORMAT_BINARY, Long[].class)).isEqualTo(new Long[]{});
-        assertThat(codec.decode(encode(TEST, "{100,200}"), 0, FORMAT_TEXT, Long[].class)).isEqualTo(new Long[]{100L, 200L});
-        assertThat(codec.decode(encode(TEST, "{}"), 0, FORMAT_TEXT, Long[].class)).isEqualTo(new Long[]{});
+    @Override
+    PostgresqlObjectId getPostgresqlObjectId() {
+        return INT8;
     }
 
-    @Test
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    void decodeObject() {
-        assertThat(((Codec) codec).decode(BINARY_ARRAY, 0, FORMAT_BINARY, Object.class)).isEqualTo(new Long[]{100L, 200L});
-        assertThat(((Codec) codec).decode(encode(TEST, "{100,200}"), 0, FORMAT_TEXT, Object.class)).isEqualTo(new Long[]{100L, 200L});
+    @Override
+    PostgresqlObjectId getArrayPostgresqlObjectId() {
+        return INT8_ARRAY;
     }
 
-    @Test
-    void doCanDecode() {
-        assertThat(codec.doCanDecode(INT8, FORMAT_TEXT)).isFalse();
-        assertThat(codec.doCanDecode(INT8_ARRAY, FORMAT_TEXT)).isTrue();
-        assertThat(codec.doCanDecode(INT8_ARRAY, FORMAT_BINARY)).isTrue();
+    @Override
+    ByteBuf getSingleDimensionBinaryArray() {
+        return SINGLE_DIM_BINARY_ARRAY;
     }
 
-    @Test
-    void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> codec.doCanDecode(null, null))
-            .withMessage("type must not be null");
+    @Override
+    ByteBuf getTwoDimensionBinaryArray() {
+        return TWO_DIM_BINARY_ARRAY;
     }
 
-    @Test
-    void encodeArray() {
-        assertThat(codec.encodeArray(() -> encode(TEST, "{100,200}"), INT8_ARRAY))
-            .hasFormat(FORMAT_TEXT)
-            .hasType(INT8_ARRAY.getObjectId())
-            .hasValue(encode(TEST, "{100,200}"));
+    @Override
+    Class<? extends Long[]> getSingleDimensionArrayType() {
+        return Long[].class;
     }
 
-    @Test
-    void encodeNull() {
-        assertThat(codec.encodeNull())
-            .isEqualTo(new EncodedParameter(FORMAT_BINARY, INT8_ARRAY.getObjectId(), NULL_VALUE));
+    @Override
+    Class<? extends Long[][]> getTwoDimensionArrayType() {
+        return Long[][].class;
+    }
+
+    @Override
+    Long[] getExpectedSingleDimensionArray() {
+        return new Long[]{100L, 200L};
+    }
+
+    @Override
+    Long[][] getExpectedTwoDimensionArray() {
+        return new Long[][]{{100L}, {null}};
+    }
+
+    @Override
+    String getSingleDimensionStringInput() {
+        return "{100,200}";
+    }
+
+    @Override
+    String getTwoDimensionStringInput() {
+        return "{{100},{NULL}}";
     }
 
 }

@@ -1,29 +1,21 @@
 package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
-import io.r2dbc.postgresql.client.EncodedParameter;
-import io.r2dbc.postgresql.client.ParameterAssert;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.CIRCLE;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.CIRCLE_ARRAY;
-import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
  * Unit tests for {@link ArrayCodec<Circle>}.
  */
-final class CircleArrayCodecUnitTests {
+final class CircleArrayCodecUnitTests extends AbstractArrayCodecUnitTests<Circle> {
 
     private static final int dataType = CIRCLE_ARRAY.getObjectId();
-
-    private ArrayCodec<Circle> codec;
 
     private final ByteBuf SINGLE_DIM_BINARY_ARRAY = TEST
         .buffer()
@@ -56,20 +48,65 @@ final class CircleArrayCodecUnitTests {
         .writeDouble(10.0) // radius
         .writeInt(-1); // length of null element
 
-    @BeforeEach
-    void setup() {
-        codec = new ArrayCodec<>(TEST, CIRCLE_ARRAY, new CircleCodec(TEST), Circle.class);
+    @Override
+    ArrayCodec<Circle> createInstance() {
+        return new ArrayCodec<>(TEST, CIRCLE_ARRAY, new CircleCodec(TEST), Circle.class);
+    }
+
+    @Override
+    PostgresqlObjectId getPostgresqlObjectId() {
+        return CIRCLE;
+    }
+
+    @Override
+    PostgresqlObjectId getArrayPostgresqlObjectId() {
+        return CIRCLE_ARRAY;
+    }
+
+    @Override
+    ByteBuf getSingleDimensionBinaryArray() {
+        return SINGLE_DIM_BINARY_ARRAY;
+    }
+
+    @Override
+    ByteBuf getTwoDimensionBinaryArray() {
+        return TWO_DIM_BINARY_ARRAY;
+    }
+
+    @Override
+    Class<? extends Circle[]> getSingleDimensionArrayType() {
+        return Circle[].class;
+    }
+
+    @Override
+    Class<? extends Circle[][]> getTwoDimensionArrayType() {
+        return Circle[][].class;
+    }
+
+    @Override
+    Circle[] getExpectedSingleDimensionArray() {
+        return new Circle[]{Circle.of(Point.of(1.2, 123.1), 10), Circle.of(Point.of(-2.4, -456.2), 20)};
+    }
+
+    @Override
+    Circle[][] getExpectedTwoDimensionArray() {
+        return new Circle[][]{{Circle.of(Point.of(1.2, 123.1), 10)}, {null}};
+    }
+
+    @Override
+    String getSingleDimensionStringInput() {
+        return "{\"<(1.2, 123.1), 10>\",\"<(-2.4, -456.2), 20>\"}";
+    }
+
+    @Override
+    String getTwoDimensionStringInput() {
+        return "{{\"((1.2, 123.1), 10)\"},{NULL}}";
     }
 
     @Test
-    void decodeItem() {
-        assertThat(codec.decode(SINGLE_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Circle[].class))
-            .isEqualTo(new Circle[]{Circle.of(Point.of(1.2, 123.1), 10), Circle.of(Point.of(-2.4, -456.2), 20)});
-    }
-
-    @Test
+    @Override
     void decodeItem_textArray() {
-        Circle[] expected = {Circle.of(Point.of(1.2, 123.1), 10), Circle.of(Point.of(-2.4, -456.2), 20)};
+        Circle[] expected = getExpectedSingleDimensionArray();
         assertThat(codec.decode(encode(TEST, "{\"<(1.2, 123.1), 10>\",\"<(-2.4, -456.2), 20>\"}"), dataType, FORMAT_TEXT, Circle[].class))
             .isEqualTo(expected);
         assertThat(codec.decode(encode(TEST, "{\"((1.2, 123.1), 10)\",\"((-2.4, -456.2), 20)\"}"), dataType, FORMAT_TEXT, Circle[].class))
@@ -78,104 +115,6 @@ final class CircleArrayCodecUnitTests {
             .isEqualTo(expected);
         assertThat(codec.decode(encode(TEST, "{\"1.2, 123.1, 10\",\"-2.4, -456.2, 20\"}"), dataType, FORMAT_TEXT, Circle[].class))
             .isEqualTo(expected);
-    }
-
-    @Test
-    void decodeItem_emptyArray() {
-        assertThat(codec.decode(encode(TEST, "{}"), dataType, FORMAT_TEXT, Circle[][].class))
-            .isEqualTo(new Circle[][]{});
-    }
-
-    @Test
-    void decodeItem_emptyBinaryArray() {
-        ByteBuf buf = TEST
-            .buffer()
-            .writeInt(0)
-            .writeInt(0)
-            .writeInt(718);
-
-        assertThat(codec.decode(buf, dataType, FORMAT_BINARY, Circle[][].class))
-            .isEqualTo(new Circle[][]{});
-    }
-
-    @Test
-    void decodeItem_expectedLessDimensionsInArray() {
-        assertThatIllegalArgumentException()
-            .isThrownBy(() -> codec.decode(encode(TEST, "{{\"((1.2, 123.1), 10)\"}}"), dataType, FORMAT_TEXT, Circle[].class))
-            .withMessage("Dimensions mismatch: 1 expected, but 2 returned from DB");
-    }
-
-    @Test
-    void decodeItem_expectedLessDimensionsInBinaryArray() {
-        assertThatIllegalArgumentException()
-            .isThrownBy(() -> codec.decode(TWO_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Circle[].class))
-            .withMessage("Dimensions mismatch: 1 expected, but 2 returned from DB");
-    }
-
-    @Test
-    void decodeItem_expectedMoreDimensionsInArray() {
-        assertThatIllegalArgumentException()
-            .isThrownBy(() -> codec.decode(encode(TEST, "{\"1.2, 123.1, 10\",\"-2.4, -456.2, 20\"}"), dataType, FORMAT_TEXT, Circle[][].class))
-            .withMessage("Dimensions mismatch: 2 expected, but 1 returned from DB");
-    }
-
-    @Test
-    void decodeItem_expectedMoreDimensionsInBinaryArray() {
-        assertThatIllegalArgumentException()
-            .isThrownBy(() -> codec.decode(SINGLE_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Circle[][].class))
-            .withMessage("Dimensions mismatch: 2 expected, but 1 returned from DB");
-    }
-
-    @Test
-    void decodeItem_twoDimensionalArrayWithNull() {
-        assertThat(codec.decode(encode(TEST, "{{\"((1.2, 123.1), 10)\"},{NULL}}"), dataType, FORMAT_TEXT, Circle[][].class))
-            .isEqualTo(new Circle[][]{{Circle.of(Point.of(1.2, 123.1), 10)}, {null}});
-    }
-
-    @Test
-    void decodeItem_twoDimensionalBinaryArrayWithNull() {
-        assertThat(codec.decode(TWO_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Circle[][].class))
-            .isEqualTo(new Circle[][]{{Circle.of(Point.of(1.2, 123.1), 10)}, {null}});
-    }
-
-    @Test
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    void decodeObject() {
-        Codec genericCodec = codec;
-        assertThat(genericCodec.canDecode(CIRCLE_ARRAY.getObjectId(), FORMAT_TEXT, Object.class)).isTrue();
-        Circle[] expected = {Circle.of(Point.of(1.2, 123.1), 10), Circle.of(Point.of(-2.4, -456.2), 20)};
-
-        assertThat(genericCodec.decode(SINGLE_DIM_BINARY_ARRAY, dataType, FORMAT_BINARY, Object.class))
-            .isEqualTo(expected);
-        assertThat(genericCodec.decode(encode(TEST, "{\"<(1.2, 123.1), 10>\",\"<(-2.4, -456.2), 20>\"}"), dataType, FORMAT_TEXT, Object.class))
-            .isEqualTo(expected);
-    }
-
-    @Test
-    void doCanDecode() {
-        assertThat(codec.doCanDecode(CIRCLE, FORMAT_TEXT)).isFalse();
-        assertThat(codec.doCanDecode(CIRCLE_ARRAY, FORMAT_TEXT)).isTrue();
-        assertThat(codec.doCanDecode(CIRCLE_ARRAY, FORMAT_BINARY)).isTrue();
-    }
-
-    @Test
-    void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> codec.doCanDecode(null, null))
-            .withMessage("type must not be null");
-    }
-
-    @Test
-    void encodeArray() {
-        ParameterAssert.assertThat(codec.encodeArray(() -> encode(TEST, "{\"<(1.2, 123.1), 10>\",\"<(-2.4, -456.2), 20>\"}"), CIRCLE_ARRAY))
-            .hasFormat(FORMAT_TEXT)
-            .hasType(CIRCLE_ARRAY.getObjectId())
-            .hasValue(encode(TEST, "{\"<(1.2, 123.1), 10>\",\"<(-2.4, -456.2), 20>\"}"));
-    }
-
-    @Test
-    void encodeNull() {
-        ParameterAssert.assertThat(codec.encodeNull())
-            .isEqualTo(new EncodedParameter(FORMAT_BINARY, CIRCLE_ARRAY.getObjectId(), NULL_VALUE));
     }
 
 }
