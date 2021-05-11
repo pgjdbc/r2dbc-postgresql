@@ -19,13 +19,16 @@ package io.r2dbc.postgresql.codec;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.LINE;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.LINE_ARRAY;
+
 /**
  * @since 0.8.5
  */
 final class LineCodec extends AbstractGeometryCodec<Line> {
 
     LineCodec(ByteBufAllocator byteBufAllocator) {
-        super(Line.class, PostgresqlObjectId.LINE, byteBufAllocator);
+        super(Line.class, LINE, byteBufAllocator);
     }
 
     @Override
@@ -46,6 +49,11 @@ final class LineCodec extends AbstractGeometryCodec<Line> {
             .writeDouble(value.getA())
             .writeDouble(value.getB())
             .writeDouble(value.getC());
+    }
+
+    @Override
+    public PostgresTypeIdentifier getArrayDataType() {
+        return LINE_ARRAY;
     }
 
 }

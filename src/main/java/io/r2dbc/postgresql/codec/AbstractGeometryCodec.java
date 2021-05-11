@@ -33,7 +33,7 @@ import java.util.List;
  * @param <T> the type that is handled by this {@link Codec}
  * @since 0.8.5
  */
-abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> {
+abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> implements ArrayCodecDelegate<T> {
 
     protected final PostgresqlObjectId postgresqlObjectId;
 
@@ -101,6 +101,11 @@ abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> {
      * @return encoded value
      */
     abstract ByteBuf doEncodeBinary(T value);
+
+    @Override
+    public String encodeToText(T value) {
+        return String.format("\"%s\"", value);
+    }
 
     @Override
     public EncodedParameter encodeNull() {

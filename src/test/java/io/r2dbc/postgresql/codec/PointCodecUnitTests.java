@@ -26,6 +26,7 @@ import static io.r2dbc.postgresql.codec.PostgresqlObjectId.POINT;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
+import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -97,6 +98,20 @@ final class PointCodecUnitTests {
             .hasFormat(FORMAT_BINARY)
             .hasType(POINT.getObjectId())
             .hasValue(pointAsBinary);
+    }
+
+    @Test
+    void decodeText() {
+        PointCodec codec = new PointCodec(TEST);
+
+        // Points are the fundamental two-dimensional building block for geometric types.
+        // Values of type point are specified using either of the following syntaxes:
+        //  ( x , y )
+        //    x , y
+        assertThat(codec.decode(encode(TEST, "(1.2,123.1)"), POINT.getObjectId(), FORMAT_TEXT, Point.class))
+            .isEqualTo(Point.of(1.2, 123.1));
+        assertThat(codec.decode(encode(TEST, "1.2,123.1"), POINT.getObjectId(), FORMAT_TEXT, Point.class))
+            .isEqualTo(Point.of(1.2, 123.1));
     }
 
     @Test

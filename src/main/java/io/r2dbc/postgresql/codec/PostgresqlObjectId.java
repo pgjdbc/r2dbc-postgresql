@@ -65,6 +65,11 @@ public enum PostgresqlObjectId implements Type, PostgresTypeIdentifier {
     BOX(603, Box.class),
 
     /**
+     * The box array object id.
+     */
+    BOX_ARRAY(1020, Box[].class),
+
+    /**
      * The bpchar object id.
      */
     BPCHAR(1042, String.class),
@@ -205,14 +210,24 @@ public enum PostgresqlObjectId implements Type, PostgresTypeIdentifier {
     JSONB_ARRAY(3807, Json.class),
 
     /**
-     * The line object id
+     * The line object id.
      */
     LINE(628, Line.class),
 
     /**
-     * The line segment object id
+     * The line array object id.
+     */
+    LINE_ARRAY(629, Line[].class),
+
+    /**
+     * The line segment object id.
      */
     LSEG(601, Lseg.class),
+
+    /**
+     * The line segment array object id.
+     */
+    LSEG_ARRAY(1018, Lseg[].class),
 
     /**
      * The money object id.
@@ -255,9 +270,14 @@ public enum PostgresqlObjectId implements Type, PostgresTypeIdentifier {
     OID_ARRAY(1028, Integer[].class),
 
     /**
-     * the path object id
+     * The path object id.
      */
     PATH(602, Path.class),
+
+    /**
+     * The path array object id.
+     */
+    PATH_ARRAY(1019, Path[].class),
 
     /**
      * The point object id.
@@ -277,7 +297,7 @@ public enum PostgresqlObjectId implements Type, PostgresTypeIdentifier {
     /**
      * the polygon array object id.
      */
-    POLYGON_ARRAY( 1027, Polygon[].class),
+    POLYGON_ARRAY(1027, Polygon[].class),
 
     /**
      * The ref cursor object id.
