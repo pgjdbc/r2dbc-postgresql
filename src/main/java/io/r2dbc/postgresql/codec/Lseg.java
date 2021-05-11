@@ -34,6 +34,19 @@ public final class Lseg {
         return new Lseg(p1, p2);
     }
 
+    /**
+     * Create a new {@link Lseg} given parameters {@code p1x}, {@code p1y}, {@code p2x} and {@code p2y}.
+     *
+     * @param p1x the x axis coordinate of {@link Point point} p1
+     * @param p1y the y axis coordinate of {@link Point point} p1
+     * @param p2x the x axis coordinate of {@link Point point} p2
+     * @param p2y the y axis coordinate of {@link Point point} p2
+     * @return the new {@link Lseg} object
+     */
+    public static Lseg of(double p1x, double p1y, double p2x, double p2y) {
+        return new Lseg(Point.of(p1x, p1y), Point.of(p2x, p2y));
+    }
+
     public Point getP1() {
         return this.p1;
     }

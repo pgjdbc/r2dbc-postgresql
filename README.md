@@ -437,6 +437,7 @@ Support for the following single-dimensional arrays (read and write):
 | [`integer`[]][psql-integer-ref]                 | [**`Integer[]`**][java-integer-ref], [`Boolean[]`][java-boolean-ref], [`Byte[]`][java-byte-ref], [`Short[]`][java-short-ref], [`Long[]`][java-long-ref], [`BigDecimal[]`][java-bigdecimal-ref], [`BigInteger[]`][java-biginteger-ref]|
 | [`interval[]`][psql-interval-ref]               | **`Interval[]`**|
 | [`line[]`][psql-line-ref]                       | **`Line[]`**|
+| [`lseg[]`][psql-lseq-ref]                       | **`Lseg[]`**|
 | [`numeric[]`][psql-bignumeric-ref]              | [`BigDecimal[]`][java-bigdecimal-ref], [`Boolean[]`][java-boolean-ref], [`Byte[]`][java-byte-ref], [`Short[]`][java-short-ref], [`Integer[]`][java-integer-ref], [`Long[]`][java-long-ref], [`BigInteger[]`][java-biginteger-ref]|
 | [`double precision[]`][psql-floating-point-ref] | [`Double[]`][java-double-ref]         |
 | [`point[]`][psql-point-ref]                     | **`Point[]`**|
