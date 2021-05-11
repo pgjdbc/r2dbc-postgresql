@@ -98,6 +98,26 @@ final class PolygonCodecUnitTest {
     }
 
     @Test
+    void decodeText() {
+        // Polygons are represented by lists of points (the vertexes of the polygon).
+        // Values of type polygon are specified using any of the following syntaxes:
+        //  ( ( x1 , y1 ) , ... , ( xn , yn ) )
+        //    ( x1 , y1 ) , ... , ( xn , yn )
+        //    ( x1 , y1   , ... ,   xn , yn )
+        //      x1 , y1   , ... ,   xn , yn
+        PolygonCodec codec = new PolygonCodec(TEST);
+
+        assertThat(codec.decode(encode(TEST, "((-10.42,3.14),(10.42,-3.14))"), dataType, FORMAT_TEXT, Polygon.class))
+            .isEqualTo(Polygon.of(Point.of(-10.42, 3.14), Point.of(10.42, -3.14)));
+        assertThat(codec.decode(encode(TEST, "(-10.42,3.14),(10.42,-3.14)"), dataType, FORMAT_TEXT, Polygon.class))
+            .isEqualTo(Polygon.of(Point.of(-10.42, 3.14), Point.of(10.42, -3.14)));
+        assertThat(codec.decode(encode(TEST, "(-10.42,3.14,10.42,-3.14)"), dataType, FORMAT_TEXT, Polygon.class))
+            .isEqualTo(Polygon.of(Point.of(-10.42, 3.14), Point.of(10.42, -3.14)));
+        assertThat(codec.decode(encode(TEST, "-10.42,3.14,10.42,-3.14"), dataType, FORMAT_TEXT, Polygon.class))
+            .isEqualTo(Polygon.of(Point.of(-10.42, 3.14), Point.of(10.42, -3.14)));
+    }
+
+    @Test
     void encodeNull() {
         ParameterAssert.assertThat(new PolygonCodec(TEST).encodeNull())
             .isEqualTo(new EncodedParameter(FORMAT_BINARY, dataType, NULL_VALUE));
