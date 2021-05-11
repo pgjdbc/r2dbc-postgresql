@@ -19,6 +19,9 @@ package io.r2dbc.postgresql.codec;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.LINE;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.LINE_ARRAY;
 
@@ -36,10 +39,33 @@ final class LineCodec extends AbstractGeometryCodec<Line> {
         return Line.of(byteBuffer.readDouble(), byteBuffer.readDouble(), byteBuffer.readDouble());
     }
 
+    /**
+     * Decodes {@code text} into lines that are represented by the linear
+     * equation Ax + By + C = 0, where A and B are not both zero.
+     * <p>
+     * Values of type line are input and output in the following form:
+     * <ul>
+     *     <li>{ A, B, C }</li>
+     * </ul>
+     * <p>
+     * Alternatively, any of the following forms can be used for input:
+     * <ul>
+     *     <li>[ ( x1 , y1 ) , ( x2 , y2 ) ]</li>
+     *     <li>( ( x1 , y1 ) , ( x2 , y2 ) )</li>
+     *     <li>&nbsp; ( x1 , y1 ) , ( x2 , y2 )</li>
+     *     <li>&nbsp; &nbsp; x1 , y1 &nbsp; , &nbsp; x2 , y2</li>
+     * </ul>
+     *
+     * @param text string containing the textual representation of the value to decode
+     * @return the decoded line
+     */
     @Override
     Line doDecodeText(String text) {
-        TokenStream stream = getTokenStream(text);
-        return Line.of(stream.nextDouble(), stream.nextDouble(), stream.nextDouble());
+        List<Double> list = new ArrayList<>();
+        getTokenStream(text).forEachRemaining(e -> list.add(Double.parseDouble(e)));
+        return list.size() == 3
+            ? Line.of(list.get(0), list.get(1), list.get(2))
+            : Line.of(list.get(0), list.get(1), list.get(2), list.get(3));
     }
 
     @Override

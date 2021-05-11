@@ -106,6 +106,34 @@ final class LineCodecUnitTest {
     }
 
     @Test
+    void decodeText() {
+        LineCodec codec = new LineCodec(TEST);
+
+        // Lines are represented by the linear equation Ax + By + C = 0, where A and B are not both zero.
+        // Values of type line are input and output in the following form:
+        //  { A, B, C }
+        // Alternatively, any of the following forms can be used for input:
+        //  [ ( x1 , y1 ) , ( x2 , y2 ) ]
+        //  ( ( x1 , y1 ) , ( x2 , y2 ) )
+        //    ( x1 , y1 ) , ( x2 , y2 )
+        //      x1 , y1   ,   x2 , y2
+        assertThat(codec.decode(encode(TEST, "{ 5.5, 3.2, 8 }"), dataType, FORMAT_TEXT, Line.class))
+            .isEqualTo(Line.of(5.5, 3.2, 8));
+
+        assertThat(codec.decode(encode(TEST, "[(6.6,3.5), (6.6,-2.36)]"), dataType, FORMAT_TEXT, Line.class))
+            .isEqualTo(Line.of(6.6, 3.5, 6.6, -2.36));
+
+        assertThat(codec.decode(encode(TEST, "((6.6,3.5), (6.6,-2.36))"), dataType, FORMAT_TEXT, Line.class))
+            .isEqualTo(Line.of(6.6, 3.5, 6.6, -2.36));
+
+        assertThat(codec.decode(encode(TEST, "(6.6,3.5), (6.6,-2.36)"), dataType, FORMAT_TEXT, Line.class))
+            .isEqualTo(Line.of(6.6, 3.5, 6.6, -2.36));
+
+        assertThat(codec.decode(encode(TEST, "6.6,3.5, 6.6,-2.36a"), dataType, FORMAT_TEXT, Line.class))
+            .isEqualTo(Line.of(6.6, 3.5, 6.6, -2.36));
+    }
+
+    @Test
     void encodeNull() {
         ParameterAssert.assertThat(new LineCodec(TEST).encodeNull())
             .isEqualTo(new EncodedParameter(FORMAT_BINARY, dataType, NULL_VALUE));

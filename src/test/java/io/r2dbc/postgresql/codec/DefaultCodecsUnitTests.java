@@ -36,6 +36,7 @@ import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT2_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT4_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT8_ARRAY;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.LINE_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.POINT_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.POLYGON_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMESTAMP;
@@ -117,6 +118,8 @@ final class DefaultCodecsUnitTests {
             .isEqualTo(new Polygon[]{Polygon.of(Point.of(-10.42, 3.14), Point.of(10.42, -3.14)), null});
         assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{\"(1.12,2.12)\",\"(-2147483648,2147483647)\",NULL}"), POINT_ARRAY.getObjectId(), FORMAT_TEXT, Object.class))
             .isEqualTo(new Point[]{Point.of(1.12, 2.12), Point.of(Integer.MIN_VALUE, Integer.MAX_VALUE), null});
+        assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{\"{ 5.5, 3.2, 8 }\",\"{3,4,5}\",NULL}"), LINE_ARRAY.getObjectId(), FORMAT_TEXT, Object.class))
+            .isEqualTo(new Line[]{Line.of(5.5, 3.2, 8), Line.of(3, 4, 5), null});
     }
 
     @Test

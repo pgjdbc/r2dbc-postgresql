@@ -150,7 +150,7 @@ abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> implements Arra
     }
 
     /**
-     * Remove token wrappers such as {@code <>}, {@code []}, {@code {}}, {@code ()} and extract tokens into a {@link List}.
+     * Remove token wrappers such as {@code <>}, {@code []}, {@code {}}, {@code ()}, {@code <spaces>} and extract tokens into a {@link List}.
      *
      * @param content the content to decode.
      * @return tokenized content.
@@ -163,9 +163,9 @@ abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> implements Arra
         for (int i = 0, tokenStart = 0; i < length; i++) {
 
             char c = content.charAt(i);
-            if (c == '(' || c == '[' || c == '<' || c == '{') {
+            if (c == '(' || c == '[' || c == '<' || c == '{' || (c == ' ' && tokenStart >= i)) {
                 tokenStart++;
-            } else if (c == ',' || c == ')' || c == ']' || c == '>' || c == '}') {
+            } else if (c == ',' || c == ')' || c == ']' || c == '>' || c == '}' || c == ' ') {
                 if (tokenStart != i) {
                     tokens.add(content.substring(tokenStart, i));
                     tokenStart = i + 1;

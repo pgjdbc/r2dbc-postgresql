@@ -584,9 +584,19 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     }
 
     @Test
+    void lineArray() {
+        testCodec(Line[].class, new Line[]{Line.of(1., 2., 4.), Line.of(-10.42, 3.14, 5.24)}, "LINE[]");
+    }
+
+    @Test
     void line() {
         testCodec(Line.class, Line.of(1., 2., 4.), "LINE");
         testCodec(Line.class, Line.of(-10.42, 3.14, 5.24), "LINE");
+    }
+
+    @Test
+    void lineTwoDimensionalArray() {
+        testCodec(Line[][].class, new Line[][]{{Line.of(1., 2., 4.), Line.of(-10.42, 3.14, 5.24)}, {null, Line.of(3, 4, 5)}}, "LINE[][]");
     }
 
     @Test
