@@ -476,10 +476,20 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     }
 
     @Test
+    void pointArray() {
+        testCodec(Point[].class, new Point[]{Point.of(1.12, 2.12), Point.of(Integer.MIN_VALUE, Integer.MAX_VALUE), Point.of(Double.MIN_VALUE, Double.MAX_VALUE)}, "POINT[]");
+    }
+
+    @Test
     void point() {
         testCodec(Point.class, Point.of(1.12, 2.12), "POINT");
         testCodec(Point.class, Point.of(Integer.MIN_VALUE, Integer.MAX_VALUE), "POINT");
         testCodec(Point.class, Point.of(Double.MIN_VALUE, Double.MAX_VALUE), "POINT");
+    }
+
+    @Test
+    void pointTwoDimensionalArray() {
+        testCodec(Point[][].class, new Point[][]{{Point.of(1.12, 2.12), Point.of(Integer.MIN_VALUE, Integer.MAX_VALUE)}, {Point.of(Double.MIN_VALUE, Double.MAX_VALUE), null}}, "POINT[][]");
     }
 
     @Test

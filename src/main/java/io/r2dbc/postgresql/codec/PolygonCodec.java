@@ -27,7 +27,7 @@ import static io.r2dbc.postgresql.codec.PostgresqlObjectId.POLYGON_ARRAY;
 /**
  * @since 0.8.5
  */
-final class PolygonCodec extends AbstractGeometryCodec<Polygon> implements ArrayCodecDelegate<Polygon> {
+final class PolygonCodec extends AbstractGeometryCodec<Polygon> {
 
     PolygonCodec(ByteBufAllocator byteBufAllocator) {
         super(Polygon.class, PostgresqlObjectId.POLYGON, byteBufAllocator);
@@ -68,11 +68,6 @@ final class PolygonCodec extends AbstractGeometryCodec<Polygon> implements Array
         points.forEach(point -> buffer.writeDouble(point.getX()).writeDouble(point.getY()));
 
         return buffer;
-    }
-
-    @Override
-    public String encodeToText(Polygon value) {
-        return String.format("\"%s\"", value);
     }
 
     @Override

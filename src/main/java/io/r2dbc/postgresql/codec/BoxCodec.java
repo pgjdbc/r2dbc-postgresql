@@ -19,13 +19,16 @@ package io.r2dbc.postgresql.codec;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.BOX;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.BOX_ARRAY;
+
 /**
  * @since 0.8.5
  */
 final class BoxCodec extends AbstractGeometryCodec<Box> {
 
     BoxCodec(ByteBufAllocator byteBufAllocator) {
-        super(Box.class, PostgresqlObjectId.BOX, byteBufAllocator);
+        super(Box.class, BOX, byteBufAllocator);
     }
 
     @Override
@@ -48,6 +51,11 @@ final class BoxCodec extends AbstractGeometryCodec<Box> {
             .writeDouble(value.getA().getY())
             .writeDouble(value.getB().getX())
             .writeDouble(value.getB().getY());
+    }
+
+    @Override
+    public PostgresTypeIdentifier getArrayDataType() {
+        return BOX_ARRAY;
     }
 
 }

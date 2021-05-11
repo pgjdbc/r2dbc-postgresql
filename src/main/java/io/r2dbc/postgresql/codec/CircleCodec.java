@@ -25,7 +25,7 @@ import static io.r2dbc.postgresql.codec.PostgresqlObjectId.CIRCLE_ARRAY;
 /**
  * @since 0.8.5
  */
-final class CircleCodec extends AbstractGeometryCodec<Circle> implements ArrayCodecDelegate<Circle> {
+final class CircleCodec extends AbstractGeometryCodec<Circle> {
 
     CircleCodec(ByteBufAllocator byteBufAllocator) {
         super(Circle.class, CIRCLE, byteBufAllocator);
@@ -49,11 +49,6 @@ final class CircleCodec extends AbstractGeometryCodec<Circle> implements ArrayCo
             .writeDouble(center.getX())
             .writeDouble(center.getY())
             .writeDouble(value.getRadius());
-    }
-
-    @Override
-    public String encodeToText(Circle value) {
-        return String.format("\"%s\"", value);
     }
 
     @Override
