@@ -106,6 +106,29 @@ final class LsegCodecUnitTest {
     }
 
     @Test
+    void decodeText() {
+        LsegCodec codec = new LsegCodec(TEST);
+
+        // Line segments are represented by pairs of points that are the endpoints of the segment.
+        // Values of type lseg are specified using any of the following syntaxes:
+        //  [ ( x1 , y1 ) , ( x2 , y2 ) ]
+        //  ( ( x1 , y1 ) , ( x2 , y2 ) )
+        //    ( x1 , y1 ) , ( x2 , y2 )
+        //      x1 , y1   ,   x2 , y2
+        assertThat(codec.decode(encode(TEST, "[(6.6,3.5), (6.6,-2.36)]"), dataType, FORMAT_TEXT, Lseg.class))
+            .isEqualTo(Lseg.of(6.6, 3.5, 6.6, -2.36));
+
+        assertThat(codec.decode(encode(TEST, "((6.6,3.5), (6.6,-2.36))"), dataType, FORMAT_TEXT, Lseg.class))
+            .isEqualTo(Lseg.of(6.6, 3.5, 6.6, -2.36));
+
+        assertThat(codec.decode(encode(TEST, "(6.6,3.5), (6.6,-2.36)"), dataType, FORMAT_TEXT, Lseg.class))
+            .isEqualTo(Lseg.of(6.6, 3.5, 6.6, -2.36));
+
+        assertThat(codec.decode(encode(TEST, "6.6,3.5,6.6,-2.36"), dataType, FORMAT_TEXT, Lseg.class))
+            .isEqualTo(Lseg.of(6.6, 3.5, 6.6, -2.36));
+    }
+
+    @Test
     void encodeNull() {
         ParameterAssert.assertThat(new LsegCodec(TEST).encodeNull())
             .isEqualTo(new EncodedParameter(FORMAT_BINARY, dataType, NULL_VALUE));

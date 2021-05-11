@@ -610,8 +610,18 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     }
 
     @Test
+    void lsegArray() {
+        testCodec(Lseg[].class, new Lseg[]{Lseg.of(1.11, 2.22, 3.33, 4.44), Lseg.of(6.6, 3.5, 6.6, -2.36)}, "LSEG[]");
+    }
+
+    @Test
     void lseg() {
         testCodec(Lseg.class, Lseg.of(Point.of(1.11, 2.22), Point.of(3.33, 4.44)), "LSEG");
+    }
+
+    @Test
+    void lsegTwoDimensionalArray() {
+        testCodec(Lseg[][].class, new Lseg[][]{{null, Lseg.of(1.11, 2.22, 3.33, 4.44)}, {Lseg.of(6.6, 3.5, 6.6, -2.36), null}}, "LSEG[][]");
     }
 
     @Test
