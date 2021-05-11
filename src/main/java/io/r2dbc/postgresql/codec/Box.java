@@ -41,6 +41,20 @@ public final class Box {
         return new Box(a, b);
     }
 
+    /**
+     * Create a new {@link Box} given parameters {@code ax}, {@code ay}, {@code bx} and {@code by}.
+     * <p>Any two opposite corners can be supplied on input, but the values will be reordered as needed to store the upper right and lower left corners, in that order.
+     *
+     * @param ax the x axis coordinate of {@link Point point} a
+     * @param ay the y axis coordinate of {@link Point point} a
+     * @param bx the x axis coordinate of {@link Point point} b
+     * @param by the y axis coordinate of {@link Point point} b
+     * @return the new {@link Box} object
+     */
+    public static Box of(double ax, double ay, double bx, double by) {
+        return new Box(Point.of(ax, ay), Point.of(bx, by));
+    }
+
     public Point getA() {
         return this.a;
     }

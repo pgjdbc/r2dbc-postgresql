@@ -129,7 +129,7 @@ final class LineCodecUnitTest {
         assertThat(codec.decode(encode(TEST, "(6.6,3.5), (6.6,-2.36)"), dataType, FORMAT_TEXT, Line.class))
             .isEqualTo(Line.of(6.6, 3.5, 6.6, -2.36));
 
-        assertThat(codec.decode(encode(TEST, "6.6,3.5, 6.6,-2.36a"), dataType, FORMAT_TEXT, Line.class))
+        assertThat(codec.decode(encode(TEST, "6.6,3.5, 6.6,-2.36"), dataType, FORMAT_TEXT, Line.class))
             .isEqualTo(Line.of(6.6, 3.5, 6.6, -2.36));
     }
 
