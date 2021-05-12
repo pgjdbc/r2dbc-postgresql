@@ -19,11 +19,8 @@ package io.r2dbc.postgresql;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.RepeatedTest;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import reactor.test.StepVerifier;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Integration tests for cancellation.
@@ -50,23 +47,6 @@ final class PostgresCancelIntegrationTests extends AbstractIntegrationTests {
     @AfterAll
     void tearDown() {
         super.tearDown();
-    }
-
-    @Test
-    void shouldBeginAndCommitCancel() throws InterruptedException {
-
-        // precondition
-        assertThat(this.connection.isAutoCommit()).isTrue();
-
-        this.connection.beginTransaction().then(this.connection.commitTransaction())
-            .as(StepVerifier::create)
-            .thenCancel()
-            .verify();
-
-        // await completion
-        Thread.sleep(100);
-
-        assertThat(this.connection.isAutoCommit()).isTrue();
     }
 
     @RepeatedTest(NUMBER_REPETITIONS)
