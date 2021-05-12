@@ -72,7 +72,7 @@ public final class Polygon {
 
     @Override
     public String toString() {
-        return String.format("(%s)", this.points.stream().map(Point::toString).collect(Collectors.joining(", ")));
+        return "(" + this.points.stream().map(Point::toString).collect(Collectors.joining(", ")) + ")";
     }
 
 }

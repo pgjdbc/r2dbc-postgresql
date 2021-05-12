@@ -118,7 +118,7 @@ public final class Line {
 
     @Override
     public String toString() {
-        return String.format("{%s,%s,%s}", this.a, this.b, this.c);
+        return "{" + this.a + "," + this.b + "," + this.c + "}";
     }
 
 }

@@ -83,7 +83,7 @@ public final class Box {
 
     @Override
     public String toString() {
-        return String.format("(%s,%s)", this.a, this.b);
+        return "(" + this.a + "," + this.b + ")";
     }
 
 }

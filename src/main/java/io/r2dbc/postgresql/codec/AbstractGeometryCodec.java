@@ -104,7 +104,7 @@ abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> implements Arra
 
     @Override
     public String encodeToText(T value) {
-        return String.format("\"%s\"", value);
+        return "\"" + value + "\"";
     }
 
     @Override
