@@ -1,6 +1,15 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+0.8.8.RELEASE
+-----------------------------------------
+* Upgrade to Reactor Dysprosium SR20 #406
+* Upgrade to SPI 0.8.5.RELEASE #405
+* PG Bouncer tests fail with [08P01] password authentication failed #402
+* QueryLogger not used by ExtendedFlowDelegate #400
+* Overflow Exception when fetchSize is set #395
+* Can't bind Boolean[] types #394
+
 0.8.7.RELEASE
 -----------------------------------------
 * Upgrade to R2DBC SPI 0.8.4.RELEASE #387
