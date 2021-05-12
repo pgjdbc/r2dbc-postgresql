@@ -93,7 +93,7 @@ public final class Point {
 
     @Override
     public String toString() {
-        return String.format("(%s,%s)", this.x, this.y);
+        return "(" + this.x + "," + this.y + ")";
     }
 
 }

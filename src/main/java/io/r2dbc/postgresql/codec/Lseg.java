@@ -75,7 +75,7 @@ public final class Lseg {
 
     @Override
     public String toString() {
-        return String.format("[%s,%s]", this.p1, this.p2);
+        return "[" + this.p1 + "," + this.p2 + "]";
     }
 
 }
