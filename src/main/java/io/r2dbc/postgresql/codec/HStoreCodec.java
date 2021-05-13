@@ -25,6 +25,8 @@ import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
+
+import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -52,9 +54,9 @@ final class HStoreCodec implements Codec<Map> {
 
     }
 
+    private static final Class<Map> TYPE = Map.class;
+    
     private final ByteBufAllocator byteBufAllocator;
-
-    private final Class<Map> type = Map.class;
 
     private final int oid;
 
@@ -73,23 +75,21 @@ final class HStoreCodec implements Codec<Map> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        Assert.requireNonNull(type, "type must not be null");
-
-        return dataType == this.oid && type.isAssignableFrom(this.type);
+        return dataType == this.oid && type.isAssignableFrom(TYPE);
     }
 
     @Override
     public boolean canEncode(Object value) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return this.type.isInstance(value);
+        return TYPE.isInstance(value);
     }
 
     @Override
     public boolean canEncodeNull(Class<?> type) {
         Assert.requireNonNull(type, "type must not be null");
 
-        return this.type.isAssignableFrom(type);
+        return TYPE.isAssignableFrom(type);
     }
 
     @Override
@@ -126,10 +126,9 @@ final class HStoreCodec implements Codec<Map> {
 
     private static Map<String, String> decodeTextFormat(ByteBuf buffer) {
         Map<String, String> map = new LinkedHashMap<>();
-        StringBuilder mutableBuffer = new StringBuilder();
 
         while (buffer.isReadable()) {
-            String key = readString(mutableBuffer, buffer);
+            String key = readString(buffer);
             if (key == null) {
                 break;
             }
@@ -140,7 +139,7 @@ final class HStoreCodec implements Codec<Map> {
                 value = null;
                 buffer.skipBytes(4);// skip 'NULL'.
             } else {
-                value = readString(mutableBuffer, buffer);
+                value = readString(buffer);
             }
             map.put(key, value);
 
@@ -163,9 +162,10 @@ final class HStoreCodec implements Codec<Map> {
     }
 
     @Nullable
-    private static String readString(StringBuilder mutableBuffer, ByteBuf buffer) {
-        mutableBuffer.setLength(0);
+    private static String readString(ByteBuf buffer) {
+        ByteBuffer accBuffer = ByteBuffer.allocate(buffer.capacity());
         int position = buffer.forEachByte(new IndexOfProcessor((byte) '"'));
+
         if (position > buffer.writerIndex()) {
             return null;
         }
@@ -175,18 +175,21 @@ final class HStoreCodec implements Codec<Map> {
         }
 
         while (buffer.isReadable()) {
-            char c = (char) buffer.readByte();
+            byte b = buffer.readByte();
+            char c = (char) b;
+            
             if (c == '"') {
                 break;
-            } else if (c == '\\') {
-                c = (char) buffer.readByte();
             }
-            mutableBuffer.append(c);
+            
+            if (c == '\\') {
+                b = buffer.readByte();
+            }
+            
+            accBuffer.put(b);
         }
 
-        String result = mutableBuffer.toString();
-        mutableBuffer.setLength(0);
-        return result;
+        return new String(accBuffer.array(), 0, accBuffer.position(), UTF_8);
     }
 
     @Override
@@ -233,7 +236,7 @@ final class HStoreCodec implements Codec<Map> {
 
     @Override
     public Class<?> type() {
-        return this.type;
+        return TYPE;
     }
 
 }
