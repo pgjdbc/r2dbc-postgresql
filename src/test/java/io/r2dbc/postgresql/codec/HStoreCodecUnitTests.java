@@ -53,12 +53,14 @@ final class HStoreCodecUnitTests {
     @Test
     void decodeAsText() {
         ByteBuf buffer = TEST.buffer();
-        buffer.writeCharSequence("\"b\"=>\"\\\"2.2\", \"a\\\"\"=>\"1\", \"c\"=>NULL", Charset.defaultCharset());
+        buffer.writeCharSequence("\"b\"=>\"\\\"2.2\", \"a\\\"\"=>\"1\", \"c\"=>NULL, \"d\"=>\"Zoë\", \"é\"=>\"120°\"", Charset.defaultCharset());
         Map<String, String> res = new HStoreCodec(TEST, dataType).decode(buffer, dataType, Format.FORMAT_TEXT, Map.class);
         Map<String, String> expect = new HashMap<>();
         expect.put("a\"", "1");
         expect.put("b", "\"2.2");
         expect.put("c", null);
+        expect.put("d", "Zoë");
+        expect.put("é", "120°");
 
         Assertions.assertThat(res).isEqualTo(expect);
     }
