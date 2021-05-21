@@ -16,14 +16,21 @@
 
 package io.r2dbc.postgresql.codec;
 
-import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.client.EncodedParameter;
-import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 
 import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
@@ -49,11 +56,27 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for {@link DefaultCodecs}.
  */
+@ExtendWith(MockitoExtension.class)
 final class DefaultCodecsUnitTests {
+
+    DefaultCodecs codecs = new DefaultCodecs(TEST);
+
+    @Captor
+    ArgumentCaptor<Predicate<Codec<?>>> predicateArgumentCaptor;
+
+    @Captor
+    ArgumentCaptor<Map<Integer, Codec<?>>> cacheArgumentCaptor;
+
+    @Mock
+    Codec<String> dummyCodec;
 
     @Test
     void constructorNoByteBufAllocator() {
@@ -63,44 +86,42 @@ final class DefaultCodecsUnitTests {
 
     @Test
     void decode() {
-        assertThat(new DefaultCodecs(TEST).decode(TEST.buffer(4).writeInt(100), INT4.getObjectId(), FORMAT_BINARY, Integer.class))
+        assertThat(codecs.decode(TEST.buffer(4).writeInt(100), INT4.getObjectId(), FORMAT_BINARY, Integer.class))
             .isEqualTo(100);
     }
 
     @Test
     void decodeDefaultType() {
-        assertThat(new DefaultCodecs(TEST).decode(TEST.buffer(4).writeInt(100), INT4.getObjectId(), FORMAT_BINARY, Object.class))
+        assertThat(codecs.decode(TEST.buffer(4).writeInt(100), INT4.getObjectId(), FORMAT_BINARY, Object.class))
             .isEqualTo(100);
     }
 
     @Test
     void decodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new DefaultCodecs(TEST).decode(TEST.buffer(4), INT4.getObjectId(), null, Object.class))
+        assertThatIllegalArgumentException().isThrownBy(() -> codecs.decode(TEST.buffer(4), INT4.getObjectId(), null, Object.class))
             .withMessage("format must not be null");
     }
 
     @Test
     void decodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new DefaultCodecs(TEST).decode(TEST.buffer(4), INT4.getObjectId(), FORMAT_BINARY, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> codecs.decode(TEST.buffer(4), INT4.getObjectId(), FORMAT_BINARY, null))
             .withMessage("type must not be null");
     }
 
     @Test
     void decodeNull() {
-        assertThat(new DefaultCodecs(TEST).decode(null, INT4.getObjectId(), FORMAT_BINARY, Integer.class))
+        assertThat(codecs.decode(null, INT4.getObjectId(), FORMAT_BINARY, Integer.class))
             .isNull();
     }
 
     @Test
     void decodeUnsupportedType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new DefaultCodecs(TEST).decode(TEST.buffer(4), INT4.getObjectId(), FORMAT_BINARY, Void.class))
+        assertThatIllegalArgumentException().isThrownBy(() -> codecs.decode(TEST.buffer(4), INT4.getObjectId(), FORMAT_BINARY, Void.class))
             .withMessage("Cannot decode value of type java.lang.Void with OID 23");
     }
 
     @Test
     void delegatePriority() {
-        Codecs codecs = new DefaultCodecs(TEST);
-
         assertThat(codecs.decode(TEST.buffer(2).writeShort((byte) 100), INT2.getObjectId(), FORMAT_BINARY, Object.class)).isInstanceOf(Short.class);
         assertThat(codecs.decode(ByteBufUtils.encode(TEST, "100"), INT2.getObjectId(), FORMAT_TEXT, Object.class)).isInstanceOf(Short.class);
         assertThat(codecs.decode(ByteBufUtils.encode(TEST, "test"), VARCHAR.getObjectId(), FORMAT_TEXT, Object.class)).isInstanceOf(String.class);
@@ -127,7 +148,7 @@ final class DefaultCodecsUnitTests {
 
     @Test
     void encode() {
-        EncodedParameter parameter = new DefaultCodecs(TEST).encode(100);
+        EncodedParameter parameter = codecs.encode(100);
 
         assertThat(parameter)
             .hasFormat(FORMAT_BINARY)
@@ -137,42 +158,46 @@ final class DefaultCodecsUnitTests {
 
     @Test
     void encodeNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new DefaultCodecs(TEST).encode(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> codecs.encode(null))
             .withMessage("value must not be null");
     }
 
     @Test
     void encodeNull() {
-        EncodedParameter parameter = new DefaultCodecs(TEST).encodeNull(Integer.class);
+        EncodedParameter parameter = codecs.encodeNull(Integer.class);
 
         assertThat(parameter).isEqualTo(new EncodedParameter(FORMAT_BINARY, INT4.getObjectId(), NULL_VALUE));
     }
 
     @Test
     void encodeNullNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new DefaultCodecs(TEST).encodeNull(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> codecs.encodeNull(null))
             .withMessage("type must not be null");
     }
 
     @Test
     void addCodecFirst() {
-        DefaultCodecs codecs = new DefaultCodecs(TEST);
-        codecs.addFirst(DummyCodec.INSTANCE);
-        assertThat(codecs).startsWith(DummyCodec.INSTANCE);
+        DefaultCodecs spyCodecs = spy(codecs);
+        Codec<?> stringCodec = spyCodecs.findEncodeCodec("string");
+        when(dummyCodec.canEncode("string")).thenReturn(true);
+        spyCodecs.addFirst(dummyCodec);
+        assertThat(spyCodecs).startsWith(dummyCodec);
+        // Make sure the cache is invalidated and the overridden codec is now returned in place of the default one
+        verify(spyCodecs).invalidateCaches();
+        Codec<?> overriddenStringCodec = spyCodecs.findEncodeCodec("string");
+        assertThat(overriddenStringCodec).isNotEqualTo(stringCodec).isEqualTo(dummyCodec);
     }
 
     @Test
     void addCodecLast() {
-        DefaultCodecs codecs = new DefaultCodecs(TEST);
-        codecs.addLast(DummyCodec.INSTANCE);
-        assertThat(codecs).endsWith(DummyCodec.INSTANCE);
+        DefaultCodecs spyCodecs = spy(codecs);
+        spyCodecs.addLast(dummyCodec);
+        assertThat(spyCodecs).endsWith(dummyCodec);
+        verify(spyCodecs).invalidateCaches();
     }
 
     @Test
     void decodeDoubleAsFloatArray() {
-
-        DefaultCodecs codecs = new DefaultCodecs(TEST);
-
         Float[] expected = {100.5f, 200.25f};
         assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{100.5,200.25}"), PostgresqlObjectId.FLOAT8_ARRAY.getObjectId(), FORMAT_TEXT, Float[].class))
             .isEqualTo(expected);
@@ -180,61 +205,69 @@ final class DefaultCodecsUnitTests {
 
     @Test
     void decodeFloatAsDoubleArray() {
-
-        DefaultCodecs codecs = new DefaultCodecs(TEST);
-
         Double[] expected = {100.5, 200.25};
         assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{100.5,200.25}"), FLOAT4_ARRAY.getObjectId(), FORMAT_TEXT, Double[].class))
             .isEqualTo(expected);
     }
 
-    enum DummyCodec implements Codec<Object> {
+    @Test
+    void findCodec() {
+        Map<Integer, Codec<?>> cache = new HashMap<>();
+        // To count the number of time the predicate is called
+        AtomicInteger predicateCount = new AtomicInteger(0);
+        // First call the codec is not in the cache
+        Codec<?> found = codecs.findCodec(123, cache, codec -> {
+            predicateCount.incrementAndGet();
+            return codec.canEncode("a string");
+        });
+        assertThat(found).isInstanceOf(StringCodec.class);
+        assertThat(predicateCount.getAndSet(0)).isEqualTo(1);
+        // Second call the codec is in the cache
+        assertThat(codecs.findCodec(123, cache, codec -> codec.canEncode("another string"))).isEqualTo(found);
+        assertThat(predicateCount.get()).isZero();
+        assertThat(cache).containsEntry(123, found);
+    }
 
-        INSTANCE;
+    @Test
+    void findDecodeCodecShort() {
+        DefaultCodecs spyCodecs = spy(codecs);
+        Codec<Short> shortCodec = spyCodecs.findDecodeCodec(INT2.getObjectId(), FORMAT_TEXT, Short.class);
+        assertThat(shortCodec).isNotNull();
+        verify(spyCodecs).findCodec(anyInt(), cacheArgumentCaptor.capture(), predicateArgumentCaptor.capture());
+        assertThat(cacheArgumentCaptor.getValue()).containsValue(shortCodec);
+    }
 
-        @Override
-        public boolean canDecode(int dataType, Format format, Class<?> type) {
-            return false;
-        }
+    @Test
+    void findDecodeCodecNotFound() {
+        assertThat(codecs.findDecodeCodec(INT2.getObjectId(), FORMAT_TEXT, DefaultCodecsUnitTests.class)).isNull();
+    }
 
-        @Override
-        public boolean canEncode(Object value) {
-            return false;
-        }
+    @Test
+    void findEncodeCodecDouble() {
+        DefaultCodecs spyCodecs = spy(codecs);
+        Codec<?> doubleCodec = spyCodecs.findEncodeCodec(1.2);
+        assertThat(doubleCodec).isInstanceOf(DoubleCodec.class);
+        verify(spyCodecs).findCodec(anyInt(), cacheArgumentCaptor.capture(), predicateArgumentCaptor.capture());
+        assertThat(cacheArgumentCaptor.getValue()).containsValue(doubleCodec);
+    }
 
-        @Override
-        public boolean canEncodeNull(Class<?> type) {
-            return false;
-        }
+    @Test
+    void findEncodeCodecNotFound() {
+        assertThat(codecs.findEncodeCodec(this)).isNull();
+    }
 
-        @Override
-        public EncodedParameter encode(Object value) {
-            return null;
-        }
+    @Test
+    void findEncodeNullCodecInteger() {
+        DefaultCodecs spyCodecs = spy(codecs);
+        Codec<?> intCodec = spyCodecs.findEncodeNullCodec(Integer.class);
+        assertThat(intCodec).isInstanceOf(IntegerCodec.class);
+        verify(spyCodecs).findCodec(anyInt(), cacheArgumentCaptor.capture(), predicateArgumentCaptor.capture());
+        assertThat(cacheArgumentCaptor.getValue()).containsValue(intCodec);
+    }
 
-        @Override
-        public EncodedParameter encode(Object value, int dataType) {
-            return null;
-        }
-
-        @Override
-        public EncodedParameter encodeNull() {
-            return null;
-        }
-
-        private EncodedParameter encodeNull(int dataType) {
-            return null;
-        }
-
-        @Override
-        public Class<?> type() {
-            return null;
-        }
-
-        @Override
-        public Object decode(ByteBuf buffer, int dataType, Format format, Class<?> type) {
-            return null;
-        }
+    @Test
+    void findEncodeNullCodecNotFound() {
+        assertThat(codecs.findEncodeNullCodec(DefaultCodecsUnitTests.class)).isNull();
     }
 
 }
