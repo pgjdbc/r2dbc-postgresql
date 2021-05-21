@@ -80,4 +80,14 @@ final class CharacterCodec extends AbstractCodec<Character> implements ArrayCode
         return PostgresqlObjectId.CHAR_ARRAY;
     }
 
+    @Override
+    public Iterable<Format> getFormats() {
+        return this.delegate.getFormats();
+    }
+
+    @Override
+    public Iterable<PostgresTypeIdentifier> getDataTypes() {
+        return this.delegate.getDataTypes();
+    }
+
 }

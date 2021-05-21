@@ -39,6 +39,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.util.ReflectionUtils;
 import reactor.core.publisher.Flux;
@@ -310,6 +312,7 @@ final class ReactorNettyClientIntegrationTests {
     }
 
     @Test
+    @DisabledOnOs({OS.MAC, OS.WINDOWS})
     void unixDomainSocketTest() {
 
         String socket = "/tmp/.s.PGSQL.5432";

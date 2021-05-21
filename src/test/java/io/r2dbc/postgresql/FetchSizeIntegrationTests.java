@@ -73,7 +73,7 @@ final class FetchSizeIntegrationTests extends AbstractIntegrationTests {
             .bind(0, 1)
             .execute()
             .flatMap(r -> r.map((row, meta) -> row.get(0, Integer.class)))
-            .limitRequest(20)
+            .take(20, true)
             .as(StepVerifier::create)
             .expectNextCount(20)
             .verifyComplete();
@@ -88,7 +88,7 @@ final class FetchSizeIntegrationTests extends AbstractIntegrationTests {
             .fetchSize(6)
             .execute()
             .flatMap(r -> r.map((row, meta) -> row.get(0, Integer.class)))
-            .limitRequest(20)
+            .take(20, true)
             .as(StepVerifier::create)
             .expectNextCount(20)
             .verifyComplete();

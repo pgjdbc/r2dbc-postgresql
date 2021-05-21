@@ -28,6 +28,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
 import java.nio.ByteBuffer;
+import java.util.Collections;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.BYTEA;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
@@ -77,6 +78,11 @@ final class BlobCodec extends AbstractCodec<Blob> {
                 .concatWith(Flux.from(value.discard())
                     .then(Mono.empty()))
         );
+    }
+
+    @Override
+    public Iterable<PostgresTypeIdentifier> getDataTypes() {
+        return Collections.singleton(BYTEA);
     }
 
     private static final class ByteABlob implements Blob {
