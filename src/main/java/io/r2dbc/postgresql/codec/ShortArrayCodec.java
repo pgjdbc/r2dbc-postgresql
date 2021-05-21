@@ -24,6 +24,7 @@ import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
+import java.util.Collections;
 import java.util.function.Supplier;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
@@ -38,6 +39,11 @@ final class ShortArrayCodec extends AbstractArrayCodec<Short> {
     @Override
     public Parameter encodeNull() {
         return createNull(INT2_ARRAY, FORMAT_TEXT);
+    }
+
+    @Override
+    public Iterable<PostgresqlObjectId> getDataTypes() {
+        return Collections.singleton(INT2_ARRAY);
     }
 
     @Override

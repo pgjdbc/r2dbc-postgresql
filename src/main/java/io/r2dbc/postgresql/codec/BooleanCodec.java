@@ -25,6 +25,8 @@ import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
+import java.util.Collections;
+
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.BOOL;
 
@@ -40,6 +42,11 @@ final class BooleanCodec extends AbstractCodec<Boolean> {
     @Override
     public Parameter encodeNull() {
         return createNull(BOOL, FORMAT_TEXT);
+    }
+
+    @Override
+    public Iterable<PostgresqlObjectId> getDataTypes() {
+        return Collections.singleton(BOOL);
     }
 
     @Override

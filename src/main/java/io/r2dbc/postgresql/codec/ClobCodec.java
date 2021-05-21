@@ -28,6 +28,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
+import java.util.Arrays;
+
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
@@ -72,6 +75,16 @@ final class ClobCodec extends AbstractCodec<Clob> {
                 .concatWith(Flux.from(value.discard())
                     .then(Mono.empty()))
         );
+    }
+
+    @Override
+    public Iterable<PostgresqlObjectId> getDataTypes() {
+        return Arrays.asList(VARCHAR, TEXT);
+    }
+
+    @Override
+    public Iterable<Format> getFormats() {
+        return Arrays.asList(FORMAT_TEXT, FORMAT_BINARY);
     }
 
 }

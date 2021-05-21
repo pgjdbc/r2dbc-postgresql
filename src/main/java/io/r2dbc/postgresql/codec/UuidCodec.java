@@ -25,6 +25,7 @@ import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
+import java.util.Collections;
 import java.util.UUID;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
@@ -49,6 +50,11 @@ final class UuidCodec extends AbstractCodec<UUID> {
     @Override
     public Parameter encodeNull() {
         return createNull(PostgresqlObjectId.UUID, FORMAT_TEXT);
+    }
+
+    @Override
+    public Iterable<PostgresqlObjectId> getDataTypes() {
+        return Collections.singleton(PostgresqlObjectId.UUID);
     }
 
     @Override

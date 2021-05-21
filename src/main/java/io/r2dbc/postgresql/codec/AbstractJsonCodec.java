@@ -21,11 +21,16 @@ import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.JSON;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.JSONB;
 
 abstract class AbstractJsonCodec<T> extends AbstractCodec<T> {
+
+    private static final Set<PostgresqlObjectId> SUPPORTED_TYPES = EnumSet.of(JSON, JSONB);
 
     AbstractJsonCodec(Class<T> type) {
         super(type);
@@ -41,7 +46,12 @@ abstract class AbstractJsonCodec<T> extends AbstractCodec<T> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return JSONB == type || JSON == type;
+        return SUPPORTED_TYPES.contains(type);
+    }
+
+    @Override
+    public Iterable<PostgresqlObjectId> getDataTypes() {
+        return SUPPORTED_TYPES;
     }
 
 }

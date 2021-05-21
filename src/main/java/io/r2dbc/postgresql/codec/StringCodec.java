@@ -25,6 +25,9 @@ import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.BPCHAR;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.CHAR;
@@ -34,6 +37,8 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.UNKNOWN;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR;
 
 final class StringCodec extends AbstractCodec<String> {
+
+    private static final Set<PostgresqlObjectId> SUPPORTED_TYPES = EnumSet.of(BPCHAR, CHAR, TEXT, UNKNOWN, VARCHAR, NAME);
 
     private final ByteBufAllocator byteBufAllocator;
 
@@ -52,7 +57,7 @@ final class StringCodec extends AbstractCodec<String> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return BPCHAR == type || CHAR == type || TEXT == type || UNKNOWN == type || VARCHAR == type || NAME == type;
+        return SUPPORTED_TYPES.contains(type);
     }
 
     @Override
@@ -67,6 +72,11 @@ final class StringCodec extends AbstractCodec<String> {
         Assert.requireNonNull(value, "value must not be null");
 
         return create(VARCHAR, FORMAT_TEXT, () -> ByteBufUtils.encode(this.byteBufAllocator, value));
+    }
+
+    @Override
+    public Iterable<PostgresqlObjectId> getDataTypes() {
+        return SUPPORTED_TYPES;
     }
 
 }

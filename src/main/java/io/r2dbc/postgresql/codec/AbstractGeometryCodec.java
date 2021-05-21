@@ -25,6 +25,7 @@ import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -101,6 +102,11 @@ abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> {
     @Override
     public Parameter encodeNull() {
         return createNull(this.postgresqlObjectId, Format.FORMAT_BINARY);
+    }
+
+    @Override
+    public Iterable<PostgresqlObjectId> getDataTypes() {
+        return Collections.singleton(this.postgresqlObjectId);
     }
 
     /**

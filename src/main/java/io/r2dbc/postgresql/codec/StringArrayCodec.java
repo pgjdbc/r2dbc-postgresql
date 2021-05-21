@@ -24,6 +24,8 @@ import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
@@ -35,6 +37,8 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.VARCHAR_ARRAY;
 
 final class StringArrayCodec extends AbstractArrayCodec<String> {
 
+    private static final Set<PostgresqlObjectId> SUPPORTED_TYPES = EnumSet.of(BPCHAR_ARRAY, CHAR_ARRAY, NAME_ARRAY, TEXT_ARRAY, VARCHAR_ARRAY);
+
     StringArrayCodec(ByteBufAllocator byteBufAllocator) {
         super(byteBufAllocator, String.class);
     }
@@ -42,6 +46,11 @@ final class StringArrayCodec extends AbstractArrayCodec<String> {
     @Override
     public Parameter encodeNull() {
         return createNull(TEXT_ARRAY, FORMAT_TEXT);
+    }
+
+    @Override
+    public Iterable<PostgresqlObjectId> getDataTypes() {
+        return SUPPORTED_TYPES;
     }
 
     @Override
@@ -59,7 +68,7 @@ final class StringArrayCodec extends AbstractArrayCodec<String> {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return (BPCHAR_ARRAY == type || CHAR_ARRAY == type || TEXT_ARRAY == type || VARCHAR_ARRAY == type | NAME_ARRAY == type);
+        return SUPPORTED_TYPES.contains(type);
     }
 
     @Override

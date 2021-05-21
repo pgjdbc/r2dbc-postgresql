@@ -43,6 +43,11 @@ final class ZoneIdCodec extends AbstractCodec<ZoneId> {
     }
 
     @Override
+    public Iterable<PostgresqlObjectId> getDataTypes() {
+        return this.delegate.getDataTypes();
+    }
+
+    @Override
     boolean doCanDecode(PostgresqlObjectId type, Format format) {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");

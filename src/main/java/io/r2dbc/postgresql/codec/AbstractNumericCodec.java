@@ -87,6 +87,10 @@ abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> {
         return potentiallyConvert(number, expectedType, converter);
     }
 
+    @Override
+    public Iterable<PostgresqlObjectId> getDataTypes() {
+        return SUPPORTED_TYPES;
+    }
     /**
      * Returns the {@link PostgresqlObjectId} for to identify whether this codec is the default codec.
      *

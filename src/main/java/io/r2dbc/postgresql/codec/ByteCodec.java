@@ -62,4 +62,14 @@ final class ByteCodec extends AbstractCodec<Byte> {
         return this.delegate.doEncode((short) value);
     }
 
+    @Override
+    public Iterable<Format> getFormats() {
+        return this.delegate.getFormats();
+    }
+
+    @Override
+    public Iterable<PostgresqlObjectId> getDataTypes() {
+        return this.delegate.getDataTypes();
+    }
+
 }
