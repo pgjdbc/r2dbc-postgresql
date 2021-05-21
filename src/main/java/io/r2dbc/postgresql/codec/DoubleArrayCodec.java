@@ -23,6 +23,7 @@ import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 
+import java.util.Collections;
 import java.util.function.Supplier;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
@@ -40,6 +41,11 @@ final class DoubleArrayCodec extends AbstractArrayCodec<Double> {
     @Override
     public Parameter encodeNull() {
         return createNull(FLOAT8_ARRAY, FORMAT_TEXT);
+    }
+
+    @Override
+    public Iterable<PostgresqlObjectId> getDataTypes() {
+        return Collections.singleton(FLOAT8_ARRAY);
     }
 
     @Override

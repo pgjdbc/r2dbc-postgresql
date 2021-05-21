@@ -27,6 +27,7 @@ import reactor.util.annotation.Nullable;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Collections;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INET;
@@ -43,6 +44,11 @@ final class InetAddressCodec extends AbstractCodec<InetAddress> {
     @Override
     public Parameter encodeNull() {
         return createNull(INET, FORMAT_TEXT);
+    }
+
+    @Override
+    public Iterable<PostgresqlObjectId> getDataTypes() {
+        return Collections.singleton(INET);
     }
 
     @Override

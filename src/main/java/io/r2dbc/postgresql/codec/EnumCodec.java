@@ -21,6 +21,7 @@ import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.extension.CodecRegistrar;
 import io.r2dbc.postgresql.message.Format;
+import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.core.publisher.Mono;
@@ -29,11 +30,14 @@ import reactor.util.Loggers;
 import reactor.util.annotation.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
 /**
@@ -103,6 +107,16 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
     @Override
     public Class<?> type() {
         return this.type;
+    }
+
+    @Override
+    public Iterable<Format> getFormats() {
+        return EnumSet.of(FORMAT_TEXT, FORMAT_BINARY);
+    }
+
+    @Override
+    public Iterable<PostgresqlObjectId> getDataTypes() {
+        return PostgresqlObjectId.isValid(oid) ? Collections.singleton(PostgresqlObjectId.valueOf(oid)) : Collections.emptyList();
     }
 
     /**

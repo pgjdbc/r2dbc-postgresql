@@ -158,4 +158,9 @@ abstract class AbstractTemporalCodec<T extends Temporal> extends AbstractCodec<T
         return expectedType.isInstance(temporal) ? expectedType.cast(temporal) : converter.apply(temporal);
     }
 
+    @Override
+    public Iterable<PostgresqlObjectId> getDataTypes() {
+        return SUPPORTED_TYPES;
+    }
+
 }

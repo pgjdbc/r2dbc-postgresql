@@ -62,4 +62,14 @@ final class CharacterCodec extends AbstractCodec<Character> {
         return this.delegate.doEncode(value.toString());
     }
 
+    @Override
+    public Iterable<Format> getFormats() {
+        return this.delegate.getFormats();
+    }
+
+    @Override
+    public Iterable<PostgresqlObjectId> getDataTypes() {
+        return this.delegate.getDataTypes();
+    }
+
 }

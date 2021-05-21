@@ -26,6 +26,7 @@ import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -60,6 +61,11 @@ abstract class AbstractBinaryCodec<T> extends AbstractCodec<T> {
         Assert.requireNonNull(format, "format must not be null");
 
         return BYTEA == type;
+    }
+
+    @Override
+    public Iterable<PostgresqlObjectId> getDataTypes() {
+        return Collections.singleton(BYTEA);
     }
 
     byte[] decode(Format format, ByteBuf byteBuf) {

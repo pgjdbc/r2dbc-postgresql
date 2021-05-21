@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Mock imoplementation of {@link Codec}.
@@ -60,6 +61,11 @@ public final class MockCodec<T> extends AbstractCodec<T> {
     @Override
     public Parameter encodeNull() {
         return this.encodings.get(null);
+    }
+
+    @Override
+    public Iterable<PostgresqlObjectId> getDataTypes() {
+        return canDecodes.stream().map(cd -> cd.type).collect(Collectors.toList());
     }
 
     @Override

@@ -24,6 +24,7 @@ import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.function.Supplier;
 
 final class BigDecimalArrayCodec extends AbstractArrayCodec<BigDecimal> {
@@ -35,6 +36,11 @@ final class BigDecimalArrayCodec extends AbstractArrayCodec<BigDecimal> {
     @Override
     public Parameter encodeNull() {
         return createNull(PostgresqlObjectId.NUMERIC_ARRAY, Format.FORMAT_TEXT);
+    }
+
+    @Override
+    public Iterable<PostgresqlObjectId> getDataTypes() {
+        return Collections.singleton(PostgresqlObjectId.NUMERIC_ARRAY);
     }
 
     @Override

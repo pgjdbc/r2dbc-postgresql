@@ -24,6 +24,9 @@ import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 
+import java.util.Collections;
+import java.util.EnumSet;
+
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.type.PostgresqlObjectId.INTERVAL;
 
@@ -47,6 +50,16 @@ final class IntervalCodec extends AbstractCodec<Interval> {
     @Override
     Interval doDecode(ByteBuf buffer, PostgresqlObjectId dataType, Format format, Class<? extends Interval> type) {
         return Interval.parse(ByteBufUtils.decode(buffer));
+    }
+
+    @Override
+    public Iterable<Format> getFormats() {
+        return EnumSet.of(FORMAT_TEXT);
+    }
+
+    @Override
+    public Iterable<PostgresqlObjectId> getDataTypes() {
+        return Collections.singleton(INTERVAL);
     }
 
     @Override

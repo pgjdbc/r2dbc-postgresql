@@ -21,16 +21,21 @@ import io.netty.buffer.ByteBufAllocator;
 import io.netty.util.ByteProcessor;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
+import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static io.netty.util.CharsetUtil.UTF_8;
 import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
 @SuppressWarnings("rawtypes")
 final class HStoreCodec implements Codec<Map> {
@@ -84,7 +89,7 @@ final class HStoreCodec implements Codec<Map> {
             return null;
         }
 
-        if (format == Format.FORMAT_TEXT) {
+        if (format == FORMAT_TEXT) {
             return decodeTextFormat(buffer);
         }
 
@@ -182,7 +187,7 @@ final class HStoreCodec implements Codec<Map> {
         Assert.requireNonNull(value, "value must not be null");
         Map<?, ?> map = (Map<?, ?>) value;
 
-        return new Parameter(Format.FORMAT_BINARY, this.oid, Mono.fromSupplier(() -> {
+        return new Parameter(FORMAT_BINARY, this.oid, Mono.fromSupplier(() -> {
             ByteBuf buffer = this.byteBufAllocator.buffer(4 + 10 * map.size());
             buffer.writeInt(map.size());
 
@@ -207,12 +212,22 @@ final class HStoreCodec implements Codec<Map> {
 
     @Override
     public Parameter encodeNull() {
-        return new Parameter(Format.FORMAT_BINARY, this.oid, NULL_VALUE);
+        return new Parameter(FORMAT_BINARY, this.oid, NULL_VALUE);
     }
 
     @Override
     public Class<?> type() {
         return TYPE;
+    }
+
+    @Override
+    public Iterable<Format> getFormats() {
+        return EnumSet.of(FORMAT_TEXT, FORMAT_BINARY);
+    }
+
+    @Override
+    public Iterable<PostgresqlObjectId> getDataTypes() {
+        return PostgresqlObjectId.isValid(oid) ? Collections.singleton(PostgresqlObjectId.valueOf(oid)) : Collections.emptyList();
     }
 
 }
