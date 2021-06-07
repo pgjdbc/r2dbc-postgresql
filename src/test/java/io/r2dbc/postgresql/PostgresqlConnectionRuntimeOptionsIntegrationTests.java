@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import reactor.test.StepVerifier;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -51,6 +52,29 @@ final class PostgresqlConnectionRuntimeOptionsIntegrationTests {
             .flatMap(result -> result.map((row, rowMetadata) -> row.get("statement_timeout", String.class)))
             .as(StepVerifier::create)
             .expectNext("1min")
+            .verifyComplete();
+
+        connection.close().block();
+    }
+
+    @Test
+    void connectionFactoryShouldApplyParametersUsingTimeoutApis() {
+        PostgresqlConnection connection = (PostgresqlConnection) connectionFactory.create().block();
+        connection.lockTimeout(Duration.ofSeconds(10)).block();
+        connection.statementTimeout(Duration.ofMinutes(2)).block();
+
+        connection
+            .createStatement("SHOW lock_timeout").execute()
+            .flatMap(result -> result.map((row, rowMetadata) -> row.get("lock_timeout", String.class)))
+            .as(StepVerifier::create)
+            .expectNext("10s")
+            .verifyComplete();
+
+        connection
+            .createStatement("SHOW statement_timeout").execute()
+            .flatMap(result -> result.map((row, rowMetadata) -> row.get("statement_timeout", String.class)))
+            .as(StepVerifier::create)
+            .expectNext("2min")
             .verifyComplete();
 
         connection.close().block();

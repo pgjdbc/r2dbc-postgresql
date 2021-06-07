@@ -87,6 +87,9 @@ public final class PostgresqlConnectionConfiguration {
     private final String host;
 
     @Nullable
+    private final Duration lockTimeout;
+
+    @Nullable
     private final LoopResources loopResources;
 
     private final LogLevel noticeLogLevel;
@@ -101,6 +104,9 @@ public final class PostgresqlConnectionConfiguration {
 
     private final int preparedStatementCacheQueries;
 
+    @Nullable
+    private final Duration statementTimeout;
+
     private final String socket;
 
     private final SSLConfig sslConfig;
@@ -111,10 +117,11 @@ public final class PostgresqlConnectionConfiguration {
 
     private final String username;
 
-    private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions, @Nullable boolean compatibilityMode,Duration connectTimeout, @Nullable String database, LogLevel errorResponseLogLevel,
-                                              List<Extension> extensions, ToIntFunction<String> fetchSize, boolean forceBinary, @Nullable String host, @Nullable LoopResources loopResources,
+    private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions, @Nullable boolean compatibilityMode, Duration connectTimeout, @Nullable String database,
+                                              LogLevel errorResponseLogLevel,
+                                              List<Extension> extensions, ToIntFunction<String> fetchSize, boolean forceBinary, @Nullable String host, @Nullable Duration lockTimeout, @Nullable LoopResources loopResources,
                                               LogLevel noticeLogLevel, @Nullable Map<String, String> options, @Nullable CharSequence password, int port, boolean preferAttachedBuffers,
-                                              int preparedStatementCacheQueries, @Nullable String schema, @Nullable String socket, SSLConfig sslConfig, boolean tcpKeepAlive, boolean tcpNoDelay,
+                                              int preparedStatementCacheQueries, @Nullable String schema, @Nullable String socket, SSLConfig sslConfig, @Nullable Duration statementTimeout, boolean tcpKeepAlive, boolean tcpNoDelay,
                                               String username) {
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
         this.autodetectExtensions = autodetectExtensions;
@@ -129,6 +136,16 @@ public final class PostgresqlConnectionConfiguration {
         this.loopResources = loopResources;
         this.noticeLogLevel = noticeLogLevel;
         this.options = options == null ? new LinkedHashMap<>() : new LinkedHashMap<>(options);
+        this.statementTimeout = statementTimeout;
+        this.lockTimeout = lockTimeout;
+
+        if (this.statementTimeout != null) {
+            this.options.put("statement_timeout", Long.toString(statementTimeout.toMillis()));
+        }
+
+        if (this.lockTimeout != null) {
+            this.options.put("lock_timeout", Long.toString(lockTimeout.toMillis()));
+        }
 
         if (schema != null && !schema.isEmpty()) {
             this.options.put("search_path", schema);
@@ -167,6 +184,7 @@ public final class PostgresqlConnectionConfiguration {
             ", fetchSize=" + this.fetchSize +
             ", forceBinary='" + this.forceBinary + '\'' +
             ", host='" + this.host + '\'' +
+            ", lockTimeout='" + this.lockTimeout +
             ", loopResources='" + this.loopResources + '\'' +
             ", noticeLogLevel='" + this.noticeLogLevel + '\'' +
             ", options='" + this.options + '\'' +
@@ -174,6 +192,7 @@ public final class PostgresqlConnectionConfiguration {
             ", port=" + this.port +
             ", preferAttachedBuffers=" + this.preferAttachedBuffers +
             ", socket=" + this.socket +
+            ", statementTimeout=" + this.statementTimeout +
             ", tcpKeepAlive=" + this.tcpKeepAlive +
             ", tcpNoDelay=" + this.tcpNoDelay +
             ", username='" + this.username + '\'' +
@@ -344,6 +363,9 @@ public final class PostgresqlConnectionConfiguration {
         @Nullable
         private String host;
 
+        @Nullable
+        private Duration lockTimeout;
+
         private LogLevel noticeLogLevel = LogLevel.DEBUG;
 
         private Map<String, String> options;
@@ -378,6 +400,9 @@ public final class PostgresqlConnectionConfiguration {
 
         @Nullable
         private URL sslRootCert = null;
+
+        @Nullable
+        private Duration statementTimeout = null;
 
         private Function<SslContextBuilder, SslContextBuilder> sslContextBuilderCustomizer = Function.identity();
 
@@ -436,10 +461,11 @@ public final class PostgresqlConnectionConfiguration {
                 throw new IllegalArgumentException("username must not be null");
             }
 
-            return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.compatibilityMode, this.connectTimeout, this.database, this.errorResponseLogLevel, this.extensions,
+            return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.compatibilityMode, this.connectTimeout, this.database, this.errorResponseLogLevel,
+                this.extensions,
                 this.fetchSize
-                , this.forceBinary, this.host, this.loopResources, this.noticeLogLevel, this.options, this.password, this.port, this.preferAttachedBuffers,
-                this.preparedStatementCacheQueries, this.schema, this.socket, this.createSslConfig(), this.tcpKeepAlive, this.tcpNoDelay, this.username);
+                , this.forceBinary, this.host, this.lockTimeout, this.loopResources, this.noticeLogLevel, this.options, this.password, this.port, this.preferAttachedBuffers,
+                this.preparedStatementCacheQueries, this.schema, this.socket, this.createSslConfig(), this.statementTimeout, this.tcpKeepAlive, this.tcpNoDelay, this.username);
         }
 
         /**
@@ -568,6 +594,21 @@ public final class PostgresqlConnectionConfiguration {
          */
         public Builder host(String host) {
             this.host = Assert.requireNonNull(host, "host must not be null");
+            return this;
+        }
+
+        /**
+         * Configure the Lock timeout. Default unconfigured.
+         * <p>
+         * This parameter is applied once after creating a new connection.
+         * If lockTimeout is already set using {@link #options(Map)}, it will be overridden.
+         * <a href="https://www.postgresql.org/docs/current/runtime-config-client.html#RUNTIME-CONFIG-CLIENT-FORMAT">Lock Timeout</a>
+         *
+         * @param lockTimeout the lock timeout
+         * @return this {@link Builder}
+         */
+        public Builder lockTimeout(@Nullable Duration lockTimeout) {
+            this.lockTimeout = lockTimeout;
             return this;
         }
 
@@ -805,6 +846,21 @@ public final class PostgresqlConnectionConfiguration {
         }
 
         /**
+         * Configure the Statement timeout. Default unconfigured.
+         * <p>
+         * This parameter is applied once after creating a new connection.
+         * If statementTimeout is already set using {@link #options(Map)}, it will be overridden.
+         * <a href="https://www.postgresql.org/docs/current/runtime-config-client.html#RUNTIME-CONFIG-CLIENT-FORMAT">Statement Timeout</a>
+         *
+         * @param statementTimeout the statement timeout
+         * @return this {@link Builder}
+         */
+        public Builder statementTimeout(@Nullable Duration statementTimeout) {
+            this.statementTimeout = statementTimeout;
+            return this;
+        }
+
+        /**
          * Configure TCP KeepAlive.
          *
          * @param enabled whether to enable TCP KeepAlive
@@ -855,6 +911,7 @@ public final class PostgresqlConnectionConfiguration {
                 ", fetchSize='" + this.fetchSize + '\'' +
                 ", forceBinary='" + this.forceBinary + '\'' +
                 ", host='" + this.host + '\'' +
+                ", lockTimeout='" + this.lockTimeout + '\'' +
                 ", loopResources='" + this.loopResources + '\'' +
                 ", noticeLogLevel='" + this.noticeLogLevel + '\'' +
                 ", parameters='" + this.options + '\'' +
@@ -868,6 +925,7 @@ public final class PostgresqlConnectionConfiguration {
                 ", sslRootCert='" + this.sslRootCert + '\'' +
                 ", sslCert='" + this.sslCert + '\'' +
                 ", sslKey='" + this.sslKey + '\'' +
+                ", statementTimeout='" + this.statementTimeout + '\'' +
                 ", sslHostnameVerifier='" + this.sslHostnameVerifier + '\'' +
                 ", tcpKeepAlive='" + this.tcpKeepAlive + '\'' +
                 ", tcpNoDelay='" + this.tcpNoDelay + '\'' +
