@@ -29,6 +29,7 @@ import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.junit.jupiter.api.Test;
 import reactor.test.StepVerifier;
 
+import java.time.Duration;
 import java.util.Collections;
 
 import static io.r2dbc.postgresql.client.TestClient.NO_OP;
@@ -471,6 +472,34 @@ final class PostgresqlConnectionUnitTests {
 
         createConnection(client, MockCodecs.empty(), this.statementCache)
             .setTransactionIsolationLevel(READ_COMMITTED)
+            .as(StepVerifier::create)
+            .verifyComplete();
+    }
+
+    @Test
+    void setStatementTimeout() {
+        Client client = TestClient.builder()
+            .transactionStatus(IDLE)
+            .expectRequest(new Query(String.format("SET STATEMENT_TIMEOUT = %s", Duration.ofSeconds(2).toMillis())))
+            .thenRespond(new CommandComplete("SET", null, null))
+            .build();
+
+        createConnection(client, MockCodecs.empty(), this.statementCache)
+            .statementTimeout(Duration.ofSeconds(2))
+            .as(StepVerifier::create)
+            .verifyComplete();
+    }
+
+    @Test
+    void setLockTimeout() {
+        Client client = TestClient.builder()
+            .transactionStatus(IDLE)
+            .expectRequest(new Query(String.format("SET LOCK_TIMEOUT = %s", Duration.ofSeconds(4).toMillis())))
+            .thenRespond(new CommandComplete("SET", null, null))
+            .build();
+
+        createConnection(client, MockCodecs.empty(), this.statementCache)
+            .lockTimeout(Duration.ofSeconds(4))
             .as(StepVerifier::create)
             .verifyComplete();
     }

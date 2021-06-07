@@ -76,20 +76,7 @@ final class PostgresqlConnectionConfigurationUnitTests {
         options.put("statement_timeout", "60000"); // [ms]
         LoopResources loopResources = mock(LoopResources.class);
 
-        PostgresqlConnectionConfiguration configuration = PostgresqlConnectionConfiguration.builder()
-            .applicationName("test-application-name")
-            .connectTimeout(Duration.ofMillis(1000))
-            .database("test-database")
-            .host("test-host")
-            .options(options)
-            .port(100)
-            .schema("test-schema")
-            .username("test-username")
-            .sslMode(SSLMode.ALLOW)
-            .tcpKeepAlive(true)
-            .tcpNoDelay(false)
-            .loopResources(loopResources)
-            .build();
+        PostgresqlConnectionConfiguration configuration = getPostgresqlConnectionConfiguration(options, loopResources).build();
 
         assertThat(configuration)
             .hasFieldOrPropertyWithValue("applicationName", "test-application-name")
@@ -109,6 +96,54 @@ final class PostgresqlConnectionConfigurationUnitTests {
             .containsEntry("lock_timeout", "10s")
             .containsEntry("statement_timeout", "60000")
             .containsEntry("search_path", "test-schema");
+    }
+
+    @Test
+    void configureStatementAndLockTimeouts() {
+        Map<String, String> options = new HashMap<>();
+        options.put("lock_timeout", "10s");
+        options.put("statement_timeout", "60000"); // [ms]
+        LoopResources loopResources = mock(LoopResources.class);
+
+        PostgresqlConnectionConfiguration configuration = getPostgresqlConnectionConfiguration(options, loopResources)
+            .statementTimeout(Duration.ofMillis(5000))
+            .lockTimeout(Duration.ofSeconds(50))
+            .build();
+
+        assertThat(configuration)
+            .hasFieldOrPropertyWithValue("applicationName", "test-application-name")
+            .hasFieldOrPropertyWithValue("connectTimeout", Duration.ofMillis(1000))
+            .hasFieldOrPropertyWithValue("database", "test-database")
+            .hasFieldOrPropertyWithValue("host", "test-host")
+            .hasFieldOrProperty("options")
+            .hasFieldOrPropertyWithValue("password", null)
+            .hasFieldOrPropertyWithValue("port", 100)
+            .hasFieldOrPropertyWithValue("username", "test-username")
+            .hasFieldOrProperty("sslConfig")
+            .hasFieldOrPropertyWithValue("tcpKeepAlive", true)
+            .hasFieldOrPropertyWithValue("tcpNoDelay", false)
+            .hasFieldOrPropertyWithValue("loopResources", loopResources);
+
+        assertThat(configuration.getOptions())
+            .containsEntry("lock_timeout", "50000")
+            .containsEntry("statement_timeout", "5000")
+            .containsEntry("search_path", "test-schema");
+    }
+
+    private PostgresqlConnectionConfiguration.Builder getPostgresqlConnectionConfiguration(Map<String, String> options, LoopResources loopResources) {
+        return PostgresqlConnectionConfiguration.builder()
+            .applicationName("test-application-name")
+            .connectTimeout(Duration.ofMillis(1000))
+            .database("test-database")
+            .host("test-host")
+            .options(options)
+            .port(100)
+            .schema("test-schema")
+            .username("test-username")
+            .sslMode(SSLMode.ALLOW)
+            .tcpKeepAlive(true)
+            .tcpNoDelay(false)
+            .loopResources(loopResources);
     }
 
     @Test

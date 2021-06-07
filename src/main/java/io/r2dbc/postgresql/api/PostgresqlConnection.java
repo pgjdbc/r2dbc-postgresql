@@ -24,6 +24,8 @@ import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
+
 /**
  * A {@link Connection} for connecting to a PostgreSQL database.
  */
@@ -93,6 +95,13 @@ public interface PostgresqlConnection extends Connection {
     boolean isAutoCommit();
 
     /**
+     * Sets Lock Timeout by sending a query message to a server.
+     *
+     * @return a {@link Mono} that indicates that a lockTimeout frame was delivered to the backend
+     */
+    Mono<Void> lockTimeout(Duration lockTimeout);
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -121,6 +130,13 @@ public interface PostgresqlConnection extends Connection {
      */
     @Override
     Mono<Void> setTransactionIsolationLevel(IsolationLevel isolationLevel);
+
+    /**
+     * Sets Statement Timeout by sending a query message to a server.
+     *
+     * @return a {@link Mono} that indicates that a statementTimeout frame was delivered to the backend
+     */
+    Mono<Void> statementTimeout(Duration statementTimeout);
 
     /**
      * {@inheritDoc}

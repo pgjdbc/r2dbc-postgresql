@@ -18,8 +18,11 @@ package io.r2dbc.postgresql.api;
 
 import io.r2dbc.spi.IsolationLevel;
 import io.r2dbc.spi.ValidationDepth;
+import org.mockito.Mock;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.time.Duration;
 
 public final class MockPostgresqlConnection implements PostgresqlConnection {
 
@@ -80,6 +83,11 @@ public final class MockPostgresqlConnection implements PostgresqlConnection {
     }
 
     @Override
+    public Mono<Void> lockTimeout(Duration lockTimeout) {
+        return Mono.empty();
+    }
+
+    @Override
     public Mono<Void> releaseSavepoint(String name) {
         return Mono.empty();
     }
@@ -101,6 +109,11 @@ public final class MockPostgresqlConnection implements PostgresqlConnection {
 
     @Override
     public Mono<Void> setTransactionIsolationLevel(IsolationLevel isolationLevel) {
+        return Mono.empty();
+    }
+
+    @Override
+    public Mono<Void> statementTimeout(Duration statementTimeout) {
         return Mono.empty();
     }
 
