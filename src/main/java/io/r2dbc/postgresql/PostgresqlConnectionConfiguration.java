@@ -87,6 +87,9 @@ public final class PostgresqlConnectionConfiguration {
     private final String host;
 
     @Nullable
+    private final Duration lockTimeout;
+
+    @Nullable
     private final LoopResources loopResources;
 
     private final LogLevel noticeLogLevel;
@@ -101,6 +104,9 @@ public final class PostgresqlConnectionConfiguration {
 
     private final int preparedStatementCacheQueries;
 
+    @Nullable
+    private final Duration statementTimeout;
+
     private final String socket;
 
     private final SSLConfig sslConfig;
@@ -111,16 +117,12 @@ public final class PostgresqlConnectionConfiguration {
 
     private final String username;
 
-    private final Duration statementTimeout;
-
-    private final Duration lockTimeout;
-
     private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions, @Nullable boolean compatibilityMode, Duration connectTimeout, @Nullable String database,
                                               LogLevel errorResponseLogLevel,
-                                              List<Extension> extensions, ToIntFunction<String> fetchSize, boolean forceBinary, @Nullable String host, @Nullable LoopResources loopResources,
+                                              List<Extension> extensions, ToIntFunction<String> fetchSize, boolean forceBinary, @Nullable String host, @Nullable Duration lockTimeout, @Nullable LoopResources loopResources,
                                               LogLevel noticeLogLevel, @Nullable Map<String, String> options, @Nullable CharSequence password, int port, boolean preferAttachedBuffers,
-                                              int preparedStatementCacheQueries, @Nullable String schema, @Nullable String socket, SSLConfig sslConfig, boolean tcpKeepAlive, boolean tcpNoDelay,
-                                              String username, @Nullable Duration statementTimeout, @Nullable Duration lockTimeout) {
+                                              int preparedStatementCacheQueries, @Nullable String schema, @Nullable String socket, SSLConfig sslConfig, @Nullable Duration statementTimeout, boolean tcpKeepAlive, boolean tcpNoDelay,
+                                              String username) {
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
         this.autodetectExtensions = autodetectExtensions;
         this.compatibilityMode = compatibilityMode;
@@ -462,8 +464,8 @@ public final class PostgresqlConnectionConfiguration {
             return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.compatibilityMode, this.connectTimeout, this.database, this.errorResponseLogLevel,
                 this.extensions,
                 this.fetchSize
-                , this.forceBinary, this.host, this.loopResources, this.noticeLogLevel, this.options, this.password, this.port, this.preferAttachedBuffers,
-                this.preparedStatementCacheQueries, this.schema, this.socket, this.createSslConfig(), this.tcpKeepAlive, this.tcpNoDelay, this.username, this.statementTimeout, this.lockTimeout);
+                , this.forceBinary, this.host, this.lockTimeout, this.loopResources, this.noticeLogLevel, this.options, this.password, this.port, this.preferAttachedBuffers,
+                this.preparedStatementCacheQueries, this.schema, this.socket, this.createSslConfig(), this.statementTimeout, this.tcpKeepAlive, this.tcpNoDelay, this.username);
         }
 
         /**
