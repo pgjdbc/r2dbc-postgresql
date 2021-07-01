@@ -435,13 +435,13 @@ public enum PostgresqlObjectId implements Type, PostgresTypeIdentifier {
             return oid != null;
         }
 
-        try {
-            valueOf(objectId);
-            return true;
-        } catch (Exception e) {
-            return false;
+        for (PostgresqlObjectId type : values()) {
+            if (type.objectId == objectId) {
+                return true;
+            }
         }
-    }
+        return false;
+   }
 
     /**
      * Returns the {@link PostgresqlObjectId} matching a given object id.
