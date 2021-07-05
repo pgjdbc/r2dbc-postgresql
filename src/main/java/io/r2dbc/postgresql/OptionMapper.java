@@ -56,12 +56,32 @@ final class OptionMapper {
      * @param <T>    inferred option type.
      * @return the source object.
      */
-    public <T> Source<T> from(Option<T> option) {
+    public Source<Object> from(Option<?> option) {
 
         if (this.options.hasOption(option)) {
 
-            return new AvailableSource<T>(() -> {
+            return new AvailableSource<>(() -> {
                 return this.options.getRequiredValue(option);
+            }, option.name());
+        }
+
+        return NullSource.instance();
+    }
+
+    /**
+     * Construct a new {@link Source} for a {@link Option} using type inference. Options without a value are not bound or mapped in the later stages of {@link Source}.
+     *
+     * @param option the option to apply.
+     * @param <T>    inferred option type.
+     * @return the source object.
+     */
+    @SuppressWarnings("unchecked")
+    public <T> Source<T> fromTyped(Option<T> option) {
+
+        if (this.options.hasOption(option)) {
+
+            return new AvailableSource<>(() -> {
+                return (T) this.options.getRequiredValue(option);
             }, option.name());
         }
 

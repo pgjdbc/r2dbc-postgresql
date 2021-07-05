@@ -227,7 +227,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public boolean supports(ConnectionFactoryOptions connectionFactoryOptions) {
         Assert.requireNonNull(connectionFactoryOptions, "connectionFactoryOptions must not be null");
 
-        String driver = connectionFactoryOptions.getValue(DRIVER);
+        String driver = "" + connectionFactoryOptions.getValue(DRIVER);
         return driver != null && (driver.equals(POSTGRESQL_DRIVER) || driver.equals(LEGACY_POSTGRESQL_DRIVER));
     }
 
@@ -246,31 +246,31 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
 
         OptionMapper mapper = OptionMapper.create(options);
 
-        mapper.from(APPLICATION_NAME).to(builder::applicationName);
+        mapper.fromTyped(APPLICATION_NAME).to(builder::applicationName);
         mapper.from(AUTODETECT_EXTENSIONS).map(OptionMapper::toBoolean).to(builder::autodetectExtensions);
         mapper.from(COMPATIBILITY_MODE).map(OptionMapper::toBoolean).to(builder::compatibilityMode);
         mapper.from(CONNECT_TIMEOUT).map(OptionMapper::toDuration).to(builder::connectTimeout);
-        mapper.from(CURRENT_SCHEMA).to(builder::schema).otherwise(() -> mapper.from(SCHEMA).to(builder::schema));
-        mapper.from(DATABASE).to(builder::database);
+        mapper.fromTyped(CURRENT_SCHEMA).to(builder::schema).otherwise(() -> mapper.fromTyped(SCHEMA).to(builder::schema));
+        mapper.fromTyped(DATABASE).to(builder::database);
         mapper.from(ERROR_RESPONSE_LOG_LEVEL).map(it -> OptionMapper.toEnum(it, LogLevel.class)).to(builder::errorResponseLogLevel);
         mapper.from(FETCH_SIZE).map(OptionMapper::toInteger).to(builder::fetchSize);
         mapper.from(FORCE_BINARY).map(OptionMapper::toBoolean).to(builder::forceBinary);
         mapper.from(LOCK_WAIT_TIMEOUT).map(OptionMapper::toDuration).to(builder::lockWaitTimeout);
-        mapper.from(LOOP_RESOURCES).to(builder::loopResources);
+        mapper.fromTyped(LOOP_RESOURCES).to(builder::loopResources);
         mapper.from(NOTICE_LOG_LEVEL).map(it -> OptionMapper.toEnum(it, LogLevel.class)).to(builder::noticeLogLevel);
         mapper.from(OPTIONS).map(PostgresqlConnectionFactoryProvider::convertToMap).to(builder::options);
-        mapper.from(PASSWORD).to(builder::password);
+        mapper.fromTyped(PASSWORD).to(builder::password);
         mapper.from(PORT).map(OptionMapper::toInteger).to(builder::port);
         mapper.from(PREFER_ATTACHED_BUFFERS).map(OptionMapper::toBoolean).to(builder::preferAttachedBuffers);
         mapper.from(PREPARED_STATEMENT_CACHE_QUERIES).map(OptionMapper::toInteger).to(builder::preparedStatementCacheQueries);
-        mapper.from(SOCKET).to(builder::socket).otherwise(() -> {
-            builder.host(options.getRequiredValue(HOST));
+        mapper.fromTyped(SOCKET).to(builder::socket).otherwise(() -> {
+            builder.host("" + options.getRequiredValue(HOST));
             setupSsl(builder, mapper);
         });
         mapper.from(STATEMENT_TIMEOUT).map(OptionMapper::toDuration).to(builder::statementTimeout);
         mapper.from(TCP_KEEPALIVE).map(OptionMapper::toBoolean).to(builder::tcpKeepAlive);
         mapper.from(TCP_NODELAY).map(OptionMapper::toBoolean).to(builder::tcpNoDelay);
-        builder.username(options.getRequiredValue(USER));
+        builder.username("" + options.getRequiredValue(USER));
 
         return builder;
     }
@@ -288,11 +288,11 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
 
         }).to(builder::sslMode);
 
-        mapper.from(SSL_CERT).to(builder::sslCert);
-        mapper.from(SSL_CONTEXT_BUILDER_CUSTOMIZER).to(builder::sslContextBuilderCustomizer);
-        mapper.from(SSL_KEY).to(builder::sslKey);
-        mapper.from(SSL_ROOT_CERT).to(builder::sslRootCert);
-        mapper.from(SSL_PASSWORD).to(builder::sslPassword);
+        mapper.fromTyped(SSL_CERT).to(builder::sslCert);
+        mapper.fromTyped(SSL_CONTEXT_BUILDER_CUSTOMIZER).to(builder::sslContextBuilderCustomizer);
+        mapper.fromTyped(SSL_KEY).to(builder::sslKey);
+        mapper.fromTyped(SSL_ROOT_CERT).to(builder::sslRootCert);
+        mapper.fromTyped(SSL_PASSWORD).to(builder::sslPassword);
 
         mapper.from(SSL_HOSTNAME_VERIFIER).map(it -> {
 
