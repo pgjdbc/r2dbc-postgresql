@@ -85,7 +85,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
      *
      * @since 0.8.9
      */
-    public static final Option<Duration> LOCK_WAIT_TIMEOUT = Option.valueOf("lockWaitTimeout");
+    public static final Option<Duration> LOCK_WAIT_TIMEOUT = ConnectionFactoryOptions.LOCK_WAIT_TIMEOUT;
 
     /**
      * Event {@link LoopResources}.
@@ -186,7 +186,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
      *
      * @since 0.8.9
      */
-    public static final Option<Duration> STATEMENT_TIMEOUT = Option.valueOf("statementTimeout");
+    public static final Option<Duration> STATEMENT_TIMEOUT = ConnectionFactoryOptions.STATEMENT_TIMEOUT;
 
     /**
      * Enable TCP KeepAlive.
