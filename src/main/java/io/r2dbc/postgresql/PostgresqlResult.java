@@ -22,21 +22,20 @@ import io.netty.util.ReferenceCounted;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.DataRow;
-import io.r2dbc.postgresql.message.backend.EmptyQueryResponse;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.SynchronousSink;
 
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Predicate;
-
-import static io.r2dbc.postgresql.util.PredicateUtils.or;
 
 /**
  * An implementation of {@link Result} representing the results of a query against a PostgreSQL database.
@@ -106,7 +105,7 @@ final class PostgresqlResult extends AbstractReferenceCounted implements io.r2db
                     }
 
                     if (message instanceof DataRow) {
-                        PostgresqlRow row = PostgresqlRow.toRow(this.resources, (DataRow) message, this.rowDescription);
+                        PostgresqlRow row = PostgresqlRow.toRow(this.resources, (DataRow) message, this.metadata, this.rowDescription);
                         sink.next(f.apply(row, this.metadata));
                     }
 
@@ -114,6 +113,16 @@ final class PostgresqlResult extends AbstractReferenceCounted implements io.r2db
                     ReferenceCountUtil.release(message);
                 }
             });
+    }
+
+    @Override
+    public Result filter(Predicate<Segment> filter) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    @Override
+    public <T> Publisher<T> flatMap(Function<Segment, ? extends Publisher<? extends T>> mappingFunction) {
+        throw new UnsupportedOperationException("Not yet implemented");
     }
 
     @Override

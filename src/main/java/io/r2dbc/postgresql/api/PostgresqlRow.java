@@ -17,10 +17,19 @@
 package io.r2dbc.postgresql.api;
 
 import io.r2dbc.spi.Row;
+import io.r2dbc.spi.RowMetadata;
 
 /**
  * A {@link Row} for a PostgreSQL database.
  */
 public interface PostgresqlRow extends Row {
+
+    /**
+     * Returns the {@link RowMetadata} for all columns in this row.
+     *
+     * @return the {@link RowMetadata} for all columns in this row
+     * @since 0.9
+     */
+    PostgresqlRowMetadata getMetadata();
 
 }

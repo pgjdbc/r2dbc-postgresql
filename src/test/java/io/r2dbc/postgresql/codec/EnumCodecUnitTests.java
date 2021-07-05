@@ -24,7 +24,6 @@ import io.r2dbc.postgresql.extension.CodecRegistrar;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.TestByteBufAllocator;
 import io.r2dbc.spi.test.MockRow;
-import io.r2dbc.spi.test.MockRowMetadata;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.reactivestreams.Publisher;
@@ -97,7 +96,6 @@ final class EnumCodecUnitTests {
 
         MockPostgresqlStatement mockPostgresqlStatement = MockPostgresqlStatement.builder()
             .result(MockPostgresqlResult.builder()
-                .rowMetadata(MockRowMetadata.empty())
                 .row(MockRow.builder()
                     .identified("oid", Integer.class, 42)
                     .identified("typarray", Integer.class, 0)
@@ -129,7 +127,6 @@ final class EnumCodecUnitTests {
 
         MockPostgresqlStatement mockPostgresqlStatement = MockPostgresqlStatement.builder()
             .result(MockPostgresqlResult.builder()
-                .rowMetadata(MockRowMetadata.empty())
                 .row(MockRow.builder()
                     .identified("oid", Integer.class, 42)
                     .identified("typarray", Integer.class, 0)

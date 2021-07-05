@@ -52,6 +52,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
@@ -230,7 +231,7 @@ final class SimpleQueryPostgresqlStatementUnitTests {
             .execute()
             .flatMap(result -> result.map((row, rowMetadata) -> row))
             .as(StepVerifier::create)
-            .expectNext(new PostgresqlRow(context, Collections.singletonList(field),
+            .expectNext(new PostgresqlRow(context, mock(io.r2dbc.postgresql.api.PostgresqlRowMetadata.class), Collections.singletonList(field),
                 new ByteBuf[]{TEST.buffer(4).writeInt(100)}))
             .verifyComplete();
     }

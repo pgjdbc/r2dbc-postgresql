@@ -19,6 +19,7 @@ package io.r2dbc.postgresql;
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.api.RefCursor;
+import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.message.backend.DataRow;
 import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.postgresql.util.Assert;
@@ -37,14 +38,17 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
 
     private final ConnectionResources context;
 
+    private final io.r2dbc.postgresql.api.PostgresqlRowMetadata metadata;
+
     private final List<RowDescription.Field> fields;
 
     private final ByteBuf[] data;
 
     private volatile boolean isReleased = false;
 
-    PostgresqlRow(ConnectionResources context, List<RowDescription.Field> fields, ByteBuf[] data) {
+    PostgresqlRow(ConnectionResources context, io.r2dbc.postgresql.api.PostgresqlRowMetadata metadata, List<RowDescription.Field> fields, ByteBuf[] data) {
         this.context = Assert.requireNonNull(context, "context must not be null");
+        this.metadata = Assert.requireNonNull(metadata, "metadata must not be null");
         this.fields = Assert.requireNonNull(fields, "fields must not be null");
         this.data = Assert.requireNonNull(data, "data must not be null");
     }
@@ -78,6 +82,11 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
         requireNotReleased();
 
         return decode(getColumn(name), type);
+    }
+
+    @Override
+    public io.r2dbc.postgresql.api.PostgresqlRowMetadata getMetadata() {
+        return this.metadata;
     }
 
     @Nullable
@@ -128,11 +137,20 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
             '}';
     }
 
-    static PostgresqlRow toRow(ConnectionResources context, DataRow dataRow, RowDescription rowDescription) {
+    static PostgresqlRow toRow(ConnectionResources context, DataRow dataRow, Codecs codecs, RowDescription rowDescription) {
         Assert.requireNonNull(dataRow, "dataRow must not be null");
+        Assert.requireNonNull(codecs, "rowDescription must not be null");
         Assert.requireNonNull(rowDescription, "rowDescription must not be null");
 
-        return new PostgresqlRow(context, rowDescription.getFields(), dataRow.getColumns());
+        return new PostgresqlRow(context, PostgresqlRowMetadata.toRowMetadata(codecs, rowDescription), rowDescription.getFields(), dataRow.getColumns());
+    }
+
+    static PostgresqlRow toRow(ConnectionResources context, DataRow dataRow, PostgresqlRowMetadata metadata, RowDescription rowDescription) {
+        Assert.requireNonNull(dataRow, "dataRow must not be null");
+        Assert.requireNonNull(metadata, "metadata must not be null");
+        Assert.requireNonNull(rowDescription, "rowDescription must not be null");
+
+        return new PostgresqlRow(context, metadata, rowDescription.getFields(), dataRow.getColumns());
     }
 
     void release() {

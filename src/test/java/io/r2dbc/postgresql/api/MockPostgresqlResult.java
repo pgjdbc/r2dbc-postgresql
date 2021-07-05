@@ -16,23 +16,24 @@
 
 package io.r2dbc.postgresql.api;
 
+import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 public final class MockPostgresqlResult implements PostgresqlResult {
 
-    private final Mono<RowMetadata> rowMetadata;
-
     private final Flux<Row> rows;
 
-    public MockPostgresqlResult(Mono<RowMetadata> rowMetadata, Flux<Row> rows) {
-        this.rowMetadata = rowMetadata;
+    public MockPostgresqlResult(Flux<Row> rows) {
         this.rows = rows;
     }
 
@@ -48,31 +49,31 @@ public final class MockPostgresqlResult implements PostgresqlResult {
     @Override
     public <T> Flux<T> map(BiFunction<Row, RowMetadata, ? extends T> mappingFunction) {
         return this.rows
-            .zipWith(this.rowMetadata.repeat())
-            .map((tuple) -> {
-                Row row = tuple.getT1();
-                RowMetadata rowMetadata = tuple.getT2();
+            .map((row) -> {
 
-                return mappingFunction.apply(row, rowMetadata);
+                return mappingFunction.apply(row, row.getMetadata());
             });
+    }
+
+    @Override
+    public Result filter(Predicate<Segment> filter) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <T> Publisher<T> flatMap(Function<Segment, ? extends Publisher<? extends T>> mappingFunction) {
+        throw new UnsupportedOperationException();
     }
 
     public static final class Builder {
 
         private final List<Row> rows = new ArrayList<>();
 
-        private RowMetadata rowMetadata;
-
         private Builder() {
         }
 
         public MockPostgresqlResult build() {
-            return new MockPostgresqlResult(Mono.justOrEmpty(this.rowMetadata), Flux.fromIterable(this.rows));
-        }
-
-        public Builder rowMetadata(RowMetadata rowMetadata) {
-            this.rowMetadata = rowMetadata;
-            return this;
+            return new MockPostgresqlResult(Flux.fromIterable(this.rows));
         }
 
         public Builder row(Row row) {
