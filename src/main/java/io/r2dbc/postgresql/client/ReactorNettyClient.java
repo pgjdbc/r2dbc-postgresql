@@ -389,7 +389,7 @@ public final class ReactorNettyClient implements Client {
                 tcpClient = tcpClient.runOn(connectionSettings.getRequiredLoopResources());
             }
 
-            tcpClient = tcpClient.resolver(new BalancedResolverGroup());
+            tcpClient = tcpClient.resolver(BalancedResolverGroup.INSTANCE);
             tcpClient = tcpClient.option(ChannelOption.SO_KEEPALIVE, connectionSettings.isTcpKeepAlive());
             tcpClient = tcpClient.option(ChannelOption.TCP_NODELAY, connectionSettings.isTcpNoDelay());
         }
