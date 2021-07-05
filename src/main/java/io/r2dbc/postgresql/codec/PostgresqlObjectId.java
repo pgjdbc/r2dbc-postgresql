@@ -390,7 +390,7 @@ public enum PostgresqlObjectId implements Type, PostgresTypeIdentifier {
      */
     XML_ARRAY(143);
 
-    public static final int OID_CACHE_SIZE = 4096;
+    public static final int OID_CACHE_SIZE = 3810; // JSON_ARRAY is currently the highest one
 
     private static final PostgresqlObjectId[] CACHE = new PostgresqlObjectId[OID_CACHE_SIZE];
 
@@ -435,12 +435,7 @@ public enum PostgresqlObjectId implements Type, PostgresTypeIdentifier {
             return oid != null;
         }
 
-        try {
-            valueOf(objectId);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+        return false;
     }
 
     /**
@@ -452,22 +447,17 @@ public enum PostgresqlObjectId implements Type, PostgresTypeIdentifier {
      */
     public static PostgresqlObjectId valueOf(int objectId) {
 
+        PostgresqlObjectId oid = null;
+
         if (objectId >= 0 && objectId < OID_CACHE_SIZE) {
-            PostgresqlObjectId oid = CACHE[objectId];
-
-            if (oid == null) {
-                throw new IllegalArgumentException(String.format("%d is not a valid object id", objectId));
-            }
-
-            return oid;
+            oid = CACHE[objectId];
         }
 
-        for (PostgresqlObjectId type : values()) {
-            if (type.objectId == objectId) {
-                return type;
-            }
+        if (oid == null) {
+            throw new IllegalArgumentException(String.format("%d is not a valid object id", objectId));
         }
-        throw new IllegalArgumentException(String.format("%d is not a valid object id", objectId));
+
+        return oid;
     }
 
     /**
