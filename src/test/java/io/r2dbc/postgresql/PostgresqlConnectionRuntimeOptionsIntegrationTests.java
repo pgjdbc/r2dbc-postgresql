@@ -60,8 +60,8 @@ final class PostgresqlConnectionRuntimeOptionsIntegrationTests {
     @Test
     void connectionFactoryShouldApplyParametersUsingTimeoutApis() {
         PostgresqlConnection connection = (PostgresqlConnection) connectionFactory.create().block();
-        connection.lockTimeout(Duration.ofSeconds(10)).block();
-        connection.statementTimeout(Duration.ofMinutes(2)).block();
+        connection.setLockWaitTimeout(Duration.ofSeconds(10)).block();
+        connection.setStatementTimeout(Duration.ofMinutes(2)).block();
 
         connection
             .createStatement("SHOW lock_timeout").execute()

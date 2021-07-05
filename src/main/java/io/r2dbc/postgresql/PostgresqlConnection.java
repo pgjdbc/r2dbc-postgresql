@@ -52,7 +52,6 @@ import reactor.util.annotation.Nullable;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static io.r2dbc.postgresql.client.TransactionStatus.IDLE;
 import static io.r2dbc.postgresql.client.TransactionStatus.OPEN;
@@ -425,19 +424,17 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
     }
 
     @Override
-    public Mono<Void> lockTimeout(Duration lockTimeout) {
+    public Mono<Void> setLockWaitTimeout(Duration lockTimeout) {
         Assert.requireNonNull(lockTimeout, "lockTimeout must not be null");
 
-        Flux<?> exchange = exchange(String.format("SET LOCK_TIMEOUT = %s", lockTimeout.toMillis()));
-        return Mono.defer(() -> Mono.from(exchange).then());
+        return Mono.defer(() -> Mono.from(exchange(String.format("SET LOCK_TIMEOUT = %s", lockTimeout.toMillis()))).then());
     }
 
     @Override
-    public Mono<Void> statementTimeout(Duration statementTimeout) {
+    public Mono<Void> setStatementTimeout(Duration statementTimeout) {
         Assert.requireNonNull(statementTimeout, "statementTimeout must not be null");
 
-        Flux<?> exchange = exchange(String.format("SET STATEMENT_TIMEOUT = %s", statementTimeout.toMillis()));
-        return Mono.defer(() -> Mono.from(exchange).then());
+        return Mono.defer(() -> Mono.from(exchange(String.format("SET STATEMENT_TIMEOUT = %s", statementTimeout.toMillis()))).then());
     }
 
     private Mono<Void> useTransactionStatus(Function<TransactionStatus, Publisher<?>> f) {

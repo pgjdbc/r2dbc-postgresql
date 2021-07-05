@@ -113,13 +113,6 @@ public interface PostgresqlConnection extends Connection {
     boolean isAutoCommit();
 
     /**
-     * Sets Lock Timeout by sending a query message to a server.
-     *
-     * @return a {@link Mono} that indicates that a lockTimeout frame was delivered to the backend
-     */
-    Mono<Void> lockTimeout(Duration lockTimeout);
-
-    /**
      * {@inheritDoc}
      */
     @Override
@@ -144,17 +137,26 @@ public interface PostgresqlConnection extends Connection {
     Mono<Void> setAutoCommit(boolean autoCommit);
 
     /**
+     * Sets Lock Acquisition Timeout through {@code SET LOCK_TIMEOUT}.
+     *
+     * @return a {@link Mono} that indicates that a lockTimeout frame was delivered to the backend
+     * @since 0.8.9
+     */
+    Mono<Void> setLockWaitTimeout(Duration lockTimeout);
+
+    /**
+     * Sets Statement Timeout through {@code SET STATEMENT_TIMEOUT}.
+     *
+     * @return a {@link Mono} that indicates that a statementTimeout frame was delivered to the backend
+     * @since 0.8.9
+     */
+    Mono<Void> setStatementTimeout(Duration statementTimeout);
+
+    /**
      * {@inheritDoc}
      */
     @Override
     Mono<Void> setTransactionIsolationLevel(IsolationLevel isolationLevel);
-
-    /**
-     * Sets Statement Timeout by sending a query message to a server.
-     *
-     * @return a {@link Mono} that indicates that a statementTimeout frame was delivered to the backend
-     */
-    Mono<Void> statementTimeout(Duration statementTimeout);
 
     /**
      * {@inheritDoc}
