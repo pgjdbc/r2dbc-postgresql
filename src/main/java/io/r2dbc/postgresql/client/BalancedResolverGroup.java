@@ -30,13 +30,21 @@ import java.net.InetSocketAddress;
  * @since 0.8.6
  */
 final class BalancedResolverGroup extends AddressResolverGroup<InetSocketAddress> {
+
     BalancedResolverGroup() {
     }
 
-    public static final BalancedResolverGroup INSTANCE = new BalancedResolverGroup();
+    public static final BalancedResolverGroup INSTANCE;
+
+    static {
+
+        INSTANCE = new BalancedResolverGroup();
+        Runtime.getRuntime().addShutdownHook(new Thread(INSTANCE::close, "R2DBC-Postgresql-BalancedResolverGroup-ShutdownHook"));
+    }
 
     @Override
     protected AddressResolver<InetSocketAddress> newResolver(EventExecutor executor) throws Exception {
         return new RoundRobinInetAddressResolver(executor, new DefaultNameResolver(executor)).asAddressResolver();
     }
+
 }
