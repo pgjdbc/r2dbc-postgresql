@@ -485,7 +485,7 @@ final class PostgresqlConnectionUnitTests {
             .build();
 
         createConnection(client, MockCodecs.empty(), this.statementCache)
-            .statementTimeout(Duration.ofSeconds(2))
+            .setStatementTimeout(Duration.ofSeconds(2))
             .as(StepVerifier::create)
             .verifyComplete();
     }
@@ -499,7 +499,7 @@ final class PostgresqlConnectionUnitTests {
             .build();
 
         createConnection(client, MockCodecs.empty(), this.statementCache)
-            .lockTimeout(Duration.ofSeconds(4))
+            .setLockWaitTimeout(Duration.ofSeconds(4))
             .as(StepVerifier::create)
             .verifyComplete();
     }

@@ -81,7 +81,7 @@ public final class PostgresqlConnectionConfiguration {
     private final String host;
 
     @Nullable
-    private final Duration lockTimeout;
+    private final Duration lockWaitTimeout;
 
     @Nullable
     private final LoopResources loopResources;
@@ -111,7 +111,8 @@ public final class PostgresqlConnectionConfiguration {
 
     private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions, @Nullable boolean compatibilityMode, Duration connectTimeout, @Nullable String database,
                                               List<Extension> extensions,
-                                              ToIntFunction<String> fetchSize, boolean forceBinary, @Nullable String host, @Nullable Duration lockTimeout, @Nullable LoopResources loopResources,
+                                              ToIntFunction<String> fetchSize, boolean forceBinary, @Nullable String host, @Nullable Duration lockWaitTimeout,
+                                              @Nullable LoopResources loopResources,
                                               @Nullable Map<String, String> options, @Nullable CharSequence password, int port, boolean preferAttachedBuffers, int preparedStatementCacheQueries,
                                               @Nullable String schema,
                                               @Nullable String socket, SSLConfig sslConfig, @Nullable Duration statementTimeout,boolean tcpKeepAlive, boolean tcpNoDelay, String username) {
@@ -127,14 +128,14 @@ public final class PostgresqlConnectionConfiguration {
         this.loopResources = loopResources;
         this.options = options == null ? new LinkedHashMap<>() : new LinkedHashMap<>(options);
         this.statementTimeout = statementTimeout;
-        this.lockTimeout = lockTimeout;
+        this.lockWaitTimeout = lockWaitTimeout;
 
         if (this.statementTimeout != null) {
             this.options.put("statement_timeout", Long.toString(statementTimeout.toMillis()));
         }
 
-        if (this.lockTimeout != null) {
-            this.options.put("lock_timeout", Long.toString(lockTimeout.toMillis()));
+        if (this.lockWaitTimeout != null) {
+            this.options.put("lock_timeout", Long.toString(lockWaitTimeout.toMillis()));
         }
 
         if (schema != null && !schema.isEmpty()) {
@@ -173,7 +174,7 @@ public final class PostgresqlConnectionConfiguration {
             ", fetchSize=" + this.fetchSize +
             ", forceBinary='" + this.forceBinary + '\'' +
             ", host='" + this.host + '\'' +
-            ", lockTimeout='" + this.lockTimeout +
+            ", lockWaitTimeout='" + this.lockWaitTimeout +
             ", loopResources='" + this.loopResources + '\'' +
             ", options='" + this.options + '\'' +
             ", password='" + obfuscate(this.password != null ? this.password.length() : 0) + '\'' +
@@ -343,7 +344,7 @@ public final class PostgresqlConnectionConfiguration {
         private String host;
 
         @Nullable
-        private Duration lockTimeout;
+        private Duration lockWaitTimeout;
 
         private Map<String, String> options;
 
@@ -440,7 +441,7 @@ public final class PostgresqlConnectionConfiguration {
 
             return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.compatibilityMode, this.connectTimeout, this.database, this.extensions, this.fetchSize
                 , this.forceBinary,
-                this.host, this.lockTimeout, this.loopResources, this.options, this.password, this.port, this.preferAttachedBuffers,
+                this.host, this.lockWaitTimeout, this.loopResources, this.options, this.password, this.port, this.preferAttachedBuffers,
                 this.preparedStatementCacheQueries, this.schema, this.socket, this.createSslConfig(), this.statementTimeout,this.tcpKeepAlive,
                 this.tcpNoDelay, this.username);
         }
@@ -563,17 +564,18 @@ public final class PostgresqlConnectionConfiguration {
         }
 
         /**
-         * Configure the Lock timeout. Default unconfigured.
+         * Configure the Lock wait timeout. Default unconfigured.
          * <p>
          * This parameter is applied once after creating a new connection.
          * If lockTimeout is already set using {@link #options(Map)}, it will be overridden.
          * <a href="https://www.postgresql.org/docs/current/runtime-config-client.html#RUNTIME-CONFIG-CLIENT-FORMAT">Lock Timeout</a>
          *
-         * @param lockTimeout the lock timeout
+         * @param lockWaitTimeout the lock timeout
          * @return this {@link Builder}
+         * @since 0.8.9
          */
-        public Builder lockTimeout(@Nullable Duration lockTimeout) {
-            this.lockTimeout = lockTimeout;
+        public Builder lockWaitTimeout(Duration lockWaitTimeout) {
+            this.lockWaitTimeout = Assert.requireNonNull(lockWaitTimeout, "Lock wait timeout must not be null");
             return this;
         }
 
@@ -807,9 +809,10 @@ public final class PostgresqlConnectionConfiguration {
          *
          * @param statementTimeout the statement timeout
          * @return this {@link Builder}
+         * @since 0.8.9
          */
-        public Builder statementTimeout(@Nullable Duration statementTimeout) {
-            this.statementTimeout = statementTimeout;
+        public Builder statementTimeout(Duration statementTimeout) {
+            this.statementTimeout = Assert.requireNonNull(statementTimeout, "Statement timeout");
             return this;
         }
 
@@ -863,7 +866,7 @@ public final class PostgresqlConnectionConfiguration {
                 ", fetchSize='" + this.fetchSize + '\'' +
                 ", forceBinary='" + this.forceBinary + '\'' +
                 ", host='" + this.host + '\'' +
-                ", lockTimeout='" + this.lockTimeout + '\'' +
+                ", lockWaitTimeout='" + this.lockWaitTimeout + '\'' +
                 ", loopResources='" + this.loopResources + '\'' +
                 ", parameters='" + this.options + '\'' +
                 ", password='" + obfuscate(this.password != null ? this.password.length() : 0) + '\'' +

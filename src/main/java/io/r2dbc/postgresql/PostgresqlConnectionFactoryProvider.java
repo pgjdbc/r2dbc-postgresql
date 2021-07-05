@@ -28,6 +28,7 @@ import io.r2dbc.spi.Option;
 import reactor.netty.resources.LoopResources;
 
 import javax.net.ssl.HostnameVerifier;
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -72,6 +73,13 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
      * Force binary transfer.
      */
     public static final Option<Boolean> FORCE_BINARY = Option.valueOf("forceBinary");
+
+    /**
+     * Lock timeout.
+     *
+     * @since 0.8.9
+     */
+    public static final Option<Duration> LOCK_WAIT_TIMEOUT = Option.valueOf("lockWaitTimeout");
 
     /**
      * Event {@link LoopResources}.
@@ -163,6 +171,13 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<String> SSL_ROOT_CERT = Option.valueOf("sslRootCert");
 
     /**
+     * Statement timeout.
+     *
+     * @since 0.8.9
+     */
+    public static final Option<Duration> STATEMENT_TIMEOUT = Option.valueOf("statementTimeout");
+
+    /**
      * Enable TCP KeepAlive.
      *
      * @since 0.8.4
@@ -228,6 +243,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         mapper.from(DATABASE).to(builder::database);
         mapper.from(FETCH_SIZE).map(OptionMapper::toInteger).to(builder::fetchSize);
         mapper.from(FORCE_BINARY).map(OptionMapper::toBoolean).to(builder::forceBinary);
+        mapper.from(LOCK_WAIT_TIMEOUT).map(OptionMapper::toDuration).to(builder::lockWaitTimeout);
         mapper.from(LOOP_RESOURCES).to(builder::loopResources);
         mapper.from(OPTIONS).map(PostgresqlConnectionFactoryProvider::convertToMap).to(builder::options);
         mapper.from(PASSWORD).to(builder::password);
@@ -238,6 +254,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
             builder.host(options.getRequiredValue(HOST));
             setupSsl(builder, mapper);
         });
+        mapper.from(STATEMENT_TIMEOUT).map(OptionMapper::toDuration).to(builder::statementTimeout);
         mapper.from(TCP_KEEPALIVE).map(OptionMapper::toBoolean).to(builder::tcpKeepAlive);
         mapper.from(TCP_NODELAY).map(OptionMapper::toBoolean).to(builder::tcpNoDelay);
         builder.username(options.getRequiredValue(USER));

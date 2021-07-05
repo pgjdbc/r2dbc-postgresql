@@ -107,7 +107,7 @@ final class PostgresqlConnectionConfigurationUnitTests {
 
         PostgresqlConnectionConfiguration configuration = getPostgresqlConnectionConfiguration(options, loopResources)
             .statementTimeout(Duration.ofMillis(5000))
-            .lockTimeout(Duration.ofSeconds(50))
+            .lockWaitTimeout(Duration.ofSeconds(50))
             .build();
 
         assertThat(configuration)
