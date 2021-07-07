@@ -38,7 +38,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * An implementation of {@link Result} representing the results of a query against a PostgreSQL database.
+ * An implementation of {@link Result} representing the results of a query against a PostgreSQL database applying fast-path processing. Processing of {@link Segment} is handled entirely by
+ * {@link PostgresqlSegmentResult}.
  */
 final class PostgresqlResult extends AbstractReferenceCounted implements io.r2dbc.postgresql.api.PostgresqlResult {
 
@@ -116,13 +117,13 @@ final class PostgresqlResult extends AbstractReferenceCounted implements io.r2db
     }
 
     @Override
-    public Result filter(Predicate<Segment> filter) {
-        throw new UnsupportedOperationException("Not yet implemented");
+    public io.r2dbc.postgresql.api.PostgresqlResult filter(Predicate<Segment> filter) {
+        return PostgresqlSegmentResult.toResult(this.resources, this.messages, this.factory).filter(filter);
     }
 
     @Override
     public <T> Publisher<T> flatMap(Function<Segment, ? extends Publisher<? extends T>> mappingFunction) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        return PostgresqlSegmentResult.toResult(this.resources, this.messages, this.factory).flatMap(mappingFunction);
     }
 
     @Override

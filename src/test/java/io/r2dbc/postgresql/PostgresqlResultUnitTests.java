@@ -48,6 +48,20 @@ final class PostgresqlResultUnitTests {
     }
 
     @Test
+    void toResultCommandCompleteUsingSegments() {
+        io.r2dbc.postgresql.api.PostgresqlResult result = PostgresqlResult.toResult(MockContext.empty(), Flux.just(new CommandComplete("test", null, 1)), ExceptionFactory.INSTANCE).filter(it -> true);
+
+        result.map((row, rowMetadata) -> row)
+            .as(StepVerifier::create)
+            .verifyComplete();
+
+        result.getRowsUpdated()
+            .as(StepVerifier::create)
+            .expectNext(1)
+            .verifyComplete();
+    }
+
+    @Test
     void toResultEmptyQueryResponse() {
         PostgresqlResult result = PostgresqlResult.toResult(MockContext.empty(), Flux.just(EmptyQueryResponse.INSTANCE), ExceptionFactory.INSTANCE);
 
@@ -83,9 +97,30 @@ final class PostgresqlResultUnitTests {
     }
 
     @Test
+    void toResultRowDescriptionRowsUpdatedUsingSegments() {
+        io.r2dbc.postgresql.api.PostgresqlResult result = PostgresqlResult.toResult(MockContext.empty(), Flux.just(new RowDescription(Collections.emptyList()), new DataRow(), new CommandComplete
+            ("test", null, null)), ExceptionFactory.INSTANCE).filter(it -> true);
+
+        result.getRowsUpdated()
+            .as(StepVerifier::create)
+            .verifyComplete();
+    }
+
+    @Test
     void toResultRowDescriptionMap() {
         PostgresqlResult result = PostgresqlResult.toResult(MockContext.empty(), Flux.just(new RowDescription(Collections.emptyList()), new DataRow(), new CommandComplete
             ("test", null, null)), ExceptionFactory.INSTANCE);
+
+        result.map((row, rowMetadata) -> row)
+            .as(StepVerifier::create)
+            .expectNextCount(1)
+            .verifyComplete();
+    }
+
+    @Test
+    void toResultRowDescriptionMapUsingSegments() {
+        io.r2dbc.postgresql.api.PostgresqlResult result = PostgresqlResult.toResult(MockContext.empty(), Flux.just(new RowDescription(Collections.emptyList()), new DataRow(), new CommandComplete
+            ("test", null, null)), ExceptionFactory.INSTANCE).filter(it -> true);
 
         result.map((row, rowMetadata) -> row)
             .as(StepVerifier::create)

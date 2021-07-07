@@ -61,8 +61,18 @@ final class ExceptionFactory {
      * @see ErrorResponse
      */
     private static R2dbcException createException(ErrorResponse response, String sql) {
+        return createException(new ErrorDetails(response.getFields()), sql);
+    }
 
-        ErrorDetails errorDetails = new ErrorDetails(response.getFields());
+    /**
+     * Create a {@link R2dbcException} from an {@link ErrorDetails}.
+     *
+     * @param errorDetails the error details.
+     * @param sql          underlying SQL.
+     * @return the {@link R2dbcException}.
+     * @see ErrorResponse
+     */
+    private static R2dbcException createException(ErrorDetails errorDetails, String sql) {
 
         switch (errorDetails.getCode()) {
             case "42501":
@@ -73,7 +83,6 @@ final class ExceptionFactory {
             case "28000":
             case "28P01":
                 return new PostgresqlAuthenticationFailure(errorDetails);
-
         }
 
         String codeClass = errorDetails.getCode().length() > 2 ? errorDetails.getCode().substring(0, 2) : "99";
@@ -97,6 +106,17 @@ final class ExceptionFactory {
         }
 
         return new PostgresqlNonTransientResourceException(errorDetails);
+    }
+
+    /**
+     * Create a {@link R2dbcException} from an {@link ErrorDetails}.
+     *
+     * @param errorDetails the error details.
+     * @return the {@link R2dbcException}.
+     * @see ErrorResponse
+     */
+    public R2dbcException createException(ErrorDetails errorDetails) {
+        return createException(errorDetails, this.sql);
     }
 
     /**
