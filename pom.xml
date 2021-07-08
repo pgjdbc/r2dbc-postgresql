@@ -210,7 +210,7 @@
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
+            <artifactId>mockito-junit-jupiter</artifactId>
             <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
@@ -265,7 +265,7 @@
                 <version>3.8.1</version>
                 <configuration>
                     <compilerArgs>
-                        <arg>-Werror</arg>
+<!--                        <arg>-Werror</arg>-->
                         <arg>-Xlint:all</arg>
                         <arg>-Xlint:-deprecation</arg>
                         <arg>-Xlint:-options</arg>
