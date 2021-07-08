@@ -19,13 +19,16 @@ package io.r2dbc.postgresql.codec;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.LSEG;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.LSEG_ARRAY;
+
 /**
  * @since 0.8.5
  */
 final class LsegCodec extends AbstractGeometryCodec<Lseg> {
 
     LsegCodec(ByteBufAllocator byteBufAllocator) {
-        super(Lseg.class, PostgresqlObjectId.LSEG, byteBufAllocator);
+        super(Lseg.class, LSEG, byteBufAllocator);
     }
 
     @Override
@@ -49,6 +52,11 @@ final class LsegCodec extends AbstractGeometryCodec<Lseg> {
             .writeDouble(value.getP1().getY())
             .writeDouble(value.getP2().getX())
             .writeDouble(value.getP2().getY());
+    }
+
+    @Override
+    public PostgresTypeIdentifier getArrayDataType() {
+        return LSEG_ARRAY;
     }
 
 }

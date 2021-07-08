@@ -196,9 +196,20 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     }
 
     @Test
+    void circleArray() {
+        testCodec(Circle[].class, new Circle[]{Circle.of(Point.of(1.12, 2.12), 3.12), Circle.of(Point.of(Double.MIN_VALUE, Double.MIN_VALUE), Double.MAX_VALUE)}, "CIRCLE[]");
+    }
+
+    @Test
     void circle() {
         testCodec(Circle.class, Circle.of(Point.of(1.12, 2.12), 3.12), "CIRCLE");
         testCodec(Circle.class, Circle.of(Point.of(Double.MIN_VALUE, Double.MIN_VALUE), Double.MAX_VALUE), "CIRCLE");
+    }
+
+    @Test
+    void circleTwoDimensionalArray() {
+        testCodec(Circle[][].class, new Circle[][]{{Circle.of(Point.of(1.12, 2.12), 3.12), Circle.of(Point.of(Double.MIN_VALUE, Double.MIN_VALUE), Double.MAX_VALUE)},
+            {Circle.of(Point.of(-2.4, -456.2), 20), null}}, "CIRCLE[][]");
     }
 
     @Test
@@ -327,7 +338,13 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
 
     @Test
     void intArray() {
+        testCodec(Integer[].class, new Integer[]{100, 200, 300}, "INT2[]");
         testCodec(Integer[].class, new Integer[]{100, 200, 300}, "INT4[]");
+        testCodec(Integer[].class, new Integer[]{100, 200, 300}, "INT8[]");
+        testCodec(Integer[].class, new Integer[]{100, 200, 300}, "OID[]");
+        testCodec(Integer[].class, new Integer[]{100, 200, 300}, "NUMERIC[]");
+        testCodec(Integer[].class, new Integer[]{100, 200, 300}, "FLOAT4[]");
+        testCodec(Integer[].class, new Integer[]{100, 200, 300}, "FLOAT8[]");
     }
 
     @Test
@@ -459,10 +476,20 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     }
 
     @Test
+    void pointArray() {
+        testCodec(Point[].class, new Point[]{Point.of(1.12, 2.12), Point.of(Integer.MIN_VALUE, Integer.MAX_VALUE), Point.of(Double.MIN_VALUE, Double.MAX_VALUE)}, "POINT[]");
+    }
+
+    @Test
     void point() {
         testCodec(Point.class, Point.of(1.12, 2.12), "POINT");
         testCodec(Point.class, Point.of(Integer.MIN_VALUE, Integer.MAX_VALUE), "POINT");
         testCodec(Point.class, Point.of(Double.MIN_VALUE, Double.MAX_VALUE), "POINT");
+    }
+
+    @Test
+    void pointTwoDimensionalArray() {
+        testCodec(Point[][].class, new Point[][]{{Point.of(1.12, 2.12), Point.of(Integer.MIN_VALUE, Integer.MAX_VALUE)}, {Point.of(Double.MIN_VALUE, Double.MAX_VALUE), null}}, "POINT[][]");
     }
 
     @Test
@@ -551,9 +578,24 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     }
 
     @Test
+    void boxArray() {
+        testCodec(Box[].class, new Box[]{Box.of(Point.of(1.9, 2.8), Point.of(3.7, 4.6)), Box.of(Point.of(1.5, 3.3), Point.of(5., 7.))}, "BOX[]");
+    }
+
+    @Test
     void box() {
         testCodec(Box.class, Box.of(Point.of(1.9, 2.8), Point.of(3.7, 4.6)), "BOX");
         testCodec(Box.class, Box.of(Point.of(1.5, 3.3), Point.of(5., 7.)), "BOX");
+    }
+
+    @Test
+    void boxTwoDimensionalArray() {
+        testCodec(Box[][].class, new Box[][]{{null, Box.of(Point.of(1.9, 2.8), Point.of(3.7, 4.6))}, {Box.of(Point.of(1.5, 3.3), Point.of(5., 7.)), null}}, "BOX[][]");
+    }
+
+    @Test
+    void lineArray() {
+        testCodec(Line[].class, new Line[]{Line.of(1., 2., 4.), Line.of(-10.42, 3.14, 5.24)}, "LINE[]");
     }
 
     @Test
@@ -563,8 +605,30 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     }
 
     @Test
+    void lineTwoDimensionalArray() {
+        testCodec(Line[][].class, new Line[][]{{Line.of(1., 2., 4.), Line.of(-10.42, 3.14, 5.24)}, {null, Line.of(3, 4, 5)}}, "LINE[][]");
+    }
+
+    @Test
+    void lsegArray() {
+        testCodec(Lseg[].class, new Lseg[]{Lseg.of(1.11, 2.22, 3.33, 4.44), Lseg.of(6.6, 3.5, 6.6, -2.36)}, "LSEG[]");
+    }
+
+    @Test
     void lseg() {
         testCodec(Lseg.class, Lseg.of(Point.of(1.11, 2.22), Point.of(3.33, 4.44)), "LSEG");
+    }
+
+    @Test
+    void lsegTwoDimensionalArray() {
+        testCodec(Lseg[][].class, new Lseg[][]{{null, Lseg.of(1.11, 2.22, 3.33, 4.44)}, {Lseg.of(6.6, 3.5, 6.6, -2.36), null}}, "LSEG[][]");
+    }
+
+    @Test
+    void pathArray() {
+        testCodec(Path[].class, new Path[]{Path.closed(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(1.1, 2.2)), Path.open(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(0.42, 5.3)),
+            Path.closed(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(0.42, 5.3), Point.of(1.1, 2.2)), Path.open(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(0.42, 5.3),
+            Point.of(-3.5, 0.0))}, "PATH[]");
     }
 
     @Test
@@ -576,9 +640,28 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     }
 
     @Test
+    void pathTwoDimensionalArray() {
+        testCodec(Path[][].class, new Path[][]{{Path.closed(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(1.1, 2.2)), null, Path.open(Point.of(1.1, 2.2), Point.of(10.10, 10.10),
+            Point.of(0.42, 5.3))}, {Path.closed(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(0.42, 5.3), Point.of(1.1, 2.2)), Path.open(Point.of(1.1, 2.2), Point.of(10.10, 10.10),
+            Point.of(0.42, 5.3), Point.of(-3.5, 0.0)), null}}, "PATH[][]");
+    }
+
+    @Test
+    void polygonArray() {
+        testCodec(Polygon[].class, new Polygon[]{Polygon.of(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(.42, 5.3)),
+            Polygon.of(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(.42, 5.3), Point.of(-3.5, 0.))}, "POLYGON[]");
+    }
+
+    @Test
     void polygon() {
         testCodec(Polygon.class, Polygon.of(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(.42, 5.3)), "POLYGON");
         testCodec(Polygon.class, Polygon.of(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(.42, 5.3), Point.of(-3.5, 0.)), "POLYGON");
+    }
+
+    @Test
+    void polygonTwoDimensionalArray() {
+        testCodec(Polygon[][].class, new Polygon[][]{{null, Polygon.of(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(.42, 5.3))}, {Polygon.of(Point.of(1.1, 2.2), Point.of(10.10, 10.10),
+            Point.of(.42, 5.3), Point.of(-3.5, 0.)), null}}, "POLYGON[][]");
     }
 
     private static <T> Mono<T> close(Connection connection) {

@@ -22,6 +22,8 @@ import io.netty.buffer.ByteBufAllocator;
 import java.util.ArrayList;
 import java.util.List;
 
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.POLYGON_ARRAY;
+
 /**
  * @since 0.8.5
  */
@@ -66,6 +68,11 @@ final class PolygonCodec extends AbstractGeometryCodec<Polygon> {
         points.forEach(point -> buffer.writeDouble(point.getX()).writeDouble(point.getY()));
 
         return buffer;
+    }
+
+    @Override
+    public PostgresTypeIdentifier getArrayDataType() {
+        return POLYGON_ARRAY;
     }
 
 }

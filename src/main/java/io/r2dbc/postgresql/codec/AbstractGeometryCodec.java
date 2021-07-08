@@ -33,7 +33,7 @@ import java.util.List;
  * @param <T> the type that is handled by this {@link Codec}
  * @since 0.8.5
  */
-abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> {
+abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> implements ArrayCodecDelegate<T> {
 
     protected final PostgresqlObjectId postgresqlObjectId;
 
@@ -103,6 +103,11 @@ abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> {
     abstract ByteBuf doEncodeBinary(T value);
 
     @Override
+    public String encodeToText(T value) {
+        return "\"" + value + "\"";
+    }
+
+    @Override
     public EncodedParameter encodeNull() {
         return createNull(Format.FORMAT_BINARY, this.postgresqlObjectId);
     }
@@ -145,7 +150,7 @@ abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> {
     }
 
     /**
-     * Remove token wrappers such as {@code <>}, {@code []}, {@code {}}, {@code ()} and extract tokens into a {@link List}.
+     * Remove token wrappers such as {@code <>}, {@code []}, {@code {}}, {@code ()}, {@code <spaces>} and extract tokens into a {@link List}.
      *
      * @param content the content to decode.
      * @return tokenized content.
@@ -154,22 +159,22 @@ abstract class AbstractGeometryCodec<T> extends AbstractCodec<T> {
 
         List<String> tokens = new ArrayList<>();
 
-        for (int i = 0, s = 0; i < content.length(); i++) {
+        int length = content.length();
+        for (int i = 0, tokenStart = 0; i < length; i++) {
 
             char c = content.charAt(i);
-
-            if (c == '(' || c == '[' || c == '<' || c == '{') {
-                s++;
-                continue;
-            }
-
-            if (c == ',' || c == ')' || c == ']' || c == '>' || c == '}') {
-                if (s != i) {
-                    tokens.add(content.substring(s, i));
-                    s = i + 1;
+            if (c == '(' || c == '[' || c == '<' || c == '{' || (c == ' ' && tokenStart >= i)) {
+                tokenStart++;
+            } else if (c == ',' || c == ')' || c == ']' || c == '>' || c == '}' || c == ' ') {
+                if (tokenStart != i) {
+                    tokens.add(content.substring(tokenStart, i));
+                    tokenStart = i + 1;
                 } else {
-                    s++;
+                    tokenStart++;
                 }
+            } else if (i == length - 1) {
+                // for cases where there is no token at the end of the string (i.e. "(1.2,123.1),10")
+                tokens.add(content.substring(tokenStart));
             }
         }
 

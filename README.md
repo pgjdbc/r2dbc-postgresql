@@ -424,19 +424,24 @@ Support for the following single-dimensional arrays (read and write):
 | PostgreSQL Type                                 | Supported Data Type                   |
 |:------------------------------------------------|:--------------------------------------|
 | [`bytea[]`][psql-bytea-ref]                     | [**`ByteBuffer[]`**][java-ByteBuffer-ref], [`byte[][]`][java-byte-ref]|
+| [`boolean[] or bool[]`][psql-boolean-ref]       | [`Boolean[]`][java-boolean-ref]       |
+| [`box[]`][psql-box-ref]                         | **`Box[]`**|
 | [`character`][psql-character-ref]               | [`String[]`][java-string-ref]|
 | [`character varying`][psql-character-ref]       | [`String[]`][java-string-ref]|
+| [`circle[]`][psql-circle-ref]                   | **`Circle[]`**|
 | [`date[]`][psql-date-ref]                       | [`LocalDate[]`][java-ld-ref]|
 | [`double precision[]`][psql-floating-point-ref] | [**`Double[]`**][java-double-ref], [`Float[]`][java-float-ref], [`Boolean[]`][java-boolean-ref], [`Byte[]`][java-byte-ref], [`Short[]`][java-short-ref], [`Integer[]`][java-integer-ref], [`Long[]`][java-long-ref], [`BigDecimal[]`][java-bigdecimal-ref], [`BigInteger[]`][java-biginteger-ref]|
 | [enumerated type arrays][psql-enum-ref]         | Client code `Enum[]` types through `EnumCodec`|
 | [`inet[]`][psql-inet-ref]                       | [**`InetAddress[]`**][java-inet-ref]|
 | [`integer`[]][psql-integer-ref]                 | [**`Integer[]`**][java-integer-ref], [`Boolean[]`][java-boolean-ref], [`Byte[]`][java-byte-ref], [`Short[]`][java-short-ref], [`Long[]`][java-long-ref], [`BigDecimal[]`][java-bigdecimal-ref], [`BigInteger[]`][java-biginteger-ref]|
 | [`interval[]`][psql-interval-ref]               | **`Interval[]`**|
+| [`line[]`][psql-line-ref]                       | **`Line[]`**|
+| [`lseg[]`][psql-lseq-ref]                       | **`Lseg[]`**|
 | [`numeric[]`][psql-bignumeric-ref]              | [`BigDecimal[]`][java-bigdecimal-ref], [`Boolean[]`][java-boolean-ref], [`Byte[]`][java-byte-ref], [`Short[]`][java-short-ref], [`Integer[]`][java-integer-ref], [`Long[]`][java-long-ref], [`BigInteger[]`][java-biginteger-ref]|
-| [`uuid[]`][psql-uuid-ref]                       | [`UUID[]`][java-uuid-ref]|
-| [`boolean[] or bool[]`][psql-boolean-ref]       | [`Boolean[]`][java-boolean-ref]       |
-| [`double precision[]`][psql-floating-point-ref] | [`Double[]`][java-double-ref]         |
-| [`real[]`][psql-real-ref]                         | [**`Float[]`**][java-float-ref], [`Double[]`][java-double-ref], [`Boolean[]`][java-boolean-ref], [`Byte[]`][java-byte-ref], [`Short[]`][java-short-ref], [`Integer[]`][java-integer-ref], [`Long[]`][java-long-ref], [`BigDecimal[]`][java-bigdecimal-ref], [`BigInteger[]`][java-biginteger-ref]|
+| [`path[]`][psql-path-ref]                       | **`Path[]`**|
+| [`point[]`][psql-point-ref]                     | **`Point[]`**|
+| [`polygon[]`][psql-polygon-ref]                 | **`Polygon[]`**|
+| [`real[]`][psql-real-ref]                       | [**`Float[]`**][java-float-ref], [`Double[]`][java-double-ref], [`Boolean[]`][java-boolean-ref], [`Byte[]`][java-byte-ref], [`Short[]`][java-short-ref], [`Integer[]`][java-integer-ref], [`Long[]`][java-long-ref], [`BigDecimal[]`][java-bigdecimal-ref], [`BigInteger[]`][java-biginteger-ref]|
 | [`smallint[]`][psql-smallint-ref]               | [**`Short[]`**][java-short-ref], [`Boolean[]`][java-boolean-ref], [`Byte[]`][java-byte-ref], [`Integer[]`][java-integer-ref], [`Long[]`][java-long-ref], [`BigDecimal[]`][java-bigdecimal-ref], [`BigInteger[]`][java-biginteger-ref]|
 | [`smallserial[]`][psql-smallserial-ref]         | [**`Integer[]`**][java-integer-ref], [`Boolean[]`][java-boolean-ref], [`Byte[]`][java-byte-ref], [`Short[]`][java-short-ref], [`Long[]`][java-long-ref], [`BigDecimal[]`][java-bigdecimal-ref], [`BigInteger[]`][java-biginteger-ref]|
 | [`serial[]`][psql-serial-ref]                   | [**`Long[]`**][java-long-ref], [`Boolean[]`][java-boolean-ref], [`Byte[]`][java-byte-ref], [`Short[]`][java-short-ref], [`Integer[]`][java-integer-ref], [`BigDecimal[]`][java-bigdecimal-ref], [`BigInteger[]`][java-biginteger-ref]|

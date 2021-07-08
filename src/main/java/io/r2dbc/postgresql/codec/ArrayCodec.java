@@ -35,20 +35,20 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
 /**
  * Generic codec class that provides a basis for implementations
- * of a array-typed {@link Codec}. It uses a {@link AbstractCodec delegate}
+ * of a array-typed {@link Codec}. It uses a {@link ArrayCodecDelegate delegate}
  * that can encode/decode the underlying type of the array.
  *
  * @param <T> the type that is handled by this {@link Codec}
  */
 class ArrayCodec<T> extends AbstractCodec<Object[]> {
 
-    private static final byte[] CLOSE_CURLY = "}".getBytes();
+    private static final byte CLOSE_CURLY = '}';
 
-    private static final byte[] COMMA = ",".getBytes();
+    private static final byte COMMA = ',';
 
     private static final String NULL = "NULL";
 
-    private static final byte[] OPEN_CURLY = "{".getBytes();
+    private static final byte OPEN_CURLY = '{';
 
     private final ArrayCodecDelegate<T> delegate;
 
@@ -58,11 +58,12 @@ class ArrayCodec<T> extends AbstractCodec<Object[]> {
 
     private final PostgresTypeIdentifier dataType;
 
+    private final byte delimiter;
+
     /**
      * Create a new {@link ArrayCodec}.
      *
      * @param byteBufAllocator the buffer allocator
-     * @param dataType         the Postgres OID handled by this codec
      * @param delegate         the underlying {@link ArrayCodecDelegate} used to encode/decode data
      * @param componentType    the target component type
      */
@@ -72,6 +73,7 @@ class ArrayCodec<T> extends AbstractCodec<Object[]> {
         this.delegate = Assert.requireNonNull(delegate, "delegate must not be null");
         this.dataType = delegate.getArrayDataType();
         this.componentType = Assert.requireNonNull(componentType, "componentType must not be null");
+        this.delimiter = COMMA;
     }
 
     /**
@@ -88,6 +90,25 @@ class ArrayCodec<T> extends AbstractCodec<Object[]> {
         this.dataType = Assert.requireNonNull(dataType, "dataType must not be null");
         this.delegate = Assert.requireNonNull(delegate, "delegate must not be null");
         this.componentType = Assert.requireNonNull(componentType, "componentType must not be null");
+        this.delimiter = COMMA;
+    }
+
+    /**
+     * Create a new {@link ArrayCodec}.
+     *
+     * @param byteBufAllocator the buffer allocator
+     * @param dataType         the Postgres OID handled by this codec
+     * @param delegate         the underlying {@link ArrayCodecDelegate} used to encode/decode data
+     * @param componentType    the target component type
+     * @param delimiter        the delimiter to use when encoding
+     */
+    ArrayCodec(ByteBufAllocator byteBufAllocator, PostgresTypeIdentifier dataType, ArrayCodecDelegate<T> delegate, Class<T> componentType, byte delimiter) {
+        super(Object[].class);
+        this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        this.dataType = Assert.requireNonNull(dataType, "dataType must not be null");
+        this.delegate = Assert.requireNonNull(delegate, "delegate must not be null");
+        this.componentType = Assert.requireNonNull(componentType, "componentType must not be null");
+        this.delimiter = delimiter;
     }
 
     public ArrayCodecDelegate<T> getDelegate() {
@@ -145,7 +166,6 @@ class ArrayCodec<T> extends AbstractCodec<Object[]> {
 
     @Override
     public boolean canDecode(int dataType, Format format, Class<?> type) {
-        // TODO check requested type, unwrap deepest component type and check for assignability.
         return this.dataType.getObjectId() == dataType && (type == Object.class || (type.isArray() && getActualComponentType(type).isAssignableFrom(this.componentType)));
     }
 
@@ -231,7 +251,6 @@ class ArrayCodec<T> extends AbstractCodec<Object[]> {
         return dims;
     }
 
-
     Object[] decodeBinary(ByteBuf buffer, PostgresTypeIdentifier dataType, Class<?> returnType) {
         if (!buffer.isReadable()) {
             return new Object[0];
@@ -298,8 +317,6 @@ class ArrayCodec<T> extends AbstractCodec<Object[]> {
     private List<Object> decodeText(ByteBuf buf, PostgresTypeIdentifier dataType) {
         List<Object> arrayList = new ArrayList<>();
 
-        char delim = ',';
-
         boolean insideString = false;
         boolean wasInsideString = false; // needed for checking if NULL
         // value occurred
@@ -360,12 +377,12 @@ class ArrayCodec<T> extends AbstractCodec<Object[]> {
             } else if (!insideString && Character.isWhitespace(currentChar)) {
                 // white space
                 continue;
-            } else if ((!insideString && (currentChar == delim || currentChar == '}'))
+            } else if ((!insideString && (currentChar == delimiter || currentChar == '}'))
                 || indentEscape == buf.writerIndex() - 1) {
                 // array end or element end
                 // when character that is a part of array element
                 int skipTrailingBytes = 0;
-                if (currentChar != '}' && currentChar != delim && readFrom > 0) {
+                if (currentChar != '}' && currentChar != delimiter && readFrom > 0) {
                     skipTrailingBytes++;
                 }
 
@@ -424,7 +441,7 @@ class ArrayCodec<T> extends AbstractCodec<Object[]> {
 
     @SuppressWarnings("unchecked")
     private void encodeAsText(ByteBuf byteBuf, Object[] value, Function<T, String> encoder) {
-        byteBuf.writeBytes(OPEN_CURLY);
+        byteBuf.writeByte(OPEN_CURLY);
         for (int i = 0; i < value.length; i++) {
             Object item = value[i];
             if (item instanceof Object[]) {
@@ -434,10 +451,10 @@ class ArrayCodec<T> extends AbstractCodec<Object[]> {
             }
 
             if (i != value.length - 1) {
-                byteBuf.writeBytes(COMMA);
+                byteBuf.writeByte(delimiter);
             }
         }
-        byteBuf.writeBytes(CLOSE_CURLY);
+        byteBuf.writeByte(CLOSE_CURLY);
     }
 
     private void readArrayAsBinary(ByteBuf buffer, PostgresTypeIdentifier dataType, Object[] array, int[] dims, int thisDimension) {

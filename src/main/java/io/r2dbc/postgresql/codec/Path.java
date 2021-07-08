@@ -128,7 +128,7 @@ public final class Path {
     @Override
     public String toString() {
         String points = this.points.stream().map(Point::toString).collect(Collectors.joining(", "));
-        return isOpen() ? String.format("[%s]", points) : String.format("(%s)", points);
+        return isOpen() ? "[" + points + "]" : "(" + points + ")";
     }
 
 }

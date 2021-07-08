@@ -65,7 +65,7 @@ final class Extensions {
         List<Extension> discovered = new ArrayList<>();
         for (Extension extension : extensions) {
 
-            logger.debug(String.format("Registering extension %s", extension.getClass().getName()));
+            logger.debug("Registering extension {}", extension.getClass().getName());
             discovered.add(extension);
         }
 

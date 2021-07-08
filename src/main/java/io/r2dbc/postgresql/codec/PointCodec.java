@@ -20,6 +20,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.POINT;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.POINT_ARRAY;
 
 /**
  * @since 0.8.5
@@ -45,6 +46,11 @@ final class PointCodec extends AbstractGeometryCodec<Point> {
     ByteBuf doEncodeBinary(Point value) {
         return this.byteBufAllocator.buffer(lengthInBytes())
             .writeDouble(value.getX()).writeDouble(value.getY());
+    }
+
+    @Override
+    public PostgresTypeIdentifier getArrayDataType() {
+        return POINT_ARRAY;
     }
 
     int lengthInBytes() {

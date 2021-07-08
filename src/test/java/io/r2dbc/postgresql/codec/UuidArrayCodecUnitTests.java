@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
- * Unit tests for {@link ArrayCodec <UUID>}.
+ * Unit tests for {@link ArrayCodec<UUID>}.
  */
 final class UuidArrayCodecUnitTests {
 

@@ -22,13 +22,16 @@ import io.netty.buffer.ByteBufAllocator;
 import java.util.ArrayList;
 import java.util.List;
 
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.PATH;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.PATH_ARRAY;
+
 /**
  * @since 0.8.5
  */
 final class PathCodec extends AbstractGeometryCodec<Path> {
 
     PathCodec(ByteBufAllocator byteBufAllocator) {
-        super(Path.class, PostgresqlObjectId.PATH, byteBufAllocator);
+        super(Path.class, PATH, byteBufAllocator);
     }
 
     @Override
@@ -69,6 +72,11 @@ final class PathCodec extends AbstractGeometryCodec<Path> {
         points.forEach(point -> buffer.writeDouble(point.getX()).writeDouble(point.getY()));
 
         return buffer;
+    }
+
+    @Override
+    public PostgresTypeIdentifier getArrayDataType() {
+        return PATH_ARRAY;
     }
 
 }

@@ -89,7 +89,7 @@ public final class Circle {
 
     @Override
     public String toString() {
-        return String.format("<%s,%s>", this.center.toString(), this.radius);
+        return "<" + this.center.toString() + "," + this.radius + ">";
     }
 
 }

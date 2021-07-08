@@ -26,6 +26,7 @@ import static io.r2dbc.postgresql.codec.PostgresqlObjectId.CIRCLE;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
+import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -34,6 +35,8 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
  * Unit tests for {@link CircleCodec}.
  */
 final class CircleCodecUnitTests {
+
+    private static final int dataType = CIRCLE.getObjectId();
 
     @Test
     void constructorNoByteBufAllocator() {
@@ -96,14 +99,37 @@ final class CircleCodecUnitTests {
 
         ParameterAssert.assertThat(codec.doEncode(Circle.of(Point.of(1.12, 2.12), 3.12)))
             .hasFormat(FORMAT_BINARY)
-            .hasType(CIRCLE.getObjectId())
+            .hasType(dataType)
             .hasValue(circleAsBinary);
+    }
+
+    @Test
+    void decodeText() {
+        CircleCodec codec = new CircleCodec(TEST);
+
+        // Circles are represented by a center point and radius.
+        // Values of type circle are specified using any of the following syntaxes:
+        // < ( x , y ) , r >
+        // ( ( x , y ) , r )
+        //   ( x , y ) , r
+        //     x , y   , r
+        assertThat(codec.decode(encode(TEST, "<(1.2,123.1),10>"), dataType, FORMAT_TEXT, Circle.class))
+            .isEqualTo(Circle.of(Point.of(1.2, 123.1), 10));
+
+        assertThat(codec.decode(encode(TEST, "((1.2,123.1),10)"), dataType, FORMAT_TEXT, Circle.class))
+            .isEqualTo(Circle.of(Point.of(1.2, 123.1), 10));
+
+        assertThat(codec.decode(encode(TEST, "(1.2,123.1),10"), dataType, FORMAT_TEXT, Circle.class))
+            .isEqualTo(Circle.of(Point.of(1.2, 123.1), 10));
+
+        assertThat(codec.decode(encode(TEST, "1.2,123.1,10"), dataType, FORMAT_TEXT, Circle.class))
+            .isEqualTo(Circle.of(Point.of(1.2, 123.1), 10));
     }
 
     @Test
     void encodeNull() {
         ParameterAssert.assertThat(new CircleCodec(TEST).encodeNull())
-            .isEqualTo(new EncodedParameter(FORMAT_BINARY, CIRCLE.getObjectId(), NULL_VALUE));
+            .isEqualTo(new EncodedParameter(FORMAT_BINARY, dataType, NULL_VALUE));
     }
 
 }

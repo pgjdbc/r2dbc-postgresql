@@ -17,58 +17,54 @@
 package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
-import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
-
-import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT2;
-import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT2_ARRAY;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.FLOAT4;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.FLOAT4_ARRAY;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Unit tests for {@link ArrayCodec<Short>}.
+ * Unit tests for {@link ArrayCodec<Float>}.
  */
-final class ShortArrayCodecUnitTests extends AbstractArrayCodecUnitTests<Short> {
+class FloatArrayCodecUnitTests extends AbstractArrayCodecUnitTests<Float> {
 
     private final ByteBuf SINGLE_DIM_BINARY_ARRAY = TEST
         .buffer()
-        .writeInt(1)
-        .writeInt(0)
-        .writeInt(21)
-        .writeInt(2)
-        .writeInt(2)
-        .writeInt(2)
-        .writeShort(100)
-        .writeInt(2)
-        .writeShort(200);
+        .writeInt(1) // num of dimensions
+        .writeInt(0) // flag: has nulls
+        .writeInt(700) // oid
+        .writeInt(2) // num of elements
+        .writeInt(1) // ignore Lower Bound
+        .writeInt(4) // length of element
+        .writeFloat(100.5f) // value
+        .writeInt(4) // length of element
+        .writeFloat(200.25f); // value
 
     private final ByteBuf TWO_DIM_BINARY_ARRAY = TEST
         .buffer()
         .writeInt(2) // num of dims
         .writeInt(1) // flag: has nulls
-        .writeInt(21) // oid
+        .writeInt(700) // oid
         .writeInt(2) // dim 1 length
         .writeInt(1) // dim 1 lower bound
         .writeInt(1) // dim 2 length
         .writeInt(1) // dim 2 lower bound
-        .writeInt(2) // length of element
-        .writeShort(100) // value
+        .writeInt(4) // length of element
+        .writeFloat(100.5f) // value
         .writeInt(-1); // length of null element
 
     @Override
-    ArrayCodec<Short> createInstance() {
-        return new ArrayCodec<>(TEST, INT2_ARRAY, new ShortCodec(TEST), Short.class);
+    ArrayCodec<Float> createInstance() {
+        return new ArrayCodec<>(TEST, new FloatCodec(TEST), Float.class);
     }
 
     @Override
     PostgresqlObjectId getPostgresqlObjectId() {
-        return INT2;
+        return FLOAT4;
     }
 
     @Override
     PostgresqlObjectId getArrayPostgresqlObjectId() {
-        return INT2_ARRAY;
+        return FLOAT4_ARRAY;
     }
 
     @Override
@@ -82,45 +78,33 @@ final class ShortArrayCodecUnitTests extends AbstractArrayCodecUnitTests<Short> 
     }
 
     @Override
-    Class<? extends Short[]> getSingleDimensionArrayType() {
-        return Short[].class;
+    Class<? extends Float[]> getSingleDimensionArrayType() {
+        return Float[].class;
     }
 
     @Override
-    Class<? extends Short[][]> getTwoDimensionArrayType() {
-        return Short[][].class;
+    Class<? extends Float[][]> getTwoDimensionArrayType() {
+        return Float[][].class;
     }
 
     @Override
-    Short[] getExpectedSingleDimensionArray() {
-        return new Short[]{100, 200};
+    Float[] getExpectedSingleDimensionArray() {
+        return new Float[]{100.5f, 200.25f};
     }
 
     @Override
-    Short[][] getExpectedTwoDimensionArray() {
-        return new Short[][]{{100}, {null}};
+    Float[][] getExpectedTwoDimensionArray() {
+        return new Float[][]{{100.5f}, {null}};
     }
 
     @Override
     String getSingleDimensionStringInput() {
-        return "{100,200}";
+        return "{100.5,200.25}";
     }
 
     @Override
     String getTwoDimensionStringInput() {
-        return "{{100},{NULL}}";
-    }
-
-    @Test
-    void canEncode() {
-        assertThat(codec.canEncode(new Short[0])).isTrue();
-        assertThat(codec.canEncode(new UUID[0])).isFalse();
-    }
-
-    @Test
-    void canEncodeNull() {
-        assertThat(codec.canEncodeNull(Short[].class)).isTrue();
-        assertThat(codec.canEncodeNull(UUID[].class)).isFalse();
+        return "{{100.5},{NULL}}";
     }
 
 }

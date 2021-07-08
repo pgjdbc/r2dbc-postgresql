@@ -216,12 +216,12 @@ public class EnumCodec<T extends Enum<T>> implements Codec<T> {
 
                         Class<? extends Enum<?>> enumClass = mapping.get(it.getName());
                         if (enumClass == null) {
-                            logger.warn(String.format("Cannot find Java type for enum type '%s' with oid %d. Known types are: %s", it.getName(), it.getOid(), mapping));
+                            logger.warn("Cannot find Java type for enum type '{}' with oid {}. Known types are: {}", it.getName(), it.getOid(), mapping);
                             return;
                         }
 
                         missing.remove(it.getName());
-                        logger.debug(String.format("Registering codec for type '%s' with oid %d using Java enum type '%s'", it.getName(), it.getOid(), enumClass.getName()));
+                        logger.debug("Registering codec for type '{}' with oid {} using Java enum type '{}'", it.getName(), it.getOid(), enumClass.getName());
 
                         if (this.registrationPriority == RegistrationPriority.LAST) {
 
@@ -241,7 +241,7 @@ public class EnumCodec<T extends Enum<T>> implements Codec<T> {
                     }).doOnComplete(() -> {
 
                         if (!missing.isEmpty()) {
-                            logger.warn(String.format("Could not lookup enum types for: %s", missing));
+                            logger.warn("Could not lookup enum types for: {}", missing);
                         }
                     }).then();
             };

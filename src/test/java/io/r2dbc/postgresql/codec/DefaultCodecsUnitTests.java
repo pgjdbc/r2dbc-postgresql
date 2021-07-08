@@ -28,6 +28,8 @@ import java.time.OffsetDateTime;
 import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.BOOL_ARRAY;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.BOX_ARRAY;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.CIRCLE_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.FLOAT4_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.FLOAT8_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT2;
@@ -35,6 +37,9 @@ import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT2_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT4_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT8_ARRAY;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.LINE_ARRAY;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.POINT_ARRAY;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.POLYGON_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMESTAMP;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMESTAMPTZ;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.VARCHAR;
@@ -108,6 +113,16 @@ final class DefaultCodecsUnitTests {
         assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{100,200}"), INT4_ARRAY.getObjectId(), FORMAT_TEXT, Object.class)).isEqualTo(new Integer[]{100, 200});
         assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{100,200}"), INT8_ARRAY.getObjectId(), FORMAT_TEXT, Object.class)).isEqualTo(new Long[]{100L, 200L});
         assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{alpha,bravo}"), VARCHAR_ARRAY.getObjectId(), FORMAT_TEXT, Object.class)).isEqualTo(new String[]{"alpha", "bravo"});
+        assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{\"((1.2, 123.1), 10)\",NULL}"), CIRCLE_ARRAY.getObjectId(), FORMAT_TEXT, Object.class))
+            .isEqualTo(new Circle[]{Circle.of(Point.of(1.2, 123.1), 10), null});
+        assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{\"((-10.42,3.14),(10.42,-3.14))\",NULL}"), POLYGON_ARRAY.getObjectId(), FORMAT_TEXT, Object.class))
+            .isEqualTo(new Polygon[]{Polygon.of(Point.of(-10.42, 3.14), Point.of(10.42, -3.14)), null});
+        assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{\"(1.12,2.12)\",\"(-2147483648,2147483647)\",NULL}"), POINT_ARRAY.getObjectId(), FORMAT_TEXT, Object.class))
+            .isEqualTo(new Point[]{Point.of(1.12, 2.12), Point.of(Integer.MIN_VALUE, Integer.MAX_VALUE), null});
+        assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{\"{ 5.5, 3.2, 8 }\",\"{3,4,5}\",NULL}"), LINE_ARRAY.getObjectId(), FORMAT_TEXT, Object.class))
+            .isEqualTo(new Line[]{Line.of(5.5, 3.2, 8), Line.of(3, 4, 5), null});
+        assertThat(codecs.decode(ByteBufUtils.encode(TEST, " {(3.7,4.6),(1.9,2.8);(5,7),(1.5,3.3);NULL}"), BOX_ARRAY.getObjectId(), FORMAT_TEXT, Object.class))
+            .isEqualTo(new Box[]{Box.of(3.7, 4.6, 1.9, 2.8), Box.of(5, 7, 1.5, 3.3), null});
     }
 
     @Test
