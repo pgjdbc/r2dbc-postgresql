@@ -336,4 +336,8 @@ final class SimpleQueryPostgresqlStatementUnitTests {
         assertThat(SimpleQueryPostgresqlStatement.supports("test-query")).isTrue();
     }
 
+    @Test
+    void supportsDollarSignAsValue() {
+        assertThat(SimpleQueryPostgresqlStatement.supports("INSERT INTO user(password) VALUES ('$1$2 test value$1')")).isTrue();
+    }
 }
