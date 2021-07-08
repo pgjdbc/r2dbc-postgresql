@@ -37,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 /**
  * Unit tests for {@link PathCodec}.
  */
-final class PathCodecUnitTest {
+final class PathCodecUnitTests {
 
     private static final int dataType = PATH.getObjectId();
 
@@ -56,7 +56,7 @@ final class PathCodecUnitTest {
         assertThat(new PathCodec(TEST).decode(encode(TEST, "[(-10.42,3.14),(10.42,-3.14)]"), dataType, FORMAT_TEXT, Path.class)).isEqualTo(openPath);
 
         ByteBuf closedPathByteFormat = TEST.buffer(37)
-            .writeBoolean(false)
+            .writeBoolean(true)
             .writeInt(2)
             .writeDouble(-10.42)
             .writeDouble(3.14)
@@ -64,7 +64,7 @@ final class PathCodecUnitTest {
             .writeDouble(-3.14);
         assertThat(new PathCodec(TEST).decode(closedPathByteFormat, dataType, FORMAT_BINARY, Path.class)).isEqualTo(closedPath);
         ByteBuf openPathByteFormat = TEST.buffer(37)
-            .writeBoolean(true)
+            .writeBoolean(false)
             .writeInt(2)
             .writeDouble(-10.42)
             .writeDouble(3.14)
@@ -106,7 +106,7 @@ final class PathCodecUnitTest {
             .hasFormat(FORMAT_BINARY)
             .hasType(dataType)
             .hasValue(TEST.buffer(37)
-                .writeBoolean(false)
+                .writeBoolean(true)
                 .writeInt(2)
                 .writeDouble(-10.42)
                 .writeDouble(3.14)
@@ -119,7 +119,7 @@ final class PathCodecUnitTest {
             .hasFormat(FORMAT_BINARY)
             .hasType(dataType)
             .hasValue(TEST.buffer(37)
-                .writeBoolean(true)
+                .writeBoolean(false)
                 .writeInt(2)
                 .writeDouble(-10.42)
                 .writeDouble(3.14)
