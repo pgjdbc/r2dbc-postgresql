@@ -29,6 +29,7 @@ public class BlockhoundExceptions implements BlockHoundIntegration {
     @Override
     public void applyTo(BlockHound.Builder builder) {
         builder.allowBlockingCallsInside(SecureRandom.class.getName(), "next");
+        builder.allowBlockingCallsInside("io.r2dbc.postgresql.client.ReactorNettyClientIntegrationTests", "queryNeverCompletes");
     }
 
 }

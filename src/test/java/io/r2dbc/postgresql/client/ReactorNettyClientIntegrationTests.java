@@ -23,20 +23,13 @@ import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.postgresql.api.PostgresqlConnection;
 import io.r2dbc.postgresql.authentication.PasswordAuthenticationHandler;
-import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
-import io.r2dbc.postgresql.message.backend.BindComplete;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.DataRow;
 import io.r2dbc.postgresql.message.backend.NotificationResponse;
 import io.r2dbc.postgresql.message.backend.RowDescription;
-import io.r2dbc.postgresql.message.frontend.Bind;
-import io.r2dbc.postgresql.message.frontend.Describe;
-import io.r2dbc.postgresql.message.frontend.Execute;
-import io.r2dbc.postgresql.message.frontend.ExecutionType;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.message.frontend.Query;
-import io.r2dbc.postgresql.message.frontend.Sync;
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import io.r2dbc.spi.R2dbcPermissionDeniedException;
@@ -61,6 +54,7 @@ import javax.net.ssl.SSLSession;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -71,7 +65,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT4;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.fail;
@@ -338,6 +331,33 @@ final class ReactorNettyClientIntegrationTests {
             })
             .as(StepVerifier::create)
             .expectNext(1)
+            .verifyComplete();
+    }
+
+    @Test
+    @Timeout(10)
+    void queryNeverCompletes() {
+        PostgresqlConnectionFactory connectionFactory = new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
+            .host(SERVER.getHost())
+            .port(SERVER.getPort())
+            .username(SERVER.getUsername())
+            .password(SERVER.getPassword())
+            .database(SERVER.getDatabase())
+            .applicationName(ReactorNettyClientIntegrationTests.class.getName())
+            .build());
+        Flux.usingWhen(
+            connectionFactory.create(),
+            connection -> connection.createStatement("SELECT floor(random() * 100) FROM generate_series(1, 256 + 15)").execute()
+                .limitRate(1, 1)
+                .flatMap(r -> r.map((row, meta) -> row.get(0)).limitRate(1, 1))
+                .limitRate(1, 1)
+                .delayElements(Duration.of(1, ChronoUnit.MILLIS))
+                .limitRate(1, 1),
+            io.r2dbc.spi.Connection::close
+        )
+            .as(StepVerifier::create)
+            .thenAwait()
+            .expectNextCount(256 + 15)
             .verifyComplete();
     }
 
