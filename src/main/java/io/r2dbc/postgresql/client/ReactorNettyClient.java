@@ -685,7 +685,10 @@ public final class ReactorNettyClient implements Client {
          * @param item the message to test whether it can complete the current conversation
          * @return whether the {@link BackendMessage} can complete the current conversation
          */
-        public boolean canComplete(BackendMessage item) {
+        public boolean canComplete(@Nullable BackendMessage item) {
+            if (item == null) {
+                return false;
+            }
             return this.takeUntil.test(item);
         }
 
@@ -838,7 +841,7 @@ public final class ReactorNettyClient implements Client {
             // fast-path
             if (this.buffer.isEmpty()) {
                 Conversation conversation = this.conversations.peek();
-                if (conversation != null && conversation.hasDemand()) {
+                if (conversation != null && (conversation.hasDemand() || conversation.canComplete(message))) {
                     emit(conversation, message);
                     potentiallyDemandMore(conversation);
                     return;
@@ -931,7 +934,7 @@ public final class ReactorNettyClient implements Client {
                         break;
                     }
 
-                    if (conversation.hasDemand()) {
+                    if (conversation.hasDemand() || conversation.canComplete(this.buffer.peek())) {
 
                         BackendMessage item = this.buffer.poll();
 
