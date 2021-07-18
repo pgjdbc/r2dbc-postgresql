@@ -26,7 +26,7 @@ import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
 
-import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -163,8 +163,8 @@ final class HStoreCodec implements Codec<Map> {
 
     @Nullable
     private static String readString(ByteBuf buffer) {
-        ByteBuffer accBuffer = ByteBuffer.allocate(buffer.capacity());
-        int position = buffer.forEachByte(new IndexOfProcessor((byte) '"'));
+        final ByteBuf accBuffer = buffer.alloc().buffer();
+        final int position = buffer.forEachByte(new IndexOfProcessor((byte) '"'));
 
         if (position > buffer.writerIndex()) {
             return null;
@@ -175,21 +175,19 @@ final class HStoreCodec implements Codec<Map> {
         }
 
         while (buffer.isReadable()) {
-            byte b = buffer.readByte();
-            char c = (char) b;
+            final byte current = buffer.readByte();
             
-            if (c == '"') {
+            if (current == '"') {
                 break;
             }
-            
-            if (c == '\\') {
-                b = buffer.readByte();
-            }
-            
-            accBuffer.put(b);
+
+            accBuffer.writeByte(current == '\\' ? buffer.readByte() : current);
         }
 
-        return new String(accBuffer.array(), 0, accBuffer.position(), UTF_8);
+        final String result = accBuffer.toString(StandardCharsets.UTF_8);
+
+        accBuffer.release();
+        return result;
     }
 
     @Override
