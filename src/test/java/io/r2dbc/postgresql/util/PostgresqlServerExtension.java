@@ -187,7 +187,7 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
     }
 
     private <T extends PostgreSQLContainer<T>> T container() {
-        T container = new PostgreSQLContainer<T>("postgres:latest")
+        T container = new PostgreSQLContainer<T>("postgres:13.3")
             .withCopyFileToContainer(getHostPath("server.crt", 0600), "/var/server.crt")
             .withCopyFileToContainer(getHostPath("server.key", 0600), "/var/server.key")
             .withCopyFileToContainer(getHostPath("client.crt", 0600), "/var/client.crt")
