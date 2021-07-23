@@ -21,6 +21,7 @@ import io.r2dbc.postgresql.client.DefaultHostnameVerifier;
 import io.r2dbc.postgresql.client.SSLMode;
 import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.codec.Json;
+import io.r2dbc.postgresql.extension.Extension;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.LogLevel;
 import io.r2dbc.spi.ConnectionFactoryOptions;
@@ -30,6 +31,7 @@ import reactor.netty.resources.LoopResources;
 
 import javax.net.ssl.HostnameVerifier;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -203,6 +205,11 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<Boolean> TCP_NODELAY = Option.valueOf("tcpNoDelay");
 
     /**
+     * Extensions to register.
+     */
+    public static final Option<Collection<Extension>> EXTENSIONS = Option.valueOf("extensions");
+
+    /**
      * Returns a new {@link PostgresqlConnectionConfiguration.Builder} configured with the given {@link ConnectionFactoryOptions}.
      *
      * @param connectionFactoryOptions {@link ConnectionFactoryOptions} used to initialize the {@link PostgresqlConnectionConfiguration.Builder}.
@@ -270,6 +277,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         mapper.from(STATEMENT_TIMEOUT).map(OptionMapper::toDuration).to(builder::statementTimeout);
         mapper.from(TCP_KEEPALIVE).map(OptionMapper::toBoolean).to(builder::tcpKeepAlive);
         mapper.from(TCP_NODELAY).map(OptionMapper::toBoolean).to(builder::tcpNoDelay);
+        mapper.fromTyped(EXTENSIONS).to(extensions -> extensions.forEach(builder::extendWith));
         builder.username("" + options.getRequiredValue(USER));
 
         return builder;
