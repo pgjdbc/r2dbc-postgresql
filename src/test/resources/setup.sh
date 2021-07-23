@@ -13,7 +13,7 @@ cp /var/pg_hba.conf /var/runtime
 chown postgres:postgres /var/runtime/*
 ls -l /var/runtime
 
-./docker-entrypoint.sh postgres \
+/usr/local/bin/docker-entrypoint.sh postgres \
   -c 'wal_level=logical' \
   -c 'wal_keep_size=4' \
   -c 'max_replication_slots=4' \
