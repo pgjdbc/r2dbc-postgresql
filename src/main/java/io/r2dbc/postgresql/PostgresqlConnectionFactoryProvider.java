@@ -73,6 +73,13 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<LogLevel> ERROR_RESPONSE_LOG_LEVEL = Option.valueOf("errorResponseLogLevel");
 
     /**
+     * Extensions to register.
+     *
+     * @since 0.8.9
+     */
+    public static final Option<Collection<Extension>> EXTENSIONS = Option.valueOf("extensions");
+
+    /**
      * Fetch Size.
      */
     public static final Option<Integer> FETCH_SIZE = Option.valueOf("fetchSize");
@@ -205,11 +212,6 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<Boolean> TCP_NODELAY = Option.valueOf("tcpNoDelay");
 
     /**
-     * Extensions to register.
-     */
-    public static final Option<Collection<Extension>> EXTENSIONS = Option.valueOf("extensions");
-
-    /**
      * Returns a new {@link PostgresqlConnectionConfiguration.Builder} configured with the given {@link ConnectionFactoryOptions}.
      *
      * @param connectionFactoryOptions {@link ConnectionFactoryOptions} used to initialize the {@link PostgresqlConnectionConfiguration.Builder}.
@@ -260,6 +262,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         mapper.fromTyped(CURRENT_SCHEMA).to(builder::schema).otherwise(() -> mapper.fromTyped(SCHEMA).to(builder::schema));
         mapper.fromTyped(DATABASE).to(builder::database);
         mapper.from(ERROR_RESPONSE_LOG_LEVEL).map(it -> OptionMapper.toEnum(it, LogLevel.class)).to(builder::errorResponseLogLevel);
+        mapper.fromTyped(EXTENSIONS).to(extensions -> extensions.forEach(builder::extendWith));
         mapper.from(FETCH_SIZE).map(OptionMapper::toInteger).to(builder::fetchSize);
         mapper.from(FORCE_BINARY).map(OptionMapper::toBoolean).to(builder::forceBinary);
         mapper.from(LOCK_WAIT_TIMEOUT).map(OptionMapper::toDuration).to(builder::lockWaitTimeout);
@@ -277,7 +280,6 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         mapper.from(STATEMENT_TIMEOUT).map(OptionMapper::toDuration).to(builder::statementTimeout);
         mapper.from(TCP_KEEPALIVE).map(OptionMapper::toBoolean).to(builder::tcpKeepAlive);
         mapper.from(TCP_NODELAY).map(OptionMapper::toBoolean).to(builder::tcpNoDelay);
-        mapper.fromTyped(EXTENSIONS).to(extensions -> extensions.forEach(builder::extendWith));
         builder.username("" + options.getRequiredValue(USER));
 
         return builder;

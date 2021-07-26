@@ -81,6 +81,7 @@ Mono<Connection> connectionMono = Mono.from(connectionFactory.create());
 | `autodetectExtensions` | Whether to auto-detect and register `Extension`s from the class path.  Defaults to `true`. _(Optional)_
 | `compatibilityMode` | Enable compatibility mode for cursored fetching. Required when using newer pgpool versions. Defaults to `false`. _(Optional)_
 | `errorResponseLogLevel` | Log level for error responses. Any of `OFF`, `DEBUG`, `INFO`, `WARN` or `ERROR`  Defaults to `DEBUG`. _(Optional)_
+| `extensions`      | Collection of `Extension` to provide additional extensions when creating a connection factory. Defaults to empty. _(Optional)_
 | `fetchSize`       | The default number of rows to return when fetching results. Defaults to `0` for unlimited. _(Optional)_
 | `forceBinary`     | Whether to force binary transfer. Defaults to `false`. _(Optional)_
 | `loopResources`   | TCP/Socket LoopResources (depends on the endpoint connection type). _(Optional)_
