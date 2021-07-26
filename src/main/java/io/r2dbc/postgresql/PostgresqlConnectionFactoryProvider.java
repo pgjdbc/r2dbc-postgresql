@@ -21,6 +21,7 @@ import io.r2dbc.postgresql.client.DefaultHostnameVerifier;
 import io.r2dbc.postgresql.client.SSLMode;
 import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.codec.Json;
+import io.r2dbc.postgresql.extension.Extension;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.ConnectionFactoryProvider;
@@ -29,6 +30,7 @@ import reactor.netty.resources.LoopResources;
 
 import javax.net.ssl.HostnameVerifier;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -63,6 +65,13 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
      * @since 0.8.7
      */
     public static final Option<Boolean> COMPATIBILITY_MODE = Option.valueOf("compatibilityMode");
+
+    /**
+     * Extensions to register.
+     *
+     * @since 0.8.9
+     */
+    public static final Option<Collection<Extension>> EXTENSIONS = Option.valueOf("extensions");
 
     /**
      * Fetch Size.
@@ -241,6 +250,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         mapper.from(CONNECT_TIMEOUT).map(OptionMapper::toDuration).to(builder::connectTimeout);
         mapper.from(CURRENT_SCHEMA).to(builder::schema).otherwise(() -> mapper.from(SCHEMA).to(builder::schema));
         mapper.from(DATABASE).to(builder::database);
+        mapper.from(EXTENSIONS).to(extensions -> extensions.forEach(builder::extendWith));
         mapper.from(FETCH_SIZE).map(OptionMapper::toInteger).to(builder::fetchSize);
         mapper.from(FORCE_BINARY).map(OptionMapper::toBoolean).to(builder::forceBinary);
         mapper.from(LOCK_WAIT_TIMEOUT).map(OptionMapper::toDuration).to(builder::lockWaitTimeout);
