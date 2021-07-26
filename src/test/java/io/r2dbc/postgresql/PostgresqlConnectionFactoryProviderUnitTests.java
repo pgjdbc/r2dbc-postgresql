@@ -18,18 +18,22 @@ package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.client.SSLConfig;
 import io.r2dbc.postgresql.client.SSLMode;
+import io.r2dbc.postgresql.extension.Extension;
 import io.r2dbc.postgresql.util.LogLevel;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.Option;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.AUTODETECT_EXTENSIONS;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.COMPATIBILITY_MODE;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.ERROR_RESPONSE_LOG_LEVEL;
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.EXTENSIONS;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.FETCH_SIZE;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.FORCE_BINARY;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.LEGACY_POSTGRESQL_DRIVER;
@@ -489,6 +493,48 @@ final class PostgresqlConnectionFactoryProviderUnitTests {
             .build());
 
         assertThat(factory.getConfiguration().isPreferAttachedBuffers()).isTrue();
+    }
+
+    @Test
+    void shouldConfigureExtensions() {
+        TestExtension testExtension1 = new TestExtension("extension-1");
+        TestExtension testExtension2 = new TestExtension("extension-2");
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, LEGACY_POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(EXTENSIONS, Arrays.asList(testExtension1, testExtension2))
+            .build());
+
+        assertThat(factory.getConfiguration().getExtensions()).containsExactly(testExtension1, testExtension2);
+    }
+
+    private static class TestExtension implements Extension {
+
+        private final String name;
+
+        private TestExtension(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            TestExtension that = (TestExtension) o;
+            return Objects.equals(name, that.name);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(name);
+        }
+
     }
 
 }
