@@ -1,6 +1,24 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+0.9.0.M2
+-----------------------------------------
+* Adding Extension from Option #433
+* Upgrade to R2DBC SPI 0.9.0.M2 #425
+* Add support for Result segment API #424
+* Add `Row.getMetadata()` method #423
+* Adapt to changed `Option.getRequiredValue()` return type #422
+* PostgresObjectId#isValid uses exception as control mechanism resulting in significant performance penalty #420
+* Memory Leak of BalancedResolverGroup #412
+* Multi-byte characters inside HStore columns are not read correctly #407
+* PG Bouncer tests fail with [08P01] password authentication failed #402
+* Fetch rows never completes #401
+* QueryLogger not used by ExtendedFlowDelegate #400
+* Add BooleanArrayCodec, FloatArrayCodec, DoubleArrayCodec support #399
+* Overflow Exception when fetchSize is set #395
+* Can't bind Boolean[] types #394
+* Introduce connection factory option for statementTimeout #381
+
 0.9.0.M1
 -----------------------------------------
 * Upgrade to R2DBC SPI 0.9.0.M1 #388
