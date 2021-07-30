@@ -20,7 +20,6 @@ import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.client.ParameterAssert;
 import io.r2dbc.postgresql.message.Format;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.Charset;
@@ -62,7 +61,7 @@ final class HStoreCodecUnitTests {
         expect.put("d", "Zoë");
         expect.put("é", "120°");
 
-        Assertions.assertThat(res).isEqualTo(expect);
+        assertThat(res).isEqualTo(expect);
     }
 
     @Test
