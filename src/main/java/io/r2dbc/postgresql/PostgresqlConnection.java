@@ -451,8 +451,7 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
     private <T> Flux<T> exchange(String sql) {
         ExceptionFactory exceptionFactory = ExceptionFactory.withSql(sql);
         return (Flux<T>) SimpleQueryMessageFlow.exchange(this.client, sql)
-            .handle(exceptionFactory::handleErrorResponse)
-            .as(Operators::discardOnCancel);
+            .handle(exceptionFactory::handleErrorResponse);
     }
 
     private void cleanupIsolationLevel() {

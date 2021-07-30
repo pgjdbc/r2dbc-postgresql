@@ -131,7 +131,20 @@ final class PostgresqlSegmentResult extends AbstractReferenceCounted implements 
                 } finally {
                     ReferenceCountUtil.release(segment);
                 }
-            }).singleOrEmpty();
+            }).collectList().handle((list, sink) -> {
+
+                if (list.isEmpty()) {
+                    return;
+                }
+
+                int sum = 0;
+
+                for (Integer integer : list) {
+                    sum += integer;
+                }
+
+                sink.next(sum);
+            });
     }
 
     @Override

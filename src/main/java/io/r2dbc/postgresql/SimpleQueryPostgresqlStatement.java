@@ -16,8 +16,6 @@
 
 package io.r2dbc.postgresql;
 
-import io.netty.util.ReferenceCountUtil;
-import io.netty.util.ReferenceCounted;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.postgresql.client.Binding;
 import io.r2dbc.postgresql.client.SimpleQueryMessageFlow;
@@ -27,7 +25,6 @@ import io.r2dbc.postgresql.message.backend.EmptyQueryResponse;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.GeneratedValuesUtils;
-import io.r2dbc.postgresql.util.Operators;
 import io.r2dbc.spi.Statement;
 import reactor.core.publisher.Flux;
 import reactor.util.annotation.Nullable;
@@ -91,11 +88,7 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
 
     @Override
     public Flux<io.r2dbc.postgresql.api.PostgresqlResult> execute() {
-        if (this.generatedColumns == null) {
-            return execute(this.sql);
-        }
-
-        return execute(GeneratedValuesUtils.augment(this.sql, this.generatedColumns));
+        return execute(this.generatedColumns == null ? this.sql : GeneratedValuesUtils.augment(this.sql, this.generatedColumns));
     }
 
     @Override
@@ -148,17 +141,11 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
         if (this.fetchSize != NO_LIMIT) {
 
             Flux<BackendMessage> messages = ExtendedFlowDelegate.runQuery(this.resources, factory, sql, Binding.EMPTY, Collections.emptyList(), this.fetchSize);
-
             return Flux.just(new PostgresqlResult(this.resources, messages, factory));
         }
 
-        return SimpleQueryMessageFlow
-            .exchange(this.resources.getClient(), sql)
-            .windowUntil(WINDOW_UNTIL)
-            .map(dataRow -> PostgresqlResult.toResult(this.resources, dataRow, factory))
-            .cast(io.r2dbc.postgresql.api.PostgresqlResult.class)
-            .as(Operators::discardOnCancel)
-            .doOnDiscard(ReferenceCounted.class, ReferenceCountUtil::release);
+        Flux<BackendMessage> messages = SimpleQueryMessageFlow.exchange(this.resources.getClient(), sql);
+        return Flux.just(PostgresqlResult.toResult(this.resources, messages, factory));
     }
 
 }

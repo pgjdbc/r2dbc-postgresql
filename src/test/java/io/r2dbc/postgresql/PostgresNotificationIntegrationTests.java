@@ -19,6 +19,7 @@ package io.r2dbc.postgresql;
 import io.netty.channel.Channel;
 import io.r2dbc.postgresql.api.Notification;
 import io.r2dbc.postgresql.api.PostgresqlConnection;
+import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.util.ConnectionIntrospector;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.junit.jupiter.api.Test;
@@ -44,13 +45,13 @@ final class PostgresNotificationIntegrationTests extends AbstractIntegrationTest
 
         CountDownLatch await = new CountDownLatch(1);
         Disposable listener = this.connectionFactory.create().flatMapMany(it -> {
-            return it.createStatement("LISTEN mymessage").execute().doOnComplete(await::countDown)
+            return it.createStatement("LISTEN mymessage").execute().flatMap(PostgresqlResult::getRowsUpdated).doOnComplete(await::countDown)
                 .thenMany(it.getNotifications()).doOnCancel(() -> it.close().subscribe());
         }).doOnNext(notifications::add).subscribe();
 
         await.await(10, TimeUnit.SECONDS);
 
-        this.connectionFactory.create().flatMapMany(it -> it.createStatement("NOTIFY mymessage, 'Mötorhead'").execute().thenMany(it.close()))
+        this.connectionFactory.create().flatMapMany(it -> it.createStatement("NOTIFY mymessage, 'Mötorhead'").execute().flatMap(PostgresqlResult::getRowsUpdated).thenMany(it.close()))
             .as(StepVerifier::create).verifyComplete();
 
         Notification notification = notifications.poll(10, TimeUnit.SECONDS);

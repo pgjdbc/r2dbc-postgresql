@@ -82,7 +82,20 @@ final class PostgresqlResult extends AbstractReferenceCounted implements io.r2db
                         sink.next(rowCount);
                     }
                 }
-            }).singleOrEmpty();
+            }).collectList().handle((list, sink) -> {
+
+                if (list.isEmpty()) {
+                    return;
+                }
+
+                int sum = 0;
+
+                for (Integer integer : list) {
+                    sum += integer;
+                }
+
+                sink.next(sum);
+            });
     }
 
     @Override
