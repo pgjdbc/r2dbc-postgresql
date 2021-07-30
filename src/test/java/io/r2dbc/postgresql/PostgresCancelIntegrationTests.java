@@ -22,6 +22,8 @@ import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.TestInstance;
 import reactor.test.StepVerifier;
 
+import java.time.Duration;
+
 /**
  * Integration tests for cancellation.
  */
