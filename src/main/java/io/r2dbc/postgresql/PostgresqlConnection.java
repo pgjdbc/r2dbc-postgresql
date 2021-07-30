@@ -360,8 +360,7 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
     private <T> Publisher<T> exchange(String sql) {
         ExceptionFactory exceptionFactory = ExceptionFactory.withSql(sql);
         return (Publisher<T>) SimpleQueryMessageFlow.exchange(this.client, sql)
-            .handle(exceptionFactory::handleErrorResponse)
-            .as(Operators::discardOnCancel);
+            .handle(exceptionFactory::handleErrorResponse);
     }
 
     /**

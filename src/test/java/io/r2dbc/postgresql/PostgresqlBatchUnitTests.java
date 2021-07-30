@@ -47,7 +47,7 @@ final class PostgresqlBatchUnitTests {
             .add("test-query-2")
             .execute()
             .as(StepVerifier::create)
-            .expectNextCount(2)
+            .expectNextCount(1)
             .verifyComplete();
     }
 

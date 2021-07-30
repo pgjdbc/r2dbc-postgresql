@@ -16,10 +16,13 @@
 
 package io.r2dbc.postgresql.client;
 
+import io.netty.util.ReferenceCountUtil;
+import io.netty.util.ReferenceCounted;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.message.frontend.Query;
 import io.r2dbc.postgresql.util.Assert;
+import io.r2dbc.postgresql.util.Operators;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -43,7 +46,8 @@ public final class SimpleQueryMessageFlow {
         Assert.requireNonNull(client, "client must not be null");
         Assert.requireNonNull(query, "query must not be null");
 
-        return client.exchange(Mono.<FrontendMessage>just(new Query(query)).doOnSubscribe(ignore -> QueryLogger.logQuery(client.getContext(), query)));
+        return client.exchange(Mono.<FrontendMessage>just(new Query(query)).doOnSubscribe(ignore -> QueryLogger.logQuery(client.getContext(), query))).doOnDiscard(ReferenceCounted.class,
+            ReferenceCountUtil::release).as(Operators::discardOnCancel);
     }
 
 }
