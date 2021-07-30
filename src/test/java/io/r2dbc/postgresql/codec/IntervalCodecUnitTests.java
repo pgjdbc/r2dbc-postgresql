@@ -44,19 +44,19 @@ final class IntervalCodecUnitTests {
     @Test
     void constructorNoByteBufAllocator() {
         assertThatIllegalArgumentException().isThrownBy(() -> new IntervalCodec(null))
-                .withMessage("byteBufAllocator must not be null");
+            .withMessage("byteBufAllocator must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
         assertThatIllegalArgumentException().isThrownBy(() -> new IntervalCodec(TEST).doCanDecode(null, FORMAT_TEXT))
-                .withMessage("type must not be null");
+            .withMessage("type must not be null");
     }
 
     @Test
     void doCanDecodeNoFormat() {
         assertThatIllegalArgumentException().isThrownBy(() -> new IntervalCodec(TEST).doCanDecode(INTERVAL, null))
-                .withMessage("format must not be null");
+            .withMessage("format must not be null");
     }
 
     @Test
@@ -75,13 +75,13 @@ final class IntervalCodecUnitTests {
         Interval interval = Interval.of(Period.of(20, 5, 8));
         ByteBuf intervalAsText = encode(TEST, "20 year 5 mon 8 day");
         IntervalAssert.assertThat(codec.doDecode(intervalAsText, INTERVAL, FORMAT_TEXT, Interval.class))
-                .isEqualTo(interval);
+            .isEqualTo(interval);
     }
 
     @Test
     void doEncodeNoValue() {
         assertThatIllegalArgumentException().isThrownBy(() -> new IntervalCodec(TEST).doEncode(null))
-                .withMessage("value must not be null");
+            .withMessage("value must not be null");
     }
 
     @Test
@@ -90,9 +90,9 @@ final class IntervalCodecUnitTests {
 
         ByteBuf intervalAsText = encode(TEST, "10 years 5 mons 2 days 0 hours 0 mins 0.0 secs");
         ParameterAssert.assertThat(codec.doEncode(Interval.of(Period.of(10, 5, 2))))
-                .hasFormat(FORMAT_TEXT)
-                .hasType(INTERVAL.getObjectId())
-                .hasValue(intervalAsText);
+            .hasFormat(FORMAT_TEXT)
+            .hasType(INTERVAL.getObjectId())
+            .hasValue(intervalAsText);
 
         intervalAsText = encode(TEST, "0 years 0 mons 23 days 23 hours 59 mins 3.35 secs");
         ParameterAssert.assertThat(codec.doEncode(Interval.of(Duration.ofSeconds(2073543, 350000000))))

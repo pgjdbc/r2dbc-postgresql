@@ -39,5 +39,4 @@ public class OffsetTimeCodec extends AbstractTemporalCodec<OffsetTime> {
         return decodeTemporal(buffer, dataType, format, OffsetTime.class, OffsetTime::from);
     }
 
-
 }

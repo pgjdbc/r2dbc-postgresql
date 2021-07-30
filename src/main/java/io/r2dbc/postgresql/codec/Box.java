@@ -50,6 +50,7 @@ public final class Box {
      * @param bx the x axis coordinate of {@link Point point} b
      * @param by the y axis coordinate of {@link Point point} b
      * @return the new {@link Box} object
+     * @since 0.9
      */
     public static Box of(double ax, double ay, double bx, double by) {
         return new Box(Point.of(ax, ay), Point.of(bx, by));

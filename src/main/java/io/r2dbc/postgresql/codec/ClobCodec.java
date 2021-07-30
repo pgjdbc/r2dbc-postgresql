@@ -77,4 +77,5 @@ final class ClobCodec extends AbstractCodec<Clob> {
                     .then(Mono.empty()))
         );
     }
+
 }

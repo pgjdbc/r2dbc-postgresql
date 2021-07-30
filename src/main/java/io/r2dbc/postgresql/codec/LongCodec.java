@@ -27,7 +27,6 @@ import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT8_ARRAY;
 
 final class LongCodec extends AbstractNumericCodec<Long> {
 
-
     LongCodec(ByteBufAllocator byteBufAllocator) {
         super(Long.class, byteBufAllocator);
     }

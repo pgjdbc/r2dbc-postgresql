@@ -105,7 +105,6 @@ public class EnumCodec<T extends Enum<T>> implements Codec<T> {
         return encodeNull(this.oid);
     }
 
-
     private EncodedParameter encodeNull(int dataType) {
         return new EncodedParameter(Format.FORMAT_BINARY, dataType, NULL_VALUE);
     }

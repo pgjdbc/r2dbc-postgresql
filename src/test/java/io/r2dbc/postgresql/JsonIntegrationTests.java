@@ -26,7 +26,7 @@ import reactor.test.StepVerifier;
 /**
  * Integration tests for {@link Json}.
  */
-final class JsonIntegrationTests extends AbstractIntegrationTests{
+final class JsonIntegrationTests extends AbstractIntegrationTests {
 
     @Test
     void shouldReadAndWriteJson() {

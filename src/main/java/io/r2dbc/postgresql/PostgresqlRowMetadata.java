@@ -203,4 +203,5 @@ final class PostgresqlRowMetadata extends AbstractCollection<String> implements 
 
         return columnMetadatas;
     }
+
 }

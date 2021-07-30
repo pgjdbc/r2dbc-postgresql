@@ -18,7 +18,6 @@ package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.client.Binding;
 import io.r2dbc.postgresql.client.Client;
-import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.client.TestClient;
 import io.r2dbc.postgresql.message.backend.CloseComplete;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
