@@ -25,7 +25,6 @@ import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
-
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -37,25 +36,12 @@ import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 final class HStoreCodec implements Codec<Map> {
 
     /**
-     * A {@link ByteProcessor} which finds the first appearance of a specific byte.
+     * Aborts on a comma {@code ('"')}.
      */
-    static class IndexOfProcessor implements ByteProcessor {
-
-        private final byte byteToFind;
-
-        public IndexOfProcessor(byte byteToFind) {
-            this.byteToFind = byteToFind;
-        }
-
-        @Override
-        public boolean process(byte value) {
-            return value != this.byteToFind;
-        }
-
-    }
+    static final ByteProcessor FIND_QUOTE = new ByteProcessor.IndexOfProcessor((byte) '"');
 
     private static final Class<Map> TYPE = Map.class;
-    
+
     private final ByteBufAllocator byteBufAllocator;
 
     private final int oid;
@@ -163,9 +149,8 @@ final class HStoreCodec implements Codec<Map> {
 
     @Nullable
     private static String readString(ByteBuf buffer) {
-        final ByteBuf accBuffer = buffer.alloc().buffer();
-        final int position = buffer.forEachByte(new IndexOfProcessor((byte) '"'));
 
+        int position = buffer.forEachByte(FIND_QUOTE);
         if (position > buffer.writerIndex()) {
             return null;
         }
@@ -174,20 +159,22 @@ final class HStoreCodec implements Codec<Map> {
             buffer.readerIndex(position + 1);
         }
 
-        while (buffer.isReadable()) {
-            final byte current = buffer.readByte();
-            
-            if (current == '"') {
-                break;
+        ByteBuf aggregated = buffer.alloc().buffer();
+        try {
+            while (buffer.isReadable()) {
+                byte current = buffer.readByte();
+
+                if (current == '"') {
+                    break;
+                }
+
+                aggregated.writeByte(current == '\\' ? buffer.readByte() : current);
             }
 
-            accBuffer.writeByte(current == '\\' ? buffer.readByte() : current);
+            return aggregated.toString(StandardCharsets.UTF_8);
+        } finally {
+            aggregated.release();
         }
-
-        final String result = accBuffer.toString(StandardCharsets.UTF_8);
-
-        accBuffer.release();
-        return result;
     }
 
     @Override
