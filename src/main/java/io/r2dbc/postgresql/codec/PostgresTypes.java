@@ -70,7 +70,7 @@ public class PostgresTypes {
             throw new IllegalArgumentException(String.format("Invalid typename %s", typeName));
         }
 
-        return this.connection.createStatement(String.format(SELECT_PG_TYPE, "=", typeName, "LIMIT 1")).execute()
+        return this.connection.createStatement(String.format(SELECT_PG_TYPE, "=", "'" + typeName + "'", "LIMIT 1")).execute()
             .flatMap(it -> it.map((row, rowMetadata) -> {
                 return new PostgresType(row.get("oid", Integer.class), row.get("typname", String.class), row.get("typcategory", String.class));
             })).singleOrEmpty();
