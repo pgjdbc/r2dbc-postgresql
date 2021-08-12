@@ -34,7 +34,7 @@
     <properties>
         <assertj.version>3.20.2</assertj.version>
         <awaitility.version>4.1.0</awaitility.version>
-        <blockhound.version>1.0.4.RELEASE</blockhound.version>
+        <blockhound.version>1.0.6.RELEASE</blockhound.version>
         <hikari-cp.version>4.0.3</hikari-cp.version>
         <java.version>1.8</java.version>
         <jsr305.version>3.0.2</jsr305.version>
@@ -48,9 +48,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <r2dbc-spi.version>0.9.0.M2</r2dbc-spi.version>
-        <reactor.version>2020.0.9</reactor.version>
+        <reactor.version>2020.0.10</reactor.version>
         <scram-client.version>2.1</scram-client.version>
-        <spring-framework.version>5.2.9.RELEASE</spring-framework.version>
+        <spring-framework.version>5.3.9</spring-framework.version>
         <testcontainers.version>1.16.0</testcontainers.version>
     </properties>
 
