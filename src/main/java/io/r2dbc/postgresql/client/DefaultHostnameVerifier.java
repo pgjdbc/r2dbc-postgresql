@@ -28,6 +28,7 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
 import javax.security.auth.x500.X500Principal;
 import java.net.IDN;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -100,7 +101,11 @@ public enum DefaultHostnameVerifier implements HostnameVerifier {
     public boolean verify(String hostname, SSLSession session) {
         X509Certificate[] peerCerts;
         try {
-            peerCerts = (X509Certificate[]) session.getPeerCertificates();
+            Certificate[] currentCerts = session.getPeerCertificates();
+            peerCerts = new X509Certificate[currentCerts.length];
+            for (int i=0;i<currentCerts.length;i++) {
+                peerCerts[i] = (X509Certificate) currentCerts[i];
+            }
         } catch (SSLPeerUnverifiedException e) {
             this.logger.warn("Unable to parse X509Certificate for hostname {}", hostname, e);
             return false;
