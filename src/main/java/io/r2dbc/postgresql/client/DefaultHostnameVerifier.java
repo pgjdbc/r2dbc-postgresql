@@ -99,22 +99,6 @@ public enum DefaultHostnameVerifier implements HostnameVerifier {
 
     @Override
     public boolean verify(String hostname, SSLSession session) {
-        X509Certificate[] peerCerts;
-        try {
-            Certificate[] currentCerts = session.getPeerCertificates();
-            peerCerts = new X509Certificate[currentCerts.length];
-            for (int i=0;i<currentCerts.length;i++) {
-                peerCerts[i] = (X509Certificate) currentCerts[i];
-            }
-        } catch (SSLPeerUnverifiedException e) {
-            this.logger.warn("Unable to parse X509Certificate for hostname {}", hostname, e);
-            return false;
-        }
-        if (peerCerts == null || peerCerts.length == 0) {
-            this.logger.warn("No certificates found for hostname {}", hostname);
-            return false;
-        }
-
         String canonicalHostname;
         if (hostname.startsWith("[") && hostname.endsWith("]")) {
             // IPv6 address like [2001:db8:0:1:1:1:1:1]
@@ -131,7 +115,18 @@ public enum DefaultHostnameVerifier implements HostnameVerifier {
             }
         }
 
-        X509Certificate serverCert = peerCerts[0];
+        X509Certificate serverCert
+        try {
+            Certificate[] peerCerts = session.getPeerCertificates();
+            if (peerCerts == null || peerCerts.length == 0) {
+                this.logger.warn("No certificates found for hostname {}", hostname);
+                return false;
+            }
+            serverCert = (X509Certificate) peerCerts[0];
+        } catch (SSLPeerUnverifiedException e) {
+            this.logger.warn("Unable to parse X509Certificate for hostname {}", hostname, e);
+            return false;
+        }
 
         // Check for Subject Alternative Names (see RFC 6125)
 
