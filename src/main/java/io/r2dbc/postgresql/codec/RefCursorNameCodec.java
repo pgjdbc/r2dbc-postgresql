@@ -23,6 +23,8 @@ import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
+import java.util.Collections;
+
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.REF_CURSOR;
 
 final class RefCursorNameCodec extends AbstractCodec<String> {
@@ -36,6 +38,11 @@ final class RefCursorNameCodec extends AbstractCodec<String> {
     @Override
     public EncodedParameter encodeNull() {
         throw new UnsupportedOperationException("Cannot encode RefCursor");
+    }
+
+    @Override
+    public Iterable<PostgresTypeIdentifier> getDataTypes() {
+        return Collections.singleton(REF_CURSOR);
     }
 
     @Override

@@ -78,4 +78,14 @@ final class ByteCodec extends AbstractCodec<Byte> implements ArrayCodecDelegate<
         return PostgresqlObjectId.INT2_ARRAY;
     }
 
+    @Override
+    public Iterable<Format> getFormats() {
+        return this.delegate.getFormats();
+    }
+
+    @Override
+    public Iterable<PostgresTypeIdentifier> getDataTypes() {
+        return this.delegate.getDataTypes();
+    }
+
 }

@@ -16,21 +16,21 @@
 
 package io.r2dbc.postgresql.codec;
 
+import io.r2dbc.postgresql.client.Binding;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.util.ByteBufUtils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Predicate;
+import java.util.Collections;
+import java.util.EnumSet;
 
 import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
@@ -38,6 +38,7 @@ import static io.r2dbc.postgresql.codec.PostgresqlObjectId.BOOL_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.BOX_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.CIRCLE_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.FLOAT4_ARRAY;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.FLOAT8;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.FLOAT8_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT2;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT2_ARRAY;
@@ -47,6 +48,7 @@ import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT8_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.LINE_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.POINT_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.POLYGON_ARRAY;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TEXT;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMESTAMP;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMESTAMPTZ;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.VARCHAR;
@@ -56,10 +58,8 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for {@link DefaultCodecs}.
@@ -67,20 +67,25 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 final class DefaultCodecsUnitTests {
 
-    DefaultCodecs codecs = new DefaultCodecs(TEST);
-
-    @Captor
-    ArgumentCaptor<Predicate<Codec<?>>> predicateArgumentCaptor;
-
-    @Captor
-    ArgumentCaptor<Map<Integer, Codec<?>>> cacheArgumentCaptor;
+    DefaultCodecs codecs;
 
     @Mock
     Codec<String> dummyCodec;
 
+    // We test with the cache version of the CodecFinder. We could switch the implementation if needed.
+    CodecFinder codecFinder = new CodecFinderCacheImpl();
+
+    @BeforeEach
+    void before() {
+        codecs = new DefaultCodecs(TEST, false, codecFinder);
+        lenient().doReturn(String.class).when(dummyCodec).type();
+        lenient().doReturn(EnumSet.of(FORMAT_TEXT, FORMAT_BINARY)).when(dummyCodec).getFormats();
+        lenient().doReturn(Collections.singleton(TEXT)).when(dummyCodec).getDataTypes();
+    }
+
     @Test
     void constructorNoByteBufAllocator() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new DefaultCodecs(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new DefaultCodecs(null, true, codecFinder))
             .withMessage("byteBufAllocator must not be null");
     }
 
@@ -129,7 +134,9 @@ final class DefaultCodecsUnitTests {
         assertThat(codecs.decode(ByteBufUtils.encode(TEST, "2018-11-05 00:35:43.048593+09"), TIMESTAMPTZ.getObjectId(), FORMAT_TEXT, Object.class)).isInstanceOf(OffsetDateTime.class);
         assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{t,f}"), BOOL_ARRAY.getObjectId(), FORMAT_TEXT, Object.class)).isEqualTo(new Boolean[]{true, false});
         assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{100.5,200.25}"), FLOAT4_ARRAY.getObjectId(), FORMAT_TEXT, Object.class)).isEqualTo(new Float[]{100.5f, 200.25f});
+        assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{100.5,200.25}"), FLOAT4_ARRAY.getObjectId(), FORMAT_TEXT, Float[].class)).isEqualTo(new Float[]{100.5f, 200.25f});
         assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{100.5,200.25}"), FLOAT8_ARRAY.getObjectId(), FORMAT_TEXT, Object.class)).isEqualTo(new Double[]{100.5, 200.25});
+        assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{100.5,200.25}"), FLOAT8_ARRAY.getObjectId(), FORMAT_TEXT, Double[].class)).isEqualTo(new Double[]{100.5, 200.25});
         assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{100,200}"), INT2_ARRAY.getObjectId(), FORMAT_TEXT, Object.class)).isEqualTo(new Short[]{100, 200});
         assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{100,200}"), INT4_ARRAY.getObjectId(), FORMAT_TEXT, Object.class)).isEqualTo(new Integer[]{100, 200});
         assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{100,200}"), INT8_ARRAY.getObjectId(), FORMAT_TEXT, Object.class)).isEqualTo(new Long[]{100L, 200L});
@@ -178,13 +185,11 @@ final class DefaultCodecsUnitTests {
     @Test
     void addCodecFirst() {
         DefaultCodecs spyCodecs = spy(codecs);
-        Codec<?> stringCodec = spyCodecs.findEncodeCodec("string");
-        when(dummyCodec.canEncode("string")).thenReturn(true);
+        Codec<?> stringCodec = codecFinder.findEncodeCodec("string");
+        lenient().when(dummyCodec.canEncode("string")).thenReturn(true);
         spyCodecs.addFirst(dummyCodec);
         assertThat(spyCodecs).startsWith(dummyCodec);
-        // Make sure the cache is invalidated and the overridden codec is now returned in place of the default one
-        verify(spyCodecs).invalidateCaches();
-        Codec<?> overriddenStringCodec = spyCodecs.findEncodeCodec("string");
+        Codec<?> overriddenStringCodec = codecFinder.findEncodeCodec("string");
         assertThat(overriddenStringCodec).isNotEqualTo(stringCodec).isEqualTo(dummyCodec);
     }
 
@@ -193,13 +198,12 @@ final class DefaultCodecsUnitTests {
         DefaultCodecs spyCodecs = spy(codecs);
         spyCodecs.addLast(dummyCodec);
         assertThat(spyCodecs).endsWith(dummyCodec);
-        verify(spyCodecs).invalidateCaches();
     }
 
     @Test
     void decodeDoubleAsFloatArray() {
         Float[] expected = {100.5f, 200.25f};
-        assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{100.5,200.25}"), PostgresqlObjectId.FLOAT8_ARRAY.getObjectId(), FORMAT_TEXT, Float[].class))
+        assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{100.5,200.25}"), FLOAT8_ARRAY.getObjectId(), FORMAT_TEXT, Float[].class))
             .isEqualTo(expected);
     }
 
@@ -211,63 +215,30 @@ final class DefaultCodecsUnitTests {
     }
 
     @Test
-    void findCodec() {
-        Map<Integer, Codec<?>> cache = new HashMap<>();
-        // To count the number of time the predicate is called
-        AtomicInteger predicateCount = new AtomicInteger(0);
-        // First call the codec is not in the cache
-        Codec<?> found = codecs.findCodec(123, cache, codec -> {
-            predicateCount.incrementAndGet();
-            return codec.canEncode("a string");
-        });
-        assertThat(found).isInstanceOf(StringCodec.class);
-        assertThat(predicateCount.getAndSet(0)).isEqualTo(1);
-        // Second call the codec is in the cache
-        assertThat(codecs.findCodec(123, cache, codec -> codec.canEncode("another string"))).isEqualTo(found);
-        assertThat(predicateCount.get()).isZero();
-        assertThat(cache).containsEntry(123, found);
+    void decodeArrayOfArray() {
+        Double[][] expected = new Double[][]{{123.4, 567.8}, {12.3, 45.6}};
+        assertThat(codecs.decode(ByteBufUtils.encode(TEST, "{{123.4, 567.8}, {12.3, 45.6}}"), FLOAT8_ARRAY.getObjectId(), FORMAT_TEXT, Double[][].class)).isEqualTo(expected);
     }
 
     @Test
-    void findDecodeCodecShort() {
-        DefaultCodecs spyCodecs = spy(codecs);
-        Codec<Short> shortCodec = spyCodecs.findDecodeCodec(INT2.getObjectId(), FORMAT_TEXT, Short.class);
-        assertThat(shortCodec).isNotNull();
-        verify(spyCodecs).findCodec(anyInt(), cacheArgumentCaptor.capture(), predicateArgumentCaptor.capture());
-        assertThat(cacheArgumentCaptor.getValue()).containsValue(shortCodec);
-    }
-
-    @Test
-    void findDecodeCodecNotFound() {
-        assertThat(codecs.findDecodeCodec(INT2.getObjectId(), FORMAT_TEXT, DefaultCodecsUnitTests.class)).isNull();
-    }
-
-    @Test
-    void findEncodeCodecDouble() {
-        DefaultCodecs spyCodecs = spy(codecs);
-        Codec<?> doubleCodec = spyCodecs.findEncodeCodec(1.2);
-        assertThat(doubleCodec).isInstanceOf(DoubleCodec.class);
-        verify(spyCodecs).findCodec(anyInt(), cacheArgumentCaptor.capture(), predicateArgumentCaptor.capture());
-        assertThat(cacheArgumentCaptor.getValue()).containsValue(doubleCodec);
-    }
-
-    @Test
-    void findEncodeCodecNotFound() {
-        assertThat(codecs.findEncodeCodec(this)).isNull();
-    }
-
-    @Test
-    void findEncodeNullCodecInteger() {
-        DefaultCodecs spyCodecs = spy(codecs);
-        Codec<?> intCodec = spyCodecs.findEncodeNullCodec(Integer.class);
-        assertThat(intCodec).isInstanceOf(IntegerCodec.class);
-        verify(spyCodecs).findCodec(anyInt(), cacheArgumentCaptor.capture(), predicateArgumentCaptor.capture());
-        assertThat(cacheArgumentCaptor.getValue()).containsValue(intCodec);
-    }
-
-    @Test
-    void findEncodeNullCodecNotFound() {
-        assertThat(codecs.findEncodeNullCodec(DefaultCodecsUnitTests.class)).isNull();
+    void testEncodeDecode() {
+        Flux.fromIterable((new Binding(1)).add(0, codecs.encode(65.589)).getParameterValues())
+            .flatMap(Flux::from)
+            .subscribe(bb -> {
+                assertThat(codecs.decode(bb, FLOAT8.getObjectId(), FORMAT_BINARY, Double.class)).isEqualTo(65.589);
+            });
+        StepVerifier.create(Flux.fromIterable((new Binding(2))
+                    .add(0, codecs.encode(65.589))
+                    .add(1, codecs.encode((short) 15))
+                    .getParameterValues())
+                .flatMap(Flux::from))
+            .assertNext(byteBuf -> {
+                assertThat(codecs.decode(byteBuf, FLOAT8.getObjectId(), FORMAT_BINARY, Double.class)).isEqualTo(65.589);
+            })
+            .assertNext(byteBuf -> {
+                assertThat(codecs.decode(byteBuf, INT2.getObjectId(), FORMAT_BINARY, Short.class)).isEqualTo((short) 15);
+            })
+            .verifyComplete();
     }
 
 }

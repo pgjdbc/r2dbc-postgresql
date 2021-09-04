@@ -24,6 +24,10 @@ import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
+import java.util.EnumSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.BPCHAR;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.CHAR;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.NAME;
@@ -34,6 +38,8 @@ import static io.r2dbc.postgresql.codec.PostgresqlObjectId.VARCHAR_ARRAY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
 final class StringCodec extends AbstractCodec<String> implements ArrayCodecDelegate<String> {
+
+    private static final Set<PostgresqlObjectId> SUPPORTED_TYPES = EnumSet.of(BPCHAR, CHAR, TEXT, UNKNOWN, VARCHAR, NAME);
 
     private final ByteBufAllocator byteBufAllocator;
 
@@ -52,7 +58,7 @@ final class StringCodec extends AbstractCodec<String> implements ArrayCodecDeleg
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return BPCHAR == type || CHAR == type || TEXT == type || UNKNOWN == type || VARCHAR == type || NAME == type;
+        return SUPPORTED_TYPES.contains(type);
     }
 
     @Override
@@ -84,6 +90,11 @@ final class StringCodec extends AbstractCodec<String> implements ArrayCodecDeleg
     @Override
     public PostgresTypeIdentifier getArrayDataType() {
         return VARCHAR_ARRAY;
+    }
+
+    @Override
+    public Iterable<PostgresTypeIdentifier> getDataTypes() {
+        return SUPPORTED_TYPES.stream().map(PostgresTypeIdentifier.class::cast).collect(Collectors.toList());
     }
 
 }

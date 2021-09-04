@@ -22,6 +22,7 @@ import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 
+import java.util.Collections;
 import java.util.function.Function;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
@@ -85,6 +86,11 @@ abstract class BuiltinCodecSupport<T> extends AbstractCodec<T> implements ArrayC
     @Override
     public final EncodedParameter encodeNull() {
         return createNull(FORMAT_TEXT, this.postgresType);
+    }
+
+    @Override
+    public Iterable<PostgresTypeIdentifier> getDataTypes() {
+        return Collections.singleton(this.postgresType);
     }
 
     @Override

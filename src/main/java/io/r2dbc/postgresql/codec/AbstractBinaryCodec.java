@@ -25,6 +25,7 @@ import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -72,6 +73,11 @@ abstract class AbstractBinaryCodec<T> extends AbstractCodec<T> implements ArrayC
     @Override
     public PostgresTypeIdentifier getArrayDataType() {
         return BYTEA_ARRAY;
+    }
+
+    @Override
+    public Iterable<PostgresTypeIdentifier> getDataTypes() {
+        return Collections.singleton(BYTEA);
     }
 
     byte[] decode(Format format, ByteBuf byteBuf) {

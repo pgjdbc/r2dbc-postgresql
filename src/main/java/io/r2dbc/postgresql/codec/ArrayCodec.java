@@ -26,6 +26,7 @@ import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -200,6 +201,11 @@ class ArrayCodec<T> extends AbstractCodec<Object[]> {
             encodeAsText(byteBuf, value, this.delegate::encodeToText);
             return byteBuf;
         }, dataType);
+    }
+
+    @Override
+    public Iterable<PostgresTypeIdentifier> getDataTypes() {
+        return Collections.singleton(this.dataType);
     }
 
     /**

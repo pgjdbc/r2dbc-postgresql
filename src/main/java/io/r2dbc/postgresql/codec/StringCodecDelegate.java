@@ -93,4 +93,14 @@ class StringCodecDelegate<T> extends AbstractCodec<T> implements ArrayCodecDeleg
         return PostgresqlObjectId.VARCHAR_ARRAY;
     }
 
+    @Override
+    public Iterable<Format> getFormats() {
+        return this.delegate.getFormats();
+    }
+
+    @Override
+    public Iterable<PostgresTypeIdentifier> getDataTypes() {
+        return this.delegate.getDataTypes();
+    }
+
 }

@@ -26,15 +26,15 @@ import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.Type;
 import reactor.util.annotation.Nullable;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.ServiceLoader;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Predicate;
 
 import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 
@@ -47,11 +47,7 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
 
     private final List<Codec<?>> codecs;
 
-    private final Map<Integer, Codec<?>> decodeCodecsCache;
-
-    private final Map<Integer, Codec<?>> encodeCodecsCache;
-
-    private final Map<Integer, Codec<?>> encodeNullCodecsCache;
+    private final CodecFinder codecFinder;
 
     /**
      * Create a new instance of {@link DefaultCodecs} preferring detached (copied buffers).
@@ -63,18 +59,28 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
     }
 
     /**
-     * Create a new instance of {@link DefaultCodecs}.
+     * Create a new instance of {@link DefaultCodecs} preferring detached (copied buffers).
      *
      * @param byteBufAllocator      the {@link ByteBufAllocator} to use for encoding
      * @param preferAttachedBuffers whether to prefer attached (pooled) {@link ByteBuf buffers}. Use {@code false} (default) to use detached buffers which minimize the risk of memory leaks.
      */
-    @SuppressWarnings({"unchecked", "rawtypes"})
     public DefaultCodecs(ByteBufAllocator byteBufAllocator, boolean preferAttachedBuffers) {
-        Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
-        this.decodeCodecsCache = new ConcurrentHashMap<>();
-        this.encodeCodecsCache = new ConcurrentHashMap<>();
-        this.encodeNullCodecsCache = new ConcurrentHashMap<>();
+        this(byteBufAllocator, preferAttachedBuffers, loadCodecFinder());
+    }
 
+    /**
+     * Create a new instance of {@link DefaultCodecs}.
+     *
+     * @param byteBufAllocator      the {@link ByteBufAllocator} to use for encoding
+     * @param preferAttachedBuffers whether to prefer attached (pooled) {@link ByteBuf buffers}. Use {@code false} (default) to use detached buffers which minimize the risk of memory leaks.
+     * @param codecFinder           the {@link CodecFinder} to use for finding relevant codecs
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public DefaultCodecs(ByteBufAllocator byteBufAllocator, boolean preferAttachedBuffers, CodecFinder codecFinder) {
+        Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        Assert.requireNonNull(codecFinder, "codecFinder must not be null");
+
+        this.codecFinder = codecFinder;
         this.codecs = new CopyOnWriteArrayList<>(Arrays.asList(
 
             // Prioritized Codecs
@@ -159,84 +165,27 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
         }
 
         this.codecs.addAll(defaultArrayCodecs);
+        codecFinder.updateCodecs(codecs);
     }
 
-    void invalidateCaches() {
-        this.decodeCodecsCache.clear();
-        this.encodeCodecsCache.clear();
-        this.encodeNullCodecsCache.clear();
+    private static CodecFinder loadCodecFinder() {
+        ServiceLoader<CodecFinder> loader = AccessController.doPrivileged((PrivilegedAction<ServiceLoader<CodecFinder>>) () -> ServiceLoader.load(CodecFinder.class,
+            DefaultCodecs.class.getClassLoader()));
+        return loader.iterator().hasNext() ? loader.iterator().next() : new CodecFinderDefaultImpl();
     }
 
     @Override
-    public void addFirst(Codec<?> codec) {
+    public synchronized void addFirst(Codec<?> codec) {
         Assert.requireNonNull(codec, "codec must not be null");
-        invalidateCaches();
         this.codecs.add(0, codec);
+        codecFinder.updateCodecs(codecs);
     }
 
     @Override
-    public void addLast(Codec<?> codec) {
+    public synchronized void addLast(Codec<?> codec) {
         Assert.requireNonNull(codec, "codec must not be null");
-        invalidateCaches();
         this.codecs.add(codec);
-    }
-
-    private <T> int generateCodecHash(int dataType, Format format, Class<? extends T> type) {
-        int hash = (dataType << 5) - dataType;
-        hash = (hash << 5) - hash + format.hashCode();
-        hash = (hash << 5) - hash + generateCodecHash(type);
-        return hash;
-    }
-
-    private <T> int generateCodecHash(Class<? extends T> type) {
-        int hash = type.hashCode();
-        if (type.getComponentType() != null) {
-            hash = (hash << 5) - hash + generateCodecHash(type.getComponentType());
-        }
-        return hash;
-    }
-
-    @Nullable
-    @SuppressWarnings("rawtypes")
-    Codec findCodec(int codecHash, Map<Integer, Codec<?>> cache, Predicate<Codec<?>> predicate) {
-        Codec<?> found = cache.get(codecHash);
-        if (found == null) {
-            for (Codec<?> codec : this.codecs) {
-                if (predicate.test(codec)) {
-                    found = codec;
-                    cache.put(codecHash, found);
-                    break;
-                }
-            }
-        }
-        return found;
-    }
-
-    @Nullable
-    @SuppressWarnings("unchecked")
-    <T> Codec<T> findDecodeCodec(int dataType, Format format, Class<? extends T> type) {
-        return findCodec(
-            generateCodecHash(dataType, format, type),
-            decodeCodecsCache,
-            codec -> codec.canDecode(dataType, format, type));
-    }
-
-    @Nullable
-    @SuppressWarnings("rawtypes")
-    Codec findEncodeCodec(Object value) {
-        return findCodec(
-            generateCodecHash(value.getClass()),
-            encodeCodecsCache,
-            codec -> codec.canEncode(value));
-    }
-
-    @Nullable
-    @SuppressWarnings("rawtypes")
-    Codec findEncodeNullCodec(Class<?> type) {
-        return findCodec(
-            generateCodecHash(type),
-            encodeNullCodecsCache,
-            codec -> codec.canEncodeNull(type));
+        codecFinder.updateCodecs(codecs);
     }
 
     @Override
@@ -249,7 +198,7 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
             return null;
         }
 
-        Codec<T> codec = findDecodeCodec(dataType, format, type);
+        Codec<T> codec = codecFinder.findDecodeCodec(dataType, format, type);
         if (codec != null) {
             return codec.decode(buffer, dataType, format, type);
         }
@@ -292,7 +241,7 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
                 throw new IllegalArgumentException(String.format("Cannot encode null value %s using type inference", value));
             }
 
-            Codec<?> codec = findEncodeCodec(parameterValue);
+            Codec<?> codec = codecFinder.findEncodeCodec(parameterValue);
             if (codec != null) {
                 return codec.encode(parameterValue);
             }
@@ -302,7 +251,7 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
                 return new EncodedParameter(Format.FORMAT_BINARY, dataType.getObjectId(), NULL_VALUE);
             }
 
-            Codec<?> codec = findEncodeCodec(parameterValue);
+            Codec<?> codec = codecFinder.findEncodeCodec(parameterValue);
             if (codec != null) {
                 return codec.encode(parameterValue, dataType.getObjectId());
             }
@@ -315,7 +264,7 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
     public EncodedParameter encodeNull(Class<?> type) {
         Assert.requireNonNull(type, "type must not be null");
 
-        Codec<?> codec = findEncodeNullCodec(type);
+        Codec<?> codec = codecFinder.findEncodeNullCodec(type);
         if (codec != null) {
             return codec.encodeNull();
         }
@@ -327,7 +276,7 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
     public Class<?> preferredType(int dataType, Format format) {
         Assert.requireNonNull(format, "format must not be null");
 
-        Codec<?> codec = findDecodeCodec(dataType, format, Object.class);
+        Codec<?> codec = codecFinder.findDecodeCodec(dataType, format, Object.class);
         if (codec != null) {
             return codec.type();
         }

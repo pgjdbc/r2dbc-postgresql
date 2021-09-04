@@ -25,9 +25,12 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
+import java.util.EnumSet;
 import java.util.function.Supplier;
 
 import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
 /**
  * Abstract codec class that provides a basis for all concrete
@@ -97,8 +100,8 @@ abstract class AbstractCodec<T> implements Codec<T> {
         return doEncode((T) value, getDataType(dataType));
     }
 
-    PostgresTypeIdentifier getDataType(int dataType) {
-        return PostgresqlObjectId.isValid(dataType) ? PostgresqlObjectId.valueOf(dataType) : new SimplePostgresTypeIdentifier(dataType);
+    public static PostgresTypeIdentifier getDataType(int dataType) {
+        return PostgresqlObjectId.isValid(dataType) ? PostgresqlObjectId.valueOf(dataType) : () -> dataType;
     }
 
     public EncodedParameter encodeNull(int dataType) {
@@ -108,6 +111,12 @@ abstract class AbstractCodec<T> implements Codec<T> {
     @Override
     public Class<?> type() {
         return this.type;
+    }
+
+    @Override
+    public Iterable<Format> getFormats() {
+        // Unless overridden all codecs supports both text and binary format
+        return EnumSet.of(FORMAT_TEXT, FORMAT_BINARY);
     }
 
     /**
@@ -212,21 +221,6 @@ abstract class AbstractCodec<T> implements Codec<T> {
         Assert.requireNonNull(type, "type must not be null");
 
         return type.isAssignableFrom(this.type);
-    }
-
-    static class SimplePostgresTypeIdentifier implements PostgresTypeIdentifier {
-
-        private final int oid;
-
-        public SimplePostgresTypeIdentifier(int oid) {
-            this.oid = oid;
-        }
-
-        @Override
-        public int getObjectId() {
-            return this.oid;
-        }
-
     }
 
 }

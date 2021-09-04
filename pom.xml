@@ -41,8 +41,8 @@
         <junit.version>5.7.0</junit.version>
         <jmh.version>1.32</jmh.version>
         <mbr.version>0.2.0.RELEASE</mbr.version>
-        <logback.version>1.2.3</logback.version>
-        <mockito.version>3.11.2</mockito.version>
+        <logback.version>1.2.5</logback.version>
+        <mockito.version>3.12.4</mockito.version>
         <netty.version>4.1.66.Final</netty.version>
         <postgresql.version>42.2.23</postgresql.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -265,7 +265,7 @@
                 <version>3.8.1</version>
                 <configuration>
                     <compilerArgs>
-<!--                        <arg>-Werror</arg>-->
+                        <arg>-Werror</arg>
                         <arg>-Xlint:all</arg>
                         <arg>-Xlint:-deprecation</arg>
                         <arg>-Xlint:-options</arg>

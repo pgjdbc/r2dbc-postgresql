@@ -26,11 +26,15 @@ import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static io.netty.util.CharsetUtil.UTF_8;
 import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
 @SuppressWarnings("rawtypes")
 final class HStoreCodec implements Codec<Map> {
@@ -84,7 +88,7 @@ final class HStoreCodec implements Codec<Map> {
             return null;
         }
 
-        if (format == Format.FORMAT_TEXT) {
+        if (format == FORMAT_TEXT) {
             return decodeTextFormat(buffer);
         }
 
@@ -187,7 +191,7 @@ final class HStoreCodec implements Codec<Map> {
         Assert.requireNonNull(value, "value must not be null");
         Map<?, ?> map = (Map<?, ?>) value;
 
-        return new EncodedParameter(Format.FORMAT_BINARY, dataType, Mono.fromSupplier(() -> {
+        return new EncodedParameter(FORMAT_BINARY, dataType, Mono.fromSupplier(() -> {
             ByteBuf buffer = this.byteBufAllocator.buffer(4 + 10 * map.size());
             buffer.writeInt(map.size());
 
@@ -216,12 +220,22 @@ final class HStoreCodec implements Codec<Map> {
     }
 
     private EncodedParameter encodeNull(int dataType) {
-        return new EncodedParameter(Format.FORMAT_BINARY, dataType, NULL_VALUE);
+        return new EncodedParameter(FORMAT_BINARY, dataType, NULL_VALUE);
     }
 
     @Override
     public Class<?> type() {
         return TYPE;
+    }
+
+    @Override
+    public Iterable<Format> getFormats() {
+        return EnumSet.of(FORMAT_TEXT, FORMAT_BINARY);
+    }
+
+    @Override
+    public Iterable<PostgresTypeIdentifier> getDataTypes() {
+        return Collections.singleton(AbstractCodec.getDataType(oid));
     }
 
 }
