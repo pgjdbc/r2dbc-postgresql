@@ -140,19 +140,18 @@ final class ReactorNettyClientIntegrationTests {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
     void shouldCancelExchangeOnCloseFirstMessage() throws Exception {
 
         Connection connection = (Connection) ReflectionUtils.getField(CONNECTION, this.client);
 
-        reactor.core.publisher.EmitterProcessor<FrontendMessage> messages = reactor.core.publisher.EmitterProcessor.create();
-        Flux<BackendMessage> query = this.client.exchange(messages);
+        Sinks.Many<FrontendMessage> messages = Sinks.many().unicast().onBackpressureBuffer();
+        Flux<BackendMessage> query = this.client.exchange(messages.asFlux());
         CompletableFuture<List<BackendMessage>> future = query.collectList().toFuture();
 
         connection.channel().eventLoop().execute(() -> {
 
             connection.channel().close();
-            messages.onNext(new Query("SELECT value FROM test"));
+            messages.tryEmitNext(new Query("SELECT value FROM test"));
         });
 
         try {
@@ -164,20 +163,19 @@ final class ReactorNettyClientIntegrationTests {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
     void shouldCancelExchangeOnCloseInFlight() throws Exception {
 
         Connection connection = (Connection) ReflectionUtils.getField(CONNECTION, this.client);
 
-        reactor.core.publisher.EmitterProcessor<FrontendMessage> messages = reactor.core.publisher.EmitterProcessor.create();
-        Flux<BackendMessage> query = this.client.exchange(messages);
+        Sinks.Many<FrontendMessage> messages = Sinks.many().unicast().onBackpressureBuffer();
+        Flux<BackendMessage> query = this.client.exchange(messages.asFlux());
         CompletableFuture<List<BackendMessage>> future = query.doOnNext(ignore -> {
             connection.channel().close();
-            messages.onNext(new Query("SELECT value FROM test"));
+            messages.tryEmitNext(new Query("SELECT value FROM test"));
 
         }).collectList().toFuture();
 
-        messages.onNext(new Query("SELECT value FROM test;SELECT value FROM test;"));
+        messages.tryEmitNext(new Query("SELECT value FROM test;SELECT value FROM test;"));
 
         try {
             future.get(5, TimeUnit.SECONDS);

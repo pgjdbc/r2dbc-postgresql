@@ -53,6 +53,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Operators;
+import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Schedulers;
 import reactor.netty.Connection;
 import reactor.netty.resources.LoopResources;
@@ -88,7 +89,6 @@ import static io.r2dbc.postgresql.client.TransactionStatus.IDLE;
  *
  * @see TcpClient
  */
-@SuppressWarnings("deprecation")
 public final class ReactorNettyClient implements Client {
 
     private static final Logger logger = Loggers.getLogger(ReactorNettyClient.class);
@@ -107,11 +107,9 @@ public final class ReactorNettyClient implements Client {
 
     private ConnectionContext context;
 
-    private final reactor.core.publisher.EmitterProcessor<Publisher<FrontendMessage>> requestProcessor = reactor.core.publisher.EmitterProcessor.create(false);
+    private final Sinks.Many<Publisher<FrontendMessage>> requestSink = Sinks.many().unicast().onBackpressureBuffer();
 
-    private final FluxSink<Publisher<FrontendMessage>> requests = this.requestProcessor.sink();
-
-    private final reactor.core.publisher.DirectProcessor<NotificationResponse> notificationProcessor = reactor.core.publisher.DirectProcessor.create();
+    private final Sinks.Many<NotificationResponse> notificationProcessor = Sinks.many().multicast().directBestEffort();
 
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
@@ -143,7 +141,7 @@ public final class ReactorNettyClient implements Client {
         this.settings = Assert.requireNonNull(settings, "ConnectionSettings must not be null");
 
         connection.addHandler(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE - 5, 1, 4, -4, 0));
-        connection.addHandler(new EnsureSubscribersCompleteChannelHandler(this.requestProcessor));
+        connection.addHandler(new EnsureSubscribersCompleteChannelHandler(this.requestSink));
         this.connection = connection;
         this.byteBufAllocator = connection.outbound().alloc();
         this.context = new ConnectionContext().withChannelId(connection.channel().toString());
@@ -166,7 +164,7 @@ public final class ReactorNettyClient implements Client {
             })
             .subscribe(this.messageSubscriber);
 
-        Mono<Void> request = this.requestProcessor
+        Mono<Void> request = this.requestSink.asFlux()
             .concatMap(Function.identity())
             .flatMap(message -> {
                 if (DEBUG_ENABLED) {
@@ -186,9 +184,7 @@ public final class ReactorNettyClient implements Client {
     public Mono<Void> close() {
         return Mono.defer(() -> {
 
-            if (!this.notificationProcessor.isTerminated()) {
-                this.notificationProcessor.onComplete();
-            }
+            this.notificationProcessor.tryEmitComplete();
 
             drainError(EXPECTED);
 
@@ -221,20 +217,20 @@ public final class ReactorNettyClient implements Client {
         Assert.requireNonNull(takeUntil, "takeUntil must not be null");
         Assert.requireNonNull(requests, "requests must not be null");
 
-        return this.messageSubscriber.addConversation(takeUntil, requests, this.requests::next, this::isConnected);
+        return this.messageSubscriber.addConversation(takeUntil, requests, it -> this.requestSink.emitNext(it, Sinks.EmitFailureHandler.FAIL_FAST), this::isConnected);
     }
 
     @Override
     public void send(FrontendMessage message) {
         Assert.requireNonNull(message, "requests must not be null");
 
-        this.requests.next(Mono.just(message));
+        this.requestSink.emitNext(Mono.just(message), Sinks.EmitFailureHandler.FAIL_FAST);
     }
 
     private Mono<Void> resumeError(Throwable throwable) {
 
         handleConnectionError(throwable);
-        this.requestProcessor.onComplete();
+        this.requestSink.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
 
         if (isSslException(throwable)) {
             logger.debug(this.context.getMessage("Connection Error"), throwable);
@@ -291,7 +287,7 @@ public final class ReactorNettyClient implements Client {
         }
 
         if (message.getClass() == NotificationResponse.class) {
-            this.notificationProcessor.onNext((NotificationResponse) message);
+            this.notificationProcessor.tryEmitNext((NotificationResponse) message);
             return true;
         }
 
@@ -423,12 +419,13 @@ public final class ReactorNettyClient implements Client {
 
     @Override
     public Disposable addNotificationListener(Consumer<NotificationResponse> consumer) {
-        return this.notificationProcessor.subscribe(consumer);
+        return this.notificationProcessor.asFlux().subscribe(consumer);
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public Disposable addNotificationListener(Subscriber<NotificationResponse> consumer) {
-        return this.notificationProcessor.subscribe(consumer::onNext, consumer::onError, consumer::onComplete, consumer::onSubscribe);
+        return this.notificationProcessor.asFlux().subscribe(consumer::onNext, consumer::onError, consumer::onComplete, consumer::onSubscribe);
     }
 
     @Override
@@ -464,10 +461,6 @@ public final class ReactorNettyClient implements Client {
     @Override
     public boolean isConnected() {
         if (this.isClosed.get()) {
-            return false;
-        }
-
-        if (this.requestProcessor.isDisposed()) {
             return false;
         }
 
@@ -513,17 +506,15 @@ public final class ReactorNettyClient implements Client {
 
         this.messageSubscriber.close(supplier);
 
-        if (!this.notificationProcessor.isTerminated()) {
-            this.notificationProcessor.onError(supplier.get());
-        }
+        this.notificationProcessor.tryEmitError(supplier.get());
     }
 
     private final class EnsureSubscribersCompleteChannelHandler extends ChannelDuplexHandler {
 
-        private final reactor.core.publisher.EmitterProcessor<Publisher<FrontendMessage>> requestProcessor;
+        private final Sinks.Many<?> requestSink;
 
-        private EnsureSubscribersCompleteChannelHandler(reactor.core.publisher.EmitterProcessor<Publisher<FrontendMessage>> requestProcessor) {
-            this.requestProcessor = requestProcessor;
+        private EnsureSubscribersCompleteChannelHandler(Sinks.Many<?> requestSink) {
+            this.requestSink = requestSink;
         }
 
         @Override
@@ -535,7 +526,7 @@ public final class ReactorNettyClient implements Client {
         public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
             super.channelUnregistered(ctx);
 
-            this.requestProcessor.onComplete();
+            this.requestSink.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
             handleClose();
         }
 
@@ -870,7 +861,7 @@ public final class ReactorNettyClient implements Client {
             }
 
             handleConnectionError(throwable);
-            ReactorNettyClient.this.requestProcessor.onComplete();
+            ReactorNettyClient.this.requestSink.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
             this.terminated = true;
 
             if (isSslException(throwable)) {

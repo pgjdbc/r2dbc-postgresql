@@ -32,6 +32,7 @@ import io.r2dbc.postgresql.replication.ReplicationStream;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Row;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
 
 import java.util.function.Predicate;
 
@@ -78,7 +79,6 @@ final class DefaultPostgresqlReplicationConnection implements io.r2dbc.postgresq
             row.get("output_plugin", String.class));
     }
 
-    @SuppressWarnings("deprecation")
     @Override
     public Mono<ReplicationStream> startReplication(ReplicationRequest request) {
 
@@ -87,14 +87,16 @@ final class DefaultPostgresqlReplicationConnection implements io.r2dbc.postgresq
         String sql = request.asSQL();
         ExceptionFactory exceptionFactory = ExceptionFactory.withSql(sql);
 
-        reactor.core.publisher.EmitterProcessor<FrontendMessage> requestProcessor = reactor.core.publisher.EmitterProcessor.create();
+        Sinks.Many<FrontendMessage> requestSink = Sinks.many().unicast().onBackpressureBuffer();
 
-        return Mono.fromDirect(this.client.exchange(requestProcessor.startWith(new Query(sql)))
+        return Mono.fromDirect(this.client.exchange(requestSink.asFlux())
             .handle(exceptionFactory::handleErrorResponse)
             .windowUntil(WINDOW_UNTIL)
             .map(messages -> {
-                return new PostgresReplicationStream(this.client.getByteBufAllocator(), request, requestProcessor, messages);
-            }));
+                return (ReplicationStream) new PostgresReplicationStream(this.client.getByteBufAllocator(), request, requestSink, messages);
+            })).doOnSubscribe(it -> {
+            requestSink.emitNext(new Query(sql), Sinks.EmitFailureHandler.FAIL_FAST);
+        });
     }
 
     @Override

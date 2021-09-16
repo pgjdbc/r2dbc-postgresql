@@ -32,6 +32,7 @@ import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
@@ -41,7 +42,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
-@SuppressWarnings("deprecation")
 final class PostgresReplicationStream implements ReplicationStream {
 
     public static final long POSTGRES_EPOCH_2000_01_01 = 946684800000L;
@@ -50,9 +50,9 @@ final class PostgresReplicationStream implements ReplicationStream {
 
     private static final char X_LOG_DATA = 'w';
 
-    private final reactor.core.publisher.EmitterProcessor<CopyData> responseProcessor = reactor.core.publisher.EmitterProcessor.create(false);
+    private final Sinks.Many<FrontendMessage> requestSink;
 
-    private final reactor.core.publisher.EmitterProcessor<FrontendMessage> requestProcessor;
+    private final Flux<CopyData> stream;
 
     private final AtomicReference<Disposable> subscription = new AtomicReference<>();
 
@@ -70,13 +70,13 @@ final class PostgresReplicationStream implements ReplicationStream {
 
     private volatile LogSequenceNumber lastFlushedLSN = LogSequenceNumber.INVALID_LSN;
 
-    PostgresReplicationStream(ByteBufAllocator allocator, ReplicationRequest replicationRequest, reactor.core.publisher.EmitterProcessor<FrontendMessage> requestProcessor,
+    PostgresReplicationStream(ByteBufAllocator allocator, ReplicationRequest replicationRequest, Sinks.Many<FrontendMessage> requestSink,
                               Flux<BackendMessage> messages) {
         this.allocator = allocator;
         this.replicationRequest = replicationRequest;
-        this.requestProcessor = requestProcessor;
+        this.requestSink = requestSink;
 
-        Flux<CopyData> stream = messages
+        this.stream = messages
             .takeUntil(ReadyForQuery.class::isInstance)
             .doOnError(throwable -> {
                 close().subscribe();
@@ -85,8 +85,12 @@ final class PostgresReplicationStream implements ReplicationStream {
             .doOnComplete(() -> {
                 this.closeFuture.complete(null);
             })
+            .doOnCancel(() -> {
+                Disposable scheduler = Schedulers.parallel().schedule(() -> this.closeFuture.complete(null), 1, TimeUnit.MINUTES);
+                this.closeFuture.whenComplete(((unused, throwable) -> scheduler.dispose()));
+            })
             .ofType(CopyData.class)
-            .handle((message, sink) -> {
+            .<CopyData>handle((message, sink) -> {
 
                 try {
 
@@ -112,9 +116,8 @@ final class PostgresReplicationStream implements ReplicationStream {
                 } finally {
                     ReferenceCountUtil.release(message);
                 }
-            });
+            }).share();
 
-        stream.subscribeWith(this.responseProcessor);
         Disposable disposable = () -> {
         };
 
@@ -164,7 +167,7 @@ final class PostgresReplicationStream implements ReplicationStream {
     private void sendStatusUpdate() {
         ByteBuf byteBuf = prepareUpdateStatus(this.lastReceiveLSN, this.lastFlushedLSN, this.lastAppliedLSN, false);
         io.r2dbc.postgresql.message.frontend.CopyData copyData = new io.r2dbc.postgresql.message.frontend.CopyData(byteBuf);
-        this.requestProcessor.onNext(copyData);
+        this.requestSink.emitNext(copyData, Sinks.EmitFailureHandler.FAIL_FAST);
     }
 
     private ByteBuf prepareUpdateStatus(LogSequenceNumber received, LogSequenceNumber flushed,
@@ -181,13 +184,14 @@ final class PostgresReplicationStream implements ReplicationStream {
     public Mono<Void> close() {
 
         Disposable disposable = this.subscription.get();
+
         if (disposable != null && this.subscription.compareAndSet(disposable, null)) {
             disposable.dispose();
 
-            this.requestProcessor.onNext(CopyDone.INSTANCE);
-            this.requestProcessor.onComplete();
+            this.requestSink.emitNext(CopyDone.INSTANCE, Sinks.EmitFailureHandler.FAIL_FAST);
+            this.requestSink.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
 
-            return this.responseProcessor.ignoreElements().then(Mono.fromCompletionStage(this.closeFuture));
+            return this.stream.ignoreElements().then(Mono.fromCompletionStage(this.closeFuture));
         }
 
         return Mono.fromCompletionStage(this.closeFuture);
@@ -201,7 +205,7 @@ final class PostgresReplicationStream implements ReplicationStream {
     @Override
     public <T> Flux<T> map(Function<ByteBuf, ? extends T> mappingFunction) {
         Assert.requireNonNull(mappingFunction, "mappingFunction must not be null");
-        return this.responseProcessor.map(data -> {
+        return this.stream.map(data -> {
 
             try {
                 return mappingFunction.apply(data.getData());

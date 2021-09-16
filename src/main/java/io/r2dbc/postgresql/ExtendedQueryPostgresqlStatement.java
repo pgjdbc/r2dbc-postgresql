@@ -27,9 +27,9 @@ import io.r2dbc.postgresql.message.frontend.Bind;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.GeneratedValuesUtils;
 import io.r2dbc.spi.Statement;
-import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,6 +37,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 
 import static io.r2dbc.postgresql.client.ExtendedQueryMessageFlow.PARAMETER_SYMBOL;
@@ -195,37 +196,39 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
             }
 
             Iterator<Binding> iterator = this.bindings.bindings.iterator();
-            EmitterProcessor<Binding> bindingEmitter = EmitterProcessor.create(true);
-            return bindingEmitter.startWith(iterator.next())
+            Sinks.Many<Binding> bindings = Sinks.many().unicast().onBackpressureBuffer();
+            AtomicBoolean canceled = new AtomicBoolean();
+            return bindings.asFlux()
                 .map(it -> {
 
                     Flux<BackendMessage> messages =
                         collectBindingParameters(it).flatMapMany(values -> ExtendedFlowDelegate.runQuery(this.resources, factory, sql, it, values, this.fetchSize)).doOnComplete(() -> {
-                            tryNextBinding(iterator, bindingEmitter);
+                            tryNextBinding(iterator, bindings, canceled);
                         });
 
                     return PostgresqlResult.toResult(this.resources, messages, factory);
                 })
-                .doOnCancel(() -> clearBindings(iterator))
-                .doOnError(e -> clearBindings(iterator));
+                .doOnCancel(() -> clearBindings(iterator, canceled))
+                .doOnError(e -> clearBindings(iterator, canceled))
+                .doOnSubscribe(it -> bindings.emitNext(iterator.next(), Sinks.EmitFailureHandler.FAIL_FAST));
 
         }).cast(io.r2dbc.postgresql.api.PostgresqlResult.class);
     }
 
-    private static void tryNextBinding(Iterator<Binding> iterator, EmitterProcessor<Binding> boundRequests) {
+    private static void tryNextBinding(Iterator<Binding> iterator, Sinks.Many<Binding> bindingSink, AtomicBoolean canceled) {
 
-        if (boundRequests.isCancelled()) {
+        if (canceled.get()) {
             return;
         }
 
         try {
             if (iterator.hasNext()) {
-                boundRequests.onNext(iterator.next());
+                bindingSink.emitNext(iterator.next(), Sinks.EmitFailureHandler.FAIL_FAST);
             } else {
-                boundRequests.onComplete();
+                bindingSink.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
             }
         } catch (Exception e) {
-            boundRequests.onError(e);
+            bindingSink.emitError(e, Sinks.EmitFailureHandler.FAIL_FAST);
         }
     }
 
@@ -253,7 +256,9 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
         return Integer.parseInt(matcher.group(1)) - 1;
     }
 
-    private void clearBindings(Iterator<Binding> iterator) {
+    private void clearBindings(Iterator<Binding> iterator, AtomicBoolean canceled) {
+
+        canceled.set(true);
 
         while (iterator.hasNext()) {
             // exhaust iterator, ignore returned elements
