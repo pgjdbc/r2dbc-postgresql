@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-package io.r2dbc.postgresql;
+package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.UnpooledByteBufAllocator;
-import io.r2dbc.postgresql.codec.CodecFinderCacheImpl;
-import io.r2dbc.postgresql.codec.CodecFinderDefaultImpl;
-import io.r2dbc.postgresql.codec.Codecs;
-import io.r2dbc.postgresql.codec.DefaultCodecs;
+import io.r2dbc.postgresql.BenchmarkSettings;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import org.junit.platform.commons.annotation.Testable;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -65,9 +62,9 @@ public class CodecRegistryBenchmarks extends BenchmarkSettings {
 
         final ByteBufAllocator byteBufAllocator = new UnpooledByteBufAllocator(false, true);
 
-        DefaultCodecs cacheEnabledRegistry = new DefaultCodecs(byteBufAllocator, false, new CodecFinderCacheImpl());
+        DefaultCodecs cacheEnabledRegistry = new DefaultCodecs(this.byteBufAllocator, false, CachedCodecLookup::new);
 
-        DefaultCodecs cacheDisabledRegistry = new DefaultCodecs(byteBufAllocator, false, new CodecFinderDefaultImpl());
+        DefaultCodecs cacheDisabledRegistry = new DefaultCodecs(this.byteBufAllocator, false, DefaultCodecLookup::new);
 
     }
 
