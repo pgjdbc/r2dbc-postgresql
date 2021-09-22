@@ -408,6 +408,10 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
     @Test
     void supportsSemicolon() {
         assertThat(ExtendedQueryPostgresqlStatement.supports("test-query-1; test-query-2")).isFalse();
+        assertThat(ExtendedQueryPostgresqlStatement.supports("test-query-1; test-query-2;")).isFalse();
+        assertThat(ExtendedQueryPostgresqlStatement.supports("test-query-1; test-query-2 with $1;")).isFalse();
+        assertThat(ExtendedQueryPostgresqlStatement.supports("test-query-1 with $1; ")).isTrue();
+        assertThat(ExtendedQueryPostgresqlStatement.supports("test-query-1 with $1;")).isTrue();
     }
 
     @Test
