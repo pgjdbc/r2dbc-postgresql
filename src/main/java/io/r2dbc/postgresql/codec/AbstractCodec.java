@@ -26,12 +26,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
-import java.util.EnumSet;
 import java.util.function.Supplier;
 
 import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
-import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
-import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
 /**
  * Abstract codec class that provides a basis for all concrete
@@ -39,7 +36,7 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
  *
  * @param <T> the type that is handled by this {@link Codec}
  */
-abstract class AbstractCodec<T> implements Codec<T> {
+abstract class AbstractCodec<T> implements Codec<T>, CodecMetadata {
 
     private final Class<T> type;
 
@@ -96,12 +93,6 @@ abstract class AbstractCodec<T> implements Codec<T> {
     @Override
     public Class<?> type() {
         return this.type;
-    }
-
-    @Override
-    public Iterable<Format> getFormats() {
-        // Unless overridden all codecs supports both text and binary format
-        return EnumSet.of(FORMAT_TEXT, FORMAT_BINARY);
     }
 
     /**

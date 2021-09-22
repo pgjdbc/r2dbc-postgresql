@@ -51,7 +51,6 @@ import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.spy;
 
 /**
  * Unit tests for {@link DefaultCodecs}.
@@ -62,58 +61,55 @@ final class DefaultCodecsUnitTests {
     DefaultCodecs codecs;
 
     @Mock
-    Codec<String> dummyCodec;
-
-    // We test with the cache version of the CodecFinder. We could switch the implementation if needed.
-    CodecFinder codecFinder = new CodecFinderCacheImpl();
+    AbstractCodec<String> dummyCodec;
 
     @BeforeEach
     void before() {
-        codecs = new DefaultCodecs(TEST, false, codecFinder);
-        lenient().doReturn(String.class).when(dummyCodec).type();
-        lenient().doReturn(EnumSet.of(FORMAT_TEXT, FORMAT_BINARY)).when(dummyCodec).getFormats();
-        lenient().doReturn(Collections.singleton(TEXT)).when(dummyCodec).getDataTypes();
+        this.codecs = new DefaultCodecs(TEST, false);
+        lenient().doReturn(String.class).when(this.dummyCodec).type();
+        lenient().doReturn(EnumSet.of(FORMAT_TEXT, FORMAT_BINARY)).when(this.dummyCodec).getFormats();
+        lenient().doReturn(Collections.singleton(TEXT)).when(this.dummyCodec).getDataTypes();
     }
 
     @Test
     void constructorNoByteBufAllocator() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new DefaultCodecs(null, true, codecFinder))
+        assertThatIllegalArgumentException().isThrownBy(() -> new DefaultCodecs(null, true))
             .withMessage("byteBufAllocator must not be null");
     }
 
     @Test
     void decode() {
-        assertThat(codecs.decode(TEST.buffer(4).writeInt(100), INT4.getObjectId(), FORMAT_BINARY, Integer.class))
+        assertThat(this.codecs.decode(TEST.buffer(4).writeInt(100), INT4.getObjectId(), FORMAT_BINARY, Integer.class))
             .isEqualTo(100);
     }
 
     @Test
     void decodeDefaultType() {
-        assertThat(codecs.decode(TEST.buffer(4).writeInt(100), INT4.getObjectId(), FORMAT_BINARY, Object.class))
+        assertThat(this.codecs.decode(TEST.buffer(4).writeInt(100), INT4.getObjectId(), FORMAT_BINARY, Object.class))
             .isEqualTo(100);
     }
 
     @Test
     void decodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> codecs.decode(TEST.buffer(4), INT4.getObjectId(), null, Object.class))
+        assertThatIllegalArgumentException().isThrownBy(() -> this.codecs.decode(TEST.buffer(4), INT4.getObjectId(), null, Object.class))
             .withMessage("format must not be null");
     }
 
     @Test
     void decodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> codecs.decode(TEST.buffer(4), INT4.getObjectId(), FORMAT_BINARY, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> this.codecs.decode(TEST.buffer(4), INT4.getObjectId(), FORMAT_BINARY, null))
             .withMessage("type must not be null");
     }
 
     @Test
     void decodeNull() {
-        assertThat(codecs.decode(null, INT4.getObjectId(), FORMAT_BINARY, Integer.class))
+        assertThat(this.codecs.decode(null, INT4.getObjectId(), FORMAT_BINARY, Integer.class))
             .isNull();
     }
 
     @Test
     void decodeUnsupportedType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> codecs.decode(TEST.buffer(4), INT4.getObjectId(), FORMAT_BINARY, Void.class))
+        assertThatIllegalArgumentException().isThrownBy(() -> this.codecs.decode(TEST.buffer(4), INT4.getObjectId(), FORMAT_BINARY, Void.class))
             .withMessage("Cannot decode value of type java.lang.Void with OID 23");
     }
 
@@ -132,7 +128,7 @@ final class DefaultCodecsUnitTests {
 
     @Test
     void encode() {
-        Parameter parameter = codecs.encode(100);
+        Parameter parameter = this.codecs.encode(100);
 
         assertThat(parameter)
             .hasFormat(FORMAT_BINARY)
@@ -142,58 +138,58 @@ final class DefaultCodecsUnitTests {
 
     @Test
     void encodeNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> codecs.encode(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> this.codecs.encode(null))
             .withMessage("value must not be null");
     }
 
     @Test
     void encodeNull() {
-        Parameter parameter = codecs.encodeNull(Integer.class);
+        Parameter parameter = this.codecs.encodeNull(Integer.class);
 
         assertThat(parameter).isEqualTo(new Parameter(FORMAT_BINARY, INT4.getObjectId(), NULL_VALUE));
     }
 
     @Test
     void encodeNullNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> codecs.encodeNull(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> this.codecs.encodeNull(null))
             .withMessage("type must not be null");
     }
 
     @Test
     void addCodecFirst() {
-        DefaultCodecs spyCodecs = spy(codecs);
-        Codec<?> stringCodec = codecFinder.findEncodeCodec("string");
-        lenient().when(dummyCodec.canEncode("string")).thenReturn(true);
-        spyCodecs.addFirst(dummyCodec);
-        assertThat(spyCodecs).startsWith(dummyCodec);
-        Codec<?> overriddenStringCodec = codecFinder.findEncodeCodec("string");
-        assertThat(overriddenStringCodec).isNotEqualTo(stringCodec).isEqualTo(dummyCodec);
+        DefaultCodecLookup codecLookup = new DefaultCodecLookup(this.codecs);
+
+        Codec<?> stringCodec = codecLookup.findEncodeCodec("string");
+        lenient().when(this.dummyCodec.canEncode("string")).thenReturn(true);
+        this.codecs.addFirst(this.dummyCodec);
+        assertThat(this.codecs).startsWith(this.dummyCodec);
+        Codec<?> overriddenStringCodec = codecLookup.findEncodeCodec("string");
+        assertThat(overriddenStringCodec).isNotEqualTo(stringCodec).isEqualTo(this.dummyCodec);
     }
 
     @Test
     void addCodecLast() {
-        DefaultCodecs spyCodecs = spy(codecs);
-        spyCodecs.addLast(dummyCodec);
-        assertThat(spyCodecs).endsWith(dummyCodec);
+        this.codecs.addLast(this.dummyCodec);
+        assertThat(this.codecs).endsWith(this.dummyCodec);
     }
 
     @Test
     void testEncodeDecode() {
-        Flux.fromIterable((new Binding(1)).add(0, codecs.encode(65.589)).getParameterValues())
+        Flux.fromIterable((new Binding(1)).add(0, this.codecs.encode(65.589)).getParameterValues())
             .flatMap(Flux::from)
             .subscribe(bb -> {
-                assertThat(codecs.decode(bb, FLOAT8.getObjectId(), FORMAT_BINARY, Double.class)).isEqualTo(65.589);
+                assertThat(this.codecs.decode(bb, FLOAT8.getObjectId(), FORMAT_BINARY, Double.class)).isEqualTo(65.589);
             });
         StepVerifier.create(Flux.fromIterable((new Binding(2))
-                    .add(0, codecs.encode(65.589))
-                    .add(1, codecs.encode((short) 15))
+                    .add(0, this.codecs.encode(65.589))
+                    .add(1, this.codecs.encode((short) 15))
                     .getParameterValues())
                 .flatMap(Flux::from))
             .assertNext(byteBuf -> {
-                assertThat(codecs.decode(byteBuf, FLOAT8.getObjectId(), FORMAT_BINARY, Double.class)).isEqualTo(65.589);
+                assertThat(this.codecs.decode(byteBuf, FLOAT8.getObjectId(), FORMAT_BINARY, Double.class)).isEqualTo(65.589);
             })
             .assertNext(byteBuf -> {
-                assertThat(codecs.decode(byteBuf, INT2.getObjectId(), FORMAT_BINARY, Short.class)).isEqualTo((short) 15);
+                assertThat(this.codecs.decode(byteBuf, INT2.getObjectId(), FORMAT_BINARY, Short.class)).isEqualTo((short) 15);
             })
             .verifyComplete();
     }

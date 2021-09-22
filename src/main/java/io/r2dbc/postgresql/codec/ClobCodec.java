@@ -82,9 +82,4 @@ final class ClobCodec extends AbstractCodec<Clob> {
         return Arrays.asList(VARCHAR, TEXT);
     }
 
-    @Override
-    public Iterable<Format> getFormats() {
-        return Arrays.asList(FORMAT_TEXT, FORMAT_BINARY);
-    }
-
 }

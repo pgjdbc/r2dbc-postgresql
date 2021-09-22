@@ -22,7 +22,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
@@ -34,15 +33,16 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.INT2;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.verify;
 
+/**
+ * Unit tests for {@link DefaultCodecLookup}.
+ */
 @ExtendWith(MockitoExtension.class)
-class CodecFinderDefaultImplUnitTest {
+class DefaultCodecLookupUnitTest {
 
     DefaultCodecs codecs;
 
-    @Spy
-    CodecFinderDefaultImpl codecFinder = new CodecFinderDefaultImpl();
+    DefaultCodecLookup codecFinder;
 
     @Captor
     ArgumentCaptor<Predicate<Codec<?>>> predicateArgumentCaptor;
@@ -56,61 +56,60 @@ class CodecFinderDefaultImplUnitTest {
     @BeforeEach
     void setUp() {
         // We use the DefaultCodecs to populate the cache with some codecs
-        codecs = new DefaultCodecs(TEST, false, codecFinder);
+        this.codecs = new DefaultCodecs(TEST, false);
+        this.codecFinder = new DefaultCodecLookup(this.codecs);
     }
 
     @Test
     void findCodec_notFound() {
-        List<Codec<?>> codecList = Arrays.asList(stringCodec, integerCodec);
-        codecFinder.updateCodecs(codecList);
-        doReturn(false).when(stringCodec).canEncode(this);
-        doReturn(false).when(integerCodec).canEncode(this);
-        assertThat(codecFinder.findCodec(c -> c.canEncode(this))).isNull();
+        List<Codec<?>> codecList = Arrays.asList(this.stringCodec, this.integerCodec);
+        codecList.forEach(this.codecs::addLast);
+        this.codecFinder.afterCodecAdded();
+        doReturn(false).when(this.stringCodec).canEncode(this);
+        doReturn(false).when(this.integerCodec).canEncode(this);
+        assertThat(this.codecFinder.findCodec(c -> c.canEncode(this))).isNull();
     }
 
     @Test
     void findCodec_found() {
-        List<Codec<?>> codecList = Arrays.asList(stringCodec, integerCodec);
-        codecFinder.updateCodecs(codecList);
-        doReturn(false).when(stringCodec).canEncode(this);
-        doReturn(true).when(integerCodec).canEncode(this);
-        assertThat(codecFinder.findCodec(c -> c.canEncode(this))).isEqualTo(integerCodec);
+        List<Codec<?>> codecList = Arrays.asList(this.stringCodec, this.integerCodec);
+        codecList.forEach(this.codecs::addLast);
+        doReturn(false).when(this.stringCodec).canEncode(this);
+        doReturn(true).when(this.integerCodec).canEncode(this);
+        assertThat(this.codecFinder.findCodec(c -> c.canEncode(this))).isEqualTo(this.integerCodec);
     }
 
     @Test
     void findDecodeCodecShort() {
-        Codec<Short> shortCodec = codecFinder.findDecodeCodec(INT2.getObjectId(), FORMAT_TEXT, Short.class);
+        Codec<Short> shortCodec = this.codecFinder.findDecodeCodec(INT2.getObjectId(), FORMAT_TEXT, Short.class);
         assertThat(shortCodec).isNotNull();
-        verify(codecFinder).findCodec(predicateArgumentCaptor.capture());
     }
 
     @Test
     void findDecodeCodecNotFound() {
-        assertThat(codecFinder.findDecodeCodec(INT2.getObjectId(), FORMAT_TEXT, this.getClass())).isNull();
+        assertThat(this.codecFinder.findDecodeCodec(INT2.getObjectId(), FORMAT_TEXT, this.getClass())).isNull();
     }
 
     @Test
     void findEncodeCodecDouble() {
-        Codec<?> doubleCodec = codecFinder.findEncodeCodec(1.2);
+        Codec<?> doubleCodec = this.codecFinder.findEncodeCodec(1.2);
         assertThat(doubleCodec).isInstanceOf(DoubleCodec.class);
-        verify(codecFinder).findCodec(predicateArgumentCaptor.capture());
     }
 
     @Test
     void findEncodeCodecNotFound() {
-        assertThat(codecFinder.findEncodeCodec(this)).isNull();
+        assertThat(this.codecFinder.findEncodeCodec(this)).isNull();
     }
 
     @Test
     void findEncodeNullCodecInteger() {
-        Codec<?> intCodec = codecFinder.findEncodeNullCodec(Integer.class);
+        Codec<?> intCodec = this.codecFinder.findEncodeNullCodec(Integer.class);
         assertThat(intCodec).isInstanceOf(IntegerCodec.class);
-        verify(codecFinder).findCodec(predicateArgumentCaptor.capture());
     }
 
     @Test
     void findEncodeNullCodecNotFound() {
-        assertThat(codecFinder.findEncodeNullCodec(DefaultCodecsUnitTests.class)).isNull();
+        assertThat(this.codecFinder.findEncodeNullCodec(DefaultCodecsUnitTests.class)).isNull();
     }
 
 }

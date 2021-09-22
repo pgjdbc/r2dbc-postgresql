@@ -33,9 +33,6 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.util.Collections;
-import java.util.EnumSet;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -77,7 +74,6 @@ final class CodecExtensionIntegrationTests extends AbstractIntegrationTests {
 
             })
             .verifyComplete();
-
     }
 
     public static class JsonCodecRegistrar implements CodecRegistrar {
@@ -136,20 +132,6 @@ final class CodecExtensionIntegrationTests extends AbstractIntegrationTests {
             return null;
         }
 
-        @Override
-        public Class<?> type() {
-            return Json.class;
-        }
-
-        @Override
-        public Iterable<Format> getFormats() {
-            return EnumSet.of(Format.FORMAT_TEXT, Format.FORMAT_BINARY);
-        }
-
-        @Override
-        public Iterable<PostgresqlObjectId> getDataTypes() {
-            return Collections.singleton(PostgresqlObjectId.JSON);
-        }
     }
 
     static class Json {

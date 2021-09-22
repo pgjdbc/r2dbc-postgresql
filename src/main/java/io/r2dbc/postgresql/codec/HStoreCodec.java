@@ -28,7 +28,6 @@ import reactor.core.publisher.Mono;
 import javax.annotation.Nullable;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -38,7 +37,7 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
 @SuppressWarnings("rawtypes")
-final class HStoreCodec implements Codec<Map> {
+final class HStoreCodec implements Codec<Map>, CodecMetadata {
 
     /**
      * Aborts on a comma {@code ('"')}.
@@ -221,13 +220,8 @@ final class HStoreCodec implements Codec<Map> {
     }
 
     @Override
-    public Iterable<Format> getFormats() {
-        return EnumSet.of(FORMAT_TEXT, FORMAT_BINARY);
-    }
-
-    @Override
     public Iterable<PostgresqlObjectId> getDataTypes() {
-        return PostgresqlObjectId.isValid(oid) ? Collections.singleton(PostgresqlObjectId.valueOf(oid)) : Collections.emptyList();
+        return PostgresqlObjectId.isValid(oid) ? Collections.singleton(PostgresqlObjectId.valueOf(this.oid)) : Collections.emptyList();
     }
 
 }
