@@ -97,25 +97,4 @@ public interface Codec<T> {
      */
     EncodedParameter encodeNull();
 
-    /**
-     * Returns the Java {@link Class type} of this codec.
-     *
-     * @return the Java type
-     */
-    Class<?> type();
-
-    /**
-     * Returns the collection of {@link Format} supported by this codec
-     *
-     * @return the formats
-     */
-    Iterable<Format> getFormats();
-
-    /**
-     * Returns the collection of {@link PostgresTypeIdentifier} this codec can handle
-     *
-     * @return the datatypes
-     */
-    Iterable<PostgresTypeIdentifier> getDataTypes();
-
 }

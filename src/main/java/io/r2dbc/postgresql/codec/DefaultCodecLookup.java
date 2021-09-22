@@ -19,32 +19,33 @@ package io.r2dbc.postgresql.codec;
 import io.r2dbc.postgresql.message.Format;
 import reactor.util.annotation.Nullable;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.Iterator;
 import java.util.function.Predicate;
 
 /**
- * Default implementation of the {@link CodecFinder}. This will systematically search for {@link Codec} for the type, format and database type
+ * Default implementation of the {@link CodecLookup}. This will systematically search for {@link Codec} for the type, format and database type
  * by calling the methods {@link Codec#canDecode}, {@link Codec#canEncode} and {@link Codec#canEncodeNull} on each registered codecs.
+ *
+ * @since 0.9
  */
-public class CodecFinderDefaultImpl implements CodecFinder {
+class DefaultCodecLookup implements CodecLookup {
 
-    List<Codec<?>> codecs = Collections.emptyList();
+    private final Iterable<Codec<?>> codecs;
+
+    DefaultCodecLookup(Iterable<Codec<?>> codecRegistry) {
+        this.codecs = codecRegistry;
+    }
 
     @Nullable
     @SuppressWarnings("unchecked")
     synchronized <T> Codec<T> findCodec(Predicate<Codec<?>> predicate) {
-        for (Codec<?> codec : codecs) {
+
+        for (Codec<?> codec : this.codecs) {
             if (predicate.test(codec)) {
                 return (Codec<T>) codec;
             }
         }
         return null;
-    }
-
-    @Override
-    public synchronized void updateCodecs(List<Codec<?>> codecs) {
-        this.codecs = codecs;
     }
 
     @Override
@@ -60,6 +61,11 @@ public class CodecFinderDefaultImpl implements CodecFinder {
     @Override
     public <T> Codec<T> findEncodeNullCodec(Class<T> type) {
         return findCodec(codec -> codec.canEncodeNull(type));
+    }
+
+    @Override
+    public Iterator<Codec<?>> iterator() {
+        return this.codecs.iterator();
     }
 
 }

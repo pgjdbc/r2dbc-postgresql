@@ -312,7 +312,7 @@ final class ReactorNettyClientIntegrationTests {
     }
 
     @Test
-    @DisabledOnOs({OS.MAC, OS.WINDOWS})
+    @DisabledOnOs(OS.WINDOWS)
     void unixDomainSocketTest() {
 
         String socket = "/tmp/.s.PGSQL.5432";

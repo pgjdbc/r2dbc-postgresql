@@ -25,7 +25,7 @@ import reactor.util.annotation.Nullable;
  *
  * @since 0.8.8
  */
-interface ArrayCodecDelegate<T> {
+interface ArrayCodecDelegate<T> extends CodecMetadata {
 
     /**
      * Encode the {@code value} to be used as parameter to be used as array element.

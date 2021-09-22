@@ -31,7 +31,6 @@ import java.util.Arrays;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TEXT;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.VARCHAR;
-import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
 final class ClobCodec extends AbstractCodec<Clob> {
@@ -84,11 +83,6 @@ final class ClobCodec extends AbstractCodec<Clob> {
     @Override
     public Iterable<PostgresTypeIdentifier> getDataTypes() {
         return Arrays.asList(VARCHAR, TEXT);
-    }
-
-    @Override
-    public Iterable<Format> getFormats() {
-        return Arrays.asList(FORMAT_TEXT, FORMAT_BINARY);
     }
 
 }
