@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Function;
 
 /**
  * The default {@link Codec} implementation.  Delegates to type-specific codec implementations.
@@ -69,13 +70,13 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
      *
      * @param byteBufAllocator      the {@link ByteBufAllocator} to use for encoding
      * @param preferAttachedBuffers whether to prefer attached (pooled) {@link ByteBuf buffers}. Use {@code false} (default) to use detached buffers which minimize the risk of memory leaks.
-     * @param codecLookup           the {@link CodecLookup} to use for finding relevant codecs
+     * @param codecLookupFunction   provides the {@link CodecLookup} to use for finding relevant codecs
      */
-    DefaultCodecs(ByteBufAllocator byteBufAllocator, boolean preferAttachedBuffers, CodecLookup codecLookup) {
+    DefaultCodecs(ByteBufAllocator byteBufAllocator, boolean preferAttachedBuffers, Function<CodecRegistry, CodecLookup> codecLookupFunction) {
         Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
-        Assert.requireNonNull(codecLookup, "codecFinder must not be null");
+        Assert.requireNonNull(codecLookupFunction, "codecLookupFunction must not be null");
 
-        this.codecLookup = codecLookup;
+        this.codecLookup = codecLookupFunction.apply(this);
         this.codecs = getDefaultCodecs(byteBufAllocator, preferAttachedBuffers);
         this.codecLookup.afterCodecAdded();
     }
