@@ -25,6 +25,7 @@ import io.r2dbc.postgresql.message.backend.EmptyQueryResponse;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.GeneratedValuesUtils;
+import io.r2dbc.postgresql.util.Operators;
 import io.r2dbc.spi.Statement;
 import reactor.core.publisher.Flux;
 import reactor.util.annotation.Nullable;
@@ -140,12 +141,16 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
 
         if (this.fetchSize != NO_LIMIT) {
 
-            Flux<BackendMessage> messages = ExtendedFlowDelegate.runQuery(this.resources, factory, sql, Binding.EMPTY, Collections.emptyList(), this.fetchSize);
-            return Flux.just(new PostgresqlResult(this.resources, messages, factory));
+            return ExtendedFlowDelegate.runQuery(this.resources, factory, sql, Binding.EMPTY, Collections.emptyList(), this.fetchSize)
+                .windowUntil(WINDOW_UNTIL)
+                .map(messages -> PostgresqlResult.toResult(this.resources, messages, factory))
+                .as(Operators::discardOnCancel);
         }
 
-        Flux<BackendMessage> messages = SimpleQueryMessageFlow.exchange(this.resources.getClient(), sql);
-        return Flux.just(PostgresqlResult.toResult(this.resources, messages, factory));
+        return SimpleQueryMessageFlow.exchange(this.resources.getClient(), sql)
+            .windowUntil(WINDOW_UNTIL)
+            .map(messages -> PostgresqlResult.toResult(this.resources, messages, factory))
+            .as(Operators::discardOnCancel);
     }
 
 }
