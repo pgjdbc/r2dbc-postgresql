@@ -156,7 +156,9 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
     static boolean supports(String sql) {
         Assert.requireNonNull(sql, "sql must not be null");
 
-        return !sql.trim().isEmpty() && !sql.contains(";") && sql.contains("$1");
+        int semicolon = sql.indexOf(';');
+
+        return !sql.trim().isEmpty() && (semicolon == -1 || sql.trim().length() - 1 == semicolon) && sql.contains("$1");
     }
 
     Binding getCurrentBinding() {
