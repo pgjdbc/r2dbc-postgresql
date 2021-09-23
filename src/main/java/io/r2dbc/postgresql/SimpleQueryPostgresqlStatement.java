@@ -144,12 +144,12 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
         if (this.fetchSize != NO_LIMIT) {
 
             Flux<BackendMessage> messages = ExtendedFlowDelegate.runQuery(this.resources, factory, sql, Binding.EMPTY, Collections.emptyList(), this.fetchSize);
-            return REACTOR_3_4_AVAILABLE ? messages.windowUntil(WINDOW_UNTIL).map(msg -> new PostgresqlResult(this.resources, messages, factory)).as(Operators::discardOnCancel) :
+            return REACTOR_3_4_AVAILABLE ? messages.windowUntil(WINDOW_UNTIL).map(msg -> new PostgresqlResult(this.resources, msg, factory)).as(Operators::discardOnCancel) :
                 Flux.just(new PostgresqlResult(this.resources, messages, factory));
         }
 
         Flux<BackendMessage> messages = SimpleQueryMessageFlow.exchange(this.resources.getClient(), sql);
-        return REACTOR_3_4_AVAILABLE ? messages.windowUntil(WINDOW_UNTIL).map(msg -> new PostgresqlResult(this.resources, messages, factory)).as(Operators::discardOnCancel) :
+        return REACTOR_3_4_AVAILABLE ? messages.windowUntil(WINDOW_UNTIL).map(msg -> new PostgresqlResult(this.resources, msg, factory)).as(Operators::discardOnCancel) :
             Flux.just(PostgresqlResult.toResult(this.resources, messages, factory));
     }
 

@@ -1,6 +1,10 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+0.8.10.RELEASE
+-----------------------------------------
+* Apply correct windowing in SimpleQueryPostgresqlStatement #450
+
 0.8.9.RELEASE
 -----------------------------------------
 * Upgrade dependencies #448

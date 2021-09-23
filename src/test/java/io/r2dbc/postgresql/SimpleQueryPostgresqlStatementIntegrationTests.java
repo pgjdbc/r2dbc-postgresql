@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql;
 
+import io.r2dbc.postgresql.api.PostgresqlResult;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,6 +55,46 @@ class SimpleQueryPostgresqlStatementIntegrationTests extends AbstractIntegration
             .flatMap(it -> it.map((row, rowMetadata) -> Tuples.of(row.get(0), rowMetadata.getColumnMetadata(0).getName())))
             .as(StepVerifier::create)
             .expectNext(Tuples.of(1, "?column?"), Tuples.of("a", "val"), Tuples.of("b", "val"))
+            .verifyComplete();
+    }
+
+    @Test
+    void shouldRunQueryOnceWithFetchSize() {
+
+        this.connection.createStatement("DELETE FROM test")
+            .fetchSize(10)
+            .execute()
+            .flatMap(PostgresqlResult::getRowsUpdated)
+            .as(StepVerifier::create)
+            .expectNext(2)
+            .verifyComplete();
+
+        this.connection.createStatement("DELETE FROM test")
+            .fetchSize(10)
+            .execute()
+            .flatMap(PostgresqlResult::getRowsUpdated)
+            .as(StepVerifier::create)
+            .expectNext(0)
+            .verifyComplete();
+    }
+
+    @Test
+    void shouldRunQueryOnce() {
+
+        this.connection.createStatement("DELETE FROM test")
+            .fetchSize(0)
+            .execute()
+            .flatMap(PostgresqlResult::getRowsUpdated)
+            .as(StepVerifier::create)
+            .expectNext(2)
+            .verifyComplete();
+
+        this.connection.createStatement("DELETE FROM test")
+            .fetchSize(0)
+            .execute()
+            .flatMap(PostgresqlResult::getRowsUpdated)
+            .as(StepVerifier::create)
+            .expectNext(0)
             .verifyComplete();
     }
 
