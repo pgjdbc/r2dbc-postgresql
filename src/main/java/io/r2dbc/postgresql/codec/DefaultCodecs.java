@@ -58,11 +58,7 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
      * @param preferAttachedBuffers whether to prefer attached (pooled) {@link ByteBuf buffers}. Use {@code false} (default) to use detached buffers which minimize the risk of memory leaks.
      */
     public DefaultCodecs(ByteBufAllocator byteBufAllocator, boolean preferAttachedBuffers) {
-
-        Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
-
-        this.codecs = getDefaultCodecs(byteBufAllocator, preferAttachedBuffers);
-        this.codecLookup = new CachedCodecLookup(new DefaultCodecLookup(this));
+        this(byteBufAllocator, preferAttachedBuffers, CachedCodecLookup::new);
     }
 
     /**
