@@ -25,6 +25,7 @@ import io.r2dbc.postgresql.message.backend.EmptyQueryResponse;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.GeneratedValuesUtils;
+import io.r2dbc.postgresql.util.Operators;
 import io.r2dbc.spi.Statement;
 import reactor.core.publisher.Flux;
 import reactor.util.annotation.Nullable;
@@ -40,6 +41,8 @@ import static io.r2dbc.postgresql.util.PredicateUtils.or;
  * flow} when a {@link #fetchSize(int) fetch size} is specified.
  */
 final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
+
+    private static final boolean REACTOR_3_4_AVAILABLE = isPresent("reactor.util.context.ContextView", SimpleQueryPostgresqlStatement.class.getClassLoader());
 
     private static final Predicate<BackendMessage> WINDOW_UNTIL = or(CommandComplete.class::isInstance, EmptyQueryResponse.class::isInstance, ErrorResponse.class::isInstance);
 
@@ -141,11 +144,55 @@ final class SimpleQueryPostgresqlStatement implements PostgresqlStatement {
         if (this.fetchSize != NO_LIMIT) {
 
             Flux<BackendMessage> messages = ExtendedFlowDelegate.runQuery(this.resources, factory, sql, Binding.EMPTY, Collections.emptyList(), this.fetchSize);
-            return Flux.just(new PostgresqlResult(this.resources, messages, factory));
+            return REACTOR_3_4_AVAILABLE ? messages.windowUntil(WINDOW_UNTIL).map(msg -> new PostgresqlResult(this.resources, messages, factory)).as(Operators::discardOnCancel) :
+                Flux.just(new PostgresqlResult(this.resources, messages, factory));
         }
 
         Flux<BackendMessage> messages = SimpleQueryMessageFlow.exchange(this.resources.getClient(), sql);
-        return Flux.just(PostgresqlResult.toResult(this.resources, messages, factory));
+        return REACTOR_3_4_AVAILABLE ? messages.windowUntil(WINDOW_UNTIL).map(msg -> new PostgresqlResult(this.resources, messages, factory)).as(Operators::discardOnCancel) :
+            Flux.just(PostgresqlResult.toResult(this.resources, messages, factory));
+    }
+
+    /**
+     * Determine whether the {@link Class} identified by the supplied name is present
+     * and can be loaded. Will return {@code false} if either the class or
+     * one of its dependencies is not present or cannot be loaded.
+     *
+     * @param className   the name of the class to check
+     * @param classLoader the class loader to use
+     *                    (may be {@code null} which indicates the default class loader)
+     * @return whether the specified class is present (including all of its
+     * superclasses and interfaces)
+     * @throws IllegalStateException if the corresponding class is resolvable but
+     *                               there was a readability mismatch in the inheritance hierarchy of the class
+     *                               (typically a missing dependency declaration in a Jigsaw module definition
+     *                               for a superclass or interface implemented by the class to be checked here)
+     */
+    private static boolean isPresent(String className, @Nullable ClassLoader classLoader) {
+        try {
+            try {
+                Class.forName(className, false, classLoader);
+            } catch (ClassNotFoundException ex) {
+                int lastDotIndex = className.lastIndexOf(".");
+                if (lastDotIndex != -1) {
+                    String innerClassName =
+                        className.substring(0, lastDotIndex) + "$" + className.substring(lastDotIndex + 1);
+                    try {
+                        Class.forName(innerClassName, false, classLoader);
+                    } catch (ClassNotFoundException ex2) {
+                        // Swallow - let original exception get through
+                    }
+                }
+                throw ex;
+            }
+            return true;
+        } catch (IllegalAccessError err) {
+            throw new IllegalStateException("Readability mismatch in inheritance hierarchy of class [" +
+                className + "]: " + err.getMessage(), err);
+        } catch (Throwable ex) {
+            // Typically ClassNotFoundException or NoClassDefFoundError...
+            return false;
+        }
     }
 
 }
