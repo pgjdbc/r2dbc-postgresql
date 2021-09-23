@@ -47,7 +47,7 @@
         <postgresql.version>42.2.24</postgresql.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <r2dbc-spi.version>0.8.5.RELEASE</r2dbc-spi.version>
+        <r2dbc-spi.version>0.8.6.RELEASE</r2dbc-spi.version>
         <reactor.version>Dysprosium-SR23</reactor.version>
         <scram-client.version>2.1</scram-client.version>
         <spring-framework.version>5.2.10.RELEASE</spring-framework.version>
