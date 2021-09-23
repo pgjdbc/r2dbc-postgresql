@@ -32,26 +32,26 @@
     <url>https://github.com/r2dbc/r2dbc-postgresql</url>
 
     <properties>
-        <assertj.version>3.19.0</assertj.version>
+        <assertj.version>3.21.0</assertj.version>
         <awaitility.version>4.1.0</awaitility.version>
         <blockhound.version>1.0.6.RELEASE</blockhound.version>
         <hikari-cp.version>4.0.3</hikari-cp.version>
         <java.version>1.8</java.version>
         <jsr305.version>3.0.2</jsr305.version>
-        <junit.version>5.7.1</junit.version>
+        <junit.version>5.8.1</junit.version>
         <jmh.version>1.23</jmh.version>
         <mbr.version>0.2.0.RELEASE</mbr.version>
         <logback.version>1.2.3</logback.version>
-        <mockito.version>3.9.0</mockito.version>
-        <netty.version>4.1.63.Final</netty.version>
-        <postgresql.version>42.2.20</postgresql.version>
+        <mockito.version>3.12.4</mockito.version>
+        <netty.version>4.1.68.Final</netty.version>
+        <postgresql.version>42.2.24</postgresql.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <r2dbc-spi.version>0.8.5.RELEASE</r2dbc-spi.version>
-        <reactor.version>Dysprosium-SR20</reactor.version>
+        <reactor.version>Dysprosium-SR23</reactor.version>
         <scram-client.version>2.1</scram-client.version>
-        <spring-framework.version>5.2.9.RELEASE</spring-framework.version>
-        <testcontainers.version>1.15.3</testcontainers.version>
+        <spring-framework.version>5.2.10.RELEASE</spring-framework.version>
+        <testcontainers.version>1.16.0</testcontainers.version>
     </properties>
 
     <licenses>
