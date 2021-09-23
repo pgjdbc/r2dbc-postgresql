@@ -1,6 +1,21 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+0.8.9.RELEASE
+-----------------------------------------
+* Upgrade dependencies #448
+* Introduce codec mapping caches (0.8.x branch) #444
+* Remove restriction on ending semicolon in ExtendedQueryPostgresStatement #439
+* Avoid cast to X509Certificate array during certificate verification #438
+* Invalid string formatting in `PostgresTypes.lookupType` #437
+* Adding Extension from Option #433
+* PostgresObjectId#isValid uses exception as control mechanism resulting in significant performance penalty #420
+* Memory Leak of BalancedResolverGroup #412
+* Multi-byte characters inside HStore columns are not read correctly #407
+* Fetch rows never completes #401
+* Introduce connection factory option for statementTimeout #381
+* Add FluxDiscardOnCancel operator #44
+
 0.8.8.RELEASE
 -----------------------------------------
 * Upgrade to Reactor Dysprosium SR20 #406
