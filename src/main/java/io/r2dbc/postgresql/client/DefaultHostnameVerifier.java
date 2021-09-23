@@ -122,7 +122,12 @@ public enum DefaultHostnameVerifier implements HostnameVerifier {
                 this.logger.warn("No certificates found for hostname {}", hostname);
                 return false;
             }
-            serverCert = (X509Certificate) peerCerts[0];
+            if (peerCerts[0] instanceof X509Certificate) {
+                serverCert = (X509Certificate) peerCerts[0];
+            } else {
+                this.logger.warn("Unable to obtain X509Certificate for hostname {}. Certificate type was {}", hostname, peerCerts[0].getClass().getName());
+                return false;
+            }
         } catch (SSLPeerUnverifiedException e) {
             this.logger.warn("Unable to parse X509Certificate for hostname {}", hostname, e);
             return false;
