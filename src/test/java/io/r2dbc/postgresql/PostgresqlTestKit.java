@@ -21,8 +21,6 @@ import io.r2dbc.spi.ConnectionFactories;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.test.TestKit;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.jdbc.core.JdbcOperations;
 
@@ -95,11 +93,6 @@ final class PostgresqlTestKit implements TestKit<String> {
     @Override
     public String getPlaceholder(int index) {
         return String.format("$%d", index + 1);
-    }
-
-    @Test
-    @Disabled("Disabled until we get a fixed windowUntil(…) or we have a better way to split result streams into multiple Result objects. https://github.com/pgjdbc/r2dbc-postgresql/issues/401")
-    public void compoundStatement() {
     }
 
 }
