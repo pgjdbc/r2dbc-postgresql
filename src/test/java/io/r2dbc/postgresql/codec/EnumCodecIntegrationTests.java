@@ -22,6 +22,7 @@ import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.postgresql.api.PostgresqlConnection;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.spi.Parameters;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataAccessException;
 import reactor.test.StepVerifier;
@@ -32,6 +33,15 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Integration tests for {@link EnumCodec}.
  */
 final class EnumCodecIntegrationTests extends AbstractIntegrationTests {
+
+    @BeforeAll
+    static void createEnum() {
+        try {
+            SERVER.getJdbcOperations().execute("CREATE TYPE my_enum AS ENUM ('HELLO', 'WORLD')");
+        } catch (DataAccessException e) {
+            // ignore duplicate types
+        }
+    }
 
     @Override
     protected void customize(PostgresqlConnectionConfiguration.Builder builder) {
@@ -59,12 +69,6 @@ final class EnumCodecIntegrationTests extends AbstractIntegrationTests {
     @Test
     void shouldBindEnumTypeAsString() {
 
-        try {
-            SERVER.getJdbcOperations().execute("CREATE TYPE my_enum AS ENUM ('HELLO', 'WORLD')");
-        } catch (DataAccessException e) {
-            // ignore duplicate types
-        }
-
         SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS enum_test");
         SERVER.getJdbcOperations().execute("CREATE TABLE enum_test (the_value my_enum);");
 
@@ -81,16 +85,28 @@ final class EnumCodecIntegrationTests extends AbstractIntegrationTests {
 
         String result = SERVER.getJdbcOperations().queryForObject("SELECT the_value FROM enum_test", String.class);
         assertThat(result).isEqualTo("HELLO");
+
+        this.connection.createStatement("SELECT * FROM enum_test")
+            .execute()
+            .flatMap(it -> it.map(((row, rowMetadata) -> row.get(0, MyEnum.class))))
+            .as(StepVerifier::create)
+            .consumeNextWith(actual -> {
+                assertThat(actual).isEqualTo(MyEnum.HELLO);
+            })
+            .verifyComplete();
+
+        this.connection.createStatement("SELECT * FROM enum_test")
+            .execute()
+            .flatMap(it -> it.map(((row, rowMetadata) -> row.get(0, String.class))))
+            .as(StepVerifier::create)
+            .consumeNextWith(actual -> {
+                assertThat(actual).isEqualTo("HELLO");
+            })
+            .verifyComplete();
     }
 
     @Test
     void shouldBindEnumArrayTypeAsString() {
-
-        try {
-            SERVER.getJdbcOperations().execute("CREATE TYPE my_enum AS ENUM ('HELLO', 'WORLD')");
-        } catch (DataAccessException e) {
-            // ignore duplicate types
-        }
 
         SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS enum_test");
         SERVER.getJdbcOperations().execute("CREATE TABLE enum_test (the_value my_enum[]);");
@@ -108,16 +124,19 @@ final class EnumCodecIntegrationTests extends AbstractIntegrationTests {
 
         String result = SERVER.getJdbcOperations().queryForObject("SELECT the_value FROM enum_test", String.class);
         assertThat(result).isEqualTo("{HELLO,WORLD}");
+
+        this.connection.createStatement("SELECT the_value FROM enum_test")
+            .execute()
+            .flatMap(it -> it.map(((row, rowMetadata) -> row.get(0, String[].class))))
+            .as(StepVerifier::create)
+            .consumeNextWith(actual -> {
+                assertThat(actual).contains("HELLO", "WORLD");
+            })
+            .verifyComplete();
     }
 
     @Test
     void shouldBindEnumArrayType() {
-
-        try {
-            SERVER.getJdbcOperations().execute("CREATE TYPE my_enum AS ENUM ('HELLO', 'WORLD')");
-        } catch (DataAccessException e) {
-            // ignore duplicate types
-        }
 
         SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS enum_test");
         SERVER.getJdbcOperations().execute("CREATE TABLE enum_test (the_value my_enum[]);");

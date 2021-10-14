@@ -40,7 +40,6 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -71,9 +70,14 @@ final class EnumCodecUnitTests {
         assertThat(codec.canDecode(1, Format.FORMAT_TEXT, MyEnum.class)).isTrue();
         assertThat(codec.canDecode(1, FORMAT_BINARY, MyEnum.class)).isTrue();
         assertThat(codec.canDecode(1, FORMAT_BINARY, Object.class)).isTrue();
+
         assertThat(codec.canDecode(VARCHAR.getObjectId(), FORMAT_BINARY, MyEnum.class)).isFalse();
         assertThat(codec.canDecode(JSON.getObjectId(), FORMAT_TEXT, MyEnum.class)).isFalse();
         assertThat(codec.canDecode(JSONB.getObjectId(), FORMAT_BINARY, MyEnum.class)).isFalse();
+
+        EnumCodec.EnumStringCodec stringCodec =
+            new EnumCodec.EnumStringCodec(TestByteBufAllocator.TEST, 1);
+        assertThat(stringCodec.canDecode(1, FORMAT_TEXT, String.class)).isTrue();
     }
 
     @Test
@@ -109,7 +113,8 @@ final class EnumCodecUnitTests {
         Publisher<Void> register = codecRegistrar.register(mockPostgresqlConnection, mockByteBufAllocator, mockCodecRegistry);
         StepVerifier.create(register).verifyComplete();
 
-        verify(mockCodecRegistry, only()).addFirst(any(EnumCodec.class));
+        verify(mockCodecRegistry).addFirst(any(EnumCodec.class));
+        verify(mockCodecRegistry).addFirst(any(EnumCodec.EnumStringCodec.class));
         verify(mockCodecRegistry, never()).addLast(any(EnumCodec.class));
     }
 
@@ -148,6 +153,7 @@ final class EnumCodecUnitTests {
 
         verify(mockCodecRegistry, never()).addFirst(any(EnumCodec.class));
         verify(mockCodecRegistry, times(2)).addLast(any(EnumCodec.class));
+        verify(mockCodecRegistry, times(2)).addLast(any(EnumCodec.EnumStringCodec.class));
     }
 
     enum MyEnum {
