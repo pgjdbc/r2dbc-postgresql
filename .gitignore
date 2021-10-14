@@ -46,3 +46,6 @@ hs_err_pid*
 
 # VSCode
 .vscode/
+
+# JEnv
+.java-version
