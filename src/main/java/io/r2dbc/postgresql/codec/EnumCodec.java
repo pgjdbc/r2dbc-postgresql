@@ -155,6 +155,100 @@ public class EnumCodec<T extends Enum<T>> implements Codec<T>, CodecMetadata {
 
     }
 
+    static class EnumStringCodec implements Codec<String>, CodecMetadata {
+
+        private final ByteBufAllocator byteBufAllocator;
+
+        private final int oid;
+
+        EnumStringCodec(ByteBufAllocator byteBufAllocator, int oid) {
+            this.oid = oid;
+            this.byteBufAllocator = byteBufAllocator;
+        }
+
+        @Override
+        public boolean canDecode(int dataType, Format format, Class<?> type) {
+            Assert.requireNonNull(type, "type must not be null");
+            return type.isAssignableFrom(String.class) && dataType == this.oid;
+        }
+
+        @Override
+        public boolean canEncode(Object value) {
+            Assert.requireNonNull(value, "value must not be null");
+            return value instanceof String;
+        }
+
+        @Override
+        public boolean canEncodeNull(Class<?> type) {
+            Assert.requireNonNull(type, "type must not be null");
+            return String.class.equals(type);
+        }
+
+        @Override
+        public String decode(@Nullable ByteBuf buffer, int dataType, Format format, Class<? extends String> type) {
+            Assert.requireNonNull(buffer, "byteBuf must not be null");
+            return ByteBufUtils.decode(buffer);
+        }
+
+        @Override
+        public EncodedParameter encode(Object value) {
+            return encode(value, this.oid);
+        }
+
+        @Override
+        public EncodedParameter encode(Object value, int dataType) {
+            Assert.requireNonNull(value, "value must not be null");
+            return new EncodedParameter(
+                FORMAT_TEXT,
+                dataType,
+                Mono.fromSupplier(() -> ByteBufUtils.encode(this.byteBufAllocator, ((String) value))
+                ));
+        }
+
+        @Override
+        public EncodedParameter encodeNull() {
+            return new EncodedParameter(Format.FORMAT_BINARY, this.oid, NULL_VALUE);
+        }
+
+        @Override
+        public Class<?> type() {
+            return String.class;
+        }
+
+        @Override
+        public Iterable<PostgresTypeIdentifier> getDataTypes() {
+            return Collections.singleton(AbstractCodec.getDataType(this.oid));
+        }
+
+    }
+
+    static class EnumStringArrayCodec extends EnumStringCodec implements ArrayCodecDelegate<String> {
+
+        private final PostgresTypeIdentifier arrayType;
+
+        EnumStringArrayCodec(ByteBufAllocator byteBufAllocator, int oid, PostgresTypeIdentifier arrayType) {
+            super(byteBufAllocator, oid);
+            this.arrayType = arrayType;
+        }
+
+        @Override
+        public String encodeToText(String value) {
+            Assert.requireNonNull(value, "value must not be null");
+            return ArrayCodec.escapeArrayElement(value);
+        }
+
+        @Override
+        public PostgresTypeIdentifier getArrayDataType() {
+            return arrayType;
+        }
+
+        @Override
+        public String decode(ByteBuf buffer, PostgresTypeIdentifier dataType, Format format, Class<? extends String> type) {
+            return decode(buffer, dataType.getObjectId(), format, type);
+        }
+
+    }
+
     /**
      * Builder for {@link CodecRegistrar} to register {@link EnumCodec} for one or more enum type mappings.
      */
@@ -228,20 +322,23 @@ public class EnumCodec<T extends Enum<T>> implements Codec<T>, CodecMetadata {
                         missing.remove(it.getName());
                         logger.debug("Registering codec for type '{}' with oid {} using Java enum type '{}'", it.getName(), it.getOid(), enumClass.getName());
 
+                        EnumCodec enumCodec = new EnumCodec(allocator, enumClass, it.getOid());
+                        EnumStringCodec enumStringCodec = new EnumStringCodec(allocator, it.getOid());
+                        List<ArrayCodec> arrayCodecs = new ArrayList<>();
+                        if (it.getArrayObjectId() > 0) {
+                            PostgresTypes.PostgresType arrayType = it.asArrayType();
+                            arrayCodecs.add(new ArrayCodec(allocator, new EnumArrayCodec(allocator, enumClass, it.getOid(), arrayType), enumClass));
+                            arrayCodecs.add(new ArrayCodec(allocator, new EnumStringArrayCodec(allocator, it.getOid(), arrayType), String.class));
+                        }
+
                         if (this.registrationPriority == RegistrationPriority.LAST) {
-
-                            if (it.getArrayObjectId() > 0) {
-                                registry.addLast(new ArrayCodec(allocator, new EnumArrayCodec(allocator, enumClass, it.getOid(), it.asArrayType()), enumClass));
-                            }
-
-                            registry.addLast(new EnumCodec(allocator, enumClass, it.getOid()));
+                            arrayCodecs.forEach(registry::addLast);
+                            registry.addLast(enumCodec);
+                            registry.addLast(enumStringCodec);
                         } else {
-
-                            if (it.getArrayObjectId() > 0) {
-                                registry.addFirst(new ArrayCodec(allocator, new EnumArrayCodec(allocator, enumClass, it.getOid(), it.asArrayType()), enumClass));
-                            }
-
-                            registry.addFirst(new EnumCodec(allocator, enumClass, it.getOid()));
+                            arrayCodecs.forEach(registry::addFirst);
+                            registry.addFirst(enumCodec);
+                            registry.addFirst(enumStringCodec);
                         }
                     }).doOnComplete(() -> {
 
