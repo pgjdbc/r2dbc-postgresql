@@ -175,6 +175,12 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
         Codec<T> codec = this.codecLookup.findDecodeCodec(dataType, format, type);
         if (codec != null) {
             return codec.decode(buffer, dataType, format, type);
+        } else if (String.class == type) {
+            int varcharType = PostgresqlObjectId.VARCHAR.getObjectId();
+            codec = this.codecLookup.findDecodeCodec(varcharType, format, type);
+            if (codec != null) {
+                return codec.decode(buffer, varcharType, format, type);
+            }
         }
 
         throw new IllegalArgumentException(String.format("Cannot decode value of type %s with OID %d", type.getName(), dataType));

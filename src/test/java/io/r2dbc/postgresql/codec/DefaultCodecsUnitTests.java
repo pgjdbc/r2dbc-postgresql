@@ -114,6 +114,16 @@ final class DefaultCodecsUnitTests {
     }
 
     @Test
+    void decodeFallbackToVarcharCodec() {
+        assertThat(this.codecs.decode(ByteBufUtils.encode(TEST, "2018-11-04 15:35:00.847108"), TIMESTAMP.getObjectId(), FORMAT_TEXT, String.class))
+            .isEqualTo("2018-11-04 15:35:00.847108");
+        assertThat(this.codecs.decode(ByteBufUtils.encode(TEST, "2018-11-05 00:35:43.048593+09"), TIMESTAMPTZ.getObjectId(), FORMAT_TEXT, String.class))
+            .isEqualTo("2018-11-05 00:35:43.048593+09");
+        assertThat(this.codecs.decode(ByteBufUtils.encode(TEST, "ENUM_VALUE"), 123456, FORMAT_TEXT, String.class))
+            .isEqualTo("ENUM_VALUE");
+    }
+
+    @Test
     void delegatePriority() {
         assertThat(codecs.decode(TEST.buffer(2).writeShort((byte) 100), INT2.getObjectId(), FORMAT_BINARY, Object.class)).isInstanceOf(Short.class);
         assertThat(codecs.decode(ByteBufUtils.encode(TEST, "100"), INT2.getObjectId(), FORMAT_TEXT, Object.class)).isInstanceOf(Short.class);
