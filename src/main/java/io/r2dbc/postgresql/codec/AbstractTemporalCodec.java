@@ -45,7 +45,7 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 /**
  * Codec to decode all known temporal types.
  *
- * @param <T>
+ * @param <T> the type that is handled by this {@link Codec}
  */
 abstract class AbstractTemporalCodec<T extends Temporal> extends BuiltinCodecSupport<T> {
 
