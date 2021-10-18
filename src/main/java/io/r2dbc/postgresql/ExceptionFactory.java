@@ -28,6 +28,7 @@ import io.r2dbc.spi.R2dbcPermissionDeniedException;
 import io.r2dbc.spi.R2dbcRollbackException;
 import io.r2dbc.spi.R2dbcTransientException;
 import reactor.core.publisher.SynchronousSink;
+import reactor.util.annotation.Nullable;
 
 /**
  * Factory for Postgres-specific {@link R2dbcException}s.
@@ -76,13 +77,13 @@ final class ExceptionFactory {
 
         switch (errorDetails.getCode()) {
             case "42501":
-                return new PostgresqlPermissionDeniedException(errorDetails);
+                return new PostgresqlPermissionDeniedException(errorDetails, sql);
             case "40000":
             case "40001":
-                return new PostgresqlRollbackException(errorDetails);
+                return new PostgresqlRollbackException(errorDetails, sql);
             case "28000":
             case "28P01":
-                return new PostgresqlAuthenticationFailure(errorDetails);
+                return new PostgresqlAuthenticationFailure(errorDetails, sql);
         }
 
         String codeClass = errorDetails.getCode().length() > 2 ? errorDetails.getCode().substring(0, 2) : "99";
@@ -94,18 +95,18 @@ final class ExceptionFactory {
             case "26": // Invalid SQL Statement Name
                 return new PostgresqlBadGrammarException(errorDetails, sql);
             case "08": // Connection Exception
-                return new PostgresqlNonTransientResourceException(errorDetails);
+                return new PostgresqlNonTransientResourceException(errorDetails, sql);
             case "21": // Cardinality Violation
             case "23": // Integrity Constraint Violation
             case "27": // Integrity Constraint Violation
-                return new PostgresqlDataIntegrityViolationException(errorDetails);
+                return new PostgresqlDataIntegrityViolationException(errorDetails, sql);
             case "28": // Invalid Authorization Specification
-                return new PostgresqlPermissionDeniedException(errorDetails);
+                return new PostgresqlPermissionDeniedException(errorDetails, sql);
             case "40": // Invalid Authorization Specification
-                return new PostgresqlTransientException(errorDetails);
+                return new PostgresqlTransientException(errorDetails, sql);
         }
 
-        return new PostgresqlNonTransientResourceException(errorDetails);
+        return new PostgresqlNonTransientResourceException(errorDetails, sql);
     }
 
     /**
@@ -141,8 +142,8 @@ final class ExceptionFactory {
 
         private final ErrorDetails errorDetails;
 
-        PostgresqlBadGrammarException(ErrorDetails errorDetails, String offendingSql) {
-            super(errorDetails.getMessage(), errorDetails.getCode(), 0, offendingSql);
+        PostgresqlBadGrammarException(ErrorDetails errorDetails, String sql) {
+            super(errorDetails.getMessage(), errorDetails.getCode(), 0, sql);
             this.errorDetails = errorDetails;
         }
 
@@ -160,8 +161,8 @@ final class ExceptionFactory {
 
         private final ErrorDetails errorDetails;
 
-        PostgresqlDataIntegrityViolationException(ErrorDetails errorDetails) {
-            super(errorDetails.getMessage(), errorDetails.getCode());
+        PostgresqlDataIntegrityViolationException(ErrorDetails errorDetails, @Nullable String sql) {
+            super(errorDetails.getMessage(), errorDetails.getCode(), 0, sql);
             this.errorDetails = errorDetails;
         }
 
@@ -179,8 +180,8 @@ final class ExceptionFactory {
 
         private final ErrorDetails errorDetails;
 
-        PostgresqlNonTransientResourceException(ErrorDetails errorDetails) {
-            super(errorDetails.getMessage(), errorDetails.getCode());
+        PostgresqlNonTransientResourceException(ErrorDetails errorDetails, @Nullable String sql) {
+            super(errorDetails.getMessage(), errorDetails.getCode(), 0, sql);
             this.errorDetails = errorDetails;
         }
 
@@ -198,8 +199,8 @@ final class ExceptionFactory {
 
         private final ErrorDetails errorDetails;
 
-        PostgresqlPermissionDeniedException(ErrorDetails errorDetails) {
-            super(errorDetails.getMessage(), errorDetails.getCode());
+        PostgresqlPermissionDeniedException(ErrorDetails errorDetails, @Nullable String sql) {
+            super(errorDetails.getMessage(), errorDetails.getCode(), 0, sql);
             this.errorDetails = errorDetails;
         }
 
@@ -217,8 +218,8 @@ final class ExceptionFactory {
 
         private final ErrorDetails errorDetails;
 
-        PostgresqlRollbackException(ErrorDetails errorDetails) {
-            super(errorDetails.getMessage(), errorDetails.getCode());
+        PostgresqlRollbackException(ErrorDetails errorDetails, @Nullable String sql) {
+            super(errorDetails.getMessage(), errorDetails.getCode(), 0, sql);
             this.errorDetails = errorDetails;
         }
 
@@ -236,8 +237,8 @@ final class ExceptionFactory {
 
         private final ErrorDetails errorDetails;
 
-        PostgresqlTransientException(ErrorDetails errorDetails) {
-            super(errorDetails.getMessage(), errorDetails.getCode());
+        PostgresqlTransientException(ErrorDetails errorDetails, @Nullable String sql) {
+            super(errorDetails.getMessage(), errorDetails.getCode(), 0, sql);
             this.errorDetails = errorDetails;
         }
 
@@ -255,8 +256,8 @@ final class ExceptionFactory {
 
         private final ErrorDetails errorDetails;
 
-        PostgresqlAuthenticationFailure(ErrorDetails errorDetails) {
-            super(errorDetails.getMessage(), errorDetails.getCode());
+        PostgresqlAuthenticationFailure(ErrorDetails errorDetails, @Nullable String sql) {
+            super(errorDetails.getMessage(), errorDetails.getCode(), 0, sql);
             this.errorDetails = errorDetails;
         }
 

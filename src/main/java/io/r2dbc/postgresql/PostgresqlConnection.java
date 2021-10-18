@@ -200,7 +200,7 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
                         if ("ROLLBACK".equalsIgnoreCase(message.getCommand())) {
                             sink.error(new ExceptionFactory.PostgresqlRollbackException(ErrorDetails.fromMessage("The database returned ROLLBACK, so the transaction cannot be committed. Transaction" +
                                 " " +
-                                "failure is not known (check server logs?)")));
+                                "failure is not known (check server logs?)"), "COMMIT"));
                             return;
                         }
 
