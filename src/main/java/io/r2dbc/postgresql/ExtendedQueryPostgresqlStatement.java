@@ -36,6 +36,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
@@ -252,7 +253,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
         Matcher matcher = PARAMETER_SYMBOL.matcher(identifier);
 
         if (!matcher.find()) {
-            throw new IllegalArgumentException(String.format("Identifier '%s' is not a valid identifier. Should be of the pattern '%s'.", identifier, PARAMETER_SYMBOL.pattern()));
+            throw new NoSuchElementException(String.format("Identifier '%s' is not a valid identifier. Should be of the pattern '%s'.", identifier, PARAMETER_SYMBOL.pattern()));
         }
 
         return Integer.parseInt(matcher.group(1)) - 1;

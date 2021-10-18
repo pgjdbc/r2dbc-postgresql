@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
 /**
@@ -55,7 +56,7 @@ final class PostgresqlRowMetadata extends AbstractCollection<String> implements 
     @Override
     public PostgresqlColumnMetadata getColumnMetadata(int index) {
         if (index >= this.columnMetadatas.size()) {
-            throw new IllegalArgumentException(String.format("Column index %d is larger than the number of columns %d", index, this.columnMetadatas.size()));
+            throw new IndexOutOfBoundsException(String.format("Column index %d is larger than the number of columns %d", index, this.columnMetadatas.size()));
         }
 
         return this.columnMetadatas.get(index);
@@ -72,7 +73,7 @@ final class PostgresqlRowMetadata extends AbstractCollection<String> implements 
             }
         }
 
-        throw new IllegalArgumentException(String.format("Column name '%s' does not exist in column names %s", name, getColumnNames()));
+        throw new NoSuchElementException(String.format("Column name '%s' does not exist in column names %s", name, getColumnNames()));
     }
 
     @Override

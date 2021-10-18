@@ -25,11 +25,13 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.mockito.Mockito.mock;
@@ -98,15 +100,17 @@ final class PostgresqlRowUnitTests {
 
     @Test
     void getInvalidIndex() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRow(MockContext.empty(), new PostgresqlRowMetadata(Collections.emptyList()), this.columns, new ByteBuf[0]).get(3,
-            Object.class))
+        assertThatExceptionOfType(IndexOutOfBoundsException.class).isThrownBy(() -> new PostgresqlRow(MockContext.empty(), new PostgresqlRowMetadata(Collections.emptyList()), this.columns,
+                new ByteBuf[0]).get(3,
+                Object.class))
             .withMessage("Column index 3 is larger than the number of columns 3");
     }
 
     @Test
     void getInvalidName() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRow(MockContext.empty(), new PostgresqlRowMetadata(Collections.emptyList()), this.columns, new ByteBuf[0]).get("test-name" +
-            "-4", Object.class))
+        assertThatExceptionOfType(NoSuchElementException.class).isThrownBy(() -> new PostgresqlRow(MockContext.empty(), new PostgresqlRowMetadata(Collections.emptyList()), this.columns,
+                new ByteBuf[0]).get("test-name" +
+                "-4", Object.class))
             .withMessageMatching("Column name 'test-name-4' does not exist in column names \\[test-name-[\\d], test-name-[\\d], test-name-[\\d]\\]");
     }
 

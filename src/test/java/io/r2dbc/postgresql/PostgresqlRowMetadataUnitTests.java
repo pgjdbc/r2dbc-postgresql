@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,13 +56,13 @@ final class PostgresqlRowMetadataUnitTests {
 
     @Test
     void getColumnMetadataInvalidIndex() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRowMetadata(this.columnMetadatas).getColumnMetadata(2))
+        assertThatExceptionOfType(IndexOutOfBoundsException.class).isThrownBy(() -> new PostgresqlRowMetadata(this.columnMetadatas).getColumnMetadata(2))
             .withMessage("Column index 2 is larger than the number of columns 2");
     }
 
     @Test
     void getColumnMetadataInvalidName() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRowMetadata(this.columnMetadatas).getColumnMetadata("test-name-3"))
+        assertThatExceptionOfType(NoSuchElementException.class).isThrownBy(() -> new PostgresqlRowMetadata(this.columnMetadatas).getColumnMetadata("test-name-3"))
             .withMessage("Column name 'test-name-3' does not exist in column names [test-name-2, test-name-1]");
     }
 

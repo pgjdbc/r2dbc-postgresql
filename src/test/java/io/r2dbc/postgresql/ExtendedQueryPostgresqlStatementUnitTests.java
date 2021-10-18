@@ -44,6 +44,7 @@ import reactor.test.StepVerifier;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 
@@ -52,6 +53,7 @@ import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.mockito.ArgumentMatchers.any;
@@ -128,13 +130,13 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
 
     @Test
     void bindNullWrongIdentifierFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> this.statement.bindNull("foo", Integer.class))
+        assertThatExceptionOfType(NoSuchElementException.class).isThrownBy(() -> this.statement.bindNull("foo", Integer.class))
             .withMessage("Identifier 'foo' is not a valid identifier. Should be of the pattern '\\$([\\d]+)'.");
     }
 
     @Test
     void bindWrongIdentifierFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> this.statement.bind("foo", ""))
+        assertThatExceptionOfType(NoSuchElementException.class).isThrownBy(() -> this.statement.bind("foo", ""))
             .withMessage("Identifier 'foo' is not a valid identifier. Should be of the pattern '\\$([\\d]+)'.");
     }
 

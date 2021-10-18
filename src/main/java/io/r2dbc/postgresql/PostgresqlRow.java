@@ -29,6 +29,7 @@ import reactor.util.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
 /**
@@ -172,7 +173,7 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
             }
         }
 
-        throw new IllegalArgumentException(String.format("Column name '%s' does not exist in column names %s", name, toColumnNames()));
+        throw new NoSuchElementException(String.format("Column name '%s' does not exist in column names %s", name, toColumnNames()));
     }
 
     private List<String> toColumnNames() {
@@ -187,7 +188,7 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
 
     private int getColumn(int index) {
         if (index >= this.fields.size()) {
-            throw new IllegalArgumentException(String.format("Column index %d is larger than the number of columns %d", index, this.fields.size()));
+            throw new IndexOutOfBoundsException(String.format("Column index %d is larger than the number of columns %d", index, this.fields.size()));
         }
 
         return index;
