@@ -47,7 +47,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
 
 import static io.r2dbc.postgresql.client.Parameter.NULL_VALUE;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
@@ -220,7 +219,6 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
             .bind("$1", 200)
             .execute()
             .flatMap(PostgresqlResult::getRowsUpdated)
-            .log("foo", Level.SEVERE)
             .as(StepVerifier::create)
             .verifyError(R2dbcNonTransientResourceException.class);
 
