@@ -48,19 +48,24 @@ final class SSLSessionHandlerAdapter extends AbstractPostgresSSLHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         ByteBuf buf = (ByteBuf) msg;
         char response = (char) buf.readByte();
-        switch (response) {
-            case 'S':
-                processSslEnabled(ctx, msg);
-                break;
-            case 'N':
-                processSslDisabled(ctx, msg);
-                break;
-            default:
-                throw new IllegalStateException("Unknown SSLResponse from server: '" + response + "'");
+        try {
+            switch (response) {
+                case 'S':
+                    processSslEnabled(ctx, buf);
+                    break;
+                case 'N':
+                    processSslDisabled();
+                    break;
+                default:
+                    buf.release();
+                    throw new IllegalStateException("Unknown SSLResponse from server: '" + response + "'");
+            }
+        } finally {
+            buf.release();
         }
     }
 
-    private void processSslDisabled(ChannelHandlerContext ctx, Object msg) {
+    private void processSslDisabled() {
         if (this.sslConfig.getSslMode().requireSsl()) {
             PostgresqlSslException e =
                 new PostgresqlSslException("Server support for SSL connection is disabled, but client was configured with SSL mode " + this.sslConfig.getSslMode());
@@ -70,7 +75,7 @@ final class SSLSessionHandlerAdapter extends AbstractPostgresSSLHandlerAdapter {
         }
     }
 
-    private void processSslEnabled(ChannelHandlerContext ctx, Object msg) {
+    private void processSslEnabled(ChannelHandlerContext ctx, ByteBuf msg) {
         if (this.sslConfig.getSslMode() == SSLMode.DISABLE) {
 
             PostgresqlSslException e = new PostgresqlSslException("Server requires SSL handshake, but client was configured with SSL mode DISABLE");
@@ -80,7 +85,7 @@ final class SSLSessionHandlerAdapter extends AbstractPostgresSSLHandlerAdapter {
         ctx.channel().pipeline()
             .addFirst(this.getSslHandler())
             .remove(this);
-        ctx.fireChannelRead(msg);
+        ctx.fireChannelRead(msg.retain());
     }
 
 }
