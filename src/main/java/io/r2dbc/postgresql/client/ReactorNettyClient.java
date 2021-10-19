@@ -150,10 +150,7 @@ public final class ReactorNettyClient implements Client {
 
         connection.inbound().receive()
             .map(BackendMessageDecoder::decode)
-            .doOnError(throwable -> {
-                receiveError.set(throwable);
-                handleConnectionError(throwable);
-            })
+            .doOnError(receiveError::set)
             .<BackendMessage>handle((backendMessage, sink) -> {
 
                 if (consumeMessage(backendMessage)) {
@@ -235,7 +232,7 @@ public final class ReactorNettyClient implements Client {
         if (isSslException(throwable)) {
             logger.debug(this.context.getMessage("Connection Error"), throwable);
         } else {
-            logger.error(this.context.getMessage("Connection Error"), throwable);
+            logger.warn(this.context.getMessage("Connection Error"), throwable);
         }
 
         return close();
