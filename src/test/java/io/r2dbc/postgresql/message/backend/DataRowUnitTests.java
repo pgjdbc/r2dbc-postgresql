@@ -17,8 +17,10 @@
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import static io.r2dbc.postgresql.message.backend.BackendMessageAssert.Cleaner;
 import static io.r2dbc.postgresql.message.backend.BackendMessageAssert.assertThat;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -27,6 +29,13 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
  * Unit tests for {@link DataRow}.
  */
 final class DataRowUnitTests {
+
+    private final Cleaner cleaner = new Cleaner();
+
+    @AfterEach
+    void tearDown() {
+        this.cleaner.clean();
+    }
 
     @Test
     void constructorNoColumns() {
@@ -37,20 +46,22 @@ final class DataRowUnitTests {
     @Test
     void decode() {
         assertThat(DataRow.class)
+            .cleaner(this.cleaner)
             .decoded(buffer -> buffer
                 .writeShort(1)
                 .writeInt(4)
                 .writeInt(100))
-            .isEqualTo(new DataRow(TEST.buffer(4).writeInt(100)));
+            .isEqualTo(this.cleaner.capture(new DataRow(TEST.buffer(4).writeInt(100))));
     }
 
     @Test
     void decodeNullColumn() {
         assertThat(DataRow.class)
+            .cleaner(this.cleaner)
             .decoded(buffer -> buffer
                 .writeShort(1)
                 .writeInt(-1))
-            .isEqualTo(new DataRow(new ByteBuf[]{null}));
+            .isEqualTo(this.cleaner.capture(new DataRow(new ByteBuf[]{null})));
     }
 
 }
