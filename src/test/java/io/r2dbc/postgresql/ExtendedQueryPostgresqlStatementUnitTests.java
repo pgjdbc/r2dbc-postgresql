@@ -46,7 +46,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
 
 import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT4;
@@ -334,7 +333,6 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
             .bind("$1", 200)
             .execute()
             .flatMap(PostgresqlResult::getRowsUpdated)
-            .log("foo", Level.SEVERE)
             .as(StepVerifier::create)
             .verifyError(R2dbcNonTransientResourceException.class);
 
