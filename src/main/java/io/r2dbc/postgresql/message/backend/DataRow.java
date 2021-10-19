@@ -18,6 +18,10 @@ package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.util.AbstractReferenceCounted;
+import io.netty.util.ReferenceCounted;
+import io.netty.util.ResourceLeakDetector;
+import io.netty.util.ResourceLeakDetectorFactory;
+import io.netty.util.ResourceLeakTracker;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
@@ -27,6 +31,10 @@ import java.util.Arrays;
  * The DataRow message.
  */
 public final class DataRow extends AbstractReferenceCounted implements BackendMessage {
+
+    private final static ResourceLeakDetector<DataRow> DETECTOR = ResourceLeakDetectorFactory.instance().newResourceLeakDetector(DataRow.class);
+
+    private final ResourceLeakTracker<DataRow> tracker = DETECTOR.track(this);
 
     private static final int NULL = -1;
 
@@ -76,6 +84,23 @@ public final class DataRow extends AbstractReferenceCounted implements BackendMe
     }
 
     @Override
+    public ReferenceCounted retain() {
+        if (this.tracker != null) {
+            this.tracker.record();
+        }
+        return super.retain();
+    }
+
+    @Override
+    public ReferenceCounted retain(int increment) {
+        if (this.tracker != null) {
+            this.tracker.record();
+        }
+
+        return super.retain(increment);
+    }
+
+    @Override
     protected void deallocate() {
 
         for (ByteBuf column : this.columns) {
@@ -83,10 +108,17 @@ public final class DataRow extends AbstractReferenceCounted implements BackendMe
                 column.release();
             }
         }
+
+        if (this.tracker != null) {
+            this.tracker.close(this);
+        }
     }
 
     @Override
     public DataRow touch(Object hint) {
+        if (this.tracker != null) {
+            this.tracker.record(hint);
+        }
         return this;
     }
 
