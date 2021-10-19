@@ -113,9 +113,9 @@ final class ReactorNettyClientIntegrationTests {
 
         this.client
             .exchange(Mono.just(new Query("SELECT value FROM test")))
+            .doOnNext(ReferenceCountUtil::release)
             .limitRate(1)
             .publishOn(Schedulers.parallel())
-            .doOnNext(ReferenceCountUtil::release)
             .as(StepVerifier::create)
             .thenConsumeWhile((t) -> true)
             .verifyComplete();
