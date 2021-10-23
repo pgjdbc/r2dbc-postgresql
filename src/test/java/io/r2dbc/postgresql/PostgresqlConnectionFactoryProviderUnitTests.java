@@ -149,7 +149,22 @@ final class PostgresqlConnectionFactoryProviderUnitTests {
     }
 
     @Test
-    void supportsSsl() {
+    void disableSsl() {
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(SSL, false)
+            .build());
+
+        SSLConfig sslConfig = factory.getConfiguration().getSslConfig();
+
+        assertThat(sslConfig.getSslMode()).isEqualTo(SSLMode.DISABLE);
+    }
+
+    @Test
+    void enableSsl() {
         PostgresqlConnectionFactory factory = this.provider.create(builder()
             .option(DRIVER, POSTGRESQL_DRIVER)
             .option(HOST, "test-host")
