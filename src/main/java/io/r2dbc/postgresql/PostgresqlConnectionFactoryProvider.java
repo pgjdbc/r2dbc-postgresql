@@ -287,7 +287,12 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
 
     private static void setupSsl(PostgresqlConnectionConfiguration.Builder builder, OptionMapper mapper) {
 
-        mapper.from(SSL).to(builder::enableSsl);
+        mapper.from(SSL).map(OptionMapper::toBoolean).to(enableSsl -> {
+            if(enableSsl) {
+                builder.enableSsl();
+            }
+        });
+
         mapper.from(SSL_MODE).map(it -> {
 
             if (it instanceof String) {
