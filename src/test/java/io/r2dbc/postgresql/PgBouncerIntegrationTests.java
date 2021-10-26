@@ -16,11 +16,8 @@
 
 package io.r2dbc.postgresql;
 
-import io.r2dbc.postgresql.api.ErrorDetails;
-import io.r2dbc.postgresql.api.PostgresqlException;
 import io.r2dbc.postgresql.util.PgBouncer;
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
-import io.r2dbc.spi.R2dbcBadGrammarException;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -70,33 +67,6 @@ final class PgBouncerIntegrationTests {
                 .as(StepVerifier::create)
                 .expectNext(1, 1, 2, 2, 3, 3)
                 .verifyComplete();
-        }
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"transaction", "statement"})
-    void statementCacheDoesntWorkWithTransactionAndStatementModes(String poolMode) {
-        try (PgBouncer pgBouncer = new PgBouncer(SERVER, poolMode)) {
-            PostgresqlConnectionFactory connectionFactory = this.createConnectionFactory(pgBouncer, -1);
-
-            connectionFactory.create().flatMapMany(connection -> {
-                Flux<Integer> q1 = connection.createStatement("SELECT 1 WHERE $1 = 1").bind(0, 1).execute().flatMap(r -> r.map((row, rowMetadata) -> row.get(0, Integer.class)));
-
-                return Flux.concat(q1, q1, connection.close());
-            })
-                .as(StepVerifier::create)
-                .expectNext(1)
-                .verifyErrorMatches(e -> {
-                    if (!(e instanceof R2dbcBadGrammarException)) {
-                        return false;
-                    }
-                    if (!(e instanceof PostgresqlException)) {
-                        return false;
-                    }
-                    PostgresqlException pgException = (PostgresqlException) e;
-                    ErrorDetails errorDetails = pgException.getErrorDetails();
-                    return errorDetails.getCode().equals("26000") && errorDetails.getMessage().equals("prepared statement \"S_0\" does not exist");
-                });
         }
     }
 

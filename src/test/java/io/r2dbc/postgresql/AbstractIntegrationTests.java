@@ -23,6 +23,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import reactor.test.StepVerifier;
 
+import java.util.function.Consumer;
+
 /**
  * Support class for integration tests using {@link PostgresqlConnection}.
  */
@@ -41,6 +43,15 @@ public abstract class AbstractIntegrationTests {
      * @return a {@link PostgresqlConnectionFactory}.
      */
     protected PostgresqlConnectionFactory getConnectionFactory() {
+        return getConnectionFactory(this::customize);
+    }
+
+    /**
+     * Entry-point to obtain a {@link PostgresqlConnectionFactory}.
+     *
+     * @return a {@link PostgresqlConnectionFactory}.
+     */
+    protected PostgresqlConnectionFactory getConnectionFactory(Consumer<PostgresqlConnectionConfiguration.Builder> customizer) {
 
         PostgresqlConnectionConfiguration.Builder builder = PostgresqlConnectionConfiguration.builder()
             .database(SERVER.getDatabase())
@@ -49,7 +60,7 @@ public abstract class AbstractIntegrationTests {
             .password(SERVER.getPassword())
             .username(SERVER.getUsername());
 
-        customize(builder);
+        customizer.accept(builder);
         return new PostgresqlConnectionFactory(builder.build());
     }
 

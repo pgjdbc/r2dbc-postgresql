@@ -92,9 +92,30 @@ final class BoundedStatementCache implements StatementCache {
 
         Map.Entry<CacheKey, String> lastAccessedStatement = getAndRemoveEldest();
         ExceptionFactory factory = ExceptionFactory.withSql(lastAccessedStatement.getKey().sql);
+        String statementName = lastAccessedStatement.getValue();
 
+        close(lastAccessedStatement, factory, statementName);
+    }
+
+    @Override
+    public void evict(String name) {
+
+        synchronized (this.cache) {
+
+            List<CacheKey> toRemove = new ArrayList<>();
+            for (Map.Entry<CacheKey, String> entry : this.cache.entrySet()) {
+                if (entry.getKey().sql.equals(name)) {
+                    toRemove.add(entry.getKey());
+                }
+            }
+
+            toRemove.forEach(this.cache::remove);
+        }
+    }
+
+    private void close(Map.Entry<CacheKey, String> lastAccessedStatement, ExceptionFactory factory, String statementName) {
         ExtendedQueryMessageFlow
-            .closeStatement(this.client, lastAccessedStatement.getValue())
+            .closeStatement(this.client, statementName)
             .handle(factory::handleErrorResponse)
             .subscribe(it -> {
             }, err -> LOGGER.warn(String.format("Cannot close statement %s (%s)", lastAccessedStatement.getValue(), lastAccessedStatement.getKey().sql), err));

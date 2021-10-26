@@ -40,6 +40,10 @@ class DisabledStatementCache implements StatementCache {
     }
 
     @Override
+    public void evict(String sql) {
+    }
+
+    @Override
     public String toString() {
         return "DisabledStatementCache";
     }
