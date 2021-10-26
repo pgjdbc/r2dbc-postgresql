@@ -49,10 +49,16 @@ final class ConvertingArrayCodec<T> extends ArrayCodec<T> {
 
     static final Set<PostgresqlObjectId> DATE_ARRAY_TYPES = EnumSet.of(DATE_ARRAY, TIMESTAMP_ARRAY, TIMESTAMPTZ_ARRAY, TIME_ARRAY, TIMETZ_ARRAY);
 
+    private final ArrayCodecDelegate<T> delegate;
+
+    private final Class<T> componentType;
+
     private final Set<PostgresqlObjectId> supportedTypes;
 
     public ConvertingArrayCodec(ByteBufAllocator byteBufAllocator, ArrayCodecDelegate<T> delegate, Class<T> componentType, Set<PostgresqlObjectId> supportedTypes) {
         super(byteBufAllocator, delegate, componentType);
+        this.delegate = delegate;
+        this.componentType = componentType;
         this.supportedTypes = supportedTypes;
     }
 
@@ -75,9 +81,9 @@ final class ConvertingArrayCodec<T> extends ArrayCodec<T> {
         Assert.requireNonNull(type, "type must not be null");
 
         if (FORMAT_BINARY == format) {
-            return decodeBinary(buffer, dataType, type);
+            return decodeBinary(buffer, dataType, this.delegate, this.componentType, type);
         } else {
-            return decodeText(buffer, dataType, type);
+            return decodeText(buffer, dataType, ArrayCodec.COMMA, this.delegate, this.componentType, type);
         }
     }
 

@@ -43,13 +43,13 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
  */
 class ArrayCodec<T> extends AbstractCodec<Object[]> {
 
-    private static final byte CLOSE_CURLY = '}';
+    static final byte CLOSE_CURLY = '}';
 
-    private static final byte COMMA = ',';
+    static final byte COMMA = ',';
 
-    private static final String NULL = "NULL";
+    static final String NULL = "NULL";
 
-    private static final byte OPEN_CURLY = '{';
+    static final byte OPEN_CURLY = '{';
 
     private final ArrayCodecDelegate<T> delegate;
 
@@ -159,9 +159,9 @@ class ArrayCodec<T> extends AbstractCodec<Object[]> {
         Assert.requireNonNull(type, "type must not be null");
 
         if (FORMAT_BINARY == format) {
-            return decodeBinary(buffer, this.dataType, type);
+            return decodeBinary(buffer, this.dataType, this.delegate, this.componentType, type);
         } else {
-            return decodeText(buffer, this.dataType, type);
+            return decodeText(buffer, this.dataType, this.delimiter, this.delegate, this.componentType, type);
         }
     }
 
@@ -257,14 +257,15 @@ class ArrayCodec<T> extends AbstractCodec<Object[]> {
         return dims;
     }
 
-    Object[] decodeBinary(ByteBuf buffer, PostgresTypeIdentifier dataType, Class<?> returnType) {
+    @SuppressWarnings("unchecked")
+    static <T> T[] decodeBinary(ByteBuf buffer, PostgresTypeIdentifier dataType, Decoder<T> decoder, Class<T> componentType, Class<?> returnType) {
         if (!buffer.isReadable()) {
-            return new Object[0];
+            return (T[]) Array.newInstance(componentType, 0);
         }
 
         int dimensions = buffer.readInt();
         if (dimensions == 0) {
-            return (Object[]) Array.newInstance(this.componentType, 0);
+            return (T[]) Array.newInstance(componentType, 0);
         }
 
         if (returnType != Object.class) {
@@ -280,18 +281,19 @@ class ArrayCodec<T> extends AbstractCodec<Object[]> {
             buffer.skipBytes(4); // lower bound ignored
         }
 
-        Object[] array = (Object[]) Array.newInstance(this.componentType, dims);
+        T[] array = (T[]) Array.newInstance(componentType, dims);
 
-        readArrayAsBinary(buffer, dataType, array, dims, 0);
+        readArrayAsBinary(buffer, dataType, array, dims, decoder, componentType, 0);
 
         return array;
     }
 
-    Object[] decodeText(ByteBuf buffer, PostgresTypeIdentifier dataType, Class<?> returnType) {
-        List<?> elements = decodeText(buffer, dataType);
+    @SuppressWarnings("unchecked")
+    static <T> T[] decodeText(ByteBuf buffer, PostgresTypeIdentifier dataType, byte delimiter, Decoder<T> decoder, Class<T> componentType, Class<?> returnType) {
+        List<T> elements = (List<T>) decodeText(buffer, delimiter, dataType, decoder, componentType);
 
         if (elements.isEmpty()) {
-            return (Object[]) Array.newInstance(this.componentType, 0);
+            return (T[]) Array.newInstance(componentType, 0);
         }
 
         int dimensions = getDimensions(elements);
@@ -300,27 +302,29 @@ class ArrayCodec<T> extends AbstractCodec<Object[]> {
             Assert.requireArrayDimension(returnType, dimensions, "Dimensions mismatch: %s expected, but %s returned from DB");
         }
 
-        return toArray(elements, createArrayType(dimensions).getComponentType());
+        return toArray(elements, (Class<T>) createArrayType(componentType, dimensions).getComponentType());
     }
 
-    private Class<?> createArrayType(int dims) {
+    @SuppressWarnings("unchecked")
+    private static <T> Class<T> createArrayType(Class<T> componentType, int dims) {
         int[] size = new int[dims];
         Arrays.fill(size, 1);
-        return Array.newInstance(this.componentType, size).getClass();
+        return (Class<T>) Array.newInstance(componentType, size).getClass();
     }
 
-    private static Object[] toArray(List<?> list, Class<?> returnType) {
+    @SuppressWarnings("unchecked")
+    private static <T> T[] toArray(List<T> list, Class<T> returnType) {
         List<Object> result = new ArrayList<>(list.size());
 
         for (Object e : list) {
-            Object o = (e instanceof List ? toArray((List<?>) e, returnType.getComponentType()) : e);
+            Object o = (e instanceof List ? toArray((List<Object>) e, (Class<Object>) returnType.getComponentType()) : e);
             result.add(o);
         }
 
-        return result.toArray((Object[]) Array.newInstance(returnType, list.size()));
+        return result.toArray((T[]) Array.newInstance(returnType, list.size()));
     }
 
-    private List<Object> decodeText(ByteBuf buf, PostgresTypeIdentifier dataType) {
+    private static <T> List<Object> decodeText(ByteBuf buf, byte delimiter, PostgresTypeIdentifier dataType, Decoder<T> decoder, Class<T> componentType) {
         List<Object> arrayList = new ArrayList<>();
 
         boolean insideString = false;
@@ -416,7 +420,7 @@ class ArrayCodec<T> extends AbstractCodec<Object[]> {
                         if (!wasInsideString && slice.readableBytes() == 4 && slice.getByte(0) == 'N' && "NULL".equals(slice.toString(StandardCharsets.US_ASCII))) {
                             currentArray.add(null);
                         } else {
-                            currentArray.add(this.delegate.decode(slice, dataType, FORMAT_TEXT, this.componentType));
+                            currentArray.add(decoder.decode(slice, dataType, FORMAT_TEXT, componentType));
                         }
                     }
                 } finally {
@@ -463,18 +467,18 @@ class ArrayCodec<T> extends AbstractCodec<Object[]> {
         byteBuf.writeByte(CLOSE_CURLY);
     }
 
-    private void readArrayAsBinary(ByteBuf buffer, PostgresTypeIdentifier dataType, Object[] array, int[] dims, int thisDimension) {
+    private static <T> void readArrayAsBinary(ByteBuf buffer, PostgresTypeIdentifier dataType, Object[] array, int[] dims, Decoder<T> decoder, Class<T> componentType, int thisDimension) {
         if (thisDimension == dims.length - 1) {
             for (int i = 0; i < dims[thisDimension]; ++i) {
                 int len = buffer.readInt();
                 if (len == -1) {
                     continue;
                 }
-                array[i] = this.delegate.decode(buffer.readSlice(len), dataType, FORMAT_BINARY, this.componentType);
+                array[i] = decoder.decode(buffer.readSlice(len), dataType, FORMAT_BINARY, componentType);
             }
         } else {
             for (int i = 0; i < dims[thisDimension]; ++i) {
-                readArrayAsBinary(buffer, dataType, (Object[]) array[i], dims, thisDimension + 1);
+                readArrayAsBinary(buffer, dataType, (Object[]) array[i], dims, decoder, componentType, thisDimension + 1);
             }
         }
     }

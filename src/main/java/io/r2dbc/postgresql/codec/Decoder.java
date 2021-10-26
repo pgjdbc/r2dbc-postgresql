@@ -21,26 +21,12 @@ import io.r2dbc.postgresql.message.Format;
 import reactor.util.annotation.Nullable;
 
 /**
- * Interface for codecs that should be used as delegate from {@link ArrayCodec}.
+ * Decoder for a specific {@link PostgresTypeIdentifier} and {@link Class type}.
  *
- * @since 0.8.8
+ * @param <T> the type that is handled by this decoder.
+ * @since 0.9
  */
-interface ArrayCodecDelegate<T> extends CodecMetadata, Decoder<T> {
-
-    /**
-     * Encode the {@code value} to be used as parameter to be used as array element.
-     *
-     * @param value the  {@code value}
-     * @return the encoded value
-     */
-    String encodeToText(T value);
-
-    /**
-     * Return the array data type to be used when creating the encoded form of the array.
-     *
-     * @return the array data type to be used when creating the encoded form of the array.
-     */
-    PostgresTypeIdentifier getArrayDataType();
+interface Decoder<T> {
 
     /**
      * Decode the {@link ByteBuf buffer} and return it as the requested {@link Class type}.
@@ -52,7 +38,6 @@ interface ArrayCodecDelegate<T> extends CodecMetadata, Decoder<T> {
      * @return the decoded value. Can be {@code null} if the value is {@code null}.
      */
     @Nullable
-    @Override
     T decode(ByteBuf buffer, PostgresTypeIdentifier dataType, Format format, Class<? extends T> type);
 
 }

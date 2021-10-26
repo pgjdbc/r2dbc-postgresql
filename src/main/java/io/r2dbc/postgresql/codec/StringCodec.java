@@ -35,9 +35,14 @@ import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TEXT;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.UNKNOWN;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.VARCHAR_ARRAY;
+import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
 final class StringCodec extends AbstractCodec<String> implements ArrayCodecDelegate<String> {
+
+    static final Codec<String> STRING_DECODER = StringDecoder.INSTANCE;
+
+    static final Codec<String[]> STRING_ARRAY_DECODER = StringArrayDecoder.INSTANCE;
 
     private static final Set<PostgresqlObjectId> SUPPORTED_TYPES = EnumSet.of(BPCHAR, CHAR, TEXT, UNKNOWN, VARCHAR, NAME);
 
@@ -95,6 +100,109 @@ final class StringCodec extends AbstractCodec<String> implements ArrayCodecDeleg
     @Override
     public Iterable<PostgresTypeIdentifier> getDataTypes() {
         return SUPPORTED_TYPES.stream().map(PostgresTypeIdentifier.class::cast).collect(Collectors.toList());
+    }
+
+    private static class StringDecoder implements Codec<String>, Decoder<String> {
+
+        static final StringDecoder INSTANCE = new StringDecoder();
+
+        StringDecoder() {
+        }
+
+        @Override
+        public boolean canDecode(int dataType, Format format, Class<?> type) {
+            Assert.requireNonNull(type, "type must not be null");
+            return type.isAssignableFrom(String.class);
+        }
+
+        @Override
+        public boolean canEncode(Object value) {
+            return false;
+        }
+
+        @Override
+        public boolean canEncodeNull(Class<?> type) {
+            return false;
+        }
+
+        @Override
+        public String decode(@Nullable ByteBuf buffer, int dataType, Format format, Class<? extends String> type) {
+            Assert.requireNonNull(buffer, "byteBuf must not be null");
+            return ByteBufUtils.decode(buffer);
+        }
+
+        @Override
+        public String decode(ByteBuf buffer, PostgresTypeIdentifier dataType, Format format, Class<? extends String> type) {
+            Assert.requireNonNull(buffer, "byteBuf must not be null");
+            return ByteBufUtils.decode(buffer);
+        }
+
+        @Override
+        public EncodedParameter encode(Object value) {
+            throw new UnsupportedOperationException("Cannot encode using a generic enum codec");
+        }
+
+        @Override
+        public EncodedParameter encode(Object value, int dataType) {
+            throw new UnsupportedOperationException("Cannot encode using a generic enum codec");
+        }
+
+        @Override
+        public EncodedParameter encodeNull() {
+            throw new UnsupportedOperationException("Cannot encode using a generic enum codec");
+        }
+
+    }
+
+    private static class StringArrayDecoder implements Codec<String[]> {
+
+        static final StringArrayDecoder INSTANCE = new StringArrayDecoder();
+
+        @Override
+        public boolean canDecode(int dataType, Format format, Class<?> type) {
+            Assert.requireNonNull(type, "type must not be null");
+            return type.isAssignableFrom(String[].class);
+        }
+
+        @Override
+        public boolean canEncode(Object value) {
+            return false;
+        }
+
+        @Override
+        public boolean canEncodeNull(Class<?> type) {
+            return false;
+        }
+
+        @Override
+        public String[] decode(ByteBuf buffer, int dataType, Format format, Class<? extends String[]> type) {
+
+            Assert.requireNonNull(buffer, "byteBuf must not be null");
+            Assert.requireNonNull(format, "format must not be null");
+            Assert.requireNonNull(type, "type must not be null");
+
+            if (FORMAT_BINARY == format) {
+                return ArrayCodec.decodeBinary(buffer, AbstractCodec.getDataType(dataType), StringDecoder.INSTANCE, String.class, type);
+            } else {
+                return ArrayCodec.decodeText(buffer, AbstractCodec.getDataType(dataType), ArrayCodec.COMMA, StringDecoder.INSTANCE, String.class, type);
+            }
+        }
+
+        @Override
+        public EncodedParameter encode(Object value) {
+            throw new UnsupportedOperationException("Cannot encode using a generic enum codec");
+        }
+
+        @Override
+        public EncodedParameter encode(Object value, int dataType) {
+            throw new UnsupportedOperationException("Cannot encode using a generic enum codec");
+        }
+
+        @Override
+        public EncodedParameter encodeNull() {
+            throw new UnsupportedOperationException("Cannot encode using a generic enum codec");
+        }
+
     }
 
 }
