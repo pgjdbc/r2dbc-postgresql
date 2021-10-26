@@ -27,6 +27,8 @@ interface StatementCache {
 
     void put(Binding binding, String sql, String name);
 
+    void evict(String sql);
+
     static StatementCache fromPreparedStatementCacheQueries(Client client, int preparedStatementCacheQueries) {
         if (preparedStatementCacheQueries < 0) {
             return new IndefiniteStatementCache();

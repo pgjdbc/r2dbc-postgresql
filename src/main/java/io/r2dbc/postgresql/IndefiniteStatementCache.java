@@ -70,6 +70,11 @@ final class IndefiniteStatementCache implements StatementCache {
         typedMap.put(binding.getParameterTypes(), name);
     }
 
+    @Override
+    public void evict(String sql) {
+        this.cache.remove(sql);
+    }
+
     private Map<int[], String> getTypeMap(String sql) {
 
         return this.cache.computeIfAbsent(sql, ignore -> new TreeMap<>((o1, o2) -> {
