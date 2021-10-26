@@ -20,6 +20,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.message.Format;
+import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
@@ -164,6 +165,7 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
 
     @Override
     @Nullable
+    @SuppressWarnings("unchecked")
     public <T> T decode(@Nullable ByteBuf buffer, int dataType, Format format, Class<? extends T> type) {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
@@ -175,12 +177,22 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
         Codec<T> codec = this.codecLookup.findDecodeCodec(dataType, format, type);
         if (codec != null) {
             return codec.decode(buffer, dataType, format, type);
-        } else if (String.class == type) {
+        }
+
+        if (String.class == type) {
             int varcharType = PostgresqlObjectId.VARCHAR.getObjectId();
-            codec = this.codecLookup.findDecodeCodec(varcharType, format, type);
-            if (codec != null) {
-                return codec.decode(buffer, varcharType, format, type);
+            Codec<T> varcharFallback = this.codecLookup.findDecodeCodec(varcharType, format, type);
+            if (varcharFallback != null) {
+                return varcharFallback.decode(buffer, varcharType, format, type);
             }
+        }
+
+        if (StringCodec.STRING_DECODER.canDecode(dataType, format, type)) {
+            return type.cast(StringCodec.STRING_DECODER.decode(buffer, dataType, format, (Class<String>) type));
+        }
+
+        if (StringCodec.STRING_ARRAY_DECODER.canDecode(dataType, format, type)) {
+            return type.cast(StringCodec.STRING_ARRAY_DECODER.decode(buffer, dataType, format, (Class<String[]>) type));
         }
 
         throw new IllegalArgumentException(String.format("Cannot decode value of type %s with OID %d", type.getName(), dataType));

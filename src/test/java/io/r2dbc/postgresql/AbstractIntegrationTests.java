@@ -33,7 +33,7 @@ public abstract class AbstractIntegrationTests {
 
     PostgresqlConnectionFactory connectionFactory;
 
-    PostgresqlConnection connection;
+    public PostgresqlConnection connection;
 
     /**
      * Entry-point to obtain a {@link PostgresqlConnectionFactory}.

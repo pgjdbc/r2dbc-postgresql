@@ -20,11 +20,12 @@ import io.r2dbc.postgresql.AbstractIntegrationTests;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.postgresql.api.PostgresqlConnection;
-import io.r2dbc.postgresql.api.PostgresqlResult;
-import io.r2dbc.spi.Parameters;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.DataAccessException;
 import reactor.test.StepVerifier;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Integration tests for {@link EnumCodec}.
@@ -34,7 +35,13 @@ final class EnumCodecIntegrationTests extends AbstractIntegrationTests {
     @BeforeAll
     static void createEnum() {
         try {
-            SERVER.getJdbcOperations().execute("CREATE TYPE my_enum AS ENUM ('HELLO', 'WORLD')");
+            SERVER.getJdbcOperations().execute("CREATE TYPE my_enum_with_codec AS ENUM ('HELLO', 'WORLD')");
+        } catch (DataAccessException e) {
+            // ignore duplicate types
+        }
+
+        try {
+            SERVER.getJdbcOperations().execute("CREATE TYPE my_enum_no_codec AS ENUM ('HELLO', 'WORLD')");
         } catch (DataAccessException e) {
             // ignore duplicate types
         }
@@ -42,7 +49,7 @@ final class EnumCodecIntegrationTests extends AbstractIntegrationTests {
 
     @Override
     protected void customize(PostgresqlConnectionConfiguration.Builder builder) {
-        builder.codecRegistrar(EnumCodec.builder().withEnum("my_enum", MyEnum.class).build());
+        builder.codecRegistrar(EnumCodec.builder().withEnum("my_enum_with_codec", MyEnum.class).build());
     }
 
     @Test
@@ -64,35 +71,13 @@ final class EnumCodecIntegrationTests extends AbstractIntegrationTests {
     }
 
     @Test
-    void shouldBindEnumTypeAsString() {
+    void shouldReadEnumAsString() {
 
         SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS enum_test");
-        SERVER.getJdbcOperations().execute("CREATE TABLE enum_test (the_value my_enum);");
+        SERVER.getJdbcOperations().execute("CREATE TABLE enum_test (single_value my_enum_no_codec, array_value my_enum_no_codec[]);");
+        SERVER.getJdbcOperations().execute("INSERT INTO enum_test VALUES('HELLO'::my_enum_no_codec, '{\"HELLO\", \"WORLD\"}'::my_enum_no_codec[]);");
 
-        PostgresTypes types = PostgresTypes.from(this.connection);
-        PostgresTypes.PostgresType type = types.lookupType("my_enum").block();
-
-        this.connection.createStatement("INSERT INTO enum_test VALUES($1)")
-            .bind("$1", Parameters.in(type, "HELLO"))
-            .execute()
-            .flatMap(PostgresqlResult::getRowsUpdated)
-            .as(StepVerifier::create)
-            .expectNext(1)
-            .verifyComplete();
-
-        String result = SERVER.getJdbcOperations().queryForObject("SELECT the_value FROM enum_test", String.class);
-        assertThat(result).isEqualTo("HELLO");
-
-        this.connection.createStatement("SELECT * FROM enum_test")
-            .execute()
-            .flatMap(it -> it.map(((row, rowMetadata) -> row.get(0, MyEnum.class))))
-            .as(StepVerifier::create)
-            .consumeNextWith(actual -> {
-                assertThat(actual).isEqualTo(MyEnum.HELLO);
-            })
-            .verifyComplete();
-
-        this.connection.createStatement("SELECT * FROM enum_test")
+        this.connection.createStatement("SELECT single_value FROM enum_test")
             .execute()
             .flatMap(it -> it.map(((row, rowMetadata) -> row.get(0, String.class))))
             .as(StepVerifier::create)
@@ -100,29 +85,34 @@ final class EnumCodecIntegrationTests extends AbstractIntegrationTests {
                 assertThat(actual).isEqualTo("HELLO");
             })
             .verifyComplete();
+
+        this.connection.createStatement("SELECT single_value FROM enum_test")
+            .execute()
+            .flatMap(it -> it.map(((row, rowMetadata) -> row.get(0))))
+            .as(StepVerifier::create)
+            .consumeNextWith(actual -> {
+                assertThat(actual).isEqualTo("HELLO");
+            })
+            .verifyComplete();
+
+        this.connection.createStatement("SELECT array_value FROM enum_test")
+            .execute()
+            .flatMap(it -> it.map(((row, rowMetadata) -> row.get(0))))
+            .as(StepVerifier::create)
+            .consumeNextWith(actual -> {
+                assertThat(actual).isEqualTo("{HELLO,WORLD}");
+            })
+            .verifyComplete();
     }
 
     @Test
-    void shouldBindEnumArrayTypeAsString() {
+    void shouldReadEnumAsStringArray() {
 
         SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS enum_test");
-        SERVER.getJdbcOperations().execute("CREATE TABLE enum_test (the_value my_enum[]);");
+        SERVER.getJdbcOperations().execute("CREATE TABLE enum_test (single_value my_enum_no_codec, array_value my_enum_no_codec[]);");
+        SERVER.getJdbcOperations().execute("INSERT INTO enum_test VALUES('HELLO'::my_enum_no_codec, '{\"HELLO\", \"WORLD\"}'::my_enum_no_codec[]);");
 
-        PostgresTypes types = PostgresTypes.from(this.connection);
-        PostgresTypes.PostgresType type = types.lookupType("my_enum").block().asArrayType();
-
-        this.connection.createStatement("INSERT INTO enum_test VALUES($1)")
-            .bind("$1", Parameters.in(type, new String[]{"HELLO", "WORLD"}))
-            .execute()
-            .flatMap(PostgresqlResult::getRowsUpdated)
-            .as(StepVerifier::create)
-            .expectNext(1)
-            .verifyComplete();
-
-        String result = SERVER.getJdbcOperations().queryForObject("SELECT the_value FROM enum_test", String.class);
-        assertThat(result).isEqualTo("{HELLO,WORLD}");
-
-        this.connection.createStatement("SELECT the_value FROM enum_test")
+        this.connection.createStatement("SELECT array_value FROM enum_test")
             .execute()
             .flatMap(it -> it.map(((row, rowMetadata) -> row.get(0, String[].class))))
             .as(StepVerifier::create)
@@ -130,40 +120,13 @@ final class EnumCodecIntegrationTests extends AbstractIntegrationTests {
                 assertThat(actual).contains("HELLO", "WORLD");
             })
             .verifyComplete();
-    }
 
-    @Test
-    void shouldBindEnumArrayType() {
-
-        SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS enum_test");
-        SERVER.getJdbcOperations().execute("CREATE TABLE enum_test (the_value my_enum[]);");
-
-        this.connection.createStatement("INSERT INTO enum_test VALUES($1)")
-            .bind("$1", MyEnum.values())
+        this.connection.createStatement("SELECT array_value FROM enum_test")
             .execute()
-            .flatMap(PostgresqlResult::getRowsUpdated)
-            .as(StepVerifier::create)
-            .expectNext(1)
-            .verifyComplete();
-
-        this.connection.createStatement("SELECT * FROM enum_test")
-            .execute()
-            .flatMap(it -> it.map(((row, rowMetadata) -> row.get(0))))
+            .flatMap(it -> it.map(((row, rowMetadata) -> row.get(0, Object[].class))))
             .as(StepVerifier::create)
             .consumeNextWith(actual -> {
-
-                assertThat(actual).isInstanceOf(MyEnum[].class);
-                assertThat((MyEnum[]) actual).contains(MyEnum.values());
-
-            })
-            .verifyComplete();
-
-        this.connection.createStatement("SELECT * FROM enum_test")
-            .execute()
-            .flatMap(it -> it.map(((row, rowMetadata) -> row.get(0, MyEnum[].class))))
-            .as(StepVerifier::create)
-            .consumeNextWith(actual -> {
-                assertThat(actual).contains(MyEnum.values());
+                assertThat(actual).contains("HELLO", "WORLD");
             })
             .verifyComplete();
     }
