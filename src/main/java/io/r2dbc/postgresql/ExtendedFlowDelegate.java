@@ -257,28 +257,31 @@ class ExtendedFlowDelegate {
     }
 
     private static BiConsumer<BackendMessage, SynchronousSink<BackendMessage>> handleReprepare(FluxSink<FrontendMessage> requests, ExtendedFlowOperator operator, MessageFactory messageFactory) {
-
         AtomicBoolean reprepared = new AtomicBoolean();
 
         return (message, sink) -> {
 
-            if (message instanceof ErrorResponse && requiresReprepare((ErrorResponse) message) && reprepared.compareAndSet(false, true)) {
+            if (message instanceof ErrorResponse && requiresReprepare((ErrorResponse) message)) {
 
                 operator.evictCachedStatement();
 
-                List<FrontendMessage.DirectEncoder> messages = messageFactory.createMessages();
-                if (!messages.contains(Sync.INSTANCE)) {
-                    messages.add(0, Sync.INSTANCE);
+                if (reprepared.compareAndSet(false, true)) {
+
+                    List<FrontendMessage.DirectEncoder> messages = messageFactory.createMessages();
+                    if (!messages.contains(Sync.INSTANCE)) {
+                        messages.add(0, Sync.INSTANCE);
+                    }
+                    requests.next(new CompositeFrontendMessage(messages));
+
+                    return;
                 }
-                requests.next(new CompositeFrontendMessage(messages));
-            } else {
-                sink.next(message);
             }
+
+            sink.next(message);
         };
     }
 
     private static boolean requiresReprepare(ErrorResponse errorResponse) {
-
         ErrorDetails details = new ErrorDetails(errorResponse.getFields());
         String code = details.getCode();
 
@@ -308,7 +311,7 @@ class ExtendedFlowDelegate {
     /**
      * Operator to encapsulate common activity around the extended flow. Subclasses {@link AtomicInteger} to capture the number of ReadyForQuery frames.
      */
-    static class ExtendedFlowOperator extends AtomicInteger {
+    static class ExtendedFlowOperator extends AtomicInteger implements Predicate<BackendMessage> {
 
         private final String sql;
 
@@ -332,7 +335,6 @@ class ExtendedFlowDelegate {
             this.values = values;
             this.portal = portal;
             this.forceBinary = forceBinary;
-            set(1);
         }
 
         public void close(FluxSink<FrontendMessage> requests) {
@@ -341,9 +343,6 @@ class ExtendedFlowDelegate {
         }
 
         public void evictCachedStatement() {
-
-            incrementAndGet();
-
             synchronized (this) {
                 this.name = null;
             }
@@ -355,14 +354,16 @@ class ExtendedFlowDelegate {
         }
 
         public Predicate<BackendMessage> takeUntil() {
-            return m -> {
+            return this;
+        }
 
-                if (m instanceof ReadyForQuery) {
-                    return decrementAndGet() <= 0;
-                }
+        @Override
+        public boolean test(BackendMessage backendMessage) {
+            if (backendMessage instanceof ReadyForQuery) {
+                return decrementAndGet() <= 0;
+            }
 
-                return false;
-            };
+            return false;
         }
 
         private boolean isPrepareRequired() {
@@ -380,6 +381,7 @@ class ExtendedFlowDelegate {
         }
 
         public List<FrontendMessage.DirectEncoder> getMessages(Collection<FrontendMessage.DirectEncoder> append) {
+            incrementAndGet();
             List<FrontendMessage.DirectEncoder> messagesToSend = new ArrayList<>(6);
 
             if (isPrepareRequired()) {
