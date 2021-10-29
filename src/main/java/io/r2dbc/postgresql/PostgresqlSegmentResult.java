@@ -49,6 +49,10 @@ final class PostgresqlSegmentResult extends AbstractReferenceCounted implements 
 
     private final Flux<Segment> segments;
 
+    private PostgresqlSegmentResult(Flux<Segment> segments) {
+        this.segments = segments;
+    }
+
     PostgresqlSegmentResult(ConnectionResources resources, Flux<BackendMessage> messages, ExceptionFactory factory) {
         Assert.requireNonNull(resources, "resources must not be null");
         Assert.requireNonNull(messages, "messages must not be null");
@@ -107,10 +111,6 @@ final class PostgresqlSegmentResult extends AbstractReferenceCounted implements 
 
                 ReferenceCountUtil.release(message);
             });
-    }
-
-    private PostgresqlSegmentResult(Flux<Segment> segments) {
-        this.segments = segments;
     }
 
     @Override
@@ -190,9 +190,9 @@ final class PostgresqlSegmentResult extends AbstractReferenceCounted implements 
     @SuppressWarnings("unchecked")
     public <T> Publisher<T> flatMap(Function<Segment, ? extends Publisher<? extends T>> mappingFunction) {
         Assert.requireNonNull(mappingFunction, "mappingFunction must not be null");
-        return this.segments.flatMap(it -> {
+        return this.segments.concatMap(segment -> {
 
-            Publisher<? extends T> result = mappingFunction.apply(it);
+            Publisher<? extends T> result = mappingFunction.apply(segment);
 
             if (result == null) {
                 return Mono.error(new IllegalStateException("The mapper returned a null Publisher"));
@@ -200,10 +200,10 @@ final class PostgresqlSegmentResult extends AbstractReferenceCounted implements 
 
             // doAfterTerminate to not release resources before they had a chance to get emitted
             if (result instanceof Mono) {
-                return ((Mono<T>) result).doAfterTerminate(() -> ReferenceCountUtil.release(it));
+                return ((Mono<T>) result).doFinally(s -> ReferenceCountUtil.release(segment));
             }
 
-            return Flux.from(result).doAfterTerminate(() -> ReferenceCountUtil.release(it));
+            return Flux.from(result).doFinally(s -> ReferenceCountUtil.release(segment));
         });
     }
 
