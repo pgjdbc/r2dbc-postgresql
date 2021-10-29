@@ -67,6 +67,11 @@ class FluxDiscardOnCancel<T> extends FluxOperator<T, T> {
         }
 
         @Override
+        public Context currentContext() {
+            return this.ctx;
+        }
+
+        @Override
         public void onSubscribe(Subscription s) {
 
             if (Operators.validate(this.s, s)) {
