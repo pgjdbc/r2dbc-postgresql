@@ -22,8 +22,6 @@ import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.epoll.Epoll;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
@@ -56,9 +54,7 @@ import reactor.core.publisher.Operators;
 import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Schedulers;
 import reactor.netty.Connection;
-import reactor.netty.resources.LoopResources;
 import reactor.netty.tcp.TcpClient;
-import reactor.netty.tcp.TcpResources;
 import reactor.util.Logger;
 import reactor.util.Loggers;
 import reactor.util.annotation.Nullable;
@@ -358,14 +354,11 @@ public final class ReactorNettyClient implements Client {
 
         TcpClient tcpClient = TcpClient.create(settings.getConnectionProvider()).remoteAddress(() -> socketAddress);
 
-        if (!(socketAddress instanceof InetSocketAddress)) {
-            tcpClient = tcpClient.runOn(new SocketLoopResources(settings.hasLoopResources() ? settings.getRequiredLoopResources() : TcpResources.get()), true);
-        } else {
+        if (settings.hasLoopResources()) {
+            tcpClient = tcpClient.runOn(settings.getRequiredLoopResources());
+        }
 
-            if (settings.hasLoopResources()) {
-                tcpClient = tcpClient.runOn(settings.getRequiredLoopResources());
-            }
-
+        if (socketAddress instanceof InetSocketAddress) {
             tcpClient = tcpClient.resolver(BalancedResolverGroup.INSTANCE);
             tcpClient = tcpClient.option(ChannelOption.SO_KEEPALIVE, settings.isTcpKeepAlive());
             tcpClient = tcpClient.option(ChannelOption.TCP_NODELAY, settings.isTcpNoDelay());
@@ -420,7 +413,6 @@ public final class ReactorNettyClient implements Client {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public Disposable addNotificationListener(Subscriber<NotificationResponse> consumer) {
         return this.notificationProcessor.asFlux().subscribe(consumer::onNext, consumer::onError, consumer::onComplete, consumer::onSubscribe);
     }
@@ -557,86 +549,6 @@ public final class ReactorNettyClient implements Client {
 
         public ResponseQueueException(String message) {
             super(message);
-        }
-
-    }
-
-    @SuppressWarnings({"deprecation"})
-    static class SocketLoopResources implements LoopResources {
-
-        @Nullable
-        private static final Class<? extends Channel> EPOLL_SOCKET = findClass("io.netty.channel.epoll.EpollDomainSocketChannel");
-
-        @Nullable
-        private static final Class<? extends Channel> KQUEUE_SOCKET = findClass("io.netty.channel.kqueue.KQueueDomainSocketChannel");
-
-        private static final boolean kqueue;
-
-        static {
-            boolean kqueueCheck = false;
-            try {
-                Class.forName("io.netty.channel.kqueue.KQueue");
-                kqueueCheck = io.netty.channel.kqueue.KQueue.isAvailable();
-            } catch (ClassNotFoundException cnfe) {
-            }
-            kqueue = kqueueCheck;
-        }
-
-        private static final boolean epoll;
-
-        static {
-            boolean epollCheck = false;
-            try {
-                Class.forName("io.netty.channel.epoll.Epoll");
-                epollCheck = Epoll.isAvailable();
-            } catch (ClassNotFoundException cnfe) {
-            }
-            epoll = epollCheck;
-        }
-
-        private final LoopResources delegate;
-
-        public SocketLoopResources(LoopResources delegate) {
-            this.delegate = delegate;
-        }
-
-        @SuppressWarnings("unchecked")
-        private static Class<? extends Channel> findClass(String className) {
-            try {
-                return (Class<? extends Channel>) SocketLoopResources.class.getClassLoader().loadClass(className);
-            } catch (ClassNotFoundException e) {
-                return null;
-            }
-        }
-
-        @Override
-        public EventLoopGroup onClient(boolean useNative) {
-            return this.delegate.onClient(useNative);
-        }
-
-        @Override
-        public EventLoopGroup onServer(boolean useNative) {
-            return this.delegate.onServer(useNative);
-        }
-
-        @Override
-        public EventLoopGroup onServerSelect(boolean useNative) {
-            return this.delegate.onServerSelect(useNative);
-        }
-
-        @Override
-        public boolean daemon() {
-            return this.delegate.daemon();
-        }
-
-        @Override
-        public void dispose() {
-            this.delegate.dispose();
-        }
-
-        @Override
-        public Mono<Void> disposeLater() {
-            return this.delegate.disposeLater();
         }
 
     }
