@@ -71,6 +71,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
     @Override
     public ExtendedQueryPostgresqlStatement add() {
         this.bindings.finish();
+        this.bindings.getCurrent();
         return this;
     }
 
