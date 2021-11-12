@@ -33,25 +33,25 @@
 
     <properties>
         <assertj.version>3.21.0</assertj.version>
-        <awaitility.version>4.1.0</awaitility.version>
+        <awaitility.version>4.1.1</awaitility.version>
         <blockhound.version>1.0.6.RELEASE</blockhound.version>
         <hikari-cp.version>4.0.3</hikari-cp.version>
         <java.version>1.8</java.version>
         <jsr305.version>3.0.2</jsr305.version>
         <junit.version>5.8.1</junit.version>
-        <jmh.version>1.23</jmh.version>
+        <jmh.version>1.32</jmh.version>
         <mbr.version>0.2.0.RELEASE</mbr.version>
         <logback.version>1.2.3</logback.version>
-        <mockito.version>3.12.4</mockito.version>
-        <netty.version>4.1.68.Final</netty.version>
-        <postgresql.version>42.2.24</postgresql.version>
+        <mockito.version>4.0.0</mockito.version>
+        <netty.version>4.1.70.Final</netty.version>
+        <postgresql.version>42.3.1</postgresql.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <r2dbc-spi.version>0.8.6.RELEASE</r2dbc-spi.version>
-        <reactor.version>Dysprosium-SR23</reactor.version>
+        <reactor.version>Dysprosium-SR25</reactor.version>
         <scram-client.version>2.1</scram-client.version>
-        <spring-framework.version>5.2.10.RELEASE</spring-framework.version>
-        <testcontainers.version>1.16.0</testcontainers.version>
+        <spring-framework.version>5.3.13</spring-framework.version>
+        <testcontainers.version>1.16.2</testcontainers.version>
     </properties>
 
     <licenses>
@@ -301,7 +301,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.0.0-M3</version>
+                <version>3.0.0</version>
                 <executions>
                     <execution>
                         <id>enforce-no-snapshots</id>
@@ -322,7 +322,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>3.3.1</version>
                 <configuration>
                     <excludePackageNames>
                         io.r2dbc.postgresql.authentication,io.r2dbc.postgresql.client,io.r2dbc.postgresql.message,io.r2dbc.postgresql.util
@@ -398,7 +398,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>
-                <version>1.2.1</version>
+                <version>1.2.7</version>
                 <executions>
                     <execution>
                         <id>flatten</id>
@@ -472,7 +472,7 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>build-helper-maven-plugin</artifactId>
-                        <version>3.1.0</version>
+                        <version>3.2.0</version>
                         <executions>
                             <execution>
                                 <id>add-source</id>
@@ -506,7 +506,7 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>exec-maven-plugin</artifactId>
-                        <version>1.6.0</version>
+                        <version>3.0.0</version>
                         <executions>
                             <execution>
                                 <id>run-benchmarks</id>
@@ -558,7 +558,7 @@
                         <plugin>
                             <groupId>org.apache.maven.plugins</groupId>
                             <artifactId>maven-gpg-plugin</artifactId>
-                            <version>1.6</version>
+                            <version>3.0.1</version>
                             <executions>
                                 <execution>
                                     <id>sign-artifacts</id>
