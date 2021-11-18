@@ -67,6 +67,7 @@ import java.time.OffsetTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -333,7 +334,7 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
 
     @Test
     void instant() {
-        testCodec(Instant.class, Instant.now(), "TIMESTAMPTZ");
+        testCodec(Instant.class, Instant.now().truncatedTo(ChronoUnit.MICROS), "TIMESTAMPTZ");
     }
 
     @Test
@@ -441,12 +442,12 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
 
     @Test
     void localDateTime() {
-        testCodec(LocalDateTime.class, LocalDateTime.now(), "TIMESTAMP");
+        testCodec(LocalDateTime.class, LocalDateTime.now().truncatedTo(ChronoUnit.MICROS), "TIMESTAMP");
     }
 
     @Test
     void localTime() {
-        testCodec(LocalTime.class, LocalTime.now(), "TIME");
+        testCodec(LocalTime.class, LocalTime.now().truncatedTo(ChronoUnit.MICROS), "TIME");
     }
 
     @Test
@@ -472,7 +473,7 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
 
     @Test
     void offsetDateTime() {
-        testCodec(OffsetDateTime.class, OffsetDateTime.now(), (actual, expected) -> assertThat(actual.isEqual(expected)).isTrue(), "TIMESTAMP WITH TIME ZONE");
+        testCodec(OffsetDateTime.class, OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS), (actual, expected) -> assertThat(actual.isEqual(expected)).isTrue(), "TIMESTAMP WITH TIME ZONE");
     }
 
     @Test
@@ -565,16 +566,16 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
 
     @Test
     void zonedDateTime() {
-        testCodec(ZonedDateTime.class, ZonedDateTime.now(), (actual, expected) -> {
+        testCodec(ZonedDateTime.class, ZonedDateTime.now().truncatedTo(ChronoUnit.MICROS), (actual, expected) -> {
             assertThat(actual.toLocalDateTime()).isEqualTo(expected.toLocalDateTime());
         }, "TIMESTAMP WITH TIME ZONE");
     }
 
     @Test
     void offsetTime() {
-        testCodec(OffsetTime.class, OffsetTime.of(LocalTime.now(), ZoneOffset.UTC), "TIMETZ");
-        testCodec(OffsetTime.class, OffsetTime.of(LocalTime.now(), ZoneOffset.ofHoursMinutes(1, 30)), "TIMETZ");
-        testCodec(OffsetTime.class, OffsetTime.of(LocalTime.now(), ZoneOffset.ofHoursMinutes(-3, -30)), "TIMETZ");
+        testCodec(OffsetTime.class, OffsetTime.of(LocalTime.now().truncatedTo(ChronoUnit.MICROS), ZoneOffset.UTC), "TIMETZ");
+        testCodec(OffsetTime.class, OffsetTime.of(LocalTime.now().truncatedTo(ChronoUnit.MICROS), ZoneOffset.ofHoursMinutes(1, 30)), "TIMETZ");
+        testCodec(OffsetTime.class, OffsetTime.of(LocalTime.now().truncatedTo(ChronoUnit.MICROS), ZoneOffset.ofHoursMinutes(-3, -30)), "TIMETZ");
     }
 
     @Test
