@@ -241,7 +241,7 @@ final class PostgresqlConnectionUnitTests {
 
     @Test
     void createStatementExtended() {
-        assertThat(createConnection(NO_OP, MockCodecs.empty(), this.statementCache).createStatement("test-query-$1")).isInstanceOf(ExtendedQueryPostgresqlStatement.class);
+        assertThat(createConnection(NO_OP, MockCodecs.empty(), this.statementCache).createStatement("test-query-$1")).isInstanceOf(PostgresqlStatement.class);
     }
 
     @Test
@@ -253,7 +253,7 @@ final class PostgresqlConnectionUnitTests {
 
     @Test
     void createStatementSimple() {
-        assertThat(createConnection(NO_OP, MockCodecs.empty(), this.statementCache).createStatement("test-query-1; test-query-2")).isInstanceOf(SimpleQueryPostgresqlStatement.class);
+        assertThat(createConnection(NO_OP, MockCodecs.empty(), this.statementCache).createStatement("test-query-1; test-query-2")).isInstanceOf(PostgresqlStatement.class);
     }
 
     @Test

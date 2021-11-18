@@ -24,11 +24,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcOperations;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
+import reactor.util.function.Tuples;
 
 /**
- * Integration tests for {@link ExtendedQueryPostgresqlStatement}.
+ * Integration tests for {@link PostgresqlStatement}.
  */
-class ExtendedQueryPostgresqlStatementIntegrationTests extends AbstractIntegrationTests {
+class PostgresqlStatementIntegrationTests extends AbstractIntegrationTests {
 
     @BeforeEach
     void setUp() {
@@ -51,20 +52,6 @@ class ExtendedQueryPostgresqlStatementIntegrationTests extends AbstractIntegrati
     @Override
     protected void customize(PostgresqlConnectionConfiguration.Builder builder) {
         builder.preparedStatementCacheQueries(2);
-    }
-
-    @Test
-    void shouldRunMultipleQueries() {
-
-        Flux.from(this.connection.createStatement("SELECT * FROM test WHERE val = $1")
-            .fetchSize(0)
-            .bind("$1", "a").add()
-            .bind("$1", "b").add()
-            .bind("$1", "c").execute())
-            .flatMap(it -> it.map((row, rowMetadata) -> row.get(1)))
-            .as(StepVerifier::create)
-            .expectNext("a", "a", "b", "c", "c")
-            .verifyComplete();
     }
 
     @Test
@@ -227,6 +214,39 @@ class ExtendedQueryPostgresqlStatementIntegrationTests extends AbstractIntegrati
         } finally {
             this.connection.rollbackTransaction().block();
         }
+    }
+
+    @Test
+    void shouldRunMultipleQueriesInSingleStatement() {
+
+        this.connection.createStatement("SELECT 1;SELECT val FROM test")
+            .fetchSize(0).execute()
+            .flatMap(it -> it.map((row, rowMetadata) -> Tuples.of(row.get(0), rowMetadata.getColumnMetadata(0).getName())))
+            .as(StepVerifier::create)
+            .expectNext(Tuples.of(1, "?column?"), Tuples.of("a", "val"), Tuples.of("a", "val"), Tuples.of("b", "val"), Tuples.of("c", "val"), Tuples.of("c", "val"))
+            .verifyComplete();
+    }
+
+    @Test
+    void shouldRunQueryWithParameterAndDollarQuote() {
+        Flux.from(this.connection.createStatement("SELECT $$a$$, $1")
+            .fetchSize(1)
+            .bind("$1", "b").execute())
+            .flatMap(it -> it.map((row, rowMetadata) -> Tuples.of(row.get(0), row.get(1))))
+            .as(StepVerifier::create)
+            .expectNext(Tuples.of("a", "b"))
+            .verifyComplete();
+    }
+
+    @Test
+    void shouldRunQueryWithParameterAndQuotedDollarSign() {
+        Flux.from(this.connection.createStatement("SELECT '$', $1")
+            .fetchSize(1)
+            .bind("$1", "b").execute())
+            .flatMap(it -> it.map((row, rowMetadata) -> Tuples.of(row.get(0), row.get(1))))
+            .as(StepVerifier::create)
+            .expectNext(Tuples.of("$", "b"))
+            .verifyComplete();
     }
 
 }
