@@ -17,25 +17,10 @@
 package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.api.PostgresqlResult;
-import io.r2dbc.postgresql.client.Binding;
-import io.r2dbc.postgresql.client.Client;
-import io.r2dbc.postgresql.client.EncodedParameter;
-import io.r2dbc.postgresql.client.PortalNameSupplier;
-import io.r2dbc.postgresql.client.TestClient;
+import io.r2dbc.postgresql.client.*;
 import io.r2dbc.postgresql.codec.MockCodecs;
-import io.r2dbc.postgresql.message.backend.BindComplete;
-import io.r2dbc.postgresql.message.backend.CloseComplete;
-import io.r2dbc.postgresql.message.backend.CommandComplete;
-import io.r2dbc.postgresql.message.backend.ErrorResponse;
-import io.r2dbc.postgresql.message.backend.NoData;
-import io.r2dbc.postgresql.message.backend.RowDescription;
-import io.r2dbc.postgresql.message.frontend.Bind;
-import io.r2dbc.postgresql.message.frontend.Close;
-import io.r2dbc.postgresql.message.frontend.CompositeFrontendMessage;
-import io.r2dbc.postgresql.message.frontend.Describe;
-import io.r2dbc.postgresql.message.frontend.Execute;
-import io.r2dbc.postgresql.message.frontend.ExecutionType;
-import io.r2dbc.postgresql.message.frontend.Sync;
+import io.r2dbc.postgresql.message.backend.*;
+import io.r2dbc.postgresql.message.frontend.*;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
@@ -51,23 +36,20 @@ import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 /**
- * Unit tests for {@link ExtendedQueryPostgresqlStatement}.
+ * Unit tests for {@link PostgresqlStatement}.
  */
-final class ExtendedQueryPostgresqlStatementUnitTests {
+final class PostgresqlStatementUnitTests {
 
     private final EncodedParameter parameter = new EncodedParameter(FORMAT_BINARY, INT4.getObjectId(), Flux.just(TEST.buffer(4).writeInt(100)));
 
     private final MockCodecs codecs = MockCodecs.builder().encoding(100, this.parameter).build();
 
-    private final ExtendedQueryPostgresqlStatement statement = new ExtendedQueryPostgresqlStatement(MockContext.builder().codecs(codecs).build(), "test-query-$1");
+    private final PostgresqlStatement statement = new PostgresqlStatement(MockContext.builder().codecs(codecs).build(), "test-query-$1");
 
     @Test
     void bind() {
@@ -103,7 +85,7 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
             .encoding(Integer.class, new EncodedParameter(FORMAT_BINARY, INT4.getObjectId(), NULL_VALUE))
             .build();
 
-        ExtendedQueryPostgresqlStatement statement = new ExtendedQueryPostgresqlStatement(MockContext.builder().codecs(codecs).build(), "test-query-$1");
+        PostgresqlStatement statement = new PostgresqlStatement(MockContext.builder().codecs(codecs).build(), "test-query-$1");
 
         assertThat(statement.bindNull("$1", Integer.class).getCurrentBinding())
             .isEqualTo(new Binding(1).add(0, new EncodedParameter(FORMAT_BINARY, INT4.getObjectId(), NULL_VALUE)));
@@ -130,24 +112,24 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
     @Test
     void bindNullWrongIdentifierFormat() {
         assertThatExceptionOfType(NoSuchElementException.class).isThrownBy(() -> this.statement.bindNull("foo", Integer.class))
-            .withMessage("Identifier 'foo' is not a valid identifier. Should be of the pattern '\\$([\\d]+)'.");
+            .withMessage("\"foo\" is not a valid identifier");
     }
 
     @Test
     void bindWrongIdentifierFormat() {
         assertThatExceptionOfType(NoSuchElementException.class).isThrownBy(() -> this.statement.bind("foo", ""))
-            .withMessage("Identifier 'foo' is not a valid identifier. Should be of the pattern '\\$([\\d]+)'.");
+            .withMessage("\"foo\" is not a valid identifier");
     }
 
     @Test
     void constructorNoResources() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(null, "test-query"))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlStatement(null, "test-query"))
             .withMessage("resources must not be null");
     }
 
     @Test
     void constructorNoSql() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(MockContext.empty(), null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlStatement(MockContext.empty(), null))
             .withMessage("sql must not be null");
     }
 
@@ -178,7 +160,7 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
 
         when(context.getStatementCache().getName(any(), any())).thenReturn("test-name");
 
-        new ExtendedQueryPostgresqlStatement(context, "test-query-$1")
+        new PostgresqlStatement(context, "test-query-$1")
             .bind("$1", 100)
             .execute()
             .flatMap(PostgresqlResult::getRowsUpdated)
@@ -207,7 +189,7 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
 
         when(context.getStatementCache().getName(any(), any())).thenReturn("test-name");
 
-        new ExtendedQueryPostgresqlStatement(context, "test-query-$1")
+        new PostgresqlStatement(context, "test-query-$1")
             .bind("$1", 100)
             .execute()
             .flatMap(result -> result.map((row, rowMetadata) -> row))
@@ -236,7 +218,7 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
 
         when(context.getStatementCache().getName(any(), any())).thenReturn("test-name");
 
-        new ExtendedQueryPostgresqlStatement(context, "test-query-$1")
+        new PostgresqlStatement(context, "test-query-$1")
             .bind("$1", 100)
             .execute()
             .flatMap(PostgresqlResult::getRowsUpdated)
@@ -264,7 +246,7 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
 
         when(context.getStatementCache().getName(any(), any())).thenReturn("test-name");
 
-        new ExtendedQueryPostgresqlStatement(context, "test-query-$1")
+        new PostgresqlStatement(context, "test-query-$1")
             .bind("$1", 100)
             .execute()
             .flatMap(PostgresqlResult::getRowsUpdated)
@@ -295,7 +277,7 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
         when(context.getStatementCache().getName(any(), any())).thenReturn("test-name");
         when(context.getStatementCache().requiresPrepare(any(), any())).thenReturn(true);
 
-        new ExtendedQueryPostgresqlStatement(context, "test-query-$1")
+        new PostgresqlStatement(context, "test-query-$1")
             .bind("$1", 100)
             .execute()
             .as(StepVerifier::create)
@@ -328,13 +310,13 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
         when(context.getStatementCache().getName(any(), any())).thenReturn("test-name");
         when(context.getStatementCache().requiresPrepare(any(), any())).thenReturn(false);
 
-        new ExtendedQueryPostgresqlStatement(context, "test-query-$1")
-            .bind("$1", 100).add()
-            .bind("$1", 200)
-            .execute()
-            .flatMap(PostgresqlResult::getRowsUpdated)
-            .as(StepVerifier::create)
-            .verifyError(R2dbcNonTransientResourceException.class);
+        new PostgresqlStatement(context, "test-query-$1")
+                .bind("$1", 100).add()
+                .bind("$1", 200)
+                .execute()
+                .flatMap(PostgresqlResult::getRowsUpdated)
+                .as(StepVerifier::create)
+                .verifyError(R2dbcNonTransientResourceException.class);
 
         assertThat(hasReleased).isTrue();
     }
@@ -362,7 +344,7 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
         when(context.getStatementCache().getName(any(), any())).thenReturn("test-name");
         when(context.getStatementCache().requiresPrepare(any(), any())).thenReturn(true);
 
-        new ExtendedQueryPostgresqlStatement(context, "INSERT test-query-$1")
+        new PostgresqlStatement(context, "INSERT test-query-$1")
             .bind("$1", 100)
             .returnGeneratedValues()
             .execute()
@@ -374,49 +356,13 @@ final class ExtendedQueryPostgresqlStatementUnitTests {
 
     @Test
     void returnGeneratedValuesHasReturningClause() {
-        assertThatIllegalStateException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(MockContext.empty(), "RETURNING").returnGeneratedValues())
+        assertThatIllegalStateException().isThrownBy(() -> new PostgresqlStatement(MockContext.empty(), "RETURNING").returnGeneratedValues())
             .withMessage("Statement already includes RETURNING clause");
     }
 
     @Test
     void returnGeneratedValuesUnsupportedCommand() {
-        assertThatIllegalStateException().isThrownBy(() -> new ExtendedQueryPostgresqlStatement(MockContext.empty(), "SELECT").returnGeneratedValues())
+        assertThatIllegalStateException().isThrownBy(() -> new PostgresqlStatement(MockContext.empty(), "SELECT").returnGeneratedValues())
             .withMessage("Statement is not a DELETE, INSERT, or UPDATE command");
     }
-
-    @Test
-    void supportsMultilineParameterSymbol() {
-        assertThat(ExtendedQueryPostgresqlStatement.supports("test-query-0\ntest-query-$1")).isTrue();
-    }
-
-    @Test
-    void supportsNoSql() {
-        assertThatIllegalArgumentException().isThrownBy(() -> ExtendedQueryPostgresqlStatement.supports(null))
-            .withMessage("sql must not be null");
-    }
-
-    @Test
-    void supportsParameterSymbol() {
-        assertThat(ExtendedQueryPostgresqlStatement.supports("test-query-$1")).isTrue();
-    }
-
-    @Test
-    void supportsQueryEmpty() {
-        assertThat(ExtendedQueryPostgresqlStatement.supports(" ")).isFalse();
-    }
-
-    @Test
-    void supportsSemicolon() {
-        assertThat(ExtendedQueryPostgresqlStatement.supports("test-query-1; test-query-2")).isFalse();
-        assertThat(ExtendedQueryPostgresqlStatement.supports("test-query-1; test-query-2;")).isFalse();
-        assertThat(ExtendedQueryPostgresqlStatement.supports("test-query-1; test-query-2 with $1;")).isFalse();
-        assertThat(ExtendedQueryPostgresqlStatement.supports("test-query-1 with $1; ")).isTrue();
-        assertThat(ExtendedQueryPostgresqlStatement.supports("test-query-1 with $1;")).isTrue();
-    }
-
-    @Test
-    void supportsSimple() {
-        assertThat(ExtendedQueryPostgresqlStatement.supports("test-query")).isFalse();
-    }
-
 }
