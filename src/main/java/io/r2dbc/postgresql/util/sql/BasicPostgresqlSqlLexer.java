@@ -104,15 +104,6 @@ public class BasicPostgresqlSqlLexer {
         return new TokenizedSql(sql, statements);
     }
 
-    private static Token getSpecialOrOperatorToken(String sql, int beginIndex) {
-        for (int i = beginIndex + 1; i < sql.length(); i++) {
-            if (!isSpecialOrOperatorChar(sql.charAt(i))) {
-                return new Token(TokenType.SPECIAL_OR_OPERATOR, sql.substring(beginIndex, i));
-            }
-        }
-        return new Token(TokenType.SPECIAL_OR_OPERATOR, sql.substring(beginIndex));
-    }
-
     private static Token getDefaultToken(String sql, int beginIndex) {
         for (int i = beginIndex + 1; i < sql.length(); i++) {
             char c = sql.charAt(i);
@@ -170,7 +161,7 @@ public class BasicPostgresqlSqlLexer {
             if (isWhitespace(c) || isSpecialOrOperatorChar(c)) {
                 return new Token(TokenType.PARAMETER, sql.substring(beginIndex, i));
             }
-            if (!isDigit(c)) {
+            if (!isAsciiDigit(c)) {
                 throw new IllegalArgumentException("Sql cannot be parsed: illegal character in parameter or dollar-quote tag: " + c);
             }
         }
@@ -181,28 +172,20 @@ public class BasicPostgresqlSqlLexer {
         char firstChar = sql.charAt(beginIndex + 1);
         if (firstChar == '$') {
             return getDollarQuoteToken(sql, "$$", beginIndex);
-        } else if (isDigit(firstChar)) {
+        } else if (isAsciiDigit(firstChar)) {
             return getParameterToken(sql, beginIndex);
         } else {
-            char lower = toLowerCase(firstChar);
-            boolean isAlpha = lower >= 'a' && lower <= 'z';
-            if ((isAlpha || firstChar == '_')) {
-                for (int i = beginIndex + 2; i < sql.length(); i++) {
+                for (int i = beginIndex + 1; i < sql.length(); i++) {
                     char c = sql.charAt(i);
                     if (c == '$') {
                         return getDollarQuoteToken(sql, sql.substring(beginIndex, i + 1), beginIndex);
                     }
-                    lower = toLowerCase(c);
-                    isAlpha = lower >= 'a' && lower <= 'z';
-                    if (!(isAlpha || c == '_' || isDigit(c))) {
-                        throw new IllegalArgumentException("Sql cannot be parsed: illegal character in parameter or dollar-quote tag: " + c);
+                    if (!(isAsciiLetter(c) || c == '_' || isAsciiDigit(c))) {
+                        throw new IllegalArgumentException("Sql cannot be parsed: illegal character in dollar-quote tag (quote opened at index " + beginIndex + ") in statement: " + sql);
                     }
                 }
-            } else {
-                throw new IllegalArgumentException();
-            }
+                throw new IllegalArgumentException("Sql cannot be parsed: unclosed dollar-quote tag(quote opened at index " + beginIndex + ") in statement: " + sql);
         }
-        return null;
     }
 
     private static Token getStandardQuoteToken(String sql, int beginIndex) {
@@ -223,4 +206,12 @@ public class BasicPostgresqlSqlLexer {
         }
     }
 
+    private static boolean isAsciiLetter(char c){
+        char lower = Character.toLowerCase(c);
+        return lower >= 'a' && lower <= 'z';
+    }
+
+    private static boolean isAsciiDigit(char c){
+        return c >= '0' && c <= '9';
+    }
 }

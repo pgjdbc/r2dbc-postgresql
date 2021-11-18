@@ -136,6 +136,10 @@ class BasicPostgresqlSqlLexerTest {
                 assertThrows(IllegalArgumentException.class, () -> BasicPostgresqlSqlLexer.tokenize("$a b$test$a b$"));
             }
 
+            @Test
+            void unclosedTaggedDollarQuoteThrowsIllegalArgumentException() {
+                assertThrows(IllegalArgumentException.class, () -> BasicPostgresqlSqlLexer.tokenize("$abc"));
+            }
         }
 
         @Nested
