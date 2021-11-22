@@ -91,6 +91,7 @@ abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> {
     public Iterable<PostgresqlObjectId> getDataTypes() {
         return SUPPORTED_TYPES;
     }
+
     /**
      * Returns the {@link PostgresqlObjectId} for to identify whether this codec is the default codec.
      *

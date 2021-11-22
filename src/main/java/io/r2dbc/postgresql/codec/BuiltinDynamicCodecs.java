@@ -20,6 +20,7 @@ import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.api.PostgresqlConnection;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.postgresql.extension.CodecRegistrar;
+import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import org.reactivestreams.Publisher;
 import reactor.util.annotation.Nullable;
 
@@ -77,8 +78,8 @@ public class BuiltinDynamicCodecs implements CodecRegistrar {
         return statement.execute()
             .flatMap(it -> it.map((row, rowMetadata) -> {
 
-                    Integer oid = row.get("oid", Integer.class);
-                    String typname = row.get("typname", String.class);
+                int oid = PostgresqlObjectId.toInt(row.get("oid", Long.class));
+                String typname = row.get("typname", String.class);
 
                     BuiltinCodec lookup = BuiltinCodec.lookup(typname);
                     registry.addLast(lookup.createCodec(byteBufAllocator, oid));

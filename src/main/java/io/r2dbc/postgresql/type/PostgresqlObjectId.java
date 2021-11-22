@@ -16,6 +16,9 @@
 
 package io.r2dbc.postgresql.type;
 
+import io.r2dbc.postgresql.util.Assert;
+import reactor.util.annotation.Nullable;
+
 /**
  * Object IDs for well know PostgreSQL data types.
  * <p>Extension Object IDs that are provided by Postgres extensions such as PostGIS are not constants of this enumeration and must be looked up from {@code pg_type}.
@@ -434,6 +437,24 @@ public enum PostgresqlObjectId {
      */
     public int getObjectId() {
         return this.objectId;
+    }
+
+    public static int toInt(@Nullable Long oid) {
+        Assert.requireNonNull(oid, "OID must not be null");
+
+        return toInt(oid.longValue());
+    }
+
+    public static int toInt(long oid) {
+        if ((oid & 0xFFFFFFFF00000000L) != 0) {
+            throw new IllegalArgumentException("Value is not an OID:" + oid);
+        }
+
+        return (int) oid;
+    }
+
+    public static long toLong(int oid) {
+        return Integer.toUnsignedLong(oid);
     }
 
 }

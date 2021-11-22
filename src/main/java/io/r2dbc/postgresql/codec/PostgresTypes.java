@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.codec;
 
 import io.r2dbc.postgresql.api.PostgresqlConnection;
+import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -72,7 +73,9 @@ public class PostgresTypes {
 
         return this.connection.createStatement(String.format(SELECT_PG_TYPE, "=", "'" + typeName + "'", "LIMIT 1")).execute()
             .flatMap(it -> it.map((row, rowMetadata) -> {
-                return new PostgresType(row.get("oid", Integer.class), row.get("typname", String.class), row.get("typcategory", String.class));
+
+                Long oid = row.get("oid", Long.class);
+                return new PostgresType(PostgresqlObjectId.toInt(oid), oid.longValue(), row.get("typname", String.class), row.get("typcategory", String.class));
             })).singleOrEmpty();
     }
 
@@ -91,7 +94,9 @@ public class PostgresTypes {
 
         return this.connection.createStatement(String.format(SELECT_PG_TYPE, "IN", joiner, "")).execute()
             .flatMap(it -> it.map((row, rowMetadata) -> {
-                return new PostgresType(row.get("oid", Integer.class), row.get("typname", String.class), row.get("typcategory", String.class));
+
+                Long oid = row.get("oid", Long.class);
+                return new PostgresType(PostgresqlObjectId.toInt(oid), oid.longValue(), row.get("typname", String.class), row.get("typcategory", String.class));
             }));
 
     }
@@ -100,18 +105,32 @@ public class PostgresTypes {
 
         private final int oid;
 
+        private final long unsignedOid;
+
         private final String name;
 
         private final String category;
 
         public PostgresType(int oid, String name, String category) {
             this.oid = oid;
+            this.unsignedOid = oid;
+            this.name = name;
+            this.category = category;
+        }
+
+        public PostgresType(int oid, long unsignedOid, String name, String category) {
+            this.oid = oid;
+            this.unsignedOid = unsignedOid;
             this.name = name;
             this.category = category;
         }
 
         public int getOid() {
             return this.oid;
+        }
+
+        public long getUnsignedOid() {
+            return this.unsignedOid;
         }
 
         public String getName() {
@@ -226,19 +245,21 @@ public class PostgresTypes {
             }
             PostgresType that = (PostgresType) o;
             return this.oid == that.oid &&
+                this.unsignedOid == that.unsignedOid &&
                 Objects.equals(this.name, that.name) &&
                 Objects.equals(this.category, that.category);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(this.oid, this.name, this.category);
+            return Objects.hash(this.oid, this.unsignedOid, this.name, this.category);
         }
 
         @Override
         public String toString() {
             return "PostgresType{" +
                 "oid=" + this.oid +
+                "unsignedOid=" + this.unsignedOid +
                 ", name='" + this.name + '\'' +
                 ", category='" + this.category + '\'' +
                 '}';
