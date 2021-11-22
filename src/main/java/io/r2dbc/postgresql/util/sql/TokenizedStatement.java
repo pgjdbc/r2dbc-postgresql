@@ -16,7 +16,10 @@
 
 package io.r2dbc.postgresql.util.sql;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 public class TokenizedStatement {
@@ -77,26 +80,28 @@ public class TokenizedStatement {
     }
 
     private static int readParameterCount(List<Token> tokens) {
-        List<Integer> parameterTokens = tokens.stream()
-            .filter(t -> t.getType() == TokenType.PARAMETER)
-            .map(t -> {
-                try {
-                    return Integer.parseInt(t.getValue().substring(1));
-                } catch (NumberFormatException | IndexOutOfBoundsException e) {
-                    throw new IllegalArgumentException("Illegal parameter token: " + t.getValue());
-                }
-            })
-            .distinct()
-            .sorted()
-            .collect(Collectors.toList());
+        Set<Integer> parameters = new TreeSet<>();
+
+        for (Token token : tokens) {
+            if (token.getType() != TokenType.PARAMETER) {
+                continue;
+            }
+            try {
+                int i = Integer.parseInt(token.getValue().substring(1));
+                parameters.add(i);
+            } catch (NumberFormatException | IndexOutOfBoundsException e) {
+                throw new IllegalArgumentException("Illegal parameter token: " + token.getValue());
+            }
+        }
+
         int current = 1;
-        for (Integer i : parameterTokens) {
+        for (Integer i : parameters) {
             if (i != current) {
                 throw new IllegalArgumentException("Missing parameter number $" + i);
             }
             current++;
         }
-        return parameterTokens.size();
+        return parameters.size();
     }
 
 }

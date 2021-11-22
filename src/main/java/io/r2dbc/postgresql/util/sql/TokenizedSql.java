@@ -32,7 +32,7 @@ public class TokenizedSql {
         this.sql = sql;
         this.statements = statements;
         this.statementCount = statements.size();
-        this.parameterCount = statements.stream().mapToInt(TokenizedStatement::getParameterCount).sum();
+        this.parameterCount = getParameterCount(statements);
     }
 
     public List<TokenizedStatement> getStatements() {
@@ -49,6 +49,29 @@ public class TokenizedSql {
 
     public String getSql() {
         return sql;
+    }
+
+    private static int getParameterCount(List<TokenizedStatement> statements) {
+        int sum = 0;
+        for (TokenizedStatement statement : statements){
+            sum += statement.getParameterCount();
+        }
+        return sum;
+    }
+
+    public boolean hasDefaultTokenValue(String... tokenValues) {
+        for (TokenizedStatement statement : statements) {
+            for (Token token : statement.getTokens()) {
+                if (token.getType() == TokenType.DEFAULT) {
+                    for (String value : tokenValues) {
+                        if (token.getValue().equalsIgnoreCase(value)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 
 }
