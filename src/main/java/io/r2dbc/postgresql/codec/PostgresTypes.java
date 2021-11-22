@@ -74,7 +74,11 @@ public class PostgresTypes {
 
         return this.connection.createStatement(String.format(SELECT_PG_TYPE, "=", "'" + typeName + "'", "LIMIT 1")).execute()
             .flatMap(it -> it.map((row, rowMetadata) -> {
-                return new PostgresType(row.get("oid", Integer.class), row.get("typarray", Integer.class), row.get("typname", String.class), row.get("typcategory", String.class));
+
+                Long oid = row.get("oid", Long.class);
+                Long typarrayOid = row.get("typarray", Long.class);
+                return new PostgresType(PostgresqlObjectId.toInt(oid), oid.longValue(), PostgresqlObjectId.toInt(typarrayOid), typarrayOid, row.get("typname", String.class), row.get("typcategory",
+                    String.class));
             })).singleOrEmpty();
     }
 
@@ -93,7 +97,11 @@ public class PostgresTypes {
 
         return this.connection.createStatement(String.format(SELECT_PG_TYPE, "IN", joiner, "")).execute()
             .flatMap(it -> it.map((row, rowMetadata) -> {
-                return new PostgresType(row.get("oid", Integer.class), row.get("typarray", Integer.class), row.get("typname", String.class), row.get("typcategory", String.class));
+
+                Long oid = row.get("oid", Long.class);
+                Long typarrayOid = row.get("typarray", Long.class);
+                return new PostgresType(PostgresqlObjectId.toInt(oid), oid.longValue(), PostgresqlObjectId.toInt(typarrayOid), typarrayOid, row.get("typname", String.class), row.get("typcategory",
+                    String.class));
             }));
     }
 
@@ -101,7 +109,11 @@ public class PostgresTypes {
 
         private final int oid;
 
+        private final long unsignedOid;
+
         private final int typarray;
+
+        private final long unsignedTyparray;
 
         private final String name;
 
@@ -110,9 +122,11 @@ public class PostgresTypes {
         @Nullable
         private final PostgresqlObjectId objectId;
 
-        public PostgresType(int oid, int typarray, String name, String category) {
+        public PostgresType(int oid, long unsignedOid, int typarray, long unsignedTyparray, String name, String category) {
             this.oid = oid;
+            this.unsignedOid = unsignedOid;
             this.typarray = typarray;
+            this.unsignedTyparray = unsignedTyparray;
             this.name = name;
             this.category = category;
             this.objectId = PostgresqlObjectId.isValid(oid) ? PostgresqlObjectId.valueOf(oid) : null;
@@ -121,10 +135,6 @@ public class PostgresTypes {
         @Override
         public int getObjectId() {
             return getOid();
-        }
-
-        public int getArrayObjectId() {
-            return this.typarray;
         }
 
         /**
@@ -140,7 +150,7 @@ public class PostgresTypes {
 
             if (this.typarray > 0) {
 
-                return new PostgresType(this.typarray, this.typarray, this.name, this.category);
+                return new PostgresType(this.typarray, this.unsignedTyparray, this.typarray, this.unsignedTyparray, this.name, this.category);
             }
 
             throw new IllegalStateException("No array type available for " + this);
@@ -155,7 +165,18 @@ public class PostgresTypes {
             return this.objectId != null ? this.objectId.getJavaType() : Object.class;
         }
 
-        @Override
+        public int getArrayObjectId() {
+            return this.typarray;
+        }
+
+        public long getUnsignedObjectId() {
+            return this.unsignedOid;
+        }
+
+        public long getUnsignedArrayObjectId() {
+            return this.unsignedTyparray;
+        }
+
         public String getName() {
             return this.name;
         }
@@ -268,19 +289,25 @@ public class PostgresTypes {
             }
             PostgresType that = (PostgresType) o;
             return this.oid == that.oid &&
+                this.unsignedOid == that.unsignedOid &&
+                this.typarray == that.typarray &&
+                this.unsignedTyparray == that.unsignedTyparray &&
                 Objects.equals(this.name, that.name) &&
                 Objects.equals(this.category, that.category);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(this.oid, this.name, this.category);
+            return Objects.hash(this.oid, this.unsignedOid, this.typarray, this.unsignedTyparray, this.name, this.category);
         }
 
         @Override
         public String toString() {
             return "PostgresType{" +
                 "oid=" + this.oid +
+                "unsignedOid=" + this.unsignedOid +
+                "typarray=" + this.typarray +
+                "unsignedTyparray=" + this.unsignedTyparray +
                 ", name='" + this.name + '\'' +
                 ", category='" + this.category + '\'' +
                 '}';

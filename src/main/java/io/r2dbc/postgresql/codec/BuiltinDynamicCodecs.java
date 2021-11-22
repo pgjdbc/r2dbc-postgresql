@@ -77,7 +77,7 @@ public class BuiltinDynamicCodecs implements CodecRegistrar {
         return statement.execute()
             .flatMap(it -> it.map((row, rowMetadata) -> {
 
-                    Integer oid = row.get("oid", Integer.class);
+                    int oid = PostgresqlObjectId.toInt(row.get("oid", Long.class));
                     String typname = row.get("typname", String.class);
 
                     BuiltinCodec lookup = BuiltinCodec.lookup(typname);
