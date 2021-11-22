@@ -31,7 +31,6 @@ import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.GeneratedValuesUtils;
 import io.r2dbc.postgresql.util.Operators;
 import io.r2dbc.postgresql.util.sql.BasicPostgresqlSqlLexer;
-import io.r2dbc.postgresql.util.sql.TokenType;
 import io.r2dbc.postgresql.util.sql.TokenizedSql;
 import io.r2dbc.spi.Statement;
 import reactor.core.publisher.Flux;
@@ -52,7 +51,7 @@ import static io.r2dbc.postgresql.message.frontend.Execute.NO_LIMIT;
 import static io.r2dbc.postgresql.util.PredicateUtils.or;
 
 /**
- * {@link Statement} using the  <a href="https://www.postgresql.org/docs/current/static/protocol-flow.html#PROTOCOL-FLOW-EXT-QUERY">Extended Query Flow</a>.
+ * {@link Statement}.
  */
 final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlStatement {
 
@@ -85,6 +84,10 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
 
     @Override
     public PostgresqlStatement add() {
+        Binding binding = bindings.peekLast();
+        if (binding != null) {
+            binding.validate();
+        }
         this.bindings.add(new Binding(tokenizedSql.getParameterCount()));
         return this;
     }
@@ -99,7 +102,7 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
         Assert.requireNonNull(value, "value must not be null");
 
         BindingLogger.logBind(this.connectionContext, index, value);
-        getCurrentOrNewBinding().add(index, this.resources.getCodecs().encode(value));
+        getCurrentOrFirstBinding().add(index, this.resources.getCodecs().encode(value));
         return this;
     }
 
@@ -112,17 +115,17 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
     public PostgresqlStatement bindNull(int index, Class<?> type) {
         Assert.requireNonNull(type, "type must not be null");
 
-        if(index >= tokenizedSql.getParameterCount()){
+        if (index >= tokenizedSql.getParameterCount()) {
             throw new UnsupportedOperationException(String.format("Cannot bind parameter %d, statement has %d parameters", index, this.tokenizedSql.getParameterCount()));
         }
 
         BindingLogger.logBindNull(this.connectionContext, index, type);
-        getCurrentOrNewBinding().add(index, this.resources.getCodecs().encodeNull(type));
+        getCurrentOrFirstBinding().add(index, this.resources.getCodecs().encodeNull(type));
         return this;
     }
 
     @Nonnull
-    private Binding getCurrentOrNewBinding() {
+    private Binding getCurrentOrFirstBinding() {
         Binding binding = bindings.peekLast();
         if (binding == null) {
             Binding newBinding = new Binding(tokenizedSql.getParameterCount());
@@ -145,20 +148,12 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
     public PostgresqlStatement returnGeneratedValues(String... columns) {
         Assert.requireNonNull(columns, "columns must not be null");
 
-        boolean hasReturning = this.tokenizedSql.getStatements().stream()
-            .flatMap(s -> s.getTokens().stream())
-            .anyMatch(token -> (token.getType() == TokenType.DEFAULT)
-                && (token.getValue().equalsIgnoreCase("RETURNING")));
+        boolean hasReturning = this.tokenizedSql.hasDefaultTokenValue("RETURNING");
         if (hasReturning) {
             throw new IllegalStateException("Statement already includes RETURNING clause");
         }
-        boolean isSupporting = this.tokenizedSql.getStatements().stream()
-            .flatMap(s -> s.getTokens().stream())
-            .anyMatch(e -> e.getType() == TokenType.DEFAULT
-                && (e.getValue().equalsIgnoreCase("DELETE")
-                || e.getValue().equalsIgnoreCase("INSERT")
-                || e.getValue().equalsIgnoreCase("UPDATE")));
 
+        boolean isSupporting = this.tokenizedSql.hasDefaultTokenValue("DELETE", "INSERT", "UPDATE");
         if (!isSupporting) {
             throw new IllegalStateException("Statement is not a DELETE, INSERT, or UPDATE command");
         }
@@ -185,13 +180,13 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
     }
 
     Binding getCurrentBinding() {
-        return getCurrentOrNewBinding();
+        return getCurrentOrFirstBinding();
     }
 
     private int getIdentifierIndex(String identifier) {
         Assert.requireNonNull(identifier, "identifier must not be null");
         Assert.requireType(identifier, String.class, "identifier must be a String");
-        if(!identifier.startsWith("$")){
+        if (!identifier.startsWith("$")) {
             throw new NoSuchElementException(String.format("\"%s\" is not a valid identifier", identifier));
         }
         try {
