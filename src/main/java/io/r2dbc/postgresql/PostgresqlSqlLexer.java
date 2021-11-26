@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
-package io.r2dbc.postgresql.util.sql;
+package io.r2dbc.postgresql;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static java.lang.Character.isDigit;
 import static java.lang.Character.isWhitespace;
-import static java.lang.Character.toLowerCase;
 
-public class BasicPostgresqlSqlLexer {
+/**
+ * Utility to tokenize Postgres SQL statements.
+ *
+ * @since 0.9
+ */
+class PostgresqlSqlLexer {
 
     private static final char[] SPECIAL_AND_OPERATOR_CHARS = {
         '+', '-', '*', '/', '<', '>', '=', '~', '!', '@', '#', '%', '^', '&', '|', '`', '?',
@@ -36,14 +39,14 @@ public class BasicPostgresqlSqlLexer {
     }
 
     public static TokenizedSql tokenize(String sql) {
-        List<Token> tokens = new ArrayList<>();
-        List<TokenizedStatement> statements = new ArrayList<>();
+        List<TokenizedSql.Token> tokens = new ArrayList<>();
+        List<TokenizedSql.TokenizedStatement> statements = new ArrayList<>();
 
         int statementStartIndex = 0;
         int i = 0;
         while (i < sql.length()) {
             char c = sql.charAt(i);
-            Token token = null;
+            TokenizedSql.Token token = null;
 
             if (isWhitespace(c)) {
                 i++;
@@ -70,14 +73,14 @@ public class BasicPostgresqlSqlLexer {
                     token = getParameterOrDollarQuoteToken(sql, i);
                     break;
                 case ';':
-                    token = new Token(TokenType.STATEMENT_END, ";");
+                    token = new TokenizedSql.Token(TokenizedSql.TokenType.STATEMENT_END, ";");
                     break;
                 default:
                     break;
             }
             if (token == null) {
                 if (isSpecialOrOperatorChar(c)) {
-                    token = new Token(TokenType.SPECIAL_OR_OPERATOR, Character.toString(c));//getSpecialOrOperatorToken(sql, i);
+                    token = new TokenizedSql.Token(TokenizedSql.TokenType.SPECIAL_OR_OPERATOR, Character.toString(c));//getSpecialOrOperatorToken(sql, i);
                 } else {
                     token = getDefaultToken(sql, i);
                 }
@@ -85,10 +88,10 @@ public class BasicPostgresqlSqlLexer {
 
             i += token.getValue().length();
 
-            if (token.getType() == TokenType.STATEMENT_END) {
+            if (token.getType() == TokenizedSql.TokenType.STATEMENT_END) {
 
                 tokens.add(token);
-                statements.add(new TokenizedStatement(sql.substring(statementStartIndex, i), tokens));
+                statements.add(new TokenizedSql.TokenizedStatement(sql.substring(statementStartIndex, i), tokens));
 
                 tokens = new ArrayList<>();
                 statementStartIndex = i + 1;
@@ -98,27 +101,27 @@ public class BasicPostgresqlSqlLexer {
         }
         // If tokens is not empty, implicit statement end
         if (!tokens.isEmpty()) {
-            statements.add(new TokenizedStatement(sql.substring(statementStartIndex), tokens));
+            statements.add(new TokenizedSql.TokenizedStatement(sql.substring(statementStartIndex), tokens));
         }
 
         return new TokenizedSql(sql, statements);
     }
 
-    private static Token getDefaultToken(String sql, int beginIndex) {
+    private static TokenizedSql.Token getDefaultToken(String sql, int beginIndex) {
         for (int i = beginIndex + 1; i < sql.length(); i++) {
             char c = sql.charAt(i);
             if (Character.isWhitespace(c) || isSpecialOrOperatorChar(c)) {
-                return new Token(TokenType.DEFAULT, sql.substring(beginIndex, i));
+                return new TokenizedSql.Token(TokenizedSql.TokenType.DEFAULT, sql.substring(beginIndex, i));
             }
         }
-        return new Token(TokenType.DEFAULT, sql.substring(beginIndex));
+        return new TokenizedSql.Token(TokenizedSql.TokenType.DEFAULT, sql.substring(beginIndex));
     }
 
     private static boolean isSpecialOrOperatorChar(char c) {
         return Arrays.binarySearch(SPECIAL_AND_OPERATOR_CHARS, c) >= 0;
     }
 
-    private static Token getBlockCommentToken(String sql, int beginIndex) {
+    private static TokenizedSql.Token getBlockCommentToken(String sql, int beginIndex) {
         int depth = 1;
         for (int i = beginIndex + 2; i < (sql.length() - 1); i++) {
             String biGraph = sql.substring(i, i + 2);
@@ -131,78 +134,78 @@ public class BasicPostgresqlSqlLexer {
                 i++;
             }
             if (depth == 0) {
-                return new Token(TokenType.COMMENT, sql.substring(beginIndex, i + 1));
+                return new TokenizedSql.Token(TokenizedSql.TokenType.COMMENT, sql.substring(beginIndex, i + 1));
             }
         }
         throw new IllegalArgumentException("Sql cannot be parsed: unclosed block comment (comment opened at index " + beginIndex + ") in statement: " + sql);
     }
 
-    private static Token getCommentToLineEndToken(String sql, int beginIndex) {
+    private static TokenizedSql.Token getCommentToLineEndToken(String sql, int beginIndex) {
         int lineEnding = sql.indexOf('\n', beginIndex);
         if (lineEnding == -1) {
-            return new Token(TokenType.COMMENT, sql.substring(beginIndex));
+            return new TokenizedSql.Token(TokenizedSql.TokenType.COMMENT, sql.substring(beginIndex));
         } else {
-            return new Token(TokenType.COMMENT, sql.substring(beginIndex, lineEnding));
+            return new TokenizedSql.Token(TokenizedSql.TokenType.COMMENT, sql.substring(beginIndex, lineEnding));
         }
     }
 
-    private static Token getDollarQuoteToken(String sql, String tag, int beginIndex) {
+    private static TokenizedSql.Token getDollarQuoteToken(String sql, String tag, int beginIndex) {
         int nextQuote = sql.indexOf(tag, beginIndex + tag.length());
         if (nextQuote == -1) {
             throw new IllegalArgumentException("Sql cannot be parsed: unclosed quote (quote opened at index " + beginIndex + ") in statement: " + sql);
         } else {
-            return new Token(TokenType.STRING_CONSTANT, sql.substring(beginIndex, nextQuote + tag.length()));
+            return new TokenizedSql.Token(TokenizedSql.TokenType.STRING_CONSTANT, sql.substring(beginIndex, nextQuote + tag.length()));
         }
     }
 
-    private static Token getParameterToken(String sql, int beginIndex) {
+    private static TokenizedSql.Token getParameterToken(String sql, int beginIndex) {
         for (int i = beginIndex + 1; i < sql.length(); i++) {
             char c = sql.charAt(i);
             if (isWhitespace(c) || isSpecialOrOperatorChar(c)) {
-                return new Token(TokenType.PARAMETER, sql.substring(beginIndex, i));
+                return new TokenizedSql.Token(TokenizedSql.TokenType.PARAMETER, sql.substring(beginIndex, i));
             }
             if (!isAsciiDigit(c)) {
                 throw new IllegalArgumentException("Sql cannot be parsed: illegal character in parameter or dollar-quote tag: " + c);
             }
         }
-        return new Token(TokenType.PARAMETER, sql.substring(beginIndex));
+        return new TokenizedSql.Token(TokenizedSql.TokenType.PARAMETER, sql.substring(beginIndex));
     }
 
-    private static Token getParameterOrDollarQuoteToken(String sql, int beginIndex) {
+    private static TokenizedSql.Token getParameterOrDollarQuoteToken(String sql, int beginIndex) {
         char firstChar = sql.charAt(beginIndex + 1);
         if (firstChar == '$') {
             return getDollarQuoteToken(sql, "$$", beginIndex);
         } else if (isAsciiDigit(firstChar)) {
             return getParameterToken(sql, beginIndex);
         } else {
-                for (int i = beginIndex + 1; i < sql.length(); i++) {
-                    char c = sql.charAt(i);
-                    if (c == '$') {
-                        return getDollarQuoteToken(sql, sql.substring(beginIndex, i + 1), beginIndex);
-                    }
-                    if (!(isAsciiLetter(c) || c == '_' || isAsciiDigit(c))) {
-                        throw new IllegalArgumentException("Sql cannot be parsed: illegal character in dollar-quote tag (quote opened at index " + beginIndex + ") in statement: " + sql);
-                    }
+            for (int i = beginIndex + 1; i < sql.length(); i++) {
+                char c = sql.charAt(i);
+                if (c == '$') {
+                    return getDollarQuoteToken(sql, sql.substring(beginIndex, i + 1), beginIndex);
                 }
-                throw new IllegalArgumentException("Sql cannot be parsed: unclosed dollar-quote tag(quote opened at index " + beginIndex + ") in statement: " + sql);
+                if (!(isAsciiLetter(c) || c == '_' || isAsciiDigit(c))) {
+                    throw new IllegalArgumentException("Sql cannot be parsed: illegal character in dollar-quote tag (quote opened at index " + beginIndex + ") in statement: " + sql);
+                }
+            }
+            throw new IllegalArgumentException("Sql cannot be parsed: unclosed dollar-quote tag(quote opened at index " + beginIndex + ") in statement: " + sql);
         }
     }
 
-    private static Token getStandardQuoteToken(String sql, int beginIndex) {
+    private static TokenizedSql.Token getStandardQuoteToken(String sql, int beginIndex) {
         int nextQuote = sql.indexOf('\'', beginIndex + 1);
         if (nextQuote == -1) {
             throw new IllegalArgumentException("Sql cannot be parsed: unclosed quote (quote opened at index " + beginIndex + ") in statement: " + sql);
         } else {
-            return new Token(TokenType.STRING_CONSTANT, sql.substring(beginIndex, nextQuote + 1));
+            return new TokenizedSql.Token(TokenizedSql.TokenType.STRING_CONSTANT, sql.substring(beginIndex, nextQuote + 1));
         }
     }
 
-    private static Token getQuotedIdentifierToken(String sql, int beginIndex) {
+    private static TokenizedSql.Token getQuotedIdentifierToken(String sql, int beginIndex) {
         int nextQuote = sql.indexOf('\"', beginIndex + 1);
         if (nextQuote == -1) {
             throw new IllegalArgumentException("Sql cannot be parsed: unclosed quoted identifier (identifier opened at index " + beginIndex + ") in statement: " + sql);
         } else {
-            return new Token(TokenType.QUOTED_IDENTIFIER, sql.substring(beginIndex, nextQuote + 1));
+            return new TokenizedSql.Token(TokenizedSql.TokenType.QUOTED_IDENTIFIER, sql.substring(beginIndex, nextQuote + 1));
         }
     }
 

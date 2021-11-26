@@ -17,7 +17,6 @@
 package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.util.Assert;
-import io.r2dbc.postgresql.util.sql.BasicPostgresqlSqlLexer;
 import io.r2dbc.spi.Batch;
 import reactor.core.publisher.Flux;
 
@@ -41,7 +40,7 @@ final class PostgresqlBatch implements io.r2dbc.postgresql.api.PostgresqlBatch {
     public PostgresqlBatch add(String sql) {
         Assert.requireNonNull(sql, "sql must not be null");
 
-        if (!(BasicPostgresqlSqlLexer.tokenize(sql).getParameterCount() == 0)) {
+        if (!(PostgresqlSqlLexer.tokenize(sql).getParameterCount() == 0)) {
             throw new IllegalArgumentException(String.format("Statement '%s' is not supported.  This is often due to the presence of parameters.", sql));
         }
 

@@ -30,8 +30,6 @@ import io.r2dbc.postgresql.message.frontend.Bind;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.GeneratedValuesUtils;
 import io.r2dbc.postgresql.util.Operators;
-import io.r2dbc.postgresql.util.sql.BasicPostgresqlSqlLexer;
-import io.r2dbc.postgresql.util.sql.TokenizedSql;
 import io.r2dbc.spi.Statement;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -51,7 +49,9 @@ import static io.r2dbc.postgresql.message.frontend.Execute.NO_LIMIT;
 import static io.r2dbc.postgresql.util.PredicateUtils.or;
 
 /**
- * {@link Statement}.
+ * A generic {@link Statement}.
+ *
+ * @since 0.9
  */
 final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlStatement {
 
@@ -71,11 +71,11 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
 
     PostgresqlStatement(ConnectionResources resources, String sql) {
         this.resources = Assert.requireNonNull(resources, "resources must not be null");
-        this.tokenizedSql = BasicPostgresqlSqlLexer.tokenize(Assert.requireNonNull(sql, "sql must not be null"));
+        this.tokenizedSql = PostgresqlSqlLexer.tokenize(Assert.requireNonNull(sql, "sql must not be null"));
         this.connectionContext = resources.getClient().getContext();
-        this.bindings = new ArrayDeque<>(tokenizedSql.getParameterCount());
+        this.bindings = new ArrayDeque<>(this.tokenizedSql.getParameterCount());
 
-        if (tokenizedSql.getStatementCount() > 1 && tokenizedSql.getParameterCount() > 0) {
+        if (this.tokenizedSql.getStatementCount() > 1 && this.tokenizedSql.getParameterCount() > 0) {
             throw new IllegalArgumentException(String.format("Statement '%s' cannot be created. This is often due to the presence of both multiple statements and parameters at the same time.", sql));
         }
 
@@ -84,11 +84,11 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
 
     @Override
     public PostgresqlStatement add() {
-        Binding binding = bindings.peekLast();
+        Binding binding = this.bindings.peekLast();
         if (binding != null) {
             binding.validate();
         }
-        this.bindings.add(new Binding(tokenizedSql.getParameterCount()));
+        this.bindings.add(new Binding(this.tokenizedSql.getParameterCount()));
         return this;
     }
 
@@ -115,7 +115,7 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
     public PostgresqlStatement bindNull(int index, Class<?> type) {
         Assert.requireNonNull(type, "type must not be null");
 
-        if (index >= tokenizedSql.getParameterCount()) {
+        if (index >= this.tokenizedSql.getParameterCount()) {
             throw new UnsupportedOperationException(String.format("Cannot bind parameter %d, statement has %d parameters", index, this.tokenizedSql.getParameterCount()));
         }
 
@@ -126,10 +126,10 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
 
     @Nonnull
     private Binding getCurrentOrFirstBinding() {
-        Binding binding = bindings.peekLast();
+        Binding binding = this.bindings.peekLast();
         if (binding == null) {
-            Binding newBinding = new Binding(tokenizedSql.getParameterCount());
-            bindings.add(newBinding);
+            Binding newBinding = new Binding(this.tokenizedSql.getParameterCount());
+            this.bindings.add(newBinding);
             return newBinding;
         } else {
             return binding;
@@ -148,13 +148,11 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
     public PostgresqlStatement returnGeneratedValues(String... columns) {
         Assert.requireNonNull(columns, "columns must not be null");
 
-        boolean hasReturning = this.tokenizedSql.hasDefaultTokenValue("RETURNING");
-        if (hasReturning) {
+        if (this.tokenizedSql.hasDefaultTokenValue("RETURNING")) {
             throw new IllegalStateException("Statement already includes RETURNING clause");
         }
 
-        boolean isSupporting = this.tokenizedSql.hasDefaultTokenValue("DELETE", "INSERT", "UPDATE");
-        if (!isSupporting) {
+        if (!this.tokenizedSql.hasDefaultTokenValue("DELETE", "INSERT", "UPDATE")) {
             throw new IllegalStateException("Statement is not a DELETE, INSERT, or UPDATE command");
         }
 
