@@ -140,7 +140,7 @@ public class PostgresTypes {
         /**
          * Return the type as array type.
          *
-         * @return
+         * @return this type as array type.
          */
         public PostgresType asArrayType() {
 
