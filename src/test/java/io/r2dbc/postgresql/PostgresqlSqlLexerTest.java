@@ -61,6 +61,8 @@ class PostgresqlSqlLexerTest {
             @Test
             void cStyleCommentIsTokenized() {
                 assertSingleStatementEqualsCompleteToken("/*Test*/", TokenizedSql.TokenType.COMMENT);
+                assertSingleStatementEqualsCompleteToken("/**/", TokenizedSql.TokenType.COMMENT);
+                assertSingleStatementEqualsCompleteToken("/*T*/", TokenizedSql.TokenType.COMMENT);
             }
 
             @Test
