@@ -124,12 +124,12 @@ class PostgresqlSqlLexer {
     private static TokenizedSql.Token getBlockCommentToken(String sql, int beginIndex) {
         int depth = 1;
         for (int i = beginIndex + 2; i < (sql.length() - 1); i++) {
-            String biGraph = sql.substring(i, i + 2);
-
-            if (biGraph.equals("/*")) {
+            char c1 = sql.charAt(i);
+            char c2 = sql.charAt(i + 1);
+            if (c1 == '/' && c2 == '*') {
                 depth++;
                 i++;
-            } else if (biGraph.equals("*/")) {
+            } else if (c1 == '*' && c2 == '/') {
                 depth--;
                 i++;
             }
