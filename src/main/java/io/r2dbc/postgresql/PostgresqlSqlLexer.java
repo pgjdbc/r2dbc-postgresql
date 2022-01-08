@@ -184,7 +184,7 @@ class PostgresqlSqlLexer {
                     return getDollarQuoteToken(sql, sql.substring(beginIndex, i + 1), beginIndex);
                 }
                 if (!(isAsciiLetter(c) || c == '_' || isAsciiDigit(c))) {
-                    throw new IllegalArgumentException("Sql cannot be parsed: illegal character in dollar-quote tag (quote opened at index " + beginIndex + ") in statement: " + sql);
+                    return new TokenizedSql.Token(TokenizedSql.TokenType.PARAMETER, sql.substring(beginIndex, i));
                 }
             }
             throw new IllegalArgumentException("Sql cannot be parsed: unclosed dollar-quote tag(quote opened at index " + beginIndex + ") in statement: " + sql);
@@ -209,9 +209,8 @@ class PostgresqlSqlLexer {
         }
     }
 
-    private static boolean isAsciiLetter(char c){
-        char lower = Character.toLowerCase(c);
-        return lower >= 'a' && lower <= 'z';
+    private static boolean isAsciiLetter(char c) {
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
     }
 
     private static boolean isAsciiDigit(char c){

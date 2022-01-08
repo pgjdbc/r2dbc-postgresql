@@ -94,7 +94,10 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
 
     @Override
     public PostgresqlStatement bind(String identifier, Object value) {
-        return bind(getIdentifierIndex(identifier), value);
+        Assert.requireNonNull(value, "value must not be null");
+
+        bind(getIdentifierIndex(identifier), value);
+        return this;
     }
 
     @Override
@@ -108,7 +111,10 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
 
     @Override
     public PostgresqlStatement bindNull(String identifier, Class<?> type) {
-        return bindNull(getIdentifierIndex(identifier), type);
+        Assert.requireNonNull(type, "type must not be null");
+
+        bindNull(getIdentifierIndex(identifier), type);
+        return this;
     }
 
     @Override
@@ -181,17 +187,39 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
         return getCurrentOrFirstBinding();
     }
 
-    private int getIdentifierIndex(String identifier) {
+    private void bind(TokenizedSql.ParameterIndex parameterIndex, Object value) {
+        if (parameterIndex.getValues() == null) {
+            BindingLogger.logBind(this.connectionContext, parameterIndex.getFirst(), value);
+            getCurrentOrFirstBinding().add(parameterIndex.getFirst(), this.resources.getCodecs().encode(value));
+        } else {
+            EncodedParameter encodedValue = this.resources.getCodecs().encode(value);
+            for (int index : parameterIndex.getValues()) {
+                BindingLogger.logBind(this.connectionContext, parameterIndex.getFirst(), value);
+                getCurrentOrFirstBinding().add(index, encodedValue);
+            }
+        }
+    }
+
+    private void bindNull(TokenizedSql.ParameterIndex parameterIndex, Class<?> type) {
+        if (parameterIndex.getValues() == null) {
+            BindingLogger.logBindNull(this.connectionContext, parameterIndex.getFirst(), type);
+            getCurrentOrFirstBinding().add(parameterIndex.getFirst(), this.resources.getCodecs().encodeNull(type));
+        } else {
+            EncodedParameter encodedValue = this.resources.getCodecs().encodeNull(type);
+            for (int index : parameterIndex.getValues()) {
+                BindingLogger.logBindNull(this.connectionContext, parameterIndex.getFirst(), type);
+                getCurrentOrFirstBinding().add(index, encodedValue);
+            }
+        }
+    }
+
+    private TokenizedSql.ParameterIndex getIdentifierIndex(String identifier) {
         Assert.requireNonNull(identifier, "identifier must not be null");
         Assert.requireType(identifier, String.class, "identifier must be a String");
         if (!identifier.startsWith("$")) {
             throw new NoSuchElementException(String.format("\"%s\" is not a valid identifier", identifier));
         }
-        try {
-            return Integer.parseInt(identifier.substring(1)) - 1;
-        } catch (NumberFormatException e) {
-            throw new NoSuchElementException(String.format("\"%s\" is not a valid identifier", identifier));
-        }
+        return this.tokenizedSql.getParameterIndexes(identifier);
     }
 
     private Flux<io.r2dbc.postgresql.api.PostgresqlResult> execute(String sql) {
