@@ -16,9 +16,9 @@
 
 package io.r2dbc.postgresql;
 
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import reactor.util.annotation.Nullable;
+
+import java.util.*;
 
 class TokenizedSql {
 
@@ -28,13 +28,13 @@ class TokenizedSql {
 
     private final int statementCount;
 
-    private final int parameterCount;
+    private final TokenizedParameter parameters;
 
     public TokenizedSql(String sql, List<TokenizedStatement> statements) {
         this.sql = sql;
         this.statements = statements;
         this.statementCount = statements.size();
-        this.parameterCount = getParameterCount(statements);
+        this.parameters = getTokenizedParameter(statements);
     }
 
     List<TokenizedStatement> getStatements() {
@@ -46,19 +46,38 @@ class TokenizedSql {
     }
 
     public int getParameterCount() {
-        return this.parameterCount;
+        return this.parameters.getParameterCount();
+    }
+
+    public ParameterIndex getParameterIndexes(String name) {
+        return parameters.getParameterIndexes(name);
     }
 
     public String getSql() {
         return sql;
     }
 
-    private static int getParameterCount(List<TokenizedStatement> statements) {
-        int sum = 0;
-        for (TokenizedStatement statement : statements){
-            sum += statement.getParameterCount();
+    private static TokenizedParameter getTokenizedParameter(List<TokenizedStatement> statements) {
+        Map<String, ParameterIndex> parameterIndexMap = new HashMap<>();
+        int count = 0;
+        for (TokenizedStatement statement : statements) {
+            for (Token token : statement.tokens) {
+                if (token.type != TokenType.PARAMETER) {
+                    continue;
+                }
+                ParameterIndex value = parameterIndexMap.get(token.value);
+                if (value == null) {
+                    parameterIndexMap.put(token.value, new ParameterIndex(count));
+                } else {
+                    value.push(count);
+                }
+                count++;
+            }
         }
-        return sum;
+        if (count > 0) {
+            return new TokenizedParameter(parameterIndexMap, count);
+        }
+        return new TokenizedParameter(Collections.EMPTY_MAP, count);
     }
 
     public boolean hasDefaultTokenValue(String... tokenValues) {
@@ -135,12 +154,9 @@ class TokenizedSql {
 
         private final List<Token> tokens;
 
-        private final int parameterCount;
-
         public TokenizedStatement(String sql, List<Token> tokens) {
             this.tokens = tokens;
             this.sql = sql;
-            this.parameterCount = readParameterCount(tokens);
         }
 
         public String getSql() {
@@ -149,10 +165,6 @@ class TokenizedSql {
 
         public List<Token> getTokens() {
             return this.tokens;
-        }
-
-        public int getParameterCount() {
-            return this.parameterCount;
         }
 
         @Override
@@ -186,29 +198,78 @@ class TokenizedSql {
                 '}';
         }
 
-        private static int readParameterCount(List<Token> tokens) {
-            Set<Integer> parameters = new TreeSet<>();
+    }
 
-            for (Token token : tokens) {
-                if (token.getType() != TokenType.PARAMETER) {
-                    continue;
-                }
-                try {
-                    int i = Integer.parseInt(token.getValue().substring(1));
-                    parameters.add(i);
-                } catch (NumberFormatException | IndexOutOfBoundsException e) {
-                    throw new IllegalArgumentException("Illegal parameter token: " + token.getValue());
-                }
-            }
+    static class TokenizedParameter {
 
-            int current = 1;
-            for (Integer i : parameters) {
-                if (i != current) {
-                    throw new IllegalArgumentException("Missing parameter number $" + i);
-                }
-                current++;
+        private final Map<String, ParameterIndex> namedParameterIndexes;
+        private final int parameterCount;
+
+        TokenizedParameter(Map<String, ParameterIndex> namedParameterIndexes, int parameterCount) {
+            this.namedParameterIndexes = namedParameterIndexes;
+            this.parameterCount = parameterCount;
+        }
+
+        public ParameterIndex getParameterIndexes(String name) {
+            ParameterIndex index = namedParameterIndexes.get(name);
+            if (index == null) {
+                throw new NoSuchElementException(String.format("\"%s\" is not a valid identifier", name));
             }
-            return parameters.size();
+            return index;
+        }
+
+        public int getParameterCount() {
+            return this.parameterCount;
+        }
+    }
+
+    static class ParameterIndex {
+
+        private final int first;
+
+        private int[] values;
+
+        private int size = 1;
+
+        ParameterIndex(int first) {
+            this.first = first;
+        }
+
+        void push(int value) {
+            if (this.values == null) {
+                this.values = new int[]{this.first, value, 0, 0};
+                this.size = 2;
+            } else {
+                int i = this.size++;
+                if (i >= this.values.length) {
+                    int[] data = new int[this.values.length << 1];
+                    System.arraycopy(this.values, 0, data, 0, this.values.length);
+                    this.values = data;
+                }
+                this.values[i] = value;
+            }
+        }
+
+        public int getFirst() {
+            return first;
+        }
+
+        @Nullable
+        public int[] getValues() {
+            return values;
+        }
+
+        @Override
+        public String toString() {
+            if (this.values == null) {
+                return Integer.toString(this.first);
+            } else {
+                StringBuilder builder = (new StringBuilder()).append('[').append(this.values[0]);
+                for(int i = 1; i < this.size; ++i) {
+                    builder.append(", ").append(this.values[i]);
+                }
+                return builder.append(']').toString();
+            }
         }
 
     }
