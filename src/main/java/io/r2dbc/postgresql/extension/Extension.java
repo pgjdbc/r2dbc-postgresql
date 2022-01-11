@@ -27,13 +27,13 @@ package io.r2dbc.postgresql.extension;
  * what is available in the classpath.
  * <p>
  * Specifically, a custom extension can be registered by supplying its fully qualified class name in a file named {@code io.r2dbc.postgresql.extension.Extension} within the
- * {@code /META-INF/services} directory in its enclosing JAR file.
+ * {@code /META-INF/services} directory in its enclosing JAR file.</p>
  *
- * <h3>Configuring Automatic Extension Detection</h3>
- * Auto-detection is enabled by default. To disable it, simply set the {@link io.r2dbc.postgresql.PostgresqlConnectionConfiguration.Builder#autodetectExtensions(boolean)} parameter to
- * {@code false}.
+ * <strong>Configuring Automatic Extension Detection</strong>
+ * <p>Auto-detection is enabled by default. To disable it, simply set the {@link io.r2dbc.postgresql.PostgresqlConnectionConfiguration.Builder#autodetectExtensions(boolean)} parameter to
+ * {@code false}.</p>
  *
- * <h3>Constructor Requirements</h3>
+ * <strong>Constructor Requirements</strong>
  * <p>Extension implementations must have a <em>default constructor</em> if registered via the {@code ServiceLoader}.  When registered through
  * {@link io.r2dbc.postgresql.PostgresqlConnectionConfiguration} the default constructor is not required to be {@code public}.
  * When registered via the {@code ServiceLoader} the default constructor must be {@code public}.

@@ -25,9 +25,9 @@ import org.reactivestreams.Subscriber;
 
 /**
  * Registrar interface that is used to register {@link Codec}s as extension to built-in codecs.
- * <p>Implementations may use {@link PostgresqlConnection} to query Postgres information schema to discover type details such as extension type OIDs.
+ * <p>Implementations may use {@link PostgresqlConnection} to query Postgres information schema to discover type details such as extension type OIDs.</p>
  *
- * <h3>Constructor Requirements</h3>
+ * <strong>Constructor Requirements</strong>
  * <p>Extension implementations must have a <em>default constructor</em> if registered via the {@code ServiceLoader}.  When registered through
  * {@link io.r2dbc.postgresql.PostgresqlConnectionConfiguration} the default constructor is not required to be {@code public}.
  * When registered via the {@code ServiceLoader} the default constructor must be {@code public}.
