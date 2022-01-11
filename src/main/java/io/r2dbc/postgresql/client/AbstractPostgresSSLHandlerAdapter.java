@@ -42,7 +42,6 @@ abstract class AbstractPostgresSSLHandlerAdapter extends ChannelInboundHandlerAd
     AbstractPostgresSSLHandlerAdapter(ByteBufAllocator alloc, SSLConfig sslConfig) {
         this.sslConfig = sslConfig;
         this.sslEngine = sslConfig.getSslProvider().get()
-            .getSslContext()
             .newEngine(alloc);
         this.handshakeFuture = new CompletableFuture<>();
         this.sslHandler = new SslHandler(this.sslEngine);

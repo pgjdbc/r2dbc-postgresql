@@ -44,6 +44,7 @@ import static io.r2dbc.postgresql.client.ExtendedQueryMessageFlow.PARAMETER_SYMB
 /**
  * {@link Statement} using the  <a href="https://www.postgresql.org/docs/current/static/protocol-flow.html#PROTOCOL-FLOW-EXT-QUERY">Extended Query Flow</a>.
  */
+@SuppressWarnings("deprecation")
 final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
 
     private final Bindings bindings;

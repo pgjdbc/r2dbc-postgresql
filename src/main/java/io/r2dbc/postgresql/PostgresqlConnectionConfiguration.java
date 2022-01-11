@@ -16,6 +16,9 @@
 
 package io.r2dbc.postgresql;
 
+import io.netty.handler.ssl.IdentityCipherSuiteFilter;
+import io.netty.handler.ssl.OpenSsl;
+import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.r2dbc.postgresql.client.DefaultHostnameVerifier;
@@ -28,10 +31,10 @@ import io.r2dbc.postgresql.extension.CodecRegistrar;
 import io.r2dbc.postgresql.extension.Extension;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.netty.resources.LoopResources;
-import reactor.netty.tcp.SslProvider;
 import reactor.util.annotation.Nullable;
 
 import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,7 +53,6 @@ import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
 
 import static io.r2dbc.postgresql.message.frontend.Execute.NO_LIMIT;
-import static reactor.netty.tcp.SslProvider.DefaultConfigurationType.TCP;
 
 /**
  * Connection configuration information for connecting to a PostgreSQL database.
@@ -896,7 +898,7 @@ public final class PostgresqlConnectionConfiguration {
             return new SSLConfig(this.sslMode, createSslProvider(), hostnameVerifier);
         }
 
-        private Supplier<SslProvider> createSslProvider() {
+        private Supplier<SslContext> createSslProvider() {
             SslContextBuilder sslContextBuilder = SslContextBuilder.forClient();
             if (this.sslMode.verifyCertificate()) {
                 if (this.sslRootCert != null) {
@@ -905,6 +907,13 @@ public final class PostgresqlConnectionConfiguration {
             } else {
                 sslContextBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
             }
+
+            sslContextBuilder.sslProvider(
+                    OpenSsl.isAvailable() ?
+                        io.netty.handler.ssl.SslProvider.OPENSSL :
+                        io.netty.handler.ssl.SslProvider.JDK)
+                .ciphers(null, IdentityCipherSuiteFilter.INSTANCE)
+                .applicationProtocolConfig(null);
 
             URL sslKey = this.sslKey;
             URL sslCert = this.sslCert;
@@ -941,10 +950,13 @@ public final class PostgresqlConnectionConfiguration {
                 });
             }
 
-            return () -> SslProvider.builder()
-                .sslContext(this.sslContextBuilderCustomizer.apply(sslContextBuilder))
-                .defaultConfiguration(TCP)
-                .build();
+            return () -> {
+                try {
+                    return this.sslContextBuilderCustomizer.apply(sslContextBuilder).build();
+                } catch (SSLException e) {
+                    throw new IllegalStateException("Failed to create SslContext", e);
+                }
+            };
         }
 
         interface StreamConsumer {

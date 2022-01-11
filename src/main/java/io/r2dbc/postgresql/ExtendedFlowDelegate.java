@@ -69,6 +69,7 @@ import static io.r2dbc.postgresql.util.PredicateUtils.or;
  * Utility to execute the {@code Parse/Bind/Describe/Execute/Sync} portion of the <a href="https://www.postgresql.org/docs/current/static/protocol-flow.html#PROTOCOL-FLOW-EXT-QUERY">Extended query</a>
  * message flow.
  */
+@SuppressWarnings("deprecation")
 class ExtendedFlowDelegate {
 
     static final Predicate<BackendMessage> RESULT_FRAME_FILTER = not(or(BindComplete.class::isInstance, NoData.class::isInstance));

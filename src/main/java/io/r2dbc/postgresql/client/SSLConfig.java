@@ -16,8 +16,8 @@
 
 package io.r2dbc.postgresql.client;
 
+import io.netty.handler.ssl.SslContext;
 import io.r2dbc.postgresql.util.Assert;
-import reactor.netty.tcp.SslProvider;
 import reactor.util.annotation.Nullable;
 
 import javax.net.ssl.HostnameVerifier;
@@ -31,9 +31,9 @@ public final class SSLConfig {
     private final SSLMode sslMode;
 
     @Nullable
-    private final Supplier<SslProvider> sslProvider;
+    private final Supplier<SslContext> sslProvider;
 
-    public SSLConfig(SSLMode sslMode, @Nullable Supplier<SslProvider> sslProvider, @Nullable HostnameVerifier hostnameVerifier) {
+    public SSLConfig(SSLMode sslMode, @Nullable Supplier<SslContext> sslProvider, @Nullable HostnameVerifier hostnameVerifier) {
         if (sslMode != SSLMode.DISABLE) {
             Assert.requireNonNull(sslProvider, "Ssl provider is required for ssl mode " + sslMode);
         }
@@ -57,7 +57,7 @@ public final class SSLConfig {
         return this.sslMode;
     }
 
-    public Supplier<SslProvider> getSslProvider() {
+    public Supplier<SslContext> getSslProvider() {
         if (this.sslProvider == null) {
             throw new IllegalStateException("SSL Mode disabled. SslProvider not available");
         }
