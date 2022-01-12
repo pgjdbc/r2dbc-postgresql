@@ -1,6 +1,17 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+0.8.11.RELEASE
+-----------------------------------------
+* Add support to re-prepare cached statements #382
+* Add support for reading arbitrary enum values as `String` #429
+* Backport compound statement result splitting to 0.8.x #446
+* SSL=False Option isn't working #453
+* Add support to decode enums and other types as `String` #454
+* Buffers in `SSLSessionHandlerAdapter` not released after decoding #458
+* Truncated the values tested in time-related unit tests to their micro… #469
+* NumberFormatException in BuiltinDynamicCodecs when reading oid value #470
+
 0.8.10.RELEASE
 -----------------------------------------
 * Apply correct windowing in SimpleQueryPostgresqlStatement #450
