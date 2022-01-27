@@ -93,7 +93,7 @@ class PostgresqlSegmentResultUnitTests {
 
         result.getRowsUpdated()
             .as(StepVerifier::create)
-            .expectNext(42)
+            .expectNext(42L)
             .verifyComplete();
     }
 
@@ -105,7 +105,7 @@ class PostgresqlSegmentResultUnitTests {
 
         result.filter(Result.UpdateCount.class::isInstance).getRowsUpdated()
             .as(StepVerifier::create)
-            .expectNext(42)
+            .expectNext(42L)
             .verifyComplete();
     }
 

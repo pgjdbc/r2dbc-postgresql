@@ -47,7 +47,7 @@ final class PostgresqlStatementErrorsIntegrationTests extends AbstractIntegratio
 
         SERVER.getJdbcOperations().execute("CREATE TABLE test (id SERIAL PRIMARY KEY)");
 
-        Flux<Integer> insert = Flux.from(this.connection.createStatement("INSERT INTO test (id) VALUES (1) RETURNING *").execute()).flatMap(Result::getRowsUpdated);
+        Flux<?> insert = Flux.from(this.connection.createStatement("INSERT INTO test (id) VALUES (1) RETURNING *").execute()).flatMap(Result::getRowsUpdated);
 
         insert.thenMany(insert).as(StepVerifier::create).verifyError(R2dbcDataIntegrityViolationException.class);
     }
@@ -57,7 +57,7 @@ final class PostgresqlStatementErrorsIntegrationTests extends AbstractIntegratio
 
         SERVER.getJdbcOperations().execute("CREATE TABLE test (id SERIAL PRIMARY KEY)");
 
-        Flux<Integer> insert = Flux.from(this.connection.createStatement("INSERT INTO test (id) VALUES ($1) RETURNING *").bind("$1", 1).execute()).flatMap(Result::getRowsUpdated);
+        Flux<?> insert = Flux.from(this.connection.createStatement("INSERT INTO test (id) VALUES ($1) RETURNING *").bind("$1", 1).execute()).flatMap(Result::getRowsUpdated);
 
         insert.thenMany(insert).as(StepVerifier::create).verifyError(R2dbcDataIntegrityViolationException.class);
     }

@@ -71,7 +71,7 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
 
     private final Codecs codecs;
 
-    private final Flux<Integer> validationQuery;
+    private final Flux<Long> validationQuery;
 
     private final AtomicReference<NotificationAdapter> notificationAdapter = new AtomicReference<>();
 
@@ -380,7 +380,7 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
                 return;
             }
 
-            this.validationQuery.subscribe(new CoreSubscriber<Integer>() {
+            this.validationQuery.subscribe(new CoreSubscriber<Long>() {
 
                 @Override
                 public void onSubscribe(Subscription s) {
@@ -388,7 +388,7 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
                 }
 
                 @Override
-                public void onNext(Integer integer) {
+                public void onNext(Long integer) {
 
                 }
 

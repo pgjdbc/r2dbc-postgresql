@@ -738,7 +738,7 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
 
                         .concatWith(close(connection)))
                     .as(StepVerifier::create)
-                    .expectNext(1)
+                    .expectNext(1L)
                     .verifyComplete();
 
                 SERVER.getJdbcOperations().execute("DELETE FROM test");
@@ -754,7 +754,7 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
 
                         .concatWith(close(connection)))
                     .as(StepVerifier::create)
-                    .expectNext(1)
+                    .expectNext(1L)
                     .verifyComplete();
             } else {
 
@@ -769,7 +769,7 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
 
                         .concatWith(close(connection)))
                     .as(StepVerifier::create)
-                    .expectNext(1)
+                    .expectNext(1L)
                     .verifyComplete();
 
                 SERVER.getJdbcOperations().execute("DELETE FROM test");
@@ -785,7 +785,7 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
 
                         .concatWith(close(connection)))
                     .as(StepVerifier::create)
-                    .expectNext(1)
+                    .expectNext(1L)
                     .verifyComplete();
             }
 
@@ -856,7 +856,7 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
 
                     .concatWith(close(connection)))
                 .as(StepVerifier::create)
-                .expectNext(1)
+                .expectNext(1L)
                 .verifyComplete();
 
             this.connectionFactory.create()

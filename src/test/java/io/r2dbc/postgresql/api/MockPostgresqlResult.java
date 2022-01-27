@@ -42,7 +42,7 @@ public final class MockPostgresqlResult implements PostgresqlResult {
     }
 
     @Override
-    public Mono<Integer> getRowsUpdated() {
+    public Mono<Long> getRowsUpdated() {
         return Mono.empty();
     }
 

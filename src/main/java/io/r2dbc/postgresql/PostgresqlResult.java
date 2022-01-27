@@ -61,7 +61,7 @@ final class PostgresqlResult extends AbstractReferenceCounted implements io.r2db
 
     @Override
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public Mono<Integer> getRowsUpdated() {
+    public Mono<Long> getRowsUpdated() {
 
         return this.messages
             .<Integer>handle((message, sink) -> {
@@ -88,7 +88,7 @@ final class PostgresqlResult extends AbstractReferenceCounted implements io.r2db
                     return;
                 }
 
-                int sum = 0;
+                long sum = 0;
 
                 for (Integer integer : list) {
                     sum += integer;

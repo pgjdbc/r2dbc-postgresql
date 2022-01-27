@@ -102,7 +102,7 @@ final class LogicalDecodeIntegrationTests {
 
         ReplicationStream replicationStream = replicationConnection.startReplication(replicationRequest).block(Duration.ofSeconds(10));
 
-        connection.createStatement("INSERT INTO logical_decode_test VALUES('Hello World')").execute().flatMap(PostgresqlResult::getRowsUpdated).as(StepVerifier::create).expectNext(1).verifyComplete();
+        connection.createStatement("INSERT INTO logical_decode_test VALUES('Hello World')").execute().flatMap(PostgresqlResult::getRowsUpdated).as(StepVerifier::create).expectNext(1L).verifyComplete();
 
         replicationStream.map(byteBuf -> byteBuf.toString(StandardCharsets.UTF_8))
             .as(StepVerifier::create)

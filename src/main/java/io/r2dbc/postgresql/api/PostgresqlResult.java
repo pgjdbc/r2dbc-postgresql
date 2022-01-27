@@ -33,7 +33,7 @@ public interface PostgresqlResult extends Result {
      * {@inheritDoc}
      */
     @Override
-    Mono<Integer> getRowsUpdated();
+    Mono<Long> getRowsUpdated();
 
     /**
      * {@inheritDoc}

@@ -114,7 +114,7 @@ final class PostgresqlSegmentResult extends AbstractReferenceCounted implements 
     }
 
     @Override
-    public Mono<Integer> getRowsUpdated() {
+    public Mono<Long> getRowsUpdated() {
         return this.segments
             .<Integer>handle((segment, sink) -> {
 
@@ -137,7 +137,7 @@ final class PostgresqlSegmentResult extends AbstractReferenceCounted implements 
                     return;
                 }
 
-                int sum = 0;
+                long sum = 0;
 
                 for (Integer integer : list) {
                     sum += integer;
