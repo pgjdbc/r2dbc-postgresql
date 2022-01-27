@@ -85,7 +85,7 @@ final class PostgresqlRowMetadataUnitTests {
 
     @Test
     void getColumnNames() {
-        Collection<String> columnNames = new PostgresqlRowMetadata(this.columnMetadatas).getColumnNames();
+        Collection<String> columnNames = new PostgresqlRowMetadata(this.columnMetadatas);
 
         assertThat(columnNames.contains("TEST-NAME-1")).isTrue();
         assertThat(columnNames).containsExactly("test-name-2", "test-name-1");
@@ -100,7 +100,7 @@ final class PostgresqlRowMetadataUnitTests {
             new PostgresqlColumnMetadata(MockCodecs.empty(), "name", 200, (short) 100)
         );
 
-        Collection<String> columnNames = new PostgresqlRowMetadata(columnMetadatas).getColumnNames();
+        Collection<String> columnNames = new PostgresqlRowMetadata(columnMetadatas);
 
         assertThat(columnNames).containsSequence("id", "age", "name");
     }
@@ -114,14 +114,14 @@ final class PostgresqlRowMetadataUnitTests {
             new PostgresqlColumnMetadata(MockCodecs.empty(), "age", 200, (short) 100)
         );
 
-        Collection<String> columnNames = new PostgresqlRowMetadata(columnMetadatas).getColumnNames();
+        Collection<String> columnNames = new PostgresqlRowMetadata(columnMetadatas);
 
         assertThat(columnNames).containsSequence("age", "name", "age");
     }
 
     @Test
     void getColumnNamesModify() {
-        assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> new PostgresqlRowMetadata(this.columnMetadatas).getColumnNames().remove("test-name-1"));
+        assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> new PostgresqlRowMetadata(this.columnMetadatas).remove("test-name-1"));
     }
 
     @Test

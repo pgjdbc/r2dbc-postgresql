@@ -73,7 +73,7 @@ final class PostgresqlRowMetadata extends AbstractCollection<String> implements 
             }
         }
 
-        throw new NoSuchElementException(String.format("Column name '%s' does not exist in column names %s", name, getColumnNames()));
+        throw new NoSuchElementException(String.format("Column name '%s' does not exist in column names %s", name, this));
     }
 
     @Override
@@ -96,11 +96,6 @@ final class PostgresqlRowMetadata extends AbstractCollection<String> implements 
     @Override
     public int hashCode() {
         return Objects.hash(this.columnMetadatas);
-    }
-
-    @Override
-    public Collection<String> getColumnNames() {
-        return this;
     }
 
     @Override
