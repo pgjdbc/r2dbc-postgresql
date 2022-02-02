@@ -33,9 +33,24 @@ public class BuiltinDynamicCodecs implements CodecRegistrar {
 
     private static final Object EMPTY = new Object();
 
-    enum BuiltinCodec {
+    private interface CodecSupport {
+        default boolean isSupported() {
+            return true;
+        }
+    }
 
-        HSTORE("hstore");
+    enum BuiltinCodec implements CodecSupport {
+
+        HSTORE("hstore"),
+        POSTGIS_GEOMETRY("geometry") {
+            @Override
+            public boolean isSupported() {
+                String className = "org.locationtech.jts.geom.Geometry";
+                ClassLoader classLoader = getClass().getClassLoader();
+
+                return isPresent(classLoader, className);
+            }
+        };
 
         private final String name;
 
@@ -48,6 +63,8 @@ public class BuiltinDynamicCodecs implements CodecRegistrar {
             switch (this) {
                 case HSTORE:
                     return new HStoreCodec(byteBufAllocator, oid);
+                case POSTGIS_GEOMETRY:
+                    return new PostgisGeometryCodec(byteBufAllocator, oid);
                 default:
                     throw new UnsupportedOperationException(String.format("Codec %s for OID %d not supported", name(), oid));
             }
@@ -81,7 +98,9 @@ public class BuiltinDynamicCodecs implements CodecRegistrar {
                     String typname = row.get("typname", String.class);
 
                     BuiltinCodec lookup = BuiltinCodec.lookup(typname);
-                    registry.addLast(lookup.createCodec(byteBufAllocator, oid));
+                    if (lookup.isSupported()) {
+                        registry.addLast(lookup.createCodec(byteBufAllocator, oid));
+                    }
 
                     return EMPTY;
                 })
@@ -94,6 +113,15 @@ public class BuiltinDynamicCodecs implements CodecRegistrar {
 
     private static String getPlaceholders() {
         return Arrays.stream(BuiltinCodec.values()).map(s -> "'" + s.getName() + "'").collect(Collectors.joining(","));
+    }
+
+    private static boolean isPresent(ClassLoader classLoader, String fullyQualifiedClassName) {
+        try {
+            classLoader.loadClass(fullyQualifiedClassName);
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
     }
 
 }
