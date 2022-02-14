@@ -15,7 +15,7 @@ This driver provides the following features:
 * Binary data transfer
 * Execution of prepared statements with bindings
 * Execution of batch statements without bindings
-* Read and write support for all data types except LOB types (e.g. `BLOB`, `CLOB`)
+* Read and write support for a majority of data types (see [Data Type Mapping](#data-type-mapping) for details)
 * Fetching of `REFCURSOR` using `io.r2dbc.postgresql.api.RefCursor`
 * Extension points to register `Codec`s to handle additional PostgreSQL data types
 
