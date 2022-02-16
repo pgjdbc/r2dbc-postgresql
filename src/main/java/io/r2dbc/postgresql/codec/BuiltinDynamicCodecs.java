@@ -33,22 +33,17 @@ public class BuiltinDynamicCodecs implements CodecRegistrar {
 
     private static final Object EMPTY = new Object();
 
-    private interface CodecSupport {
-        default boolean isSupported() {
-            return true;
-        }
-    }
 
-    enum BuiltinCodec implements CodecSupport {
+    enum BuiltinCodec {
 
         HSTORE("hstore"),
         POSTGIS_GEOMETRY("geometry") {
+
+            private final boolean jtsPresent = isPresent(BuiltinDynamicCodecs.class.getClassLoader(), "org.locationtech.jts.geom.Geometry");
+
             @Override
             public boolean isSupported() {
-                String className = "org.locationtech.jts.geom.Geometry";
-                ClassLoader classLoader = getClass().getClassLoader();
-
-                return isPresent(classLoader, className);
+                return this.jtsPresent;
             }
         };
 
@@ -72,6 +67,10 @@ public class BuiltinDynamicCodecs implements CodecRegistrar {
 
         public String getName() {
             return this.name;
+        }
+
+        boolean isSupported() {
+            return true;
         }
 
         static BuiltinCodec lookup(@Nullable String name) {
@@ -115,9 +114,9 @@ public class BuiltinDynamicCodecs implements CodecRegistrar {
         return Arrays.stream(BuiltinCodec.values()).map(s -> "'" + s.getName() + "'").collect(Collectors.joining(","));
     }
 
-    private static boolean isPresent(ClassLoader classLoader, String fullyQualifiedClassName) {
+    private static boolean isPresent(ClassLoader classLoader, String name) {
         try {
-            classLoader.loadClass(fullyQualifiedClassName);
+            Class.forName(name, false, classLoader);
             return true;
         } catch (ClassNotFoundException e) {
             return false;
