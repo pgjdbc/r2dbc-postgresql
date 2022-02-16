@@ -23,8 +23,10 @@ import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKBReader;
+import org.locationtech.jts.io.WKTWriter;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
@@ -34,11 +36,16 @@ import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
+/**
+ * PostGIS codec using {@link WKBReader} and {@link WKTWriter}.
+ */
 final class PostgisGeometryCodec implements Codec<Geometry>, CodecMetadata {
 
     private static final Class<Geometry> TYPE = Geometry.class;
 
     private final ByteBufAllocator byteBufAllocator;
+
+    private final GeometryFactory geometryFactory = new GeometryFactory();
 
     private final int oid;
 
@@ -83,7 +90,7 @@ final class PostgisGeometryCodec implements Codec<Geometry>, CodecMetadata {
         Assert.isTrue(format == FORMAT_TEXT, "format must be FORMAT_TEXT");
 
         try {
-            return new WKBReader().read(WKBReader.hexToBytes(ByteBufUtils.decode(buffer)));
+            return new WKBReader(this.geometryFactory).read(WKBReader.hexToBytes(ByteBufUtils.decode(buffer)));
         } catch (ParseException e) {
             throw new IllegalArgumentException(e);
         }
@@ -94,8 +101,8 @@ final class PostgisGeometryCodec implements Codec<Geometry>, CodecMetadata {
         Assert.requireType(value, Geometry.class, "value must be Geometry type");
         Geometry geometry = (Geometry) value;
 
-        return new EncodedParameter(Format.FORMAT_TEXT, oid, Mono.fromSupplier(
-                () -> ByteBufUtils.encode(byteBufAllocator, geometry.toText())
+        return new EncodedParameter(Format.FORMAT_TEXT, this.oid, Mono.fromSupplier(
+            () -> ByteBufUtils.encode(this.byteBufAllocator, geometry.toText())
         ));
     }
 
@@ -106,7 +113,7 @@ final class PostgisGeometryCodec implements Codec<Geometry>, CodecMetadata {
 
     @Override
     public EncodedParameter encodeNull() {
-        return new EncodedParameter(FORMAT_BINARY, oid, NULL_VALUE);
+        return new EncodedParameter(FORMAT_BINARY, this.oid, NULL_VALUE);
     }
 
     @Override

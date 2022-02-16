@@ -385,6 +385,7 @@ This reference table shows the type mapping between [PostgreSQL][p] and Java dat
 | [`date`][psql-date-ref]                         | [`LocalDate`][java-ld-ref]|
 | [`double precision`][psql-floating-point-ref]   | [**`Double`**][java-double-ref], [`Float`][java-float-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Integer`][java-integer-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
 | [enumerated types][psql-enum-ref]               | Client code `Enum` types through `EnumCodec`|
+| [`geometry`][postgis-ref]                       | **`org.locationtech.jts.geom.Geometry`**|
 | [`hstore`][psql-hstore-ref]                     | [**`Map`**][java-map-ref]|
 | [`inet`][psql-inet-ref]                         | [**`InetAddress`**][java-inet-ref]|
 | [`integer`][psql-integer-ref]                   | [**`Integer`**][java-integer-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
@@ -493,9 +494,10 @@ Support for the following single-dimensional arrays (read and write):
 [psql-uuid-ref]: https://www.postgresql.org/docs/current/datatype-uuid.html
 [psql-xml-ref]: https://www.postgresql.org/docs/current/datatype-xml.html
 [psql-runtime-config]: https://www.postgresql.org/docs/current/runtime-config-client.html
+[postgis-ref]: http://postgis.net/workshops/postgis-intro/geometries.html
 
-[r2dbc-blob-ref]: https://r2dbc.io/spec/0.9.0.M1/api/io/r2dbc/spi/Blob.html
-[r2dbc-clob-ref]: https://r2dbc.io/spec/0.9.0.M1/api/io/r2dbc/spi/Clob.html
+[r2dbc-blob-ref]: https://r2dbc.io/spec/0.9.0.RELEASE/api/io/r2dbc/spi/Blob.html
+[r2dbc-clob-ref]: https://r2dbc.io/spec/0.9.0.RELEASE/api/io/r2dbc/spi/Clob.html
 
 [java-bigdecimal-ref]: https://docs.oracle.com/javase/8/docs/api/java/math/BigDecimal.html
 [java-biginteger-ref]: https://docs.oracle.com/javase/8/docs/api/java/math/BigInteger.html
@@ -529,7 +531,7 @@ This driver accepts the following extensions:
 
 Extensions can be registered programmatically using `PostgresConnectionConfiguration` or discovered using Java's `ServiceLoader` mechanism (from `META-INF/services/io.r2dbc.postgresql.extension.Extension`).
 
-The driver ships with built-in dynamic codecs (e.g. `hstore`) that are registered during the connection handshake depending on their availability while connecting. Note that Postgres extensions registered after a connection was established require a reconnect to initialize the codec. 
+The driver ships with built-in dynamic codecs (e.g. `hstore`, PostGIS `geometry`) that are registered during the connection handshake depending on their availability while connecting. Note that Postgres extensions registered after a connection was established require a reconnect to initialize the codec. 
 
 ## Logging
 If SL4J is on the classpath, it will be used. Otherwise, there are two possible fallbacks: Console or `java.util.logging.Logger`). By default, the Console fallback is used. To use the JDK loggers, set the `reactor.logging.fallback` System property to `JDK`.
