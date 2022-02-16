@@ -214,14 +214,22 @@ public final class ReactorNettyClient implements Client {
         Assert.requireNonNull(takeUntil, "takeUntil must not be null");
         Assert.requireNonNull(requests, "requests must not be null");
 
-        return this.messageSubscriber.addConversation(takeUntil, requests, this.requests::next, this::isConnected);
+        if (!isConnected()) {
+            return Flux.error(this.messageSubscriber.createClientClosedException());
+        }
+
+        return this.messageSubscriber.addConversation(takeUntil, requests, this::doSendRequest, this::isConnected);
     }
 
     @Override
     public void send(FrontendMessage message) {
         Assert.requireNonNull(message, "requests must not be null");
 
-        this.requests.next(Mono.just(message));
+        doSendRequest(Mono.just(message));
+    }
+
+    private void doSendRequest(Publisher<FrontendMessage> it) {
+        this.requests.next(it);
     }
 
     private Mono<Void> resumeError(Throwable throwable) {
@@ -695,7 +703,7 @@ public final class ReactorNettyClient implements Client {
                         sink.onRequest(value -> onRequest(conversation, value));
 
                         if (!isConnected.get()) {
-                            sink.error(new PostgresConnectionClosedException("Cannot exchange messages because the connection is closed"));
+                            sink.error(createClientClosedException());
                             return;
                         }
 
@@ -708,10 +716,13 @@ public final class ReactorNettyClient implements Client {
                         sender.accept(requestMessages);
                     } else {
                         sink.error(new RequestQueueException("Cannot exchange messages because the request queue limit is exceeded"));
-
                     }
                 }
             });
+        }
+
+        PostgresConnectionClosedException createClientClosedException() {
+            return new PostgresConnectionClosedException("Cannot exchange messages because the connection is closed");
         }
 
         /**
