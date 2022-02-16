@@ -62,14 +62,14 @@ final class NumericDecodeUtils {
                 return Short.parseShort(ByteBufUtils.decode(buffer));
             case INT4:
             case INT4_ARRAY:
-            case OID:
-            case OID_ARRAY:
                 if (FORMAT_BINARY == format) {
                     return buffer.readInt();
                 }
                 return Integer.parseInt(ByteBufUtils.decode(buffer));
             case INT8:
             case INT8_ARRAY:
+            case OID:
+            case OID_ARRAY:
                 if (FORMAT_BINARY == format) {
                     return buffer.readLong();
                 }
