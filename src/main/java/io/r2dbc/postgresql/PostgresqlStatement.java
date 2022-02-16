@@ -266,7 +266,7 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
     private static Mono<List<ByteBuf>> collectBindingParameters(Binding binding) {
 
         return Flux.fromIterable(binding.getParameterValues())
-            .flatMap(f -> {
+            .concatMap(f -> {
                 if (f == EncodedParameter.NULL_VALUE) {
                     return Flux.just(Bind.NULL_VALUE);
                 } else {
