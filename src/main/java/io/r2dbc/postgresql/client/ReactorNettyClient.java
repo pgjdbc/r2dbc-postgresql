@@ -54,6 +54,7 @@ import reactor.core.publisher.Operators;
 import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Schedulers;
 import reactor.netty.Connection;
+import reactor.netty.channel.AbortedException;
 import reactor.netty.tcp.TcpClient;
 import reactor.util.Logger;
 import reactor.util.Loggers;
@@ -496,6 +497,11 @@ public final class ReactorNettyClient implements Client {
     }
 
     private void handleConnectionError(Throwable error) {
+
+        if (AbortedException.isConnectionReset(error) && !isConnected()) {
+            drainError(() -> this.messageSubscriber.createClientClosedException(error));
+        }
+
         drainError(() -> new PostgresConnectionException(error));
     }
 
@@ -533,6 +539,10 @@ public final class ReactorNettyClient implements Client {
 
         public PostgresConnectionClosedException(String reason) {
             super(reason);
+        }
+
+        public PostgresConnectionClosedException(String reason, @Nullable Throwable cause) {
+            super(reason, cause);
         }
 
     }
@@ -670,7 +680,7 @@ public final class ReactorNettyClient implements Client {
 
         private Subscription upstream;
 
-        public Flux<BackendMessage> addConversation(Predicate<BackendMessage> takeUntil, Publisher<FrontendMessage> requests, Consumer<Flux<FrontendMessage>> sender,
+        public Flux<BackendMessage> addConversation(Predicate<BackendMessage> takeUntil, Publisher<FrontendMessage> requests, Consumer<Publisher<FrontendMessage>> sender,
                                                     Supplier<Boolean> isConnected) {
 
             return Flux.create(sink -> {
@@ -688,13 +698,7 @@ public final class ReactorNettyClient implements Client {
                             return;
                         }
 
-                        Flux<FrontendMessage> requestMessages = Flux.from(requests).doOnNext(m -> {
-                            if (!isConnected.get()) {
-                                sink.error(new PostgresConnectionClosedException("Cannot exchange messages because the connection is closed"));
-                            }
-                        });
-
-                        sender.accept(requestMessages);
+                        sender.accept(requests);
                     } else {
                         sink.error(new RequestQueueException("Cannot exchange messages because the request queue limit is exceeded"));
                     }
@@ -703,7 +707,11 @@ public final class ReactorNettyClient implements Client {
         }
 
         PostgresConnectionClosedException createClientClosedException() {
-            return new PostgresConnectionClosedException("Cannot exchange messages because the connection is closed");
+            return createClientClosedException(null);
+        }
+
+        PostgresConnectionClosedException createClientClosedException(@Nullable Throwable cause) {
+            return new PostgresConnectionClosedException("Cannot exchange messages because the connection is closed", cause);
         }
 
         /**
