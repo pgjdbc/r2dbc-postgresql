@@ -235,7 +235,7 @@ final class ExtendedQueryPostgresqlStatement implements PostgresqlStatement {
     private static Mono<List<ByteBuf>> collectBindingParameters(Binding binding) {
 
         return Flux.fromIterable(binding.getParameterValues())
-            .flatMap(f -> {
+            .concatMap(f -> {
                 if (f == Parameter.NULL_VALUE) {
                     return Flux.just(Bind.NULL_VALUE);
                 } else {
