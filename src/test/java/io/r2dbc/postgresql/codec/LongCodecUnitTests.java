@@ -21,8 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
-import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT8;
-import static io.r2dbc.postgresql.codec.PostgresqlObjectId.VARCHAR;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.*;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.util.ByteBufUtils.encode;
@@ -49,6 +48,14 @@ final class LongCodecUnitTests {
 
         assertThat(codec.decode(TEST.buffer(8).writeLong(100L), dataType, FORMAT_BINARY, Long.class)).isEqualTo(100L);
         assertThat(codec.decode(encode(TEST, "100"), dataType, FORMAT_TEXT, Long.class)).isEqualTo(100L);
+
+        /* According to documentation: "The oid type is currently implemented as an unsigned four-byte integer"
+         * (https://www.postgresql.org/docs/12/datatype-oid.html).
+         * There is no "unsigned four-byte integer" common type in java, so the closest type to hold all possible oid
+         * values is long. 2314556683 is a valid oid for example.
+         */
+        assertThat(codec.decode(encode(TEST, "2314556683"), OID.getObjectId(), FORMAT_TEXT, Long.class))
+            .isEqualTo(2314556683L);
     }
 
     @Test
