@@ -17,14 +17,13 @@
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.util.ReferenceCountUtil;
+import io.netty.util.ReferenceCounted;
+import io.r2dbc.postgresql.util.ReferenceCountedCleaner;
 import org.assertj.core.api.AbstractObjectAssert;
 import org.assertj.core.api.ObjectAssert;
 import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -35,7 +34,7 @@ import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
  */
 final class BackendMessageAssert extends AbstractObjectAssert<BackendMessageAssert, Class<? extends BackendMessage>> {
 
-    private Cleaner cleaner = new Cleaner();
+    private ReferenceCountedCleaner cleaner = new ReferenceCountedCleaner();
 
     private BackendMessageAssert(Class<? extends BackendMessage> actual) {
         super(actual, BackendMessageAssert.class);
@@ -45,7 +44,7 @@ final class BackendMessageAssert extends AbstractObjectAssert<BackendMessageAsse
         return new BackendMessageAssert(actual);
     }
 
-    BackendMessageAssert cleaner(Cleaner cleaner) {
+    BackendMessageAssert cleaner(ReferenceCountedCleaner cleaner) {
         this.cleaner = cleaner;
         return this;
     }
@@ -61,28 +60,11 @@ final class BackendMessageAssert extends AbstractObjectAssert<BackendMessageAsse
         ReflectionUtils.makeAccessible(method);
         T actual = (T) ReflectionUtils.invokeMethod(method, null, decoded.apply(TEST.buffer()));
 
-        return new ObjectAssert<>(this.cleaner.capture(actual));
+        return new ObjectAssert<>((T) (actual instanceof ReferenceCounted ? this.cleaner.capture((ReferenceCounted) actual) : actual));
     }
 
-    public Cleaner cleaner() {
+    public ReferenceCountedCleaner cleaner() {
         return this.cleaner;
-    }
-
-    static class Cleaner {
-
-        private final List<Object> objects = new ArrayList<>();
-
-        public void clean() {
-            this.objects.forEach(ReferenceCountUtil::release);
-            this.objects.clear();
-        }
-
-        public <T> T capture(T object) {
-            this.objects.add(object);
-
-            return object;
-        }
-
     }
 
 }

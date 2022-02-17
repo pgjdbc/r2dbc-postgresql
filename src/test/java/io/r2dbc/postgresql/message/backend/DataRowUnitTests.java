@@ -17,10 +17,10 @@
 package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
+import io.r2dbc.postgresql.util.ReferenceCountedCleaner;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-import static io.r2dbc.postgresql.message.backend.BackendMessageAssert.Cleaner;
 import static io.r2dbc.postgresql.message.backend.BackendMessageAssert.assertThat;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -30,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
  */
 final class DataRowUnitTests {
 
-    private final Cleaner cleaner = new Cleaner();
+    private final ReferenceCountedCleaner cleaner = new ReferenceCountedCleaner();
 
     @AfterEach
     void tearDown() {
