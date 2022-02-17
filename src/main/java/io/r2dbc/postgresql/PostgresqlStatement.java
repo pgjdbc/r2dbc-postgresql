@@ -18,6 +18,8 @@ package io.r2dbc.postgresql;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import io.netty.util.ReferenceCountUtil;
+import io.netty.util.ReferenceCounted;
 import io.r2dbc.postgresql.client.Binding;
 import io.r2dbc.postgresql.client.ConnectionContext;
 import io.r2dbc.postgresql.client.EncodedParameter;
@@ -230,20 +232,20 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
                     .doOnSubscribe(it -> bindings.emitNext(iterator.next(), Sinks.EmitFailureHandler.FAIL_FAST));
 
             }).cast(io.r2dbc.postgresql.api.PostgresqlResult.class);
-        } else {
-            // Simple Query protocol
-            if (this.fetchSize != NO_LIMIT) {
-                return ExtendedFlowDelegate.runQuery(this.resources, factory, sql, Binding.EMPTY, Collections.emptyList(), this.fetchSize)
-                    .windowUntil(WINDOW_UNTIL)
-                    .map(messages -> PostgresqlResult.toResult(this.resources, messages, factory))
-                    .as(Operators::discardOnCancel);
-            }
-
-            return SimpleQueryMessageFlow.exchange(this.resources.getClient(), sql)
-                .windowUntil(WINDOW_UNTIL)
-                .map(messages -> PostgresqlResult.toResult(this.resources, messages, factory))
-                .as(Operators::discardOnCancel);
         }
+
+        Flux<BackendMessage> exchange;
+        // Simple Query protocol
+        if (this.fetchSize != NO_LIMIT) {
+            exchange = ExtendedFlowDelegate.runQuery(this.resources, factory, sql, Binding.EMPTY, Collections.emptyList(), this.fetchSize);
+        } else {
+            exchange = SimpleQueryMessageFlow.exchange(this.resources.getClient(), sql);
+        }
+
+        return exchange.windowUntil(WINDOW_UNTIL)
+            .doOnDiscard(ReferenceCounted.class, ReferenceCountUtil::release) // ensure release of rows within WindowPredicate
+            .map(messages -> PostgresqlResult.toResult(this.resources, messages, factory))
+            .as(Operators::discardOnCancel);
     }
 
     private static void tryNextBinding(Iterator<Binding> iterator, Sinks.Many<Binding> bindingSink, AtomicBoolean canceled) {

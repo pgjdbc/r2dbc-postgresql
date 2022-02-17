@@ -47,7 +47,14 @@ public final class DataRow extends AbstractReferenceCounted implements BackendMe
      * @throws IllegalArgumentException if {@code columns} is {@code null}
      */
     public DataRow(ByteBuf... columns) {
-        this.columns = Assert.requireNonNull(columns, "columns must not be null");
+
+        if (columns == null) {
+            this.columns = new ByteBuf[0];
+            release();
+            throw new IllegalArgumentException("columns must not be null");
+        }
+
+        this.columns = columns;
     }
 
     @Override

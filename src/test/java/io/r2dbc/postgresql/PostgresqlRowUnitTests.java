@@ -20,6 +20,8 @@ import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.codec.MockCodecs;
 import io.r2dbc.postgresql.message.backend.DataRow;
 import io.r2dbc.postgresql.message.backend.RowDescription;
+import io.r2dbc.postgresql.util.ReferenceCountedCleaner;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -41,6 +43,8 @@ import static org.mockito.Mockito.mock;
  */
 final class PostgresqlRowUnitTests {
 
+    private final ReferenceCountedCleaner cleaner = new ReferenceCountedCleaner();
+
     private final List<RowDescription.Field> columns = Arrays.asList(
         new RowDescription.Field((short) 100, 200, 300, (short) 400, FORMAT_BINARY, "test-name-1", 500),
         new RowDescription.Field((short) 300, 400, 300, (short) 400, FORMAT_TEXT, "test-name-2", 500),
@@ -48,6 +52,11 @@ final class PostgresqlRowUnitTests {
     );
 
     private final ByteBuf[] data = new ByteBuf[]{TEST.buffer(4).writeInt(100), TEST.buffer(4).writeInt(300), null};
+
+    @AfterEach
+    void tearDown() {
+        cleaner.clean();
+    }
 
     @Test
     void constructorNoContext() {
@@ -156,7 +165,7 @@ final class PostgresqlRowUnitTests {
             .build();
 
         RowDescription description = new RowDescription(Collections.singletonList(new RowDescription.Field((short) 200, 300, (short) 400, (short) 500, FORMAT_TEXT, "test-name-1", 600)));
-        PostgresqlRow row = PostgresqlRow.toRow(MockContext.builder().codecs(codecs).build(), new DataRow(TEST.buffer(4).writeInt(100)),
+        PostgresqlRow row = PostgresqlRow.toRow(MockContext.builder().codecs(codecs).build(), cleaner.capture(new DataRow(TEST.buffer(4).writeInt(100))),
             codecs, description);
 
         assertThat(row.get(0, Object.class)).isSameAs(value);
@@ -170,7 +179,7 @@ final class PostgresqlRowUnitTests {
 
     @Test
     void toRowNoRowDescription() {
-        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlRow.toRow(MockContext.empty(), new DataRow(TEST.buffer(4).writeInt(100)), MockCodecs.empty(), null))
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlRow.toRow(MockContext.empty(), cleaner.capture(new DataRow(TEST.buffer(4).writeInt(100))), MockCodecs.empty(), null))
             .withMessage("rowDescription must not be null");
     }
 
