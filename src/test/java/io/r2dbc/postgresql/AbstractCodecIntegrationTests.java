@@ -361,7 +361,7 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(Integer.class, 100, "INT2", R2dbcType.SMALLINT);
         testCodec(Integer.class, 100, "INT4", R2dbcType.INTEGER);
         testCodec(Integer.class, 100, "INT8", R2dbcType.INTEGER);
-        testCodec(Integer.class, 100, "OID");
+        testCodec(Long.class, 2314556683L, Integer.class, (actual, expected) -> assertThat(actual).isEqualTo(-1980410613), "OID", "$1", null);
         testCodec(Integer.class, 100, "NUMERIC", R2dbcType.NUMERIC);
         testCodec(Integer.class, 100, "FLOAT4", R2dbcType.FLOAT);
         testCodec(Integer.class, 100, "FLOAT8", R2dbcType.DOUBLE);
@@ -460,7 +460,7 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(Long.class, 100L, "INT2");
         testCodec(Long.class, 100L, "INT4");
         testCodec(Long.class, 100L, "INT8");
-        testCodec(Long.class, 100L, "OID");
+        testCodec(Long.class, 2314556683L, "OID");
         testCodec(Long.class, 100L, "NUMERIC");
         testCodec(Long.class, 100L, "FLOAT4");
         testCodec(Long.class, 100L, "FLOAT8");
