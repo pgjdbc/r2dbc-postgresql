@@ -66,10 +66,14 @@ final class NumericDecodeUtils {
                     return buffer.readInt();
                 }
                 return Integer.parseInt(ByteBufUtils.decode(buffer));
-            case INT8:
-            case INT8_ARRAY:
             case OID:
             case OID_ARRAY:
+                if (FORMAT_BINARY == format) {
+                    return buffer.readUnsignedInt();
+                }
+                return Long.parseLong(ByteBufUtils.decode(buffer));
+            case INT8:
+            case INT8_ARRAY:
                 if (FORMAT_BINARY == format) {
                     return buffer.readLong();
                 }
