@@ -27,6 +27,7 @@ import reactor.util.annotation.Nullable;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.BPCHAR;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.CHAR;
@@ -48,14 +49,24 @@ final class StringCodec extends AbstractCodec<String> implements ArrayCodecDeleg
 
     private final ByteBufAllocator byteBufAllocator;
 
+    private final PostgresTypeIdentifier defaultType;
+
+    private final PostgresTypeIdentifier arrayType;
+
     StringCodec(ByteBufAllocator byteBufAllocator) {
+        this(byteBufAllocator, VARCHAR, VARCHAR_ARRAY);
+    }
+
+    StringCodec(ByteBufAllocator byteBufAllocator, PostgresTypeIdentifier defaultType, PostgresTypeIdentifier arrayType) {
         super(String.class);
         this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+        this.defaultType = Assert.requireNonNull(defaultType, "defaultType must not be null");
+        this.arrayType = Assert.requireNonNull(arrayType, "arrayType must not be null");
     }
 
     @Override
     public EncodedParameter encodeNull() {
-        return createNull(FORMAT_TEXT, VARCHAR);
+        return createNull(FORMAT_TEXT, this.defaultType);
     }
 
     @Override
@@ -63,7 +74,7 @@ final class StringCodec extends AbstractCodec<String> implements ArrayCodecDeleg
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return SUPPORTED_TYPES.contains(type);
+        return this.defaultType == type || SUPPORTED_TYPES.contains(type);
     }
 
     @Override
@@ -75,7 +86,7 @@ final class StringCodec extends AbstractCodec<String> implements ArrayCodecDeleg
 
     @Override
     EncodedParameter doEncode(String value) {
-        return doEncode(value, VARCHAR);
+        return doEncode(value, this.defaultType);
     }
 
     @Override
@@ -94,12 +105,12 @@ final class StringCodec extends AbstractCodec<String> implements ArrayCodecDeleg
 
     @Override
     public PostgresTypeIdentifier getArrayDataType() {
-        return VARCHAR_ARRAY;
+        return this.arrayType;
     }
 
     @Override
     public Iterable<PostgresTypeIdentifier> getDataTypes() {
-        return SUPPORTED_TYPES.stream().map(PostgresTypeIdentifier.class::cast).collect(Collectors.toList());
+        return Stream.concat(Stream.of(this.defaultType), SUPPORTED_TYPES.stream()).map(PostgresTypeIdentifier.class::cast).collect(Collectors.toSet());
     }
 
     private static class StringDecoder implements Codec<String>, Decoder<String> {
