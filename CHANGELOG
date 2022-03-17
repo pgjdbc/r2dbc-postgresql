@@ -1,6 +1,15 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+0.9.1.RELEASE
+-----------------------------------------
+* Parameter values are not sent in the correct order #482
+* Support for postgis geometry parent type #483
+* Upgrade to R2DBC SPI 0.9.1.RELEASE #490
+* ReactorNettyClient `requestProcessor` can retain data from queries #492
+* Update Readme as LOB types are already supported #493
+* Fix postgres OID type decoding #495
+
 0.9.0.RELEASE
 -----------------------------------------
 * Polishing #478
