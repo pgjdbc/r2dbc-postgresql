@@ -1,6 +1,11 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+0.8.12.RELEASE
+-----------------------------------------
+* Parameter values are not sent in the correct order #482
+* ReactorNettyClient `requestProcessor` can retain data from queries #492
+
 0.8.11.RELEASE
 -----------------------------------------
 * Add support to re-prepare cached statements #382
