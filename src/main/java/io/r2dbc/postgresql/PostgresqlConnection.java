@@ -49,6 +49,7 @@ import reactor.util.Logger;
 import reactor.util.Loggers;
 import reactor.util.annotation.Nullable;
 
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -404,6 +405,11 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
                 }
             });
         });
+    }
+
+    @Override
+    public Mono<Long> copyIn(String sql, Publisher<ByteBuffer> stdin) {
+        return new PostgresqlCopyIn(resources).copy(sql, stdin);
     }
 
     private static Function<TransactionStatus, String> getTransactionIsolationLevelQuery(IsolationLevel isolationLevel) {

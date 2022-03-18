@@ -326,10 +326,10 @@ public final class TestClient implements Client {
                 return this.chain;
             }
 
-            public Exchange.Builder<Builder<T>> expectRequest(FrontendMessage request) {
-                Assert.requireNonNull(request, "request must not be null");
+            public Exchange.Builder<Builder<T>> expectRequest(FrontendMessage... requests) {
+                Assert.requireNonNull(requests, "requests must not be null");
 
-                Exchange.Builder<Builder<T>> exchange = new Exchange.Builder<>(this, request);
+                Exchange.Builder<Builder<T>> exchange = new Exchange.Builder<>(this, requests);
                 this.exchanges.add(exchange);
                 return exchange;
             }

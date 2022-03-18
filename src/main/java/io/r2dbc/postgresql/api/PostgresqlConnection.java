@@ -22,10 +22,12 @@ import io.r2dbc.spi.IsolationLevel;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import io.r2dbc.spi.TransactionDefinition;
 import io.r2dbc.spi.ValidationDepth;
+import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.nio.ByteBuffer;
 import java.time.Duration;
 
 /**
@@ -169,5 +171,14 @@ public interface PostgresqlConnection extends Connection {
      */
     @Override
     Mono<Boolean> validate(ValidationDepth depth);
+
+    /**
+     * Copy bulk data from client into a PostgreSQL table very fast.
+     *
+     * @param sql the COPY sql statement
+     * @param stdin the ByteBuffer publisher
+     * @return a {@link Mono} with the amount of rows inserted
+     */
+    Mono<Long> copyIn(String sql, Publisher<ByteBuffer> stdin);
 
 }

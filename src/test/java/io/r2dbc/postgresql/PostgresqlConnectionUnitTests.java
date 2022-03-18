@@ -21,13 +21,18 @@ import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.TestClient;
 import io.r2dbc.postgresql.client.Version;
 import io.r2dbc.postgresql.codec.MockCodecs;
+import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
+import io.r2dbc.postgresql.message.backend.CopyInResponse;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
+import io.r2dbc.postgresql.message.backend.ReadyForQuery;
+import io.r2dbc.postgresql.message.frontend.CopyDone;
 import io.r2dbc.postgresql.message.frontend.Query;
 import io.r2dbc.postgresql.message.frontend.Terminate;
 import io.r2dbc.spi.IsolationLevel;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
 import java.time.Duration;
@@ -38,6 +43,7 @@ import static io.r2dbc.postgresql.client.TransactionStatus.FAILED;
 import static io.r2dbc.postgresql.client.TransactionStatus.IDLE;
 import static io.r2dbc.postgresql.client.TransactionStatus.OPEN;
 import static io.r2dbc.spi.IsolationLevel.READ_COMMITTED;
+import static java.util.Collections.emptySet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.Mockito.RETURNS_SMART_NULLS;
@@ -499,6 +505,25 @@ final class PostgresqlConnectionUnitTests {
         createConnection(client, MockCodecs.empty(), this.statementCache)
             .setTransactionIsolationLevel(READ_COMMITTED)
             .as(StepVerifier::create)
+            .verifyComplete();
+    }
+
+    @Test
+    void copyIn() {
+        Client client = TestClient.builder()
+            .transactionStatus(IDLE)
+            .expectRequest(new Query("some-sql")).thenRespond(new CopyInResponse(emptySet(), Format.FORMAT_TEXT))
+            .expectRequest(CopyDone.INSTANCE).thenRespond(
+                new CommandComplete("cmd", 1, 0),
+                new ReadyForQuery(ReadyForQuery.TransactionStatus.IDLE)
+            )
+            .build();
+
+        PostgresqlConnection connection = createConnection(client, MockCodecs.empty(), this.statementCache);
+
+        connection.copyIn("some-sql", Flux.empty())
+            .as(StepVerifier::create)
+            .expectNext(0L)
             .verifyComplete();
     }
 
