@@ -16,12 +16,14 @@
 
 package io.r2dbc.postgresql.api;
 
+import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.message.frontend.CancelRequest;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.IsolationLevel;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import io.r2dbc.spi.TransactionDefinition;
 import io.r2dbc.spi.ValidationDepth;
+import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -169,5 +171,14 @@ public interface PostgresqlConnection extends Connection {
      */
     @Override
     Mono<Boolean> validate(ValidationDepth depth);
+
+    /**
+     * Use COPY FROM STDIN for very fast copying into a database table.
+     *
+     * @param sql   the COPY … FROM STDIN sql statement
+     * @param stdin the ByteBuf publisher
+     * @return a {@link Mono} with the amount of rows inserted
+     */
+    Mono<Long> copyIn(String sql, Publisher<ByteBuf> stdin);
 
 }

@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql;
 
+import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.api.ErrorDetails;
 import io.r2dbc.postgresql.api.Notification;
 import io.r2dbc.postgresql.api.PostgresTransactionDefinition;
@@ -49,6 +50,7 @@ import reactor.util.Logger;
 import reactor.util.Loggers;
 import reactor.util.annotation.Nullable;
 
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -404,6 +406,11 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
                 }
             });
         });
+    }
+
+    @Override
+    public Mono<Long> copyIn(String sql, Publisher<ByteBuf> stdin) {
+        return new PostgresqlCopyIn(resources).copy(sql, stdin);
     }
 
     private static Function<TransactionStatus, String> getTransactionIsolationLevelQuery(IsolationLevel isolationLevel) {
