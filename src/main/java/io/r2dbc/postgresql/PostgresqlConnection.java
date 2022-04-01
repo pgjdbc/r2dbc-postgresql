@@ -38,10 +38,10 @@ import io.r2dbc.spi.Option;
 import io.r2dbc.spi.TransactionDefinition;
 import io.r2dbc.spi.ValidationDepth;
 import org.reactivestreams.Publisher;
-import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.CoreSubscriber;
 import reactor.core.Disposable;
+import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
@@ -474,28 +474,31 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
 
         void register(Client client) {
 
-            this.subscription = client.addNotificationListener(new Subscriber<NotificationResponse>() {
+            BaseSubscriber<NotificationResponse> subscriber = new BaseSubscriber<NotificationResponse>() {
 
                 @Override
-                public void onSubscribe(Subscription subscription) {
+                protected void hookOnSubscribe(Subscription subscription) {
                     subscription.request(Long.MAX_VALUE);
                 }
 
                 @Override
-                public void onNext(NotificationResponse notificationResponse) {
+                public void hookOnNext(NotificationResponse notificationResponse) {
                     NotificationAdapter.this.sink.emitNext(new NotificationResponseWrapper(notificationResponse), Sinks.EmitFailureHandler.FAIL_FAST);
                 }
 
                 @Override
-                public void onError(Throwable throwable) {
+                public void hookOnError(Throwable throwable) {
                     NotificationAdapter.this.sink.emitError(throwable, Sinks.EmitFailureHandler.FAIL_FAST);
                 }
 
                 @Override
-                public void onComplete() {
+                public void hookOnComplete() {
                     NotificationAdapter.this.sink.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
                 }
-            });
+            };
+
+            this.subscription = subscriber;
+            client.addNotificationListener(subscriber);
         }
 
         Flux<Notification> getEvents() {

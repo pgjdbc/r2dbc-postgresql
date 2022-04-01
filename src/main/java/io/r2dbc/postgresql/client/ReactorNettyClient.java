@@ -137,8 +137,8 @@ public final class ReactorNettyClient implements Client {
         Assert.requireNonNull(connection, "Connection must not be null");
         this.settings = Assert.requireNonNull(settings, "ConnectionSettings must not be null");
 
-        connection.addHandler(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE - 5, 1, 4, -4, 0));
-        connection.addHandler(new EnsureSubscribersCompleteChannelHandler(this.requestSink));
+        connection.addHandlerFirst(new EnsureSubscribersCompleteChannelHandler(this.requestSink));
+        connection.addHandlerLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE - 5, 1, 4, -4, 0));
         this.connection = connection;
         this.byteBufAllocator = connection.outbound().alloc();
         this.context = new ConnectionContext().withChannelId(connection.channel().toString());
@@ -422,8 +422,8 @@ public final class ReactorNettyClient implements Client {
     }
 
     @Override
-    public Disposable addNotificationListener(Subscriber<NotificationResponse> consumer) {
-        return this.notificationProcessor.asFlux().subscribe(consumer::onNext, consumer::onError, consumer::onComplete, consumer::onSubscribe);
+    public void addNotificationListener(Subscriber<NotificationResponse> consumer) {
+        this.notificationProcessor.asFlux().subscribe(consumer);
     }
 
     @Override
@@ -816,7 +816,7 @@ public final class ReactorNettyClient implements Client {
         @Override
         public Context currentContext() {
             Conversation receiver = this.conversations.peek();
-            return receiver != null ? receiver.sink.currentContext() : Context.empty();
+            return receiver != null ? Context.of(receiver.sink.contextView()) : Context.empty();
         }
 
         private void tryDrainLoop() {

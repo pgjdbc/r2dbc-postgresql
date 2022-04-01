@@ -57,7 +57,7 @@ public interface Client {
      * @throws IllegalArgumentException if {@code consumer} is {@code null}
      * @since 0.8.1
      */
-    Disposable addNotificationListener(Subscriber<NotificationResponse> consumer);
+    void addNotificationListener(Subscriber<NotificationResponse> consumer);
 
     /**
      * Release any resources held by the {@link Client}.

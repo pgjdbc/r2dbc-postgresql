@@ -26,8 +26,8 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
 import reactor.util.annotation.Nullable;
 
 import java.util.ArrayList;
@@ -42,7 +42,6 @@ import static io.r2dbc.postgresql.client.TransactionStatus.IDLE;
 /**
  * Test {@link Client} implementation that allows specification of expectations and assertions.
  */
-@SuppressWarnings("deprecation")
 public final class TestClient implements Client {
 
     public static final TestClient NO_OP = new TestClient(false, true, null, null, Flux.empty(), IDLE, new Version("9.4"));
@@ -51,15 +50,13 @@ public final class TestClient implements Client {
 
     private final boolean connected;
 
-    private final reactor.core.publisher.EmitterProcessor<NotificationResponse> notificationProcessor = reactor.core.publisher.EmitterProcessor.create(false);
+    private final Sinks.Many<NotificationResponse> notificationProcessor = Sinks.many().multicast().onBackpressureBuffer();
 
     private final Integer processId;
 
-    private final reactor.core.publisher.EmitterProcessor<FrontendMessage> requestProcessor = reactor.core.publisher.EmitterProcessor.create(false);
+    private final Sinks.Many<FrontendMessage> requestProcessor = Sinks.many().multicast().onBackpressureBuffer();
 
-    private final FluxSink<FrontendMessage> requests = this.requestProcessor.sink();
-
-    private final reactor.core.publisher.EmitterProcessor<Flux<BackendMessage>> responseProcessor = reactor.core.publisher.EmitterProcessor.create(false);
+    private final Sinks.Many<Flux<BackendMessage>> responseProcessor = Sinks.many().replay().all();
 
     private final Integer secretKey;
 
@@ -75,14 +72,12 @@ public final class TestClient implements Client {
         this.transactionStatus = Assert.requireNonNull(transactionStatus, "transactionStatus must not be null");
         this.version = version;
 
-        FluxSink<Flux<BackendMessage>> responses = this.responseProcessor.sink();
-
         Assert.requireNonNull(windows, "windows must not be null")
             .map(window -> window.exchanges)
             .map(exchanges -> exchanges
                 .concatMap(exchange ->
 
-                    this.requestProcessor.zipWith(exchange.requests)
+                    this.requestProcessor.asFlux().zipWith(exchange.requests)
                         .handle((tuple, sink) -> {
                             FrontendMessage actual = tuple.getT1();
                             FrontendMessage expected = tuple.getT2();
@@ -92,7 +87,7 @@ public final class TestClient implements Client {
                             }
                         })
                         .thenMany(exchange.responses)))
-            .subscribe(responses::next, responses::error, responses::complete);
+            .subscribe(this.responseProcessor::tryEmitNext, this.responseProcessor::tryEmitError, this.responseProcessor::tryEmitComplete);
     }
 
     public static Builder builder() {
@@ -108,20 +103,20 @@ public final class TestClient implements Client {
     public Flux<BackendMessage> exchange(Publisher<FrontendMessage> requests) {
         Assert.requireNonNull(requests, "requests must not be null");
 
-        return this.responseProcessor
+        return this.responseProcessor.asFlux()
             .doOnSubscribe(s ->
                 Flux.from(requests)
-                    .subscribe(this.requests::next, this.requests::error))
+                    .subscribe(this.requestProcessor::tryEmitNext, this.requestProcessor::tryEmitError))
             .next()
             .flatMapMany(Function.identity());
     }
 
     @Override
     public Flux<BackendMessage> exchange(Predicate<BackendMessage> takeUntil, Publisher<FrontendMessage> requests) {
-        return this.responseProcessor
+        return this.responseProcessor.asFlux()
             .doOnSubscribe(s ->
                 Flux.from(requests)
-                    .subscribe(this.requests::next, this.requests::error))
+                    .subscribe(this.requestProcessor::tryEmitNext, this.requestProcessor::tryEmitError))
             .next()
             .flatMapMany(Function.identity())
             .takeWhile(takeUntil.negate());
@@ -169,21 +164,21 @@ public final class TestClient implements Client {
 
     @Override
     public void send(FrontendMessage message) {
-        this.requests.next(message);
+        this.requestProcessor.tryEmitNext(message);
     }
 
     @Override
     public Disposable addNotificationListener(Consumer<NotificationResponse> consumer) {
-        return this.notificationProcessor.subscribe(consumer);
+        return this.notificationProcessor.asFlux().subscribe(consumer);
     }
 
     @Override
-    public Disposable addNotificationListener(Subscriber<NotificationResponse> consumer) {
-        return this.notificationProcessor.subscribe(consumer::onNext, consumer::onError, consumer::onComplete, consumer::onSubscribe);
+    public void addNotificationListener(Subscriber<NotificationResponse> consumer) {
+        this.notificationProcessor.asFlux().subscribe(consumer);
     }
 
     public void notify(NotificationResponse notification) {
-        this.notificationProcessor.onNext(notification);
+        this.notificationProcessor.tryEmitNext(notification);
     }
 
     public static final class Builder {
