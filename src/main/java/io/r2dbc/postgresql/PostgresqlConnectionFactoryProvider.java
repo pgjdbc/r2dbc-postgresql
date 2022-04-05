@@ -181,6 +181,11 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<SSLMode> SSL_MODE = Option.valueOf("sslMode");
 
     /**
+     * Ssl mode alias (JDBC style). Default: disabled
+     */
+    public static final Option<SSLMode> SSL_MODE_ALIAS = Option.valueOf("sslmode");
+
+    /**
      * SSL key password
      */
     public static final Option<String> SSL_PASSWORD = Option.valueOf("sslPassword");
@@ -301,7 +306,18 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
 
             return (SSLMode) it;
 
-        }).to(builder::sslMode);
+        }).to(builder::sslMode).otherwise(() -> {
+
+            mapper.from(SSL_MODE_ALIAS).map(it -> {
+
+                if (it instanceof String) {
+                    return SSLMode.fromValue(it.toString());
+                }
+
+                return (SSLMode) it;
+
+            }).to(builder::sslMode);
+        });
 
         mapper.fromTyped(SSL_CERT).to(builder::sslCert);
         mapper.fromTyped(SSL_CONTEXT_BUILDER_CUSTOMIZER).to(builder::sslContextBuilderCustomizer);
