@@ -182,6 +182,8 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
 
     /**
      * Ssl mode alias (JDBC style). Default: disabled
+     *
+     * @since 0.9.2
      */
     public static final Option<SSLMode> SSL_MODE_ALIAS = Option.valueOf("sslmode");
 
@@ -298,25 +300,8 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
             }
         });
 
-        mapper.from(SSL_MODE).map(it -> {
-
-            if (it instanceof String) {
-                return SSLMode.fromValue(it.toString());
-            }
-
-            return (SSLMode) it;
-
-        }).to(builder::sslMode).otherwise(() -> {
-
-            mapper.from(SSL_MODE_ALIAS).map(it -> {
-
-                if (it instanceof String) {
-                    return SSLMode.fromValue(it.toString());
-                }
-
-                return (SSLMode) it;
-
-            }).to(builder::sslMode);
+        mapper.from(SSL_MODE).map(PostgresqlConnectionFactoryProvider::toSSLMode).to(builder::sslMode).otherwise(() -> {
+            mapper.from(SSL_MODE_ALIAS).map(PostgresqlConnectionFactoryProvider::toSSLMode).to(builder::sslMode);
         });
 
         mapper.fromTyped(SSL_CERT).to(builder::sslCert);
@@ -341,6 +326,14 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
 
             return (HostnameVerifier) it;
         }).to(builder::sslHostnameVerifier);
+    }
+
+    private static SSLMode toSSLMode(Object it) {
+        if (it instanceof String) {
+            return SSLMode.fromValue(it.toString());
+        }
+
+        return (SSLMode) it;
     }
 
     @SuppressWarnings("unchecked")
