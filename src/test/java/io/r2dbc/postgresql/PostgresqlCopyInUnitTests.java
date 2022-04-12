@@ -36,9 +36,6 @@ import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 import reactor.test.publisher.TestPublisher;
 
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-
 import static io.r2dbc.postgresql.message.backend.ReadyForQuery.TransactionStatus.IDLE;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
@@ -51,7 +48,7 @@ final class PostgresqlCopyInUnitTests {
 
     @Test
     void copyIn() {
-        ByteBuffer byteBuffer = byteBuffer("a\n");
+        ByteBuf byteBuffer = byteBuf("a\n");
         Client client = TestClient.builder()
             .expectRequest(new Query("some-sql")).thenRespond(new CopyInResponse(emptySet(), Format.FORMAT_TEXT))
             .expectRequest(new CopyData(Unpooled.wrappedBuffer(byteBuffer)), CopyDone.INSTANCE).thenRespond(
@@ -68,7 +65,7 @@ final class PostgresqlCopyInUnitTests {
 
     @Test
     void copyInInvalidQuery() {
-        ByteBuffer byteBuffer = byteBuffer("a\n");
+        ByteBuf byteBuffer = byteBuf("a\n");
         String sql = "invalid-sql";
         Client client = TestClient.builder()
             .expectRequest(new Query(sql)).thenRespond(new CommandComplete("command", 0, 9))
@@ -86,7 +83,7 @@ final class PostgresqlCopyInUnitTests {
 
     @Test
     void copyInErrorResponse() {
-        ByteBuffer byteBuffer = byteBuffer("a\n");
+        ByteBuf byteBuffer = byteBuf("a\n");
         Client client = TestClient.builder()
             .expectRequest(new Query("some-sql")).thenRespond(new ErrorResponse(emptyList()))
             .build();
@@ -118,9 +115,9 @@ final class PostgresqlCopyInUnitTests {
 
     @Test
     void copyInError() {
-        TestPublisher<ByteBuffer> testPublisher = TestPublisher.createCold();
-        testPublisher.next(byteBuffer("a\n"));
-        testPublisher.next(byteBuffer("b\n"));
+        TestPublisher<ByteBuf> testPublisher = TestPublisher.createCold();
+        testPublisher.next(byteBuf("a\n"));
+        testPublisher.next(byteBuf("b\n"));
         testPublisher.error(new RuntimeException("Failed"));
 
         Client client = TestClient.builder()
@@ -143,7 +140,7 @@ final class PostgresqlCopyInUnitTests {
 
     @Test
     void copyInCancel() {
-        TestPublisher<ByteBuffer> testPublisher = TestPublisher.create();
+        TestPublisher<ByteBuf> testPublisher = TestPublisher.create();
 
         Client client = TestClient.builder()
             .expectRequest(new Query("some-sql")).thenRespond(new CopyInResponse(emptySet(), Format.FORMAT_TEXT))
@@ -160,15 +157,11 @@ final class PostgresqlCopyInUnitTests {
             .copy("some-sql", testPublisher.flux())
             .as(StepVerifier::create)
             .then(() -> {
-                testPublisher.next(byteBuffer("a"));
-                testPublisher.next(byteBuffer("b"));
+                testPublisher.next(byteBuf("a"));
+                testPublisher.next(byteBuf("b"));
             })
             .thenCancel()
             .verify();
-    }
-
-    private ByteBuffer byteBuffer(String str) {
-        return ByteBuffer.wrap(str.getBytes(StandardCharsets.UTF_8));
     }
 
     private ByteBuf byteBuf(String str) {

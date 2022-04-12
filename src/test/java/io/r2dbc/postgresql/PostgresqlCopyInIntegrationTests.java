@@ -16,6 +16,8 @@
 
 package io.r2dbc.postgresql;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.ExceptionFactory.PostgresqlBadGrammarException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +27,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 
@@ -64,10 +65,10 @@ class PostgresqlCopyInIntegrationTests extends AbstractIntegrationTests {
     void shouldCopyDataIntoTable() {
         String sql = "COPY test (val) FROM STDIN";
 
-        Flux<ByteBuffer> data = Flux.just(
-            ByteBuffer.wrap("d\n".getBytes()),
-            ByteBuffer.wrap("d\n".getBytes()),
-            ByteBuffer.wrap("e\n".getBytes())
+        Flux<ByteBuf> data = Flux.just(
+            byteBuf("d\n"),
+            byteBuf("d\n"),
+            byteBuf("e\n")
         );
 
         this.connection.copyIn(sql, data)
@@ -83,8 +84,8 @@ class PostgresqlCopyInIntegrationTests extends AbstractIntegrationTests {
     void shouldHandleErrorOnFailureInInput() {
         String sql = "COPY test (val) FROM STDIN";
 
-        Flux<ByteBuffer> data = Flux.just(
-                ByteBuffer.wrap("d\n".getBytes())
+        Flux<ByteBuf> data = Flux.just(
+                byteBuf("d\n")
             )
             .concatWith(Mono.error(new RuntimeException("Failed during input generation")));
 
@@ -100,7 +101,7 @@ class PostgresqlCopyInIntegrationTests extends AbstractIntegrationTests {
     void shouldCopyNothingEmptyFlux() {
         String sql = "COPY test (val) FROM STDIN";
 
-        Flux<ByteBuffer> data = Flux.empty();
+        Flux<ByteBuf> data = Flux.empty();
 
         this.connection.copyIn(sql, data)
             .as(StepVerifier::create)
@@ -112,7 +113,7 @@ class PostgresqlCopyInIntegrationTests extends AbstractIntegrationTests {
     void shouldHandleErrorOnValidNonCopyInQuery() {
         String sql = "SELECT 1";
 
-        Flux<ByteBuffer> input = Flux.just(ByteBuffer.wrap(("something,something-invalid\n").getBytes()));
+        Flux<ByteBuf> input = Flux.just(byteBuf("something,something-invalid\n"));
 
         this.connection.copyIn(sql, input)
             .as(StepVerifier::create)
@@ -128,8 +129,8 @@ class PostgresqlCopyInIntegrationTests extends AbstractIntegrationTests {
         String sql = "COPY test (val) FROM STDIN";
 
         int characterCountVarcharType = 256;
-        Flux<ByteBuffer> input = Flux.just(String.join("", Collections.nCopies(characterCountVarcharType, "a")))
-            .map(row -> ByteBuffer.wrap(row.getBytes()));
+        Flux<ByteBuf> input = Flux.just(String.join("", Collections.nCopies(characterCountVarcharType, "a")))
+            .map(this::byteBuf);
 
         verifyCopyInFailed(sql, input, "value too long for type character varying(255)");
     }
@@ -138,7 +139,7 @@ class PostgresqlCopyInIntegrationTests extends AbstractIntegrationTests {
     void shouldFailOnInvalidStatement() {
         String sql = "COPY invalid command";
 
-        Flux<ByteBuffer> data = Flux.just(ByteBuffer.wrap(("something,something-invalid\n").getBytes()));
+        Flux<ByteBuf> data = Flux.just(byteBuf("something,something-invalid\n"));
 
         verifyCopyInFailed(sql, data, "syntax error at or near \"command\"");
     }
@@ -147,12 +148,12 @@ class PostgresqlCopyInIntegrationTests extends AbstractIntegrationTests {
     void shouldFailOnInvalidDataType() {
         String sql = "COPY test (val, timestamp) FROM STDIN WITH DELIMITER ','";
 
-        Flux<ByteBuffer> data = Flux.just(ByteBuffer.wrap(("something,something-invalid\n").getBytes()));
+        Flux<ByteBuf> data = Flux.just(byteBuf("something,something-invalid\n"));
 
         verifyCopyInFailed(sql, data, "invalid input syntax for type timestamp: \"something-invalid\"");
     }
 
-    private void verifyCopyInFailed(String sql, Flux<ByteBuffer> data, String message) {
+    private void verifyCopyInFailed(String sql, Flux<ByteBuf> data, String message) {
         this.connection.copyIn(sql, data)
             .as(StepVerifier::create)
             .consumeErrorWith(e -> assertThat(e)
@@ -170,6 +171,10 @@ class PostgresqlCopyInIntegrationTests extends AbstractIntegrationTests {
             .as(StepVerifier::create)
             .expectNext(t)
             .verifyComplete();
+    }
+
+    private ByteBuf byteBuf(String str) {
+        return Unpooled.wrappedBuffer(str.getBytes());
     }
 
 }

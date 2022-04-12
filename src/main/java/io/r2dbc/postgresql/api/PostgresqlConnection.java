@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql.api;
 
+import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.message.frontend.CancelRequest;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.IsolationLevel;
@@ -27,7 +28,6 @@ import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.nio.ByteBuffer;
 import java.time.Duration;
 
 /**
@@ -173,12 +173,12 @@ public interface PostgresqlConnection extends Connection {
     Mono<Boolean> validate(ValidationDepth depth);
 
     /**
-     * Copy bulk data from client into a PostgreSQL table very fast.
+     * Use COPY FROM STDIN for very fast copying into a database table.
      *
-     * @param sql the COPY sql statement
-     * @param stdin the ByteBuffer publisher
+     * @param sql   the COPY … FROM STDIN sql statement
+     * @param stdin the ByteBuf publisher
      * @return a {@link Mono} with the amount of rows inserted
      */
-    Mono<Long> copyIn(String sql, Publisher<ByteBuffer> stdin);
+    Mono<Long> copyIn(String sql, Publisher<ByteBuf> stdin);
 
 }

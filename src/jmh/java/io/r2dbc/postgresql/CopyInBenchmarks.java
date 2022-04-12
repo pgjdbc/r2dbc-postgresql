@@ -16,6 +16,8 @@
 
 package io.r2dbc.postgresql;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.api.PostgresqlConnection;
 import io.r2dbc.postgresql.util.PostgresqlServerExtension;
 import org.junit.platform.commons.annotation.Testable;
@@ -32,21 +34,20 @@ import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.infra.Blackhole;
 import org.postgresql.copy.CopyManager;
 import org.postgresql.jdbc.PgConnection;
-import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.core.io.buffer.DataBufferUtils;
-import org.springframework.core.io.buffer.DefaultDataBufferFactory;
-import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.concurrent.TimeUnit;
@@ -125,15 +126,18 @@ public class CopyInBenchmarks extends BenchmarkSettings {
     }
 
     @Benchmark
-    public void copyInR2dbc(ConnectionHolder connectionHolder, Blackhole voodoo) {
-        int bufferSize = 65536; // BufferSize is the same as the one from JDBC's CopyManager
-        Flux<ByteBuffer> input = DataBufferUtils.read(connectionHolder.csvFile, DefaultDataBufferFactory.sharedInstance, bufferSize, StandardOpenOption.READ)
-            .map(DataBuffer::asByteBuffer);
+    public void copyInR2dbc(ConnectionHolder connectionHolder, Blackhole voodoo) throws IOException {
+        File file = connectionHolder.csvFile.toFile();
+        try (FileInputStream fileInputStream = new FileInputStream(file);
+             FileChannel fileChannel = fileInputStream.getChannel()) {
+            MappedByteBuffer mappedByteBuffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, file.length());
+            ByteBuf byteBuf = Unpooled.wrappedBuffer(mappedByteBuffer);
 
-        Long rowsInserted = connectionHolder.r2dbc.copyIn("COPY simple_test (name, age) FROM STDIN DELIMITER ';'", input)
-            .block();
+            Long rowsInserted = connectionHolder.r2dbc.copyIn("COPY simple_test (name, age) FROM STDIN DELIMITER ';'", Mono.just(byteBuf))
+                .block();
 
-        voodoo.consume(rowsInserted);
+            voodoo.consume(rowsInserted);
+        }
     }
 
     @Benchmark

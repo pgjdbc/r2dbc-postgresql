@@ -16,7 +16,7 @@
 
 package io.r2dbc.postgresql;
 
-import io.netty.buffer.Unpooled;
+import io.netty.buffer.ByteBuf;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.ReferenceCounted;
 import io.r2dbc.postgresql.client.Client;
@@ -27,15 +27,12 @@ import io.r2dbc.postgresql.message.backend.ReadyForQuery;
 import io.r2dbc.postgresql.message.frontend.CopyData;
 import io.r2dbc.postgresql.message.frontend.CopyDone;
 import io.r2dbc.postgresql.message.frontend.CopyFail;
-import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.message.frontend.Query;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.Operators;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.nio.ByteBuffer;
 
 import static io.r2dbc.postgresql.PostgresqlResult.toResult;
 
@@ -50,10 +47,10 @@ final class PostgresqlCopyIn {
         this.context = Assert.requireNonNull(context, "context must not be null");
     }
 
-    Mono<Long> copy(String sql, Publisher<ByteBuffer> stdin) {
+    Mono<Long> copy(String sql, Publisher<ByteBuf> stdin) {
         return Flux.from(stdin)
-            .map(buffer -> new CopyData(Unpooled.wrappedBuffer(buffer)))
-            .as(messages ->  copyIn(sql, messages));
+            .map(CopyData::new)
+            .as(messages -> copyIn(sql, messages));
     }
 
     private Mono<Long> copyIn(String sql, Flux<CopyData> copyDataMessages) {
@@ -61,7 +58,7 @@ final class PostgresqlCopyIn {
 
         Flux<BackendMessage> backendMessages = copyDataMessages
             .doOnNext(client::send)
-            .doOnError(e -> !(e instanceof IllegalArgumentException), (e) -> sendCopyFail(e.getMessage()))
+            .doOnError((e) -> sendCopyFail(e.getMessage()))
             .doOnDiscard(ReferenceCounted.class, ReferenceCountUtil::release)
             .thenMany(client.exchange(Mono.just(CopyDone.INSTANCE)));
 
