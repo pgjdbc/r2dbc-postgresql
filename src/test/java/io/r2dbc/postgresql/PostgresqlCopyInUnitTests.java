@@ -51,7 +51,7 @@ final class PostgresqlCopyInUnitTests {
         ByteBuf byteBuffer = byteBuf("a\n");
         Client client = TestClient.builder()
             .expectRequest(new Query("some-sql")).thenRespond(new CopyInResponse(emptySet(), Format.FORMAT_TEXT))
-            .expectRequest(new CopyData(Unpooled.wrappedBuffer(byteBuffer)), CopyDone.INSTANCE).thenRespond(
+            .expectRequest(new CopyData(byteBuffer), CopyDone.INSTANCE).thenRespond(
                 new CommandComplete("cmd", 1, 1),
                 new ReadyForQuery(IDLE)
             ).build();
