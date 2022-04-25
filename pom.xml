@@ -47,10 +47,10 @@
         <postgresql.version>42.3.3</postgresql.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <r2dbc-spi.version>1.0.0.BUILD-SNAPSHOT</r2dbc-spi.version>
+        <r2dbc-spi.version>1.0.0.RELEASE</r2dbc-spi.version>
         <reactor.version>2022.0.0-M2</reactor.version>
         <scram-client.version>2.1</scram-client.version>
-        <spring-framework.version>5.3.16</spring-framework.version>
+        <spring-framework.version>5.3.19</spring-framework.version>
         <testcontainers.version>1.16.3</testcontainers.version>
         <jts-core.version>1.18.2</jts-core.version>
     </properties>
