@@ -62,6 +62,8 @@ final class LocalDateTimeCodecUnitTests {
             .isEqualTo(localDateTime);
         assertThat(new LocalDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:06:31.700426+00"), dataType, FORMAT_TEXT, LocalDateTime.class))
             .isEqualTo(localDateTime);
+        assertThat(new LocalDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:06:31.700426+00:00:00"), dataType, FORMAT_TEXT, LocalDateTime.class))
+                .isEqualTo(localDateTime);
     }
 
     @Test
