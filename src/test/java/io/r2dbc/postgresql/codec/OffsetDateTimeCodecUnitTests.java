@@ -52,6 +52,8 @@ final class OffsetDateTimeCodecUnitTests {
 
         assertThat(new OffsetDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:16:00.899797+09:00"), dataType, FORMAT_TEXT, OffsetDateTime.class))
             .isEqualTo(offsetDateTime);
+        assertThat(new OffsetDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:16:00.899797+09:00:00"), dataType, FORMAT_TEXT, OffsetDateTime.class))
+                .isEqualTo(offsetDateTime);
         assertThat(new OffsetDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:16:00.899797+09"), dataType, FORMAT_TEXT, OffsetDateTime.class))
             .isEqualTo(offsetDateTime);
     }
@@ -62,6 +64,8 @@ final class OffsetDateTimeCodecUnitTests {
 
         assertThat(new OffsetDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:16:00.899797+00:00"), dataType, FORMAT_TEXT, OffsetDateTime.class))
             .isEqualTo(offsetDateTime);
+        assertThat(new OffsetDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:16:00.899797+00:00:00"), dataType, FORMAT_TEXT, OffsetDateTime.class))
+                .isEqualTo(offsetDateTime);
         assertThat(new OffsetDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:16:00.899797+00"), dataType, FORMAT_TEXT, OffsetDateTime.class))
             .isEqualTo(offsetDateTime);
     }

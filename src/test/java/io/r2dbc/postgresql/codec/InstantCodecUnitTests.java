@@ -66,6 +66,8 @@ final class InstantCodecUnitTests {
         ZonedDateTime zonedDateTime = ZonedDateTime.parse("2018-11-05T00:20:25.039883+09:00[Asia/Tokyo]");
         Instant instant = zonedDateTime.toInstant();
 
+        assertThat(new InstantCodec(TEST).decode(encode(TEST, "2018-11-05 00:20:25.039883+09:00:00"), TIMESTAMPTZ.getObjectId(), FORMAT_TEXT, Instant.class))
+                .isEqualTo(instant);
         assertThat(new InstantCodec(TEST).decode(encode(TEST, "2018-11-05 00:20:25.039883+09:00"), TIMESTAMPTZ.getObjectId(), FORMAT_TEXT, Instant.class))
             .isEqualTo(instant);
         assertThat(new InstantCodec(TEST).decode(encode(TEST, "2018-11-05 00:20:25.039883+09"), TIMESTAMPTZ.getObjectId(), FORMAT_TEXT, Instant.class))
@@ -77,6 +79,8 @@ final class InstantCodecUnitTests {
         ZonedDateTime zonedDateTime = ZonedDateTime.parse("2018-11-05T00:20:25.039883+00:00");
         Instant instant = zonedDateTime.toInstant();
 
+        assertThat(new InstantCodec(TEST).decode(encode(TEST, "2018-11-05 00:20:25.039883+00:00:00"), TIMESTAMPTZ.getObjectId(), FORMAT_TEXT, Instant.class))
+                .isEqualTo(instant);
         assertThat(new InstantCodec(TEST).decode(encode(TEST, "2018-11-05 00:20:25.039883+00:00"), TIMESTAMPTZ.getObjectId(), FORMAT_TEXT, Instant.class))
             .isEqualTo(instant);
         assertThat(new InstantCodec(TEST).decode(encode(TEST, "2018-11-05 00:20:25.039883+00"), TIMESTAMPTZ.getObjectId(), FORMAT_TEXT, Instant.class))
