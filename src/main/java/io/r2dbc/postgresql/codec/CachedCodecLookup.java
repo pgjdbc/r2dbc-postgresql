@@ -39,9 +39,9 @@ class CachedCodecLookup implements CodecLookup {
 
     private final Map<Integer, Codec<?>> decodeCodecsCache = new ConcurrentHashMap<>();
 
-    private final Map<Integer, Codec<?>> encodeCodecsCache = new ConcurrentHashMap<>();
+    private final Map<Class<?>, Codec<?>> encodeCodecsCache = new ConcurrentHashMap<>();
 
-    private final Map<Integer, Codec<?>> encodeNullCodecsCache = new ConcurrentHashMap<>();
+    private final Map<Class<?>, Codec<?>> encodeNullCodecsCache = new ConcurrentHashMap<>();
 
     private final CodecLookup delegate;
 
@@ -93,7 +93,7 @@ class CachedCodecLookup implements CodecLookup {
     @Override
     public <T> Codec<T> findDecodeCodec(int dataType, Format format, Class<? extends T> type) {
         Integer hash = generateCodecHash(dataType, format, type);
-        return findCodec(hash, this.decodeCodecsCache, () -> {
+        return findCodec(hash, dataType, format, type, this.decodeCodecsCache, () -> {
             LOG.trace("[codec-finder dataType={}, format={}, type={}] Decode codec not found in cache", dataType, format, type.getName());
             Codec<T> c = this.delegate.findDecodeCodec(dataType, format, type);
             if (c != null) {
@@ -105,12 +105,11 @@ class CachedCodecLookup implements CodecLookup {
 
     @Override
     public <T> Codec<T> findEncodeCodec(T value) {
-        Integer hash = generateCodecHash(value.getClass());
-        return findCodec(hash, this.encodeCodecsCache, () -> {
+        return findCodec(value.getClass(), this.encodeCodecsCache, () -> {
             LOG.trace("[codec-finder type={}] Encode codec not found in cache", value.getClass().getName());
             Codec<T> c = this.delegate.findEncodeCodec(value);
             if (c != null) {
-                this.encodeCodecsCache.putIfAbsent(hash, c);
+                this.encodeCodecsCache.putIfAbsent(value.getClass(), c);
             }
             return c;
         });
@@ -118,12 +117,11 @@ class CachedCodecLookup implements CodecLookup {
 
     @Override
     public <T> Codec<T> findEncodeNullCodec(Class<T> type) {
-        Integer hash = generateCodecHash(type);
-        return findCodec(hash, this.encodeNullCodecsCache, () -> {
+        return findCodec(type, this.encodeNullCodecsCache, () -> {
             LOG.trace("[codec-finder type={}] Encode null codec not found in cache", type.getName());
             Codec<T> c = this.delegate.findEncodeNullCodec(type);
             if (c != null) {
-                this.encodeNullCodecsCache.putIfAbsent(hash, c);
+                this.encodeNullCodecsCache.putIfAbsent(type, c);
             }
             return c;
         });
@@ -135,32 +133,36 @@ class CachedCodecLookup implements CodecLookup {
     }
 
     private void cacheEncode(Codec<?> c, Class<?> type) {
-        Integer encodeHash = generateCodecHash(type);
-        this.encodeCodecsCache.putIfAbsent(encodeHash, c);
+        this.encodeCodecsCache.putIfAbsent(type, c);
         if (c.canEncodeNull(type)) {
-            this.encodeNullCodecsCache.putIfAbsent(encodeHash, c);
+            this.encodeNullCodecsCache.putIfAbsent(type, c);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private synchronized <T> Codec<T> findCodec(Integer codecHash, Map<Integer, Codec<?>> cache, Supplier<Codec<T>> fallback) {
-        Codec<T> value = (Codec<T>) cache.get(codecHash);
+    private synchronized <T> Codec<T> findCodec(Class<?> cacheKey, Map<Class<?>, Codec<?>> cache, Supplier<Codec<T>> fallback) {
+        Codec<T> value = (Codec<T>) cache.get(cacheKey);
         return value != null ? value : fallback.get();
     }
 
-    private static Integer generateCodecHash(int dataType, Format format, Class<?> type) {
-        int hash = (dataType << 5) - dataType;
-        hash = (hash << 5) - hash + format.hashCode();
-        hash = (hash << 5) - hash + generateCodecHash(type);
-        return hash;
+    @SuppressWarnings("unchecked")
+    private synchronized <T> Codec<T> findCodec(Integer cacheKey, int dataType, Format format, Class<? extends T> type, Map<Integer, Codec<?>> cache, Supplier<Codec<T>> fallback) {
+        Codec<T> value = (Codec<T>) cache.get(cacheKey);
+        return (value != null && value.canDecode(dataType, format, type)) ? value : fallback.get();
     }
 
-    private static Integer generateCodecHash(Class<?> type) {
-        int hash = type.hashCode();
-        if (type.getComponentType() != null) {
-            hash = (hash << 5) - hash + generateCodecHash(type.getComponentType());
+    private static Integer generateCodecHash(int dataType, Format format, Class<?> type) {
+        int result = 1;
+
+        result = 31 * result + dataType;
+        result = 31 * result + format.hashCode();
+        result = 31 * result + type.hashCode();
+
+        if (type.isArray()) {
+            result = 31 * result + type.getComponentType().hashCode();
         }
-        return hash;
+
+        return result;
     }
 
 }
