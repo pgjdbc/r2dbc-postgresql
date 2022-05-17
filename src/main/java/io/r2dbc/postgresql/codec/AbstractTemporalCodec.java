@@ -118,7 +118,7 @@ abstract class AbstractTemporalCodec<T extends Temporal> extends BuiltinCodecSup
                     return EpochTime.fromLong(buffer.readLong()).toLocalDateTime();
                 }
 
-                return PostgresqlDateTimeFormatter.INSTANCE.parse(ByteBufUtils.decode(buffer), LocalDateTime::from);
+                return PostgresqlDateTimeFormatter.parse(ByteBufUtils.decode(buffer), LocalDateTime::from);
             case DATE:
             case DATE_ARRAY:
                 if (FORMAT_BINARY == format) {
@@ -139,7 +139,7 @@ abstract class AbstractTemporalCodec<T extends Temporal> extends BuiltinCodecSup
                     return EpochTime.fromLong(buffer.readLong()).toInstant().atOffset(OffsetDateTime.now().getOffset());
                 }
 
-                return PostgresqlDateTimeFormatter.INSTANCE.parse(ByteBufUtils.decode(buffer), ZonedDateTime::from);
+                return PostgresqlDateTimeFormatter.parse(ByteBufUtils.decode(buffer), ZonedDateTime::from);
             case TIMETZ:
             case TIMETZ_ARRAY:
                 if (FORMAT_BINARY == format) {
@@ -148,7 +148,7 @@ abstract class AbstractTemporalCodec<T extends Temporal> extends BuiltinCodecSup
                     return OffsetTime.of(LocalTime.ofNanoOfDay(timeNano), ZoneOffset.ofTotalSeconds(offsetSec));
                 }
 
-                return PostgresqlTimeFormatter.INSTANCE.parse(ByteBufUtils.decode(buffer), OffsetTime::from);
+                return PostgresqlTimeFormatter.parse(ByteBufUtils.decode(buffer), OffsetTime::from);
         }
 
         throw new UnsupportedOperationException(String.format("Cannot decode value for type %s, format %s", dataType, format));
