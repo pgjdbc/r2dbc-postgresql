@@ -52,6 +52,12 @@ class OffsetTimeCodecUnitTests {
 
         assertThat(new OffsetTimeCodec(TEST).decode(encode(TEST, "21:16:41.123456-09:00"), dataType, FORMAT_TEXT, OffsetTime.class))
             .isEqualTo(offsetTime);
+
+        assertThat(new OffsetTimeCodec(TEST).decode(encode(TEST, "21:16:41.123456-09"), dataType, FORMAT_TEXT, OffsetTime.class))
+            .isEqualTo(offsetTime);
+
+        assertThat(new OffsetTimeCodec(TEST).decode(encode(TEST, "21:16:41.123456-09:00:00"), dataType, FORMAT_TEXT, OffsetTime.class))
+            .isEqualTo(offsetTime);
     }
 
     @Test

@@ -114,7 +114,7 @@ abstract class AbstractTemporalCodec<T extends Temporal> extends AbstractCodec<T
                     return EpochTime.fromLong(buffer.readLong()).toLocalDateTime();
                 }
 
-                return PostgresqlDateTimeFormatter.INSTANCE.parse(ByteBufUtils.decode(buffer), LocalDateTime::from);
+                return PostgresqlDateTimeFormatter.parse(ByteBufUtils.decode(buffer), LocalDateTime::from);
             case DATE:
                 if (FORMAT_BINARY == format) {
                     return LocalDate.ofEpochDay(EpochTime.fromInt(buffer.readInt()).getJavaDays());
@@ -132,7 +132,7 @@ abstract class AbstractTemporalCodec<T extends Temporal> extends AbstractCodec<T
                     return EpochTime.fromLong(buffer.readLong()).toInstant().atOffset(OffsetDateTime.now().getOffset());
                 }
 
-                return PostgresqlDateTimeFormatter.INSTANCE.parse(ByteBufUtils.decode(buffer), ZonedDateTime::from);
+                return PostgresqlDateTimeFormatter.parse(ByteBufUtils.decode(buffer), ZonedDateTime::from);
             case TIMETZ:
                 if (FORMAT_BINARY == format) {
                     long timeNano = buffer.readLong() * 1000;
@@ -140,7 +140,7 @@ abstract class AbstractTemporalCodec<T extends Temporal> extends AbstractCodec<T
                     return OffsetTime.of(LocalTime.ofNanoOfDay(timeNano), ZoneOffset.ofTotalSeconds(offsetSec));
                 }
 
-                return PostgresqlTimeFormatter.INSTANCE.parse(ByteBufUtils.decode(buffer), OffsetTime::from);
+                return PostgresqlTimeFormatter.parse(ByteBufUtils.decode(buffer), OffsetTime::from);
         }
 
         throw new UnsupportedOperationException(String.format("Cannot decode value for type %s, format %s", dataType, format));
