@@ -21,7 +21,6 @@ import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.Parameter;
 import io.r2dbc.postgresql.extension.CodecRegistrar;
 import io.r2dbc.postgresql.message.Format;
-import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.core.publisher.Mono;
@@ -30,7 +29,6 @@ import reactor.util.Loggers;
 import reactor.util.annotation.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -167,6 +165,10 @@ public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
         public CodecRegistrar build() {
 
             Map<String, Class<? extends Enum<?>>> mapping = new LinkedHashMap<>(this.mapping);
+
+            if (mapping.isEmpty()) {
+                return (connection, allocator, registry) -> Mono.empty();
+            }
 
             return (connection, allocator, registry) -> {
 

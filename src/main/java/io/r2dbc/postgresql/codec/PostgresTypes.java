@@ -24,6 +24,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.Objects;
 import java.util.StringJoiner;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 /**
@@ -82,6 +83,7 @@ public class PostgresTypes {
     public Flux<PostgresType> lookupTypes(Iterable<String> typeNames) {
 
         StringJoiner joiner = new StringJoiner(",", "(", ")");
+        AtomicBoolean hasType = new AtomicBoolean();
 
         typeNames.forEach(typeName -> {
 
@@ -89,8 +91,13 @@ public class PostgresTypes {
                 throw new IllegalArgumentException(String.format("Invalid typename %s", typeName));
             }
 
+            hasType.set(true);
             joiner.add("'" + typeName + "'");
         });
+
+        if (!hasType.get()) {
+            return Flux.empty();
+        }
 
         return this.connection.createStatement(String.format(SELECT_PG_TYPE, "IN", joiner, "")).execute()
             .flatMap(it -> it.map((row, rowMetadata) -> {
