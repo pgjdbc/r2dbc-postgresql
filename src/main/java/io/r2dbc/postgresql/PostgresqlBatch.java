@@ -40,7 +40,7 @@ final class PostgresqlBatch implements io.r2dbc.postgresql.api.PostgresqlBatch {
     public PostgresqlBatch add(String sql) {
         Assert.requireNonNull(sql, "sql must not be null");
 
-        if (!(PostgresqlSqlLexer.tokenize(sql).getParameterCount() == 0)) {
+        if (!(PostgresqlSqlParser.tokenize(sql).getParameterCount() == 0)) {
             throw new IllegalArgumentException(String.format("Statement '%s' is not supported.  This is often due to the presence of parameters.", sql));
         }
 
