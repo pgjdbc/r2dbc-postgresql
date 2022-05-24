@@ -55,6 +55,24 @@ final class EnumCodecIntegrationTests extends AbstractIntegrationTests {
     }
 
     @Test
+    void shouldNotRegisterIfEmpty() {
+
+        PostgresqlConnectionConfiguration configuration = PostgresqlConnectionConfiguration.builder()
+            .database(SERVER.getDatabase())
+            .host(SERVER.getHost())
+            .port(SERVER.getPort())
+            .password(SERVER.getPassword())
+            .username(SERVER.getUsername())
+            .codecRegistrar(EnumCodec.builder().build())
+            .build();
+
+        PostgresqlConnectionFactory connectionFactory = new PostgresqlConnectionFactory(configuration);
+        connectionFactory.create().flatMap(PostgresqlConnection::close).as(StepVerifier::create).verifyComplete();
+
+        // we cannot really assert logs so that's up to you.
+    }
+
+    @Test
     void shouldReportUnresolvableTypes() {
 
         PostgresqlConnectionConfiguration configuration = PostgresqlConnectionConfiguration.builder()
