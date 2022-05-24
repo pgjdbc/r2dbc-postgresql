@@ -212,6 +212,10 @@ public class EnumCodec<T extends Enum<T>> implements Codec<T>, CodecMetadata {
 
             Map<String, Class<? extends Enum<?>>> mapping = new LinkedHashMap<>(this.mapping);
 
+            if (mapping.isEmpty()) {
+                return (connection, allocator, registry) -> Mono.empty();
+            }
+
             return (connection, allocator, registry) -> {
 
                 List<String> missing = new ArrayList<>(mapping.keySet());
