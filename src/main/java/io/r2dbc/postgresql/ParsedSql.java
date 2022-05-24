@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-class TokenizedSql {
+class ParsedSql {
 
     private final String sql;
 
@@ -30,7 +30,7 @@ class TokenizedSql {
 
     private final int parameterCount;
 
-    public TokenizedSql(String sql, List<TokenizedStatement> statements) {
+    public ParsedSql(String sql, List<TokenizedStatement> statements) {
         this.sql = sql;
         this.statements = statements;
         this.statementCount = statements.size();

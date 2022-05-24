@@ -65,7 +65,7 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
 
     private final ConnectionContext connectionContext;
 
-    private final TokenizedSql tokenizedSql;
+    private final ParsedSql parsedSql;
 
     private int fetchSize;
 
@@ -73,11 +73,11 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
 
     PostgresqlStatement(ConnectionResources resources, String sql) {
         this.resources = Assert.requireNonNull(resources, "resources must not be null");
-        this.tokenizedSql = PostgresqlSqlLexer.tokenize(Assert.requireNonNull(sql, "sql must not be null"));
+        this.parsedSql = PostgresqlSqlParser.tokenize(Assert.requireNonNull(sql, "sql must not be null"));
         this.connectionContext = resources.getClient().getContext();
-        this.bindings = new ArrayDeque<>(this.tokenizedSql.getParameterCount());
+        this.bindings = new ArrayDeque<>(this.parsedSql.getParameterCount());
 
-        if (this.tokenizedSql.getStatementCount() > 1 && this.tokenizedSql.getParameterCount() > 0) {
+        if (this.parsedSql.getStatementCount() > 1 && this.parsedSql.getParameterCount() > 0) {
             throw new IllegalArgumentException(String.format("Statement '%s' cannot be created. This is often due to the presence of both multiple statements and parameters at the same time.", sql));
         }
 
@@ -90,7 +90,7 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
         if (binding != null) {
             binding.validate();
         }
-        this.bindings.add(new Binding(this.tokenizedSql.getParameterCount()));
+        this.bindings.add(new Binding(this.parsedSql.getParameterCount()));
         return this;
     }
 
@@ -117,8 +117,8 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
     public PostgresqlStatement bindNull(int index, Class<?> type) {
         Assert.requireNonNull(type, "type must not be null");
 
-        if (index >= this.tokenizedSql.getParameterCount()) {
-            throw new UnsupportedOperationException(String.format("Cannot bind parameter %d, statement has %d parameters", index, this.tokenizedSql.getParameterCount()));
+        if (index >= this.parsedSql.getParameterCount()) {
+            throw new UnsupportedOperationException(String.format("Cannot bind parameter %d, statement has %d parameters", index, this.parsedSql.getParameterCount()));
         }
 
         BindingLogger.logBindNull(this.connectionContext, index, type);
@@ -130,7 +130,7 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
     private Binding getCurrentOrFirstBinding() {
         Binding binding = this.bindings.peekLast();
         if (binding == null) {
-            Binding newBinding = new Binding(this.tokenizedSql.getParameterCount());
+            Binding newBinding = new Binding(this.parsedSql.getParameterCount());
             this.bindings.add(newBinding);
             return newBinding;
         } else {
@@ -141,20 +141,20 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
     @Override
     public Flux<io.r2dbc.postgresql.api.PostgresqlResult> execute() {
         if (this.generatedColumns == null) {
-            return execute(this.tokenizedSql.getSql());
+            return execute(this.parsedSql.getSql());
         }
-        return execute(GeneratedValuesUtils.augment(this.tokenizedSql.getSql(), this.generatedColumns));
+        return execute(GeneratedValuesUtils.augment(this.parsedSql.getSql(), this.generatedColumns));
     }
 
     @Override
     public PostgresqlStatement returnGeneratedValues(String... columns) {
         Assert.requireNonNull(columns, "columns must not be null");
 
-        if (this.tokenizedSql.hasDefaultTokenValue("RETURNING")) {
+        if (this.parsedSql.hasDefaultTokenValue("RETURNING")) {
             throw new IllegalStateException("Statement already includes RETURNING clause");
         }
 
-        if (!this.tokenizedSql.hasDefaultTokenValue("DELETE", "INSERT", "UPDATE")) {
+        if (!this.parsedSql.hasDefaultTokenValue("DELETE", "INSERT", "UPDATE")) {
             throw new IllegalStateException("Statement is not a DELETE, INSERT, or UPDATE command");
         }
 
@@ -174,7 +174,7 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
         return "PostgresqlStatement{" +
             "bindings=" + this.bindings +
             ", context=" + this.resources +
-            ", sql='" + this.tokenizedSql.getSql() + '\'' +
+            ", sql='" + this.parsedSql.getSql() + '\'' +
             ", generatedColumns=" + Arrays.toString(this.generatedColumns) +
             '}';
     }
@@ -199,7 +199,7 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
     private Flux<io.r2dbc.postgresql.api.PostgresqlResult> execute(String sql) {
         ExceptionFactory factory = ExceptionFactory.withSql(sql);
 
-        if (this.tokenizedSql.getParameterCount() != 0) {
+        if (this.parsedSql.getParameterCount() != 0) {
             // Extended query protocol
             if (this.bindings.size() == 0) {
                 throw new IllegalStateException("No parameters have been bound");
