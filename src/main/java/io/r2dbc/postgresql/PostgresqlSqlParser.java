@@ -38,11 +38,8 @@ class PostgresqlSqlParser {
         Arrays.sort(SPECIAL_AND_OPERATOR_CHARS);
     }
 
-    public static ParsedSql tokenize(String sql) {
+    private static List<ParsedSql.Token> tokenize(String sql) {
         List<ParsedSql.Token> tokens = new ArrayList<>();
-        List<ParsedSql.TokenizedStatement> statements = new ArrayList<>();
-
-        int statementStartIndex = 0;
         int i = 0;
         while (i < sql.length()) {
             char c = sql.charAt(i);
@@ -87,21 +84,48 @@ class PostgresqlSqlParser {
             }
 
             i += token.getValue().length();
+            tokens.add(token);
+        }
+        return tokens;
+    }
 
-            if (token.getType() == ParsedSql.TokenType.STATEMENT_END) {
+    public static ParsedSql parse(String sql) {
+        List<ParsedSql.Token> tokens = tokenize(sql);
+        List<ParsedSql.Statement> statements = new ArrayList<>();
+        List<Boolean> functionBodyList = new ArrayList<>();
 
-                tokens.add(token);
-                statements.add(new ParsedSql.TokenizedStatement(sql.substring(statementStartIndex, i), tokens));
+        List<ParsedSql.Token> currentStatementTokens = new ArrayList<>();
+        for (int i = 0; i < tokens.size(); i++) {
+            ParsedSql.Token current = tokens.get(i);
+            currentStatementTokens.add(current);
 
-                tokens = new ArrayList<>();
-                statementStartIndex = i + 1;
-            } else {
-                tokens.add(token);
+            if (current.getType() == ParsedSql.TokenType.DEFAULT) {
+                String currentValue = current.getValue();
+
+                if (currentValue.equalsIgnoreCase("BEGIN")) {
+                    if (i + 1 < tokens.size() && tokens.get(i + 1).getValue().equalsIgnoreCase("ATOMIC")) {
+                        functionBodyList.add(true);
+                    } else {
+                        functionBodyList.add(false);
+                    }
+                } else if (currentValue.equalsIgnoreCase("END") && !functionBodyList.isEmpty()) {
+                    functionBodyList.remove(functionBodyList.size() - 1);
+                }
+            } else if (current.getType().equals(ParsedSql.TokenType.STATEMENT_END)) {
+                boolean inFunctionBody = false;
+
+                for (boolean b : functionBodyList) {
+                    inFunctionBody |= b;
+                }
+                if (!inFunctionBody) {
+                    statements.add(new ParsedSql.Statement(currentStatementTokens));
+                    currentStatementTokens = new ArrayList<>();
+                }
             }
         }
-        // If tokens is not empty, implicit statement end
-        if (!tokens.isEmpty()) {
-            statements.add(new ParsedSql.TokenizedStatement(sql.substring(statementStartIndex), tokens));
+
+        if (!currentStatementTokens.isEmpty()) {
+            statements.add(new ParsedSql.Statement(currentStatementTokens));
         }
 
         return new ParsedSql(sql, statements);
@@ -209,12 +233,13 @@ class PostgresqlSqlParser {
         }
     }
 
-    private static boolean isAsciiLetter(char c){
+    private static boolean isAsciiLetter(char c) {
         char lower = Character.toLowerCase(c);
         return lower >= 'a' && lower <= 'z';
     }
 
-    private static boolean isAsciiDigit(char c){
+    private static boolean isAsciiDigit(char c) {
         return c >= '0' && c <= '9';
     }
+
 }
