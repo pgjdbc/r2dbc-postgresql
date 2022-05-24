@@ -24,20 +24,20 @@ class ParsedSql {
 
     private final String sql;
 
-    private final List<TokenizedStatement> statements;
+    private final List<Statement> statements;
 
     private final int statementCount;
 
     private final int parameterCount;
 
-    public ParsedSql(String sql, List<TokenizedStatement> statements) {
+    public ParsedSql(String sql, List<Statement> statements) {
         this.sql = sql;
         this.statements = statements;
         this.statementCount = statements.size();
         this.parameterCount = getParameterCount(statements);
     }
 
-    List<TokenizedStatement> getStatements() {
+    List<Statement> getStatements() {
         return this.statements;
     }
 
@@ -53,16 +53,16 @@ class ParsedSql {
         return sql;
     }
 
-    private static int getParameterCount(List<TokenizedStatement> statements) {
+    private static int getParameterCount(List<Statement> statements) {
         int sum = 0;
-        for (TokenizedStatement statement : statements){
+        for (Statement statement : statements){
             sum += statement.getParameterCount();
         }
         return sum;
     }
 
     public boolean hasDefaultTokenValue(String... tokenValues) {
-        for (TokenizedStatement statement : this.statements) {
+        for (Statement statement : this.statements) {
             for (Token token : statement.getTokens()) {
                 if (token.getType() == TokenType.DEFAULT) {
                     for (String value : tokenValues) {
@@ -129,22 +129,15 @@ class ParsedSql {
 
     }
 
-    static class TokenizedStatement {
-
-        private final String sql;
+    static class Statement {
 
         private final List<Token> tokens;
 
         private final int parameterCount;
 
-        public TokenizedStatement(String sql, List<Token> tokens) {
+        public Statement(List<Token> tokens) {
             this.tokens = tokens;
-            this.sql = sql;
             this.parameterCount = readParameterCount(tokens);
-        }
-
-        public String getSql() {
-            return this.sql;
         }
 
         public List<Token> getTokens() {
@@ -164,19 +157,14 @@ class ParsedSql {
                 return false;
             }
 
-            TokenizedStatement that = (TokenizedStatement) o;
+            Statement that = (Statement) o;
 
-            if (!this.sql.equals(that.sql)) {
-                return false;
-            }
             return this.tokens.equals(that.tokens);
         }
 
         @Override
         public int hashCode() {
-            int result = this.sql.hashCode();
-            result = 31 * result + this.tokens.hashCode();
-            return result;
+            return this.tokens.hashCode();
         }
 
         @Override
