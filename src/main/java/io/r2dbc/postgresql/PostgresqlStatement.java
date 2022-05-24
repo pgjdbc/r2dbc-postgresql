@@ -73,7 +73,7 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
 
     PostgresqlStatement(ConnectionResources resources, String sql) {
         this.resources = Assert.requireNonNull(resources, "resources must not be null");
-        this.parsedSql = PostgresqlSqlParser.tokenize(Assert.requireNonNull(sql, "sql must not be null"));
+        this.parsedSql = PostgresqlSqlParser.parse(Assert.requireNonNull(sql, "sql must not be null"));
         this.connectionContext = resources.getClient().getContext();
         this.bindings = new ArrayDeque<>(this.parsedSql.getParameterCount());
 

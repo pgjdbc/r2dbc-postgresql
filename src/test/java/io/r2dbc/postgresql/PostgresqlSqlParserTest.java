@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class PostgresqlSqlParserTest {
@@ -116,48 +117,49 @@ class PostgresqlSqlParserTest {
 
             @Test
             void unclosedSingleQuotedStringThrowsIllegalArgumentException() {
-                assertThrows(IllegalArgumentException.class, () -> PostgresqlSqlParser.tokenize("'test"));
+                assertThrows(IllegalArgumentException.class, () -> PostgresqlSqlParser.parse("'test"));
             }
 
             @Test
             void unclosedDollarQuotedStringThrowsIllegalArgumentException() {
-                assertThrows(IllegalArgumentException.class, () -> PostgresqlSqlParser.tokenize("$$test"));
+                assertThrows(IllegalArgumentException.class, () -> PostgresqlSqlParser.parse("$$test"));
             }
 
             @Test
             void unclosedTaggedDollarQuotedStringThrowsIllegalArgumentException() {
-                assertThrows(IllegalArgumentException.class, () -> PostgresqlSqlParser.tokenize("$abc$test"));
+                assertThrows(IllegalArgumentException.class, () -> PostgresqlSqlParser.parse("$abc$test"));
             }
 
             @Test
             void unclosedQuotedIdentifierThrowsIllegalArgumentException() {
-                assertThrows(IllegalArgumentException.class, () -> PostgresqlSqlParser.tokenize("\"test"));
+                assertThrows(IllegalArgumentException.class, () -> PostgresqlSqlParser.parse("\"test"));
             }
 
             @Test
             void unclosedBlockCommentThrowsIllegalArgumentException() {
-                assertThrows(IllegalArgumentException.class, () -> PostgresqlSqlParser.tokenize("/*test"));
+                assertThrows(IllegalArgumentException.class, () -> PostgresqlSqlParser.parse("/*test"));
             }
 
             @Test
             void unclosedNestedBlockCommentThrowsIllegalArgumentException() {
-                assertThrows(IllegalArgumentException.class, () -> PostgresqlSqlParser.tokenize("/*/*test*/"));
+                assertThrows(IllegalArgumentException.class, () -> PostgresqlSqlParser.parse("/*/*test*/"));
             }
 
             @Test
             void invalidParameterCharacterThrowsIllegalArgumentException() {
-                assertThrows(IllegalArgumentException.class, () -> PostgresqlSqlParser.tokenize("$1test"));
+                assertThrows(IllegalArgumentException.class, () -> PostgresqlSqlParser.parse("$1test"));
             }
 
             @Test
             void invalidTaggedDollarQuoteThrowsIllegalArgumentException() {
-                assertThrows(IllegalArgumentException.class, () -> PostgresqlSqlParser.tokenize("$a b$test$a b$"));
+                assertThrows(IllegalArgumentException.class, () -> PostgresqlSqlParser.parse("$a b$test$a b$"));
             }
 
             @Test
             void unclosedTaggedDollarQuoteThrowsIllegalArgumentException() {
-                assertThrows(IllegalArgumentException.class, () -> PostgresqlSqlParser.tokenize("$abc"));
+                assertThrows(IllegalArgumentException.class, () -> PostgresqlSqlParser.parse("$abc"));
             }
+
         }
 
         @Nested
@@ -242,13 +244,33 @@ class PostgresqlSqlParserTest {
                 );
             }
 
+            @Test
+            void simpleSelectStatementWithFunctionBodyIsTokenized() {
+                assertSingleStatementEquals("CREATE FUNCTION test() BEGIN ATOMIC SELECT 1; SELECT 2; END",
+                    new ParsedSql.Token(ParsedSql.TokenType.DEFAULT, "CREATE"),
+                    new ParsedSql.Token(ParsedSql.TokenType.DEFAULT, "FUNCTION"),
+                    new ParsedSql.Token(ParsedSql.TokenType.DEFAULT, "test"),
+                    new ParsedSql.Token(ParsedSql.TokenType.SPECIAL_OR_OPERATOR, "("),
+                    new ParsedSql.Token(ParsedSql.TokenType.SPECIAL_OR_OPERATOR, ")"),
+                    new ParsedSql.Token(ParsedSql.TokenType.DEFAULT, "BEGIN"),
+                    new ParsedSql.Token(ParsedSql.TokenType.DEFAULT, "ATOMIC"),
+                    new ParsedSql.Token(ParsedSql.TokenType.DEFAULT, "SELECT"),
+                    new ParsedSql.Token(ParsedSql.TokenType.DEFAULT, "1"),
+                    new ParsedSql.Token(ParsedSql.TokenType.STATEMENT_END, ";"),
+                    new ParsedSql.Token(ParsedSql.TokenType.DEFAULT, "SELECT"),
+                    new ParsedSql.Token(ParsedSql.TokenType.DEFAULT, "2"),
+                    new ParsedSql.Token(ParsedSql.TokenType.STATEMENT_END, ";"),
+                    new ParsedSql.Token(ParsedSql.TokenType.DEFAULT, "END")
+                );
+            }
+
         }
 
         void assertSingleStatementEquals(String sql, ParsedSql.Token... tokens) {
-            ParsedSql parsedSql = PostgresqlSqlParser.tokenize(sql);
+            ParsedSql parsedSql = PostgresqlSqlParser.parse(sql);
             assertEquals(1, parsedSql.getStatements().size(), "Parse returned zero or more than 2 statements");
-            ParsedSql.TokenizedStatement statement = parsedSql.getStatements().get(0);
-            assertEquals(new ParsedSql.TokenizedStatement(sql, Arrays.asList(tokens)), statement);
+            ParsedSql.Statement statement = parsedSql.getStatements().get(0);
+            assertIterableEquals(Arrays.asList(tokens), statement.getTokens());
         }
 
     }
@@ -258,30 +280,30 @@ class PostgresqlSqlParserTest {
 
         @Test
         void simpleMultipleStatementIsTokenized() {
-            ParsedSql parsedSql = PostgresqlSqlParser.tokenize("DELETE * FROM X; SELECT 1;");
-            List<ParsedSql.TokenizedStatement> statements = parsedSql.getStatements();
+            ParsedSql parsedSql = PostgresqlSqlParser.parse("DELETE * FROM X; SELECT 1;");
+            List<ParsedSql.Statement> statements = parsedSql.getStatements();
             assertEquals(2, statements.size());
-            ParsedSql.TokenizedStatement statementA = statements.get(0);
-            ParsedSql.TokenizedStatement statementB = statements.get(1);
+            ParsedSql.Statement statementA = statements.get(0);
+            ParsedSql.Statement statementB = statements.get(1);
 
-            assertEquals(new ParsedSql.TokenizedStatement("DELETE * FROM X;",
-                    Arrays.asList(
-                        new ParsedSql.Token(ParsedSql.TokenType.DEFAULT, "DELETE"),
-                        new ParsedSql.Token(ParsedSql.TokenType.SPECIAL_OR_OPERATOR, "*"),
-                        new ParsedSql.Token(ParsedSql.TokenType.DEFAULT, "FROM"),
-                        new ParsedSql.Token(ParsedSql.TokenType.DEFAULT, "X"),
-                        new ParsedSql.Token(ParsedSql.TokenType.STATEMENT_END, ";")
-                    )),
-                statementA
+            assertIterableEquals(
+                Arrays.asList(
+                    new ParsedSql.Token(ParsedSql.TokenType.DEFAULT, "DELETE"),
+                    new ParsedSql.Token(ParsedSql.TokenType.SPECIAL_OR_OPERATOR, "*"),
+                    new ParsedSql.Token(ParsedSql.TokenType.DEFAULT, "FROM"),
+                    new ParsedSql.Token(ParsedSql.TokenType.DEFAULT, "X"),
+                    new ParsedSql.Token(ParsedSql.TokenType.STATEMENT_END, ";")
+                ),
+                statementA.getTokens()
             );
 
-            assertEquals(new ParsedSql.TokenizedStatement("SELECT 1;",
-                    Arrays.asList(
-                        new ParsedSql.Token(ParsedSql.TokenType.DEFAULT, "SELECT"),
-                        new ParsedSql.Token(ParsedSql.TokenType.DEFAULT, "1"),
-                        new ParsedSql.Token(ParsedSql.TokenType.STATEMENT_END, ";")
-                    )),
-                statementB
+            assertIterableEquals(
+                Arrays.asList(
+                    new ParsedSql.Token(ParsedSql.TokenType.DEFAULT, "SELECT"),
+                    new ParsedSql.Token(ParsedSql.TokenType.DEFAULT, "1"),
+                    new ParsedSql.Token(ParsedSql.TokenType.STATEMENT_END, ";")
+                ),
+                statementB.getTokens()
             );
 
         }
