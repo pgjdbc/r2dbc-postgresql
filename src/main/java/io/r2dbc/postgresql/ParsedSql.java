@@ -50,12 +50,12 @@ class ParsedSql {
     }
 
     public String getSql() {
-        return sql;
+        return this.sql;
     }
 
     private static int getParameterCount(List<Statement> statements) {
         int sum = 0;
-        for (Statement statement : statements){
+        for (Statement statement : statements) {
             sum += statement.getParameterCount();
         }
         return sum;

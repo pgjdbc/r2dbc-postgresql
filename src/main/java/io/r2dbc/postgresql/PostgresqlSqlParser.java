@@ -16,8 +16,11 @@
 
 package io.r2dbc.postgresql;
 
+import io.netty.util.collection.CharObjectHashMap;
+import io.netty.util.collection.CharObjectMap;
+
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 import static java.lang.Character.isWhitespace;
@@ -29,13 +32,79 @@ import static java.lang.Character.isWhitespace;
  */
 class PostgresqlSqlParser {
 
-    private static final char[] SPECIAL_AND_OPERATOR_CHARS = {
-        '+', '-', '*', '/', '<', '>', '=', '~', '!', '@', '#', '%', '^', '&', '|', '`', '?',
-        '(', ')', '[', ']', ',', ';', ':', '*', '.', '\'', '"'
-    };
+    private static final CharObjectMap<Object> SPECIAL_AND_OPERATOR_CHARS = new CharObjectHashMap<>();
 
     static {
-        Arrays.sort(SPECIAL_AND_OPERATOR_CHARS);
+        char[] specialCharsAndOperators = {'+', '-', '*', '/', '<', '>', '=', '~', '!', '@', '#', '%', '^', '&', '|', '`', '?',
+            '(', ')', '[', ']', ',', ';', ':', '*', '.', '\'', '"'};
+
+        for (char c : specialCharsAndOperators) {
+            SPECIAL_AND_OPERATOR_CHARS.put(c, new Object());
+        }
+    }
+
+    public static ParsedSql parse(String sql) {
+        List<ParsedSql.Token> tokens = tokenize(sql);
+        List<ParsedSql.Statement> statements = new ArrayList<>();
+        LinkedList<Boolean> functionBodyList = null;
+
+        List<ParsedSql.Token> currentStatementTokens = new ArrayList<>(tokens.size());
+
+        for (int i = 0; i < tokens.size(); i++) {
+            ParsedSql.Token current = tokens.get(i);
+            currentStatementTokens.add(current);
+
+            if (current.getType() == ParsedSql.TokenType.DEFAULT) {
+                String currentValue = current.getValue();
+
+                if (currentValue.equalsIgnoreCase("BEGIN")) {
+                    if (functionBodyList == null) {
+                        functionBodyList = new LinkedList<>();
+                    }
+                    if (hasNextToken(tokens, i) && peekNext(tokens, i).getValue().equalsIgnoreCase("ATOMIC")) {
+                        functionBodyList.add(true);
+                    } else {
+                        functionBodyList.add(false);
+                    }
+                } else if (currentValue.equalsIgnoreCase("END") && functionBodyList != null && !functionBodyList.isEmpty()) {
+                    functionBodyList.removeLast();
+                }
+            } else if (current.getType().equals(ParsedSql.TokenType.STATEMENT_END)) {
+                boolean inFunctionBody = false;
+
+                if (functionBodyList != null) {
+                    for (boolean b : functionBodyList) {
+                        inFunctionBody |= b;
+                    }
+                }
+                if (!inFunctionBody) {
+                    statements.add(new ParsedSql.Statement(currentStatementTokens));
+                    currentStatementTokens = new ArrayList<>();
+                }
+            }
+        }
+
+        if (!currentStatementTokens.isEmpty()) {
+            statements.add(new ParsedSql.Statement(currentStatementTokens));
+        }
+
+        return new ParsedSql(sql, statements);
+    }
+
+    private static ParsedSql.Token peekNext(List<ParsedSql.Token> tokens, int index) {
+        return tokens.get(index + 1);
+    }
+
+    private static boolean hasNextToken(List<ParsedSql.Token> tokens, int index) {
+        return tokens.size() > index + 1;
+    }
+
+    private static char peekNext(CharSequence sequence, int index) {
+        return sequence.charAt(index + 1);
+    }
+
+    private static boolean hasNextToken(CharSequence sequence, int index) {
+        return sequence.length() > index + 1;
     }
 
     private static List<ParsedSql.Token> tokenize(String sql) {
@@ -57,12 +126,12 @@ class PostgresqlSqlParser {
                     token = getQuotedIdentifierToken(sql, i);
                     break;
                 case '-': // Possible start of double-dash comment
-                    if ((i + 1) < sql.length() && sql.charAt(i + 1) == '-') {
+                    if (hasNextToken(sql, i) && peekNext(sql, i) == '-') {
                         token = getCommentToLineEndToken(sql, i);
                     }
                     break;
                 case '/': // Possible start of c-style comment
-                    if ((i + 1) < sql.length() && sql.charAt(i + 1) == '*') {
+                    if (hasNextToken(sql, i) && peekNext(sql, i) == '*') {
                         token = getBlockCommentToken(sql, i);
                     }
                     break;
@@ -89,48 +158,6 @@ class PostgresqlSqlParser {
         return tokens;
     }
 
-    public static ParsedSql parse(String sql) {
-        List<ParsedSql.Token> tokens = tokenize(sql);
-        List<ParsedSql.Statement> statements = new ArrayList<>();
-        List<Boolean> functionBodyList = new ArrayList<>();
-
-        List<ParsedSql.Token> currentStatementTokens = new ArrayList<>();
-        for (int i = 0; i < tokens.size(); i++) {
-            ParsedSql.Token current = tokens.get(i);
-            currentStatementTokens.add(current);
-
-            if (current.getType() == ParsedSql.TokenType.DEFAULT) {
-                String currentValue = current.getValue();
-
-                if (currentValue.equalsIgnoreCase("BEGIN")) {
-                    if (i + 1 < tokens.size() && tokens.get(i + 1).getValue().equalsIgnoreCase("ATOMIC")) {
-                        functionBodyList.add(true);
-                    } else {
-                        functionBodyList.add(false);
-                    }
-                } else if (currentValue.equalsIgnoreCase("END") && !functionBodyList.isEmpty()) {
-                    functionBodyList.remove(functionBodyList.size() - 1);
-                }
-            } else if (current.getType().equals(ParsedSql.TokenType.STATEMENT_END)) {
-                boolean inFunctionBody = false;
-
-                for (boolean b : functionBodyList) {
-                    inFunctionBody |= b;
-                }
-                if (!inFunctionBody) {
-                    statements.add(new ParsedSql.Statement(currentStatementTokens));
-                    currentStatementTokens = new ArrayList<>();
-                }
-            }
-        }
-
-        if (!currentStatementTokens.isEmpty()) {
-            statements.add(new ParsedSql.Statement(currentStatementTokens));
-        }
-
-        return new ParsedSql(sql, statements);
-    }
-
     private static ParsedSql.Token getDefaultToken(String sql, int beginIndex) {
         for (int i = beginIndex + 1; i < sql.length(); i++) {
             char c = sql.charAt(i);
@@ -142,7 +169,7 @@ class PostgresqlSqlParser {
     }
 
     private static boolean isSpecialOrOperatorChar(char c) {
-        return Arrays.binarySearch(SPECIAL_AND_OPERATOR_CHARS, c) >= 0;
+        return SPECIAL_AND_OPERATOR_CHARS.containsKey(c);
     }
 
     private static ParsedSql.Token getBlockCommentToken(String sql, int beginIndex) {
