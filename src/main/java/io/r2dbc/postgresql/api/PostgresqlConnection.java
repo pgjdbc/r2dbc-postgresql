@@ -62,6 +62,28 @@ public interface PostgresqlConnection extends Connection {
     Mono<Void> commitTransaction();
 
     /**
+     * Obtain a {@link CopyInBuilder} to configure a {@code COPY FROM STDIN} operation for very fast copying into a database table.
+     *
+     * @param sql the COPY … FROM STDIN sql statement
+     * @return the builder to configure the copy operation.
+     * @since 1.0
+     */
+    CopyInBuilder copyIn(String sql);
+
+    /**
+     * Use {@code COPY FROM STDIN} for very fast copying into a database table.
+     *
+     * @param sql   the COPY … FROM STDIN sql statement
+     * @param stdin the ByteBuf publisher
+     * @return a {@link Mono} with the amount of rows inserted
+     * @see CopyInBuilder
+     * @since 1.0
+     */
+    default Mono<Long> copyIn(String sql, Publisher<ByteBuf> stdin) {
+        return copyIn(sql).from(stdin).build();
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -171,14 +193,5 @@ public interface PostgresqlConnection extends Connection {
      */
     @Override
     Mono<Boolean> validate(ValidationDepth depth);
-
-    /**
-     * Use COPY FROM STDIN for very fast copying into a database table.
-     *
-     * @param sql   the COPY … FROM STDIN sql statement
-     * @param stdin the ByteBuf publisher
-     * @return a {@link Mono} with the amount of rows inserted
-     */
-    Mono<Long> copyIn(String sql, Publisher<ByteBuf> stdin);
 
 }

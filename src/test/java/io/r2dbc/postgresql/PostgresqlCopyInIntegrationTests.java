@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 the original author or authors.
+ * Copyright 2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package io.r2dbc.postgresql;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.ExceptionFactory.PostgresqlBadGrammarException;
+import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -71,7 +72,7 @@ class PostgresqlCopyInIntegrationTests extends AbstractIntegrationTests {
             byteBuf("e\n")
         );
 
-        this.connection.copyIn(sql, data)
+        this.connection.copyIn(sql).fromMany(data.map(Mono::just)).build()
             .as(StepVerifier::create)
             .expectNext(3L)
             .verifyComplete();
@@ -91,7 +92,10 @@ class PostgresqlCopyInIntegrationTests extends AbstractIntegrationTests {
 
         this.connection.copyIn(sql, data)
             .as(StepVerifier::create)
-            .expectError(RuntimeException.class)
+            .expectErrorSatisfies(e -> {
+
+                assertThat(e).hasMessageContaining("COPY").hasMessageContaining("Failed during input generation").isInstanceOf(R2dbcNonTransientResourceException.class);
+            })
             .verify();
 
         verifyItemsInserted(emptyList());
@@ -117,11 +121,8 @@ class PostgresqlCopyInIntegrationTests extends AbstractIntegrationTests {
 
         this.connection.copyIn(sql, input)
             .as(StepVerifier::create)
-            .consumeErrorWith(e -> assertThat(e)
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Copy from stdin query expected, sql='SELECT 1', message=CommandComplete{command=SELECT, rowId=null, rows=1}")
-            )
-            .verify();
+            .expectNext(1L)
+            .verifyComplete();
     }
 
     @Test
@@ -133,6 +134,7 @@ class PostgresqlCopyInIntegrationTests extends AbstractIntegrationTests {
             .map(this::byteBuf);
 
         verifyCopyInFailed(sql, input, "value too long for type character varying(255)");
+        verifyItemsInserted(Collections.emptyList());
     }
 
     @Test

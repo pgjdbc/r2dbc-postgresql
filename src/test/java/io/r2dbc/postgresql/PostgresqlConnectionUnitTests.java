@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql;
 
+import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.api.PostgresTransactionDefinition;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.TestClient;
@@ -26,6 +27,7 @@ import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.CopyInResponse;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.ReadyForQuery;
+import io.r2dbc.postgresql.message.frontend.CopyData;
 import io.r2dbc.postgresql.message.frontend.CopyDone;
 import io.r2dbc.postgresql.message.frontend.Query;
 import io.r2dbc.postgresql.message.frontend.Terminate;
@@ -512,8 +514,9 @@ final class PostgresqlConnectionUnitTests {
     void copyIn() {
         Client client = TestClient.builder()
             .transactionStatus(IDLE)
-            .expectRequest(new Query("some-sql")).thenRespond(new CopyInResponse(emptySet(), Format.FORMAT_TEXT))
-            .expectRequest(CopyDone.INSTANCE).thenRespond(
+            .expectRequest(new Query("some-sql"), new CopyData(Unpooled.EMPTY_BUFFER), CopyDone.INSTANCE)
+            .thenRespond(
+                new CopyInResponse(emptySet(), Format.FORMAT_TEXT),
                 new CommandComplete("cmd", 1, 0),
                 new ReadyForQuery(ReadyForQuery.TransactionStatus.IDLE)
             )

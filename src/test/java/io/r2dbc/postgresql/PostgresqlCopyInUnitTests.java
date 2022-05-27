@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,14 +32,15 @@ import io.r2dbc.postgresql.message.frontend.CopyDone;
 import io.r2dbc.postgresql.message.frontend.CopyFail;
 import io.r2dbc.postgresql.message.frontend.Query;
 import org.junit.jupiter.api.Test;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import reactor.test.publisher.TestPublisher;
 
 import static io.r2dbc.postgresql.message.backend.ReadyForQuery.TransactionStatus.IDLE;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for {@link PostgresqlCopyIn}.
@@ -50,35 +51,18 @@ final class PostgresqlCopyInUnitTests {
     void copyIn() {
         ByteBuf byteBuffer = byteBuf("a\n");
         Client client = TestClient.builder()
-            .expectRequest(new Query("some-sql")).thenRespond(new CopyInResponse(emptySet(), Format.FORMAT_TEXT))
-            .expectRequest(new CopyData(byteBuffer), CopyDone.INSTANCE).thenRespond(
+            .expectRequest(new Query("some-sql"), new CopyData(byteBuffer), CopyDone.INSTANCE)
+            .thenRespond(
+                new CopyInResponse(emptySet(), Format.FORMAT_TEXT),
                 new CommandComplete("cmd", 1, 1),
                 new ReadyForQuery(IDLE)
             ).build();
 
         new PostgresqlCopyIn(MockContext.builder().client(client).build())
-            .copy("some-sql", Flux.just(byteBuffer))
+            .copy("some-sql", Flux.just(Flux.just(byteBuffer)))
             .as(StepVerifier::create)
             .expectNext(1L)
             .verifyComplete();
-    }
-
-    @Test
-    void copyInInvalidQuery() {
-        ByteBuf byteBuffer = byteBuf("a\n");
-        String sql = "invalid-sql";
-        Client client = TestClient.builder()
-            .expectRequest(new Query(sql)).thenRespond(new CommandComplete("command", 0, 9))
-            .build();
-
-        new PostgresqlCopyIn(MockContext.builder().client(client).build())
-            .copy(sql, Flux.just(byteBuffer))
-            .as(StepVerifier::create)
-            .consumeErrorWith(e -> assertThat(e)
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Copy from stdin query expected, sql='invalid-sql', message=CommandComplete{command=command, rowId=0, rows=9}")
-            )
-            .verify();
     }
 
     @Test
@@ -89,7 +73,7 @@ final class PostgresqlCopyInUnitTests {
             .build();
 
         new PostgresqlCopyIn(MockContext.builder().client(client).build())
-            .copy("some-sql", Flux.just(byteBuffer))
+            .copy("some-sql", Flux.just(Flux.just(byteBuffer)))
             .as(StepVerifier::create)
             .expectError(PostgresqlNonTransientResourceException.class)
             .verify();
@@ -99,8 +83,8 @@ final class PostgresqlCopyInUnitTests {
     void copyInEmpty() {
         Client client = TestClient.builder()
             .transactionStatus(TransactionStatus.IDLE)
-            .expectRequest(new Query("some-sql")).thenRespond(new CopyInResponse(emptySet(), Format.FORMAT_TEXT))
-            .expectRequest(CopyDone.INSTANCE).thenRespond(
+            .expectRequest(new Query("some-sql"), CopyDone.INSTANCE).thenRespond(
+                new CopyInResponse(emptySet(), Format.FORMAT_TEXT),
                 new CommandComplete("cmd", 1, 0),
                 new ReadyForQuery(ReadyForQuery.TransactionStatus.IDLE)
             )
@@ -115,27 +99,22 @@ final class PostgresqlCopyInUnitTests {
 
     @Test
     void copyInError() {
-        TestPublisher<ByteBuf> testPublisher = TestPublisher.createCold();
-        testPublisher.next(byteBuf("a\n"));
-        testPublisher.next(byteBuf("b\n"));
-        testPublisher.error(new RuntimeException("Failed"));
+        Publisher<ByteBuf> testPublisher = Flux.just(byteBuf("a\n"), byteBuf("b\n"));
 
         Client client = TestClient.builder()
-            .expectRequest(new Query("some-sql")).thenRespond(new CopyInResponse(emptySet(), Format.FORMAT_TEXT))
-            .expectRequest(
-                new CopyData(byteBuf("a\n")),
-                new CopyData(byteBuf("b\n")),
+            .expectRequest(new Query("some-sql"),
+                new CopyData(byteBuf("a\nb\n")),
                 new CopyFail("Copy operation failed: Failed")
             ).thenRespond(
-                new CommandComplete("cmd", 1, 1),
+                new CopyInResponse(emptySet(), Format.FORMAT_TEXT),
+                new ErrorResponse(emptyList()),
                 new ReadyForQuery(IDLE)
             ).build();
 
         new PostgresqlCopyIn(MockContext.builder().client(client).build())
-            .copy("some-sql", testPublisher.flux())
+            .copy("some-sql", Flux.concat(Mono.just(testPublisher), Mono.just(Mono.error(new RuntimeException("Failed")))))
             .as(StepVerifier::create)
-            .expectError(RuntimeException.class)
-            .verify();
+            .verifyError(RuntimeException.class);
     }
 
     @Test
@@ -143,18 +122,18 @@ final class PostgresqlCopyInUnitTests {
         TestPublisher<ByteBuf> testPublisher = TestPublisher.create();
 
         Client client = TestClient.builder()
-            .expectRequest(new Query("some-sql")).thenRespond(new CopyInResponse(emptySet(), Format.FORMAT_TEXT))
-            .expectRequest(
+            .expectRequest(new Query("some-sql"),
                 new CopyData(byteBuf("a")),
                 new CopyData(byteBuf("b")),
                 new CopyFail("Copy operation failed: Cancelled")
             ).thenRespond(
+                new CopyInResponse(emptySet(), Format.FORMAT_TEXT),
                 new CommandComplete("cmd", 1, 1),
                 new ReadyForQuery(IDLE)
             ).build();
 
         new PostgresqlCopyIn(MockContext.builder().client(client).build())
-            .copy("some-sql", testPublisher.flux())
+            .copy("some-sql", Mono.just(testPublisher.flux()))
             .as(StepVerifier::create)
             .then(() -> {
                 testPublisher.next(byteBuf("a"));
