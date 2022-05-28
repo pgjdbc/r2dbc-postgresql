@@ -17,19 +17,10 @@
 package io.r2dbc.postgresql;
 
 import io.netty.buffer.ByteBufAllocator;
-import io.netty.channel.unix.DomainSocketAddress;
-import io.r2dbc.postgresql.authentication.AuthenticationHandler;
-import io.r2dbc.postgresql.authentication.PasswordAuthenticationHandler;
-import io.r2dbc.postgresql.authentication.SASLAuthenticationHandler;
 import io.r2dbc.postgresql.client.Client;
-import io.r2dbc.postgresql.client.ConnectionSettings;
 import io.r2dbc.postgresql.client.ReactorNettyClient;
-import io.r2dbc.postgresql.client.SSLConfig;
-import io.r2dbc.postgresql.client.SSLMode;
-import io.r2dbc.postgresql.client.StartupMessageFlow;
 import io.r2dbc.postgresql.codec.DefaultCodecs;
 import io.r2dbc.postgresql.extension.CodecRegistrar;
-import io.r2dbc.postgresql.message.backend.AuthenticationMessage;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryMetadata;
@@ -41,30 +32,27 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 /**
  * An implementation of {@link ConnectionFactory} for creating connections to a PostgreSQL database.
  */
 public final class PostgresqlConnectionFactory implements ConnectionFactory {
 
+    private static final ClientSupplier DEFAULT_CLIENT_SUPPLIER = (endpoint, settings) ->
+        ReactorNettyClient.connect(endpoint, settings).cast(Client.class);
+
     private static final String REPLICATION_OPTION = "replication";
 
     private static final String REPLICATION_DATABASE = "database";
 
-    private final Function<ConnectionSettings, Mono<? extends Client>> clientFactory;
+    private final ConnectionStrategy connectionStrategy;
 
     private final PostgresqlConnectionConfiguration configuration;
-
-    private final SocketAddress endpoint;
 
     private final Extensions extensions;
 
@@ -76,25 +64,14 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
      */
     public PostgresqlConnectionFactory(PostgresqlConnectionConfiguration configuration) {
         this.configuration = Assert.requireNonNull(configuration, "configuration must not be null");
-        this.endpoint = createSocketAddress(configuration);
-        this.clientFactory = settings -> ReactorNettyClient.connect(this.endpoint, settings).cast(Client.class);
+        this.connectionStrategy = ConnectionStrategyFactory.getConnectionStrategy(DEFAULT_CLIENT_SUPPLIER, configuration);
         this.extensions = getExtensions(configuration);
     }
 
-    PostgresqlConnectionFactory(Function<ConnectionSettings, Mono<? extends Client>> clientFactory, PostgresqlConnectionConfiguration configuration) {
+    PostgresqlConnectionFactory(ConnectionStrategy connectionStrategy, PostgresqlConnectionConfiguration configuration) {
         this.configuration = Assert.requireNonNull(configuration, "configuration must not be null");
-        this.endpoint = createSocketAddress(configuration);
-        this.clientFactory = Assert.requireNonNull(clientFactory, "clientFactory must not be null");
+        this.connectionStrategy = Assert.requireNonNull(connectionStrategy, "clientFactory must not be null");
         this.extensions = getExtensions(configuration);
-    }
-
-    private static SocketAddress createSocketAddress(PostgresqlConnectionConfiguration configuration) {
-
-        if (!configuration.isUseSocket()) {
-            return InetSocketAddress.createUnresolved(configuration.getRequiredHost(), configuration.getPort());
-        }
-
-        return DomainSocketFactory.getDomainSocketAddress(configuration);
     }
 
     private static Extensions getExtensions(PostgresqlConnectionConfiguration configuration) {
@@ -114,7 +91,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
             throw new UnsupportedOperationException("Cannot create replication connection through create(). Use replication() method instead.");
         }
 
-        return doCreateConnection(false, this.configuration.getOptions()).cast(io.r2dbc.postgresql.api.PostgresqlConnection.class);
+        return doCreateConnection(false, this.connectionStrategy).cast(io.r2dbc.postgresql.api.PostgresqlConnection.class);
     }
 
     /**
@@ -127,31 +104,12 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
         Map<String, String> options = new LinkedHashMap<>(this.configuration.getOptions());
         options.put(REPLICATION_OPTION, REPLICATION_DATABASE);
 
-        return doCreateConnection(true, options).map(DefaultPostgresqlReplicationConnection::new);
+        return doCreateConnection(true, this.connectionStrategy.withOptions(options)).map(DefaultPostgresqlReplicationConnection::new);
     }
 
-    private Mono<PostgresqlConnection> doCreateConnection(boolean forReplication, @Nullable Map<String, String> options) {
+    private Mono<PostgresqlConnection> doCreateConnection(boolean forReplication, ConnectionStrategy connectionStrategy) {
 
-        SSLConfig sslConfig = this.configuration.getSslConfig();
-        ConnectionSettings connectionSettings = this.configuration.getConnectionSettings();
-        Predicate<Throwable> isAuthSpecificationError = e -> e instanceof ExceptionFactory.PostgresqlAuthenticationFailure;
-        return this.tryConnectWithConfig(connectionSettings, options)
-            .onErrorResume(
-                isAuthSpecificationError.and(e -> sslConfig.getSslMode() == SSLMode.ALLOW),
-                e -> this.tryConnectWithConfig(connectionSettings.mutate(builder -> builder.sslConfig(sslConfig.mutateMode(SSLMode.REQUIRE))), options)
-                    .onErrorResume(sslAuthError -> {
-                        e.addSuppressed(sslAuthError);
-                        return Mono.error(e);
-                    })
-            )
-            .onErrorResume(
-                isAuthSpecificationError.and(e -> sslConfig.getSslMode() == SSLMode.PREFER),
-                e -> this.tryConnectWithConfig(connectionSettings.mutate(builder -> builder.sslConfig(sslConfig.mutateMode(SSLMode.DISABLE))), options)
-                    .onErrorResume(sslAuthError -> {
-                        e.addSuppressed(sslAuthError);
-                        return Mono.error(e);
-                    })
-            )
+        return connectionStrategy.connect()
             .flatMap(client -> {
 
                 DefaultCodecs codecs = new DefaultCodecs(client.getByteBufAllocator(), this.configuration.isPreferAttachedBuffers());
@@ -180,15 +138,6 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
         return REPLICATION_DATABASE.equalsIgnoreCase(options.get(REPLICATION_OPTION));
     }
 
-    private Mono<Client> tryConnectWithConfig(ConnectionSettings settings, @Nullable Map<String, String> options) {
-        return this.clientFactory.apply(settings)
-            .delayUntil(client -> StartupMessageFlow
-                .exchange(this.configuration.getApplicationName(), this::getAuthenticationHandler, client, this.configuration.getDatabase(), this.configuration.getUsername(),
-                    options)
-                .handle(ExceptionFactory.INSTANCE::handleErrorResponse))
-            .cast(Client.class);
-    }
-
     private Publisher<?> prepareConnection(PostgresqlConnection connection, ByteBufAllocator byteBufAllocator, DefaultCodecs codecs, boolean forReplication) {
 
         List<Publisher<?>> publishers = new ArrayList<>();
@@ -213,7 +162,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
         }
 
         return new PostgresConnectionException(
-            String.format("Cannot connect to %s", this.endpoint), throwable
+            String.format("Cannot connect to %s", "TODO"), throwable // TODO
         );
     }
 
@@ -229,22 +178,10 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
     @Override
     public String toString() {
         return "PostgresqlConnectionFactory{" +
-            "clientFactory=" + this.clientFactory +
+            "connectionStrategy=" + this.connectionStrategy +
             ", configuration=" + this.configuration +
             ", extensions=" + this.extensions +
             '}';
-    }
-
-    private AuthenticationHandler getAuthenticationHandler(AuthenticationMessage message) {
-        if (PasswordAuthenticationHandler.supports(message)) {
-            CharSequence password = Assert.requireNonNull(this.configuration.getPassword(), "Password must not be null");
-            return new PasswordAuthenticationHandler(password, this.configuration.getUsername());
-        } else if (SASLAuthenticationHandler.supports(message)) {
-            CharSequence password = Assert.requireNonNull(this.configuration.getPassword(), "Password must not be null");
-            return new SASLAuthenticationHandler(password, this.configuration.getUsername());
-        } else {
-            throw new IllegalStateException(String.format("Unable to provide AuthenticationHandler capable of handling %s", message));
-        }
     }
 
     private Mono<IsolationLevel> getIsolationLevel(io.r2dbc.postgresql.api.PostgresqlConnection connection) {
@@ -266,14 +203,6 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
 
         public PostgresConnectionException(String msg, @Nullable Throwable cause) {
             super(msg, cause);
-        }
-
-    }
-
-    static class DomainSocketFactory {
-
-        private static SocketAddress getDomainSocketAddress(PostgresqlConnectionConfiguration configuration) {
-            return new DomainSocketAddress(configuration.getRequiredSocket());
         }
 
     }
