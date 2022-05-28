@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql;
 
+import io.r2dbc.postgresql.client.MultiHostConfiguration;
 import io.r2dbc.postgresql.client.SSLConfig;
 import io.r2dbc.postgresql.client.SSLMode;
 import io.r2dbc.postgresql.extension.Extension;
@@ -27,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -34,9 +36,12 @@ import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.AUTODETECT
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.COMPATIBILITY_MODE;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.ERROR_RESPONSE_LOG_LEVEL;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.EXTENSIONS;
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.FAILOVER_PROTOCOL;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.FETCH_SIZE;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.FORCE_BINARY;
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.HOST_RECHECK_TIME;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.LEGACY_POSTGRESQL_DRIVER;
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.LOAD_BALANCE_HOSTS;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.LOCK_WAIT_TIMEOUT;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.OPTIONS;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.POSTGRESQL_DRIVER;
@@ -49,11 +54,13 @@ import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_KEY;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_MODE;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_ROOT_CERT;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.STATEMENT_TIMEOUT;
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.TARGET_SERVER_TYPE;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.TCP_KEEPALIVE;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.TCP_NODELAY;
 import static io.r2dbc.spi.ConnectionFactoryOptions.DRIVER;
 import static io.r2dbc.spi.ConnectionFactoryOptions.HOST;
 import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
+import static io.r2dbc.spi.ConnectionFactoryOptions.PROTOCOL;
 import static io.r2dbc.spi.ConnectionFactoryOptions.SSL;
 import static io.r2dbc.spi.ConnectionFactoryOptions.USER;
 import static io.r2dbc.spi.ConnectionFactoryOptions.builder;
@@ -472,8 +479,31 @@ final class PostgresqlConnectionFactoryProviderUnitTests {
             .option(USER, "postgres")
             .build());
 
-        assertThat(factory.getConfiguration().isUseSocket()).isTrue();
-        assertThat(factory.getConfiguration().getRequiredSocket()).isEqualTo("/tmp/.s.PGSQL.5432");
+            assertThat(factory.getConfiguration().getSingleHostConfiguration().isUseSocket()).isTrue();
+            assertThat(factory.getConfiguration().getSingleHostConfiguration().getRequiredSocket()).isEqualTo("/tmp/.s.PGSQL.5432");
+    }
+
+    @Test
+    void shouldConnectUsingMultiHostConfiguration() {
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(PROTOCOL, FAILOVER_PROTOCOL)
+            .option(HOST, "host1:5433,host2:5432,host3")
+            .option(USER, "postgres")
+            .option(LOAD_BALANCE_HOSTS, true)
+            .option(HOST_RECHECK_TIME, Duration.ofMillis(20000))
+            .option(TARGET_SERVER_TYPE, TargetServerType.SECONDARY)
+            .build());
+
+        assertThat(factory.getConfiguration().getSingleHostConfiguration()).isNull();
+        assertThat(factory.getConfiguration().getMultiHostConfiguration().isLoadBalanceHosts()).isEqualTo(true);
+        assertThat(factory.getConfiguration().getMultiHostConfiguration().getHostRecheckTime()).isEqualTo(Duration.ofMillis(20000));
+        assertThat(factory.getConfiguration().getMultiHostConfiguration().getTargetServerType()).isEqualTo(TargetServerType.SECONDARY);
+        List<MultiHostConfiguration.ServerHost> hosts = factory.getConfiguration().getMultiHostConfiguration().getHosts();
+        assertThat(hosts).hasSize(3);
+        assertThat(hosts.get(0)).usingRecursiveComparison().isEqualTo(new MultiHostConfiguration.ServerHost("host1", 5433));
+        assertThat(hosts.get(1)).usingRecursiveComparison().isEqualTo(new MultiHostConfiguration.ServerHost("host2", 5432));
+        assertThat(hosts.get(2)).usingRecursiveComparison().isEqualTo(new MultiHostConfiguration.ServerHost("host3", 5432));
     }
 
     @Test

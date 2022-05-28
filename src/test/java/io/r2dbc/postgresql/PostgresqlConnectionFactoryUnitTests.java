@@ -17,6 +17,8 @@
 package io.r2dbc.postgresql;
 
 import com.ongres.scram.client.ScramClient;
+
+import io.netty.channel.unix.DomainSocketAddress;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.TestClient;
 import io.r2dbc.postgresql.message.backend.AuthenticationMD5Password;
@@ -82,7 +84,7 @@ final class PostgresqlConnectionFactoryUnitTests {
             .password("test-password")
             .build();
 
-        new PostgresqlConnectionFactory(c -> Mono.just(client), configuration)
+        new PostgresqlConnectionFactory(testClientFactory(client, configuration), configuration)
             .create()
             .as(StepVerifier::create)
             .expectNextCount(1)
@@ -133,7 +135,7 @@ final class PostgresqlConnectionFactoryUnitTests {
             .password("test-password")
             .build();
 
-        new PostgresqlConnectionFactory(c -> Mono.just(client), configuration).create()
+        new PostgresqlConnectionFactory(testClientFactory(client, configuration), configuration).create()
             .as(StepVerifier::create)
             .verifyErrorMatches(R2dbcNonTransientResourceException.class::isInstance);
     }
@@ -157,7 +159,11 @@ final class PostgresqlConnectionFactoryUnitTests {
             .password("test-password")
             .build();
 
-        assertThat(new PostgresqlConnectionFactory(c -> Mono.just(client), configuration).getMetadata()).isNotNull();
+        assertThat(new PostgresqlConnectionFactory(testClientFactory(client, configuration), configuration).getMetadata()).isNotNull();
+    }
+
+    private ConnectionStrategy testClientFactory(Client client, PostgresqlConnectionConfiguration configuration) {
+        return new DefaultConnectionStrategy(new DomainSocketAddress(""), (endpoint, settings) -> Mono.just(client), configuration, null, Collections.emptyMap());
     }
 
 }

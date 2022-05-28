@@ -42,6 +42,7 @@ import static io.r2dbc.spi.ConnectionFactoryOptions.DRIVER;
 import static io.r2dbc.spi.ConnectionFactoryOptions.HOST;
 import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
 import static io.r2dbc.spi.ConnectionFactoryOptions.PORT;
+import static io.r2dbc.spi.ConnectionFactoryOptions.PROTOCOL;
 import static io.r2dbc.spi.ConnectionFactoryOptions.SSL;
 import static io.r2dbc.spi.ConnectionFactoryOptions.USER;
 
@@ -90,6 +91,16 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<Boolean> FORCE_BINARY = Option.valueOf("forceBinary");
 
     /**
+     * Host status recheck time.
+     */
+    public static final Option<Duration> HOST_RECHECK_TIME = Option.valueOf("hostRecheckTime");
+
+    /**
+     * Load balance hosts.
+     */
+    public static final Option<Boolean> LOAD_BALANCE_HOSTS = Option.valueOf("loadBalanceHosts");
+
+    /**
      * Lock timeout.
      *
      * @since 0.8.9
@@ -122,6 +133,11 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
      * Legacy driver option value.
      */
     public static final String LEGACY_POSTGRESQL_DRIVER = "postgres";
+
+    /**
+     * Failover driver protocol.
+     */
+    public static final String FAILOVER_PROTOCOL = "failover";
 
     /**
      * Configure whether {@link Codecs codecs} should prefer attached data buffers. The default is {@code false}, meaning that codecs will copy data from the input buffer into a {@code byte[]}
@@ -205,6 +221,11 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<Duration> STATEMENT_TIMEOUT = ConnectionFactoryOptions.STATEMENT_TIMEOUT;
 
     /**
+     * Target server type. Allowed values: any, master, secondary, preferSecondary.
+     */
+    public static final Option<TargetServerType> TARGET_SERVER_TYPE = Option.valueOf("targetServerType");
+
+    /**
      * Enable TCP KeepAlive.
      *
      * @since 0.8.4
@@ -262,6 +283,28 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
 
         OptionMapper mapper = OptionMapper.create(options);
 
+        String protocol = (String) options.getValue(PROTOCOL);
+        if (protocol != null && FAILOVER_PROTOCOL.equals(protocol)) {
+            mapper.from(HOST_RECHECK_TIME).map(OptionMapper::toDuration).to(builder::hostRecheckTime);
+            mapper.from(LOAD_BALANCE_HOSTS).map(OptionMapper::toBoolean).to(builder::loadBalanceHosts);
+            mapper.from(TARGET_SERVER_TYPE).map(value -> OptionMapper.toEnum(value, TargetServerType.class)).to(builder::targetServerType);
+            String hosts = "" + options.getRequiredValue(HOST);
+            for (String host : hosts.split(",")) {
+                String[] hostParts = host.split(":");
+                if (hostParts.length == 1) {
+                    builder.addHost(host);
+                } else {
+                    builder.addHost(hostParts[0], OptionMapper.toInteger(hostParts[1]));
+                }
+            }
+            setupSsl(builder, mapper);
+        } else {
+            mapper.fromTyped(SOCKET).to(builder::socket).otherwise(() -> {
+                builder.host("" + options.getRequiredValue(HOST));
+                setupSsl(builder, mapper);
+            });
+        }
+
         mapper.fromTyped(APPLICATION_NAME).to(builder::applicationName);
         mapper.from(AUTODETECT_EXTENSIONS).map(OptionMapper::toBoolean).to(builder::autodetectExtensions);
         mapper.from(COMPATIBILITY_MODE).map(OptionMapper::toBoolean).to(builder::compatibilityMode);
@@ -280,10 +323,6 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         mapper.from(PORT).map(OptionMapper::toInteger).to(builder::port);
         mapper.from(PREFER_ATTACHED_BUFFERS).map(OptionMapper::toBoolean).to(builder::preferAttachedBuffers);
         mapper.from(PREPARED_STATEMENT_CACHE_QUERIES).map(OptionMapper::toInteger).to(builder::preparedStatementCacheQueries);
-        mapper.fromTyped(SOCKET).to(builder::socket).otherwise(() -> {
-            builder.host("" + options.getRequiredValue(HOST));
-            setupSsl(builder, mapper);
-        });
         mapper.from(STATEMENT_TIMEOUT).map(OptionMapper::toDuration).to(builder::statementTimeout);
         mapper.from(TCP_KEEPALIVE).map(OptionMapper::toBoolean).to(builder::tcpKeepAlive);
         mapper.from(TCP_NODELAY).map(OptionMapper::toBoolean).to(builder::tcpNoDelay);

@@ -40,9 +40,9 @@ final class PostgresqlConnectionConfigurationUnitTests {
     }
 
     @Test
-    void builderNoHostAndSocket() {
+    void builderNoHostConfiguration() {
         assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().build())
-            .withMessage("host or socket must not be null");
+            .withMessage("either multiHostConfiguration or singleHostConfiguration must not be null");
     }
 
     @Test
@@ -82,10 +82,10 @@ final class PostgresqlConnectionConfigurationUnitTests {
             .hasFieldOrPropertyWithValue("applicationName", "test-application-name")
             .hasFieldOrPropertyWithValue("connectTimeout", Duration.ofMillis(1000))
             .hasFieldOrPropertyWithValue("database", "test-database")
-            .hasFieldOrPropertyWithValue("host", "test-host")
+            .hasFieldOrPropertyWithValue("singleHostConfiguration.host", "test-host")
             .hasFieldOrProperty("options")
             .hasFieldOrPropertyWithValue("password", null)
-            .hasFieldOrPropertyWithValue("port", 100)
+            .hasFieldOrPropertyWithValue("singleHostConfiguration.port", 100)
             .hasFieldOrPropertyWithValue("username", "test-username")
             .hasFieldOrProperty("sslConfig")
             .hasFieldOrPropertyWithValue("tcpKeepAlive", true)
@@ -114,10 +114,10 @@ final class PostgresqlConnectionConfigurationUnitTests {
             .hasFieldOrPropertyWithValue("applicationName", "test-application-name")
             .hasFieldOrPropertyWithValue("connectTimeout", Duration.ofMillis(1000))
             .hasFieldOrPropertyWithValue("database", "test-database")
-            .hasFieldOrPropertyWithValue("host", "test-host")
+            .hasFieldOrPropertyWithValue("singleHostConfiguration.host", "test-host")
             .hasFieldOrProperty("options")
             .hasFieldOrPropertyWithValue("password", null)
-            .hasFieldOrPropertyWithValue("port", 100)
+            .hasFieldOrPropertyWithValue("singleHostConfiguration.port", 100)
             .hasFieldOrPropertyWithValue("username", "test-username")
             .hasFieldOrProperty("sslConfig")
             .hasFieldOrPropertyWithValue("tcpKeepAlive", true)
@@ -159,9 +159,9 @@ final class PostgresqlConnectionConfigurationUnitTests {
         assertThat(configuration)
             .hasFieldOrPropertyWithValue("applicationName", "r2dbc-postgresql")
             .hasFieldOrPropertyWithValue("database", "test-database")
-            .hasFieldOrPropertyWithValue("host", "test-host")
+            .hasFieldOrPropertyWithValue("singleHostConfiguration.host", "test-host")
             .hasFieldOrPropertyWithValue("password", "test-password")
-            .hasFieldOrPropertyWithValue("port", 5432)
+            .hasFieldOrPropertyWithValue("singleHostConfiguration.port", 5432)
             .hasFieldOrProperty("options")
             .hasFieldOrPropertyWithValue("username", "test-username")
             .hasFieldOrProperty("sslConfig")
