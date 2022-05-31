@@ -318,7 +318,7 @@ public abstract class ReplicationSlotRequest {
     public interface WithSlotName {
 
         /**
-         * Replication slots provide an automated way to ensure that the master does not remove WAL segments until they have been received by all standbys, and that the master does not remove rows
+         * Replication slots provide an automated way to ensure that the primary does not remove WAL segments until they have been received by all standbys, and that the primary does not remove rows
          * which could cause a recovery conflict even when the standby is disconnected.
          *
          * @param slotName replication slot name for create, must not be {@code null} or empty

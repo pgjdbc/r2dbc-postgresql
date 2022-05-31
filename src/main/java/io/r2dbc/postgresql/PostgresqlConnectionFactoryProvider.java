@@ -92,11 +92,15 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
 
     /**
      * Host status recheck time.
+     *
+     * @since 1.0
      */
     public static final Option<Duration> HOST_RECHECK_TIME = Option.valueOf("hostRecheckTime");
 
     /**
      * Load balance hosts.
+     *
+     * @since 1.0
      */
     public static final Option<Boolean> LOAD_BALANCE_HOSTS = Option.valueOf("loadBalanceHosts");
 
@@ -221,9 +225,11 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<Duration> STATEMENT_TIMEOUT = ConnectionFactoryOptions.STATEMENT_TIMEOUT;
 
     /**
-     * Target server type. Allowed values: any, master, secondary, preferSecondary.
+     * Target server type. Allowed values: any, primary, secondary, preferSecondary.
+     *
+     * @since 1.0
      */
-    public static final Option<TargetServerType> TARGET_SERVER_TYPE = Option.valueOf("targetServerType");
+    public static final Option<MultiHostConnectionStrategy.TargetServerType> TARGET_SERVER_TYPE = Option.valueOf("targetServerType");
 
     /**
      * Enable TCP KeepAlive.
@@ -284,11 +290,21 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         OptionMapper mapper = OptionMapper.create(options);
 
         String protocol = (String) options.getValue(PROTOCOL);
-        if (protocol != null && FAILOVER_PROTOCOL.equals(protocol)) {
+        if (FAILOVER_PROTOCOL.equals(protocol)) {
             mapper.from(HOST_RECHECK_TIME).map(OptionMapper::toDuration).to(builder::hostRecheckTime);
             mapper.from(LOAD_BALANCE_HOSTS).map(OptionMapper::toBoolean).to(builder::loadBalanceHosts);
-            mapper.from(TARGET_SERVER_TYPE).map(value -> OptionMapper.toEnum(value, TargetServerType.class)).to(builder::targetServerType);
+            mapper.from(TARGET_SERVER_TYPE).map(value -> {
+
+                if (value instanceof MultiHostConnectionStrategy.TargetServerType) {
+                    return (MultiHostConnectionStrategy.TargetServerType) value;
+                }
+
+                return MultiHostConnectionStrategy.TargetServerType.fromValue(value.toString());
+
+            }).to(builder::targetServerType);
+
             String hosts = "" + options.getRequiredValue(HOST);
+
             for (String host : hosts.split(",")) {
                 String[] hostParts = host.split(":");
                 if (hostParts.length == 1) {

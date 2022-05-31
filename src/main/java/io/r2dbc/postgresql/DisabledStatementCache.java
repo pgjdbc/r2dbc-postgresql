@@ -20,6 +20,8 @@ import io.r2dbc.postgresql.client.Binding;
 
 class DisabledStatementCache implements StatementCache {
 
+    static final DisabledStatementCache INSTANCE = new DisabledStatementCache();
+
     private static final String UNNAMED_STATEMENT_NAME = "";
 
     DisabledStatementCache() {

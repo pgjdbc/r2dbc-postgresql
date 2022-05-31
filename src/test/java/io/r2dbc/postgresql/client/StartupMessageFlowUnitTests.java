@@ -53,7 +53,7 @@ final class StartupMessageFlowUnitTests {
         when(this.authenticationHandler.handle(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))).thenReturn(new PasswordMessage("test-password"));
 
         StartupMessageFlow
-            .exchange("test-application-name", m -> this.authenticationHandler, client, "test-database", "test-username", null)
+            .exchange("test-application-name", m -> this.authenticationHandler, client, "test-database", "test-username")
             .as(StepVerifier::create)
             .verifyComplete();
     }
@@ -67,7 +67,7 @@ final class StartupMessageFlowUnitTests {
         when(this.authenticationHandler.handle(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))).thenThrow(new IllegalArgumentException());
 
         StartupMessageFlow
-            .exchange("test-application-name", m -> this.authenticationHandler, client, "test-database", "test-username", null)
+            .exchange("test-application-name", m -> this.authenticationHandler, client, "test-database", "test-username")
             .as(StepVerifier::create)
             .verifyError(IllegalArgumentException.class);
     }
@@ -79,7 +79,7 @@ final class StartupMessageFlowUnitTests {
             .build();
 
         StartupMessageFlow
-            .exchange("test-application-name", m -> this.authenticationHandler, client, "test-database", "test-username", null)
+            .exchange("test-application-name", m -> this.authenticationHandler, client, "test-database", "test-username")
             .as(StepVerifier::create)
             .verifyComplete();
     }
@@ -91,7 +91,7 @@ final class StartupMessageFlowUnitTests {
             .build();
 
         StartupMessageFlow
-            .exchange("test-application-name", m -> this.authenticationHandler, client, "test-database", "test-username", null)
+            .exchange("test-application-name", m -> this.authenticationHandler, client, "test-database", "test-username")
             .as(StepVerifier::create)
             .expectNext(new BackendKeyData(100, 200))
             .verifyComplete();
@@ -99,25 +99,25 @@ final class StartupMessageFlowUnitTests {
 
     @Test
     void exchangeNoApplicationName() {
-        assertThatIllegalArgumentException().isThrownBy(() -> StartupMessageFlow.exchange(null, m -> this.authenticationHandler, NO_OP, "test-database", "test-username", null))
+        assertThatIllegalArgumentException().isThrownBy(() -> StartupMessageFlow.exchange(null, m -> this.authenticationHandler, NO_OP, "test-database", "test-username"))
             .withMessage("applicationName must not be null");
     }
 
     @Test
     void exchangeNoAuthenticationHandlerProvider() {
-        assertThatIllegalArgumentException().isThrownBy(() -> StartupMessageFlow.exchange("test-application-name", null, NO_OP, "test-database", "test-username", null))
+        assertThatIllegalArgumentException().isThrownBy(() -> StartupMessageFlow.exchange("test-application-name", null, NO_OP, "test-database", "test-username"))
             .withMessage("authenticationHandlerProvider must not be null");
     }
 
     @Test
     void exchangeNoClient() {
-        assertThatIllegalArgumentException().isThrownBy(() -> StartupMessageFlow.exchange("test-application-name", m -> this.authenticationHandler, null, "test-database", "test-username", null))
+        assertThatIllegalArgumentException().isThrownBy(() -> StartupMessageFlow.exchange("test-application-name", m -> this.authenticationHandler, null, "test-database", "test-username"))
             .withMessage("client must not be null");
     }
 
     @Test
     void exchangeNoUsername() {
-        assertThatIllegalArgumentException().isThrownBy(() -> StartupMessageFlow.exchange("test-application-name", m -> this.authenticationHandler, NO_OP, "test-database", null, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> StartupMessageFlow.exchange("test-application-name", m -> this.authenticationHandler, NO_OP, "test-database", null))
             .withMessage("username must not be null");
     }
 

@@ -18,10 +18,12 @@ package io.r2dbc.postgresql;
 
 import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.client.Client;
+import io.r2dbc.postgresql.client.ConnectionSettings;
 import io.r2dbc.postgresql.client.ReactorNettyClient;
 import io.r2dbc.postgresql.codec.DefaultCodecs;
 import io.r2dbc.postgresql.extension.CodecRegistrar;
 import io.r2dbc.postgresql.util.Assert;
+import io.r2dbc.postgresql.util.Operators;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryMetadata;
 import io.r2dbc.spi.IsolationLevel;
@@ -43,14 +45,14 @@ import java.util.Map;
  */
 public final class PostgresqlConnectionFactory implements ConnectionFactory {
 
-    private static final ClientSupplier DEFAULT_CLIENT_SUPPLIER = (endpoint, settings) ->
+    private static final ConnectionFunction DEFAULT_CONNECTION_FUNCTION = (endpoint, settings) ->
         ReactorNettyClient.connect(endpoint, settings).cast(Client.class);
 
     private static final String REPLICATION_OPTION = "replication";
 
     private static final String REPLICATION_DATABASE = "database";
 
-    private final ConnectionStrategy connectionStrategy;
+    private final ConnectionFunction connectionFunction;
 
     private final PostgresqlConnectionConfiguration configuration;
 
@@ -59,18 +61,23 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
     /**
      * Create a new connection factory.
      *
-     * @param configuration the configuration to use connections
+     * @param configuration the configuration to use
      * @throws IllegalArgumentException if {@code configuration} is {@code null}
      */
     public PostgresqlConnectionFactory(PostgresqlConnectionConfiguration configuration) {
-        this.configuration = Assert.requireNonNull(configuration, "configuration must not be null");
-        this.connectionStrategy = ConnectionStrategyFactory.getConnectionStrategy(DEFAULT_CLIENT_SUPPLIER, configuration);
-        this.extensions = getExtensions(configuration);
+        this(DEFAULT_CONNECTION_FUNCTION, configuration);
     }
 
-    PostgresqlConnectionFactory(ConnectionStrategy connectionStrategy, PostgresqlConnectionConfiguration configuration) {
+    /**
+     * Create a new connection factory.
+     *
+     * @param connectionFunction the connectionFunction to establish
+     * @param configuration      the configuration to use
+     * @throws IllegalArgumentException if {@code configuration} is {@code null}
+     */
+    PostgresqlConnectionFactory(ConnectionFunction connectionFunction, PostgresqlConnectionConfiguration configuration) {
+        this.connectionFunction = Assert.requireNonNull(connectionFunction, "connectionFunction must not be null");
         this.configuration = Assert.requireNonNull(configuration, "configuration must not be null");
-        this.connectionStrategy = Assert.requireNonNull(connectionStrategy, "clientFactory must not be null");
         this.extensions = getExtensions(configuration);
     }
 
@@ -91,7 +98,9 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
             throw new UnsupportedOperationException("Cannot create replication connection through create(). Use replication() method instead.");
         }
 
-        return doCreateConnection(false, this.connectionStrategy).cast(io.r2dbc.postgresql.api.PostgresqlConnection.class);
+        ConnectionStrategy connectionStrategy = ConnectionStrategyFactory.getConnectionStrategy(this.connectionFunction, this.configuration, this.configuration.getConnectionSettings());
+
+        return doCreateConnection(false, connectionStrategy).cast(io.r2dbc.postgresql.api.PostgresqlConnection.class);
     }
 
     /**
@@ -104,7 +113,11 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
         Map<String, String> options = new LinkedHashMap<>(this.configuration.getOptions());
         options.put(REPLICATION_OPTION, REPLICATION_DATABASE);
 
-        return doCreateConnection(true, this.connectionStrategy.withOptions(options)).map(DefaultPostgresqlReplicationConnection::new);
+        ConnectionSettings connectionSettings = this.configuration.getConnectionSettings().mutate(builder -> builder.startupOptions(options));
+
+        ConnectionStrategy connectionStrategy = ConnectionStrategyFactory.getConnectionStrategy(connectionFunction, this.configuration, connectionSettings);
+
+        return doCreateConnection(true, connectionStrategy).map(DefaultPostgresqlReplicationConnection::new);
     }
 
     private Mono<PostgresqlConnection> doCreateConnection(boolean forReplication, ConnectionStrategy connectionStrategy) {
@@ -130,7 +143,11 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
                         return prepareConnection(connection, client.getByteBufAllocator(), codecs, forReplication);
                     })
                     .onErrorResume(throwable -> this.closeWithError(client, throwable));
-            }).onErrorMap(this::cannotConnect);
+            }).onErrorMap(e -> cannotConnect(e, connectionStrategy))
+            .flux()
+            .as(Operators::discardOnCancel)
+            .single()
+            .doOnDiscard(PostgresqlConnection.class, client -> client.close().subscribe());
     }
 
     private boolean isReplicationConnection() {
@@ -155,15 +172,13 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
         return client.close().then(Mono.error(throwable));
     }
 
-    private Throwable cannotConnect(Throwable throwable) {
+    private Throwable cannotConnect(Throwable throwable, ConnectionStrategy strategy) {
 
         if (throwable instanceof R2dbcException) {
             return throwable;
         }
 
-        return new PostgresConnectionException(
-            String.format("Cannot connect to %s", "TODO"), throwable // TODO
-        );
+        return new PostgresConnectionException(String.format("Cannot connect to %s", strategy), throwable);
     }
 
     @Override
@@ -178,7 +193,6 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
     @Override
     public String toString() {
         return "PostgresqlConnectionFactory{" +
-            "connectionStrategy=" + this.connectionStrategy +
             ", configuration=" + this.configuration +
             ", extensions=" + this.extensions +
             '}';

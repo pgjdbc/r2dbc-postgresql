@@ -27,6 +27,8 @@ import reactor.util.annotation.Nullable;
 
 import java.net.Socket;
 import java.time.Duration;
+import java.util.Collections;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -46,6 +48,8 @@ public final class ConnectionSettings {
 
     private final SSLConfig sslConfig;
 
+    private final Map<String, String> startupOptions;
+
     private final boolean tcpKeepAlive;
 
     private final boolean tcpNoDelay;
@@ -55,11 +59,12 @@ public final class ConnectionSettings {
     private final LogLevel noticeLogLevel;
 
     ConnectionSettings(@Nullable Duration connectTimeout, ConnectionProvider connectionProvider, @Nullable LoopResources loopResources,
-                       SSLConfig sslConfig, boolean tcpKeepAlive, boolean tcpNoDelay, LogLevel errorResponseLogLevel, LogLevel noticeLogLevel) {
+                       SSLConfig sslConfig, Map<String, String> startupOptions, boolean tcpKeepAlive, boolean tcpNoDelay, LogLevel errorResponseLogLevel, LogLevel noticeLogLevel) {
         this.connectTimeout = connectTimeout;
         this.connectionProvider = connectionProvider;
         this.loopResources = loopResources;
         this.sslConfig = sslConfig;
+        this.startupOptions = startupOptions;
         this.tcpKeepAlive = tcpKeepAlive;
         this.tcpNoDelay = tcpNoDelay;
         this.errorResponseLogLevel = errorResponseLogLevel;
@@ -83,7 +88,7 @@ public final class ConnectionSettings {
     public Builder mutate() {
         return new Builder().connectionProvider(this.connectionProvider).loopResources(this.loopResources)
             .errorResponseLogLevel(this.errorResponseLogLevel).noticeLogLevel(this.noticeLogLevel).sslConfig(this.sslConfig)
-            .connectTimeout(this.connectTimeout).tcpKeepAlive(this.tcpKeepAlive).tcpNoDelay(this.tcpNoDelay);
+            .connectTimeout(this.connectTimeout).startupOptions(this.startupOptions).tcpKeepAlive(this.tcpKeepAlive).tcpNoDelay(this.tcpNoDelay);
     }
 
     /**
@@ -132,6 +137,10 @@ public final class ConnectionSettings {
         return this.sslConfig;
     }
 
+    Map<String, String> getStartupOptions() {
+        return this.startupOptions;
+    }
+
     boolean isTcpKeepAlive() {
         return this.tcpKeepAlive;
     }
@@ -155,6 +164,7 @@ public final class ConnectionSettings {
      */
     public static final class Builder {
 
+        @Nullable
         private Duration connectTimeout;
 
         private ConnectionProvider connectionProvider = ConnectionProvider.newConnection();
@@ -166,6 +176,8 @@ public final class ConnectionSettings {
         private LogLevel noticeLogLevel = LogLevel.DEBUG;
 
         private SSLConfig sslConfig = new SSLConfig(SSLMode.DISABLE, null, null);
+
+        private Map<String, String> startupOptions = Collections.emptyMap();
 
         private boolean tcpKeepAlive;
 
@@ -181,7 +193,7 @@ public final class ConnectionSettings {
          */
         public ConnectionSettings build() {
             return new ConnectionSettings(this.connectTimeout, this.connectionProvider, this.loopResources, this.sslConfig,
-                this.tcpKeepAlive, this.tcpNoDelay, this.errorResponseLogLevel, this.noticeLogLevel);
+                this.startupOptions, this.tcpKeepAlive, this.tcpNoDelay, this.errorResponseLogLevel, this.noticeLogLevel);
         }
 
         /**
@@ -250,6 +262,18 @@ public final class ConnectionSettings {
          */
         public Builder sslConfig(SSLConfig sslConfig) {
             this.sslConfig = Assert.requireNonNull(sslConfig, "sslConfig must not be null");
+            return this;
+        }
+
+        /**
+         * Configure the startup options.
+         *
+         * @param startupOptions the startup options
+         * @return this {@link Builder}
+         * @since 1.0
+         */
+        public Builder startupOptions(Map<String, String> startupOptions) {
+            this.startupOptions = Assert.requireNonNull(startupOptions, "startupOptions must not be null");
             return this;
         }
 

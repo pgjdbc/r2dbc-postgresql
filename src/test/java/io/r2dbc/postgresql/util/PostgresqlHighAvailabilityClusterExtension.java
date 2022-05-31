@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.r2dbc.postgresql.util;
 
 import com.zaxxer.hikari.HikariConfig;
@@ -57,15 +73,15 @@ public class PostgresqlHighAvailabilityClusterExtension implements BeforeAllCall
         return this.primary;
     }
 
-    public JdbcTemplate getPrimaryJdbc() {
+    public JdbcTemplate getPrimaryJdbcTemplate() {
         return new JdbcTemplate(this.primaryDataSource);
     }
 
     public PostgreSQLContainer<?> getStandby() {
-        return standby;
+        return this.standby;
     }
 
-    public JdbcTemplate getStandbyJdbc() {
+    public JdbcTemplate getStandbyJdbcTemplate() {
         return new JdbcTemplate(this.standbyDataSource);
     }
 
@@ -87,7 +103,7 @@ public class PostgresqlHighAvailabilityClusterExtension implements BeforeAllCall
     }
 
     private void startPrimary(Network network) {
-        this.primary = new PostgreSQLContainer<>("postgres:latest")
+        this.primary = new PostgreSQLContainer<>(PostgresqlServerExtension.IMAGE_NAME)
             .withNetwork(network)
             .withNetworkAliases("postgres-primary")
             .withCopyFileToContainer(getHostPath("setup-primary.sh", 0755), "/docker-entrypoint-initdb.d/setup-primary.sh")
@@ -102,7 +118,7 @@ public class PostgresqlHighAvailabilityClusterExtension implements BeforeAllCall
     }
 
     private void startStandby(Network network) {
-        this.standby = new PostgreSQLContainer<>("postgres:latest")
+        this.standby = new PostgreSQLContainer<>(PostgresqlServerExtension.IMAGE_NAME)
             .withNetwork(network)
             .withCopyFileToContainer(getHostPath("setup-standby.sh", 0755), "/setup-standby.sh")
             .withCommand("/setup-standby.sh")
@@ -111,7 +127,7 @@ public class PostgresqlHighAvailabilityClusterExtension implements BeforeAllCall
             .withEnv("PG_MASTER_HOST", "postgres-primary")
             .withEnv("PG_MASTER_PORT", "5432");
         this.standby.setWaitStrategy(new LogMessageWaitStrategy()
-            .withRegEx(".*database system is ready to accept read-only connections.*\\s")
+            .withRegEx(".*database system is ready to accept .* connections.*\\s")
             .withTimes(1)
             .withStartupTimeout(Duration.of(60L, ChronoUnit.SECONDS)));
         this.standby.start();
@@ -121,4 +137,5 @@ public class PostgresqlHighAvailabilityClusterExtension implements BeforeAllCall
         standbyConfig.setPassword(this.standby.getPassword());
         this.standbyDataSource = new HikariDataSource(standbyConfig);
     }
+
 }

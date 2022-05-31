@@ -17,8 +17,6 @@
 package io.r2dbc.postgresql;
 
 import com.ongres.scram.client.ScramClient;
-
-import io.netty.channel.unix.DomainSocketAddress;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.TestClient;
 import io.r2dbc.postgresql.message.backend.AuthenticationMD5Password;
@@ -46,16 +44,6 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
  * Unit tests for {@link PostgresqlConnectionFactory}.
  */
 final class PostgresqlConnectionFactoryUnitTests {
-
-    @Test
-    void constructorNoClientFactory() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlConnectionFactory(null, PostgresqlConnectionConfiguration.builder()
-            .host("test-host")
-            .password("test-password")
-            .username("test-username")
-            .build()))
-            .withMessage("clientFactory must not be null");
-    }
 
     @Test
     void constructorNoConfiguration() {
@@ -162,8 +150,8 @@ final class PostgresqlConnectionFactoryUnitTests {
         assertThat(new PostgresqlConnectionFactory(testClientFactory(client, configuration), configuration).getMetadata()).isNotNull();
     }
 
-    private ConnectionStrategy testClientFactory(Client client, PostgresqlConnectionConfiguration configuration) {
-        return new DefaultConnectionStrategy(new DomainSocketAddress(""), (endpoint, settings) -> Mono.just(client), configuration, null, Collections.emptyMap());
+    private ConnectionFunction testClientFactory(Client client, PostgresqlConnectionConfiguration configuration) {
+        return new SingleHostConnectionFunction((endpoint, settings) -> Mono.just(client), configuration);
     }
 
 }

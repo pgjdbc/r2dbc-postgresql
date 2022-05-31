@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.r2dbc.postgresql.client;
 
 import io.r2dbc.postgresql.util.Assert;
@@ -5,7 +21,12 @@ import reactor.util.annotation.Nullable;
 
 import static io.r2dbc.postgresql.PostgresqlConnectionConfiguration.DEFAULT_PORT;
 
-public class SingleHostConfiguration {
+/**
+ * Connection configuration information for connecting to a single Postgres server.
+ *
+ * @since 1.0
+ */
+public final class SingleHostConfiguration {
 
     @Nullable
     private final String host;
@@ -15,7 +36,7 @@ public class SingleHostConfiguration {
     @Nullable
     private final String socket;
 
-    public SingleHostConfiguration(@Nullable String host, int port, @Nullable String socket) {
+    private SingleHostConfiguration(@Nullable String host, int port, @Nullable String socket) {
         this.host = host;
         this.port = port;
         this.socket = socket;
@@ -84,7 +105,7 @@ public class SingleHostConfiguration {
      * <p>
      * <i>This class is not threadsafe</i>
      */
-    public static class Builder {
+    public static final class Builder {
 
         @Nullable
         private String host;
@@ -158,7 +179,7 @@ public class SingleHostConfiguration {
                 ", socket='" + this.socket + '\'' +
                 '}';
         }
-    }
 
+    }
 
 }

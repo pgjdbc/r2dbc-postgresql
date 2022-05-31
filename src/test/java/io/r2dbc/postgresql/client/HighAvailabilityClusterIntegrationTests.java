@@ -1,47 +1,61 @@
+/*
+ * Copyright 2022 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.r2dbc.postgresql.client;
 
+import io.r2dbc.postgresql.MultiHostConnectionStrategy;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
-import io.r2dbc.postgresql.TargetServerType;
 import io.r2dbc.postgresql.api.PostgresqlConnection;
 import io.r2dbc.postgresql.util.PostgresqlHighAvailabilityClusterExtension;
+import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.R2dbcException;
-import org.junit.jupiter.api.Assertions;
+import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.testcontainers.containers.PostgreSQLContainer;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-public class HighAvailabilityClusterIntegrationTests {
+import static org.assertj.core.api.Assertions.assertThat;
+
+/**
+ * Integration tests for multi-node Postgres server topologies.
+ */
+final class HighAvailabilityClusterIntegrationTests {
 
     @RegisterExtension
     static final PostgresqlHighAvailabilityClusterExtension SERVERS = new PostgresqlHighAvailabilityClusterExtension();
 
     @Test
     void testPrimaryAndStandbyStartup() {
-        Assertions.assertFalse(SERVERS.getPrimaryJdbc().queryForObject("show transaction_read_only", Boolean.class));
-        Assertions.assertTrue(SERVERS.getStandbyJdbc().queryForObject("show transaction_read_only", Boolean.class));
+        assertThat(SERVERS.getPrimaryJdbcTemplate().queryForObject("SHOW TRANSACTION_READ_ONLY", Boolean.class)).isFalse();
+        assertThat(SERVERS.getStandbyJdbcTemplate().queryForObject("SHOW TRANSACTION_READ_ONLY", Boolean.class)).isTrue();
     }
 
     @Test
     void testMultipleCallsOnSameFactory() {
-        PostgresqlConnectionFactory connectionFactory = this.multiHostConnectionFactory(TargetServerType.PREFER_SECONDARY, SERVERS.getPrimary(), SERVERS.getStandby());
+        PostgresqlConnectionFactory connectionFactory = this.multiHostConnectionFactory(MultiHostConnectionStrategy.TargetServerType.PREFER_SECONDARY, SERVERS.getPrimary(), SERVERS.getStandby());
 
-        connectionFactory
-            .create()
-            .flatMapMany(connection -> this.isPrimary(connection)
-                .concatWith(connection.close().then(Mono.empty())))
-            .next()
+        Mono.usingWhen(connectionFactory.create(), this::isPrimary, Connection::close)
             .as(StepVerifier::create)
             .expectNext(false)
             .verifyComplete();
 
-        connectionFactory
-            .create()
-            .flatMapMany(connection -> this.isPrimary(connection)
-                .concatWith(connection.close().then(Mono.empty())))
-            .next()
+        Mono.usingWhen(connectionFactory.create(), this::isPrimary, Connection::close)
             .as(StepVerifier::create)
             .expectNext(false)
             .verifyComplete();
@@ -49,12 +63,12 @@ public class HighAvailabilityClusterIntegrationTests {
 
     @Test
     void testTargetAnyChooseFirst() {
-        isConnectedToPrimary(TargetServerType.ANY, SERVERS.getPrimary(), SERVERS.getStandby())
+        isConnectedToPrimary(MultiHostConnectionStrategy.TargetServerType.ANY, SERVERS.getPrimary(), SERVERS.getStandby())
             .as(StepVerifier::create)
             .expectNext(true)
             .verifyComplete();
 
-        isConnectedToPrimary(TargetServerType.ANY, SERVERS.getStandby(), SERVERS.getPrimary())
+        isConnectedToPrimary(MultiHostConnectionStrategy.TargetServerType.ANY, SERVERS.getStandby(), SERVERS.getPrimary())
             .as(StepVerifier::create)
             .expectNext(false)
             .verifyComplete();
@@ -62,7 +76,7 @@ public class HighAvailabilityClusterIntegrationTests {
 
     @Test
     void testTargetAnyConnectedToPrimary() {
-        isConnectedToPrimary(TargetServerType.ANY, SERVERS.getPrimary())
+        isConnectedToPrimary(MultiHostConnectionStrategy.TargetServerType.ANY, SERVERS.getPrimary())
             .as(StepVerifier::create)
             .expectNext(true)
             .verifyComplete();
@@ -70,7 +84,7 @@ public class HighAvailabilityClusterIntegrationTests {
 
     @Test
     void testTargetAnyConnectedToStandby() {
-        isConnectedToPrimary(TargetServerType.ANY, SERVERS.getStandby())
+        isConnectedToPrimary(MultiHostConnectionStrategy.TargetServerType.ANY, SERVERS.getStandby())
             .as(StepVerifier::create)
             .expectNext(false)
             .verifyComplete();
@@ -78,12 +92,12 @@ public class HighAvailabilityClusterIntegrationTests {
 
     @Test
     void testTargetPreferSecondaryChooseStandby() {
-        isConnectedToPrimary(TargetServerType.PREFER_SECONDARY, SERVERS.getStandby(), SERVERS.getPrimary())
+        isConnectedToPrimary(MultiHostConnectionStrategy.TargetServerType.PREFER_SECONDARY, SERVERS.getStandby(), SERVERS.getPrimary())
             .as(StepVerifier::create)
             .expectNext(false)
             .verifyComplete();
 
-        isConnectedToPrimary(TargetServerType.PREFER_SECONDARY, SERVERS.getPrimary(), SERVERS.getStandby())
+        isConnectedToPrimary(MultiHostConnectionStrategy.TargetServerType.PREFER_SECONDARY, SERVERS.getPrimary(), SERVERS.getStandby())
             .as(StepVerifier::create)
             .expectNext(false)
             .verifyComplete();
@@ -91,7 +105,7 @@ public class HighAvailabilityClusterIntegrationTests {
 
     @Test
     void testTargetPreferSecondaryConnectedToPrimary() {
-        isConnectedToPrimary(TargetServerType.PREFER_SECONDARY, SERVERS.getPrimary())
+        isConnectedToPrimary(MultiHostConnectionStrategy.TargetServerType.PREFER_SECONDARY, SERVERS.getPrimary())
             .as(StepVerifier::create)
             .expectNext(true)
             .verifyComplete();
@@ -99,7 +113,7 @@ public class HighAvailabilityClusterIntegrationTests {
 
     @Test
     void testTargetPreferSecondaryConnectedToStandby() {
-        isConnectedToPrimary(TargetServerType.PREFER_SECONDARY, SERVERS.getStandby())
+        isConnectedToPrimary(MultiHostConnectionStrategy.TargetServerType.PREFER_SECONDARY, SERVERS.getStandby())
             .as(StepVerifier::create)
             .expectNext(false)
             .verifyComplete();
@@ -107,12 +121,12 @@ public class HighAvailabilityClusterIntegrationTests {
 
     @Test
     void testTargetPrimaryChoosePrimary() {
-        isConnectedToPrimary(TargetServerType.MASTER, SERVERS.getPrimary(), SERVERS.getStandby())
+        isConnectedToPrimary(MultiHostConnectionStrategy.TargetServerType.PRIMARY, SERVERS.getPrimary(), SERVERS.getStandby())
             .as(StepVerifier::create)
             .expectNext(true)
             .verifyComplete();
 
-        isConnectedToPrimary(TargetServerType.MASTER, SERVERS.getStandby(), SERVERS.getPrimary())
+        isConnectedToPrimary(MultiHostConnectionStrategy.TargetServerType.PRIMARY, SERVERS.getStandby(), SERVERS.getPrimary())
             .as(StepVerifier::create)
             .expectNext(true)
             .verifyComplete();
@@ -120,7 +134,7 @@ public class HighAvailabilityClusterIntegrationTests {
 
     @Test
     void testTargetPrimaryConnectedOnPrimary() {
-        isConnectedToPrimary(TargetServerType.MASTER, SERVERS.getPrimary())
+        isConnectedToPrimary(MultiHostConnectionStrategy.TargetServerType.PRIMARY, SERVERS.getPrimary())
             .as(StepVerifier::create)
             .expectNext(true)
             .verifyComplete();
@@ -128,19 +142,19 @@ public class HighAvailabilityClusterIntegrationTests {
 
     @Test
     void testTargetPrimaryFailedOnStandby() {
-        isConnectedToPrimary(TargetServerType.MASTER, SERVERS.getStandby())
+        isConnectedToPrimary(MultiHostConnectionStrategy.TargetServerType.PRIMARY, SERVERS.getStandby())
             .as(StepVerifier::create)
-            .verifyError(R2dbcException.class);
+            .verifyError(R2dbcNonTransientResourceException.class);
     }
 
     @Test
     void testTargetSecondaryChooseStandby() {
-        isConnectedToPrimary(TargetServerType.SECONDARY, SERVERS.getStandby(), SERVERS.getPrimary())
+        isConnectedToPrimary(MultiHostConnectionStrategy.TargetServerType.SECONDARY, SERVERS.getStandby(), SERVERS.getPrimary())
             .as(StepVerifier::create)
             .expectNext(false)
             .verifyComplete();
 
-        isConnectedToPrimary(TargetServerType.SECONDARY, SERVERS.getPrimary(), SERVERS.getStandby())
+        isConnectedToPrimary(MultiHostConnectionStrategy.TargetServerType.SECONDARY, SERVERS.getPrimary(), SERVERS.getStandby())
             .as(StepVerifier::create)
             .expectNext(false)
             .verifyComplete();
@@ -148,7 +162,7 @@ public class HighAvailabilityClusterIntegrationTests {
 
     @Test
     void testTargetSecondaryConnectedOnStandby() {
-        isConnectedToPrimary(TargetServerType.SECONDARY, SERVERS.getStandby())
+        isConnectedToPrimary(MultiHostConnectionStrategy.TargetServerType.SECONDARY, SERVERS.getStandby())
             .as(StepVerifier::create)
             .expectNext(false)
             .verifyComplete();
@@ -156,30 +170,26 @@ public class HighAvailabilityClusterIntegrationTests {
 
     @Test
     void testTargetSecondaryFailedOnPrimary() {
-        isConnectedToPrimary(TargetServerType.SECONDARY, SERVERS.getPrimary())
+        isConnectedToPrimary(MultiHostConnectionStrategy.TargetServerType.SECONDARY, SERVERS.getPrimary())
             .as(StepVerifier::create)
             .verifyError(R2dbcException.class);
     }
 
-    private Mono<Boolean> isConnectedToPrimary(TargetServerType targetServerType, PostgreSQLContainer<?>... servers) {
+    private Mono<Boolean> isConnectedToPrimary(MultiHostConnectionStrategy.TargetServerType targetServerType, PostgreSQLContainer<?>... servers) {
         PostgresqlConnectionFactory connectionFactory = this.multiHostConnectionFactory(targetServerType, servers);
 
-        return connectionFactory
-            .create()
-            .flatMapMany(connection -> this.isPrimary(connection)
-                .concatWith(connection.close().then(Mono.empty())))
-            .next();
+        return Mono.usingWhen(connectionFactory.create(), this::isPrimary, Connection::close);
     }
 
     private Mono<Boolean> isPrimary(PostgresqlConnection connection) {
-        return connection.createStatement("show transaction_read_only")
+        return connection.createStatement("SHOW TRANSACTION_READ_ONLY")
             .execute()
             .flatMap(result -> result.map((row, meta) -> row.get(0, String.class)))
             .map(str -> str.equalsIgnoreCase("off"))
             .next();
     }
 
-    private PostgresqlConnectionFactory multiHostConnectionFactory(TargetServerType targetServerType, PostgreSQLContainer<?>... servers) {
+    private PostgresqlConnectionFactory multiHostConnectionFactory(MultiHostConnectionStrategy.TargetServerType targetServerType, PostgreSQLContainer<?>... servers) {
         PostgreSQLContainer<?> firstServer = servers[0];
         PostgresqlConnectionConfiguration.Builder builder = PostgresqlConnectionConfiguration.builder();
         for (PostgreSQLContainer<?> server : servers) {
@@ -192,4 +202,5 @@ public class HighAvailabilityClusterIntegrationTests {
             .build();
         return new PostgresqlConnectionFactory(configuration);
     }
+
 }

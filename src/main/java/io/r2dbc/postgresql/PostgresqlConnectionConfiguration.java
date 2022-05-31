@@ -76,6 +76,7 @@ public final class PostgresqlConnectionConfiguration {
 
     private final boolean compatibilityMode;
 
+    @Nullable
     private final Duration connectTimeout;
 
     private final String database;
@@ -96,7 +97,7 @@ public final class PostgresqlConnectionConfiguration {
 
     @Nullable
     private final MultiHostConfiguration multiHostConfiguration;
-    
+
     private final LogLevel noticeLogLevel;
 
     private final Map<String, String> options;
@@ -121,7 +122,7 @@ public final class PostgresqlConnectionConfiguration {
 
     private final String username;
 
-    private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions, @Nullable boolean compatibilityMode, Duration connectTimeout, @Nullable String database,
+    private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions, @Nullable boolean compatibilityMode, @Nullable Duration connectTimeout, @Nullable String database,
                                               LogLevel errorResponseLogLevel,
                                               List<Extension> extensions, ToIntFunction<String> fetchSize, boolean forceBinary, @Nullable Duration lockWaitTimeout,
                                               @Nullable LoopResources loopResources,
@@ -240,6 +241,17 @@ public final class PostgresqlConnectionConfiguration {
         return this.multiHostConfiguration;
     }
 
+    MultiHostConfiguration getRequiredMultiHostConfiguration() {
+
+        MultiHostConfiguration config = getMultiHostConfiguration();
+
+        if (config == null) {
+            throw new IllegalStateException("MultiHostConfiguration not configured");
+        }
+
+        return config;
+    }
+
     Map<String, String> getOptions() {
         return Collections.unmodifiableMap(this.options);
     }
@@ -260,6 +272,17 @@ public final class PostgresqlConnectionConfiguration {
     @Nullable
     SingleHostConfiguration getSingleHostConfiguration() {
         return this.singleHostConfiguration;
+    }
+
+    SingleHostConfiguration getRequiredSingleHostConfiguration() {
+
+        SingleHostConfiguration config = getSingleHostConfiguration();
+
+        if (config == null) {
+            throw new IllegalStateException("SingleHostConfiguration not configured");
+        }
+
+        return config;
     }
 
     String getUsername() {
@@ -292,6 +315,7 @@ public final class PostgresqlConnectionConfiguration {
             .errorResponseLogLevel(this.errorResponseLogLevel)
             .noticeLogLevel(this.noticeLogLevel)
             .sslConfig(getSslConfig())
+            .startupOptions(this.options)
             .tcpKeepAlive(isTcpKeepAlive())
             .tcpNoDelay(isTcpNoDelay())
             .loopResources(this.loopResources)
@@ -431,8 +455,8 @@ public final class PostgresqlConnectionConfiguration {
                 ? this.multiHostConfiguration.build()
                 : null;
 
-            if (!(singleHostConfiguration == null ^ multiHostConfiguration == null)) {
-                throw new IllegalArgumentException("either multiHostConfiguration or singleHostConfiguration must not be null");
+            if ((singleHostConfiguration == null) == (multiHostConfiguration == null)) {
+                throw new IllegalArgumentException("Connection must be configured for either multi-host or single host connectivity");
             }
 
             if (this.username == null) {
@@ -440,12 +464,9 @@ public final class PostgresqlConnectionConfiguration {
             }
 
             return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.compatibilityMode, this.connectTimeout, this.database, this.errorResponseLogLevel,
-                this.extensions,
-                this.fetchSize, this.forceBinary, this.lockWaitTimeout, this.loopResources,
-                multiHostConfiguration,
+                this.extensions, this.fetchSize, this.forceBinary, this.lockWaitTimeout, this.loopResources, multiHostConfiguration,
                 this.noticeLogLevel, this.options, this.password, this.preferAttachedBuffers,
-                this.preparedStatementCacheQueries, this.schema,
-                singleHostConfiguration,
+                this.preparedStatementCacheQueries, this.schema, singleHostConfiguration,
                 this.createSslConfig(), this.statementTimeout, this.tcpKeepAlive, this.tcpNoDelay, this.username);
         }
 
@@ -567,79 +588,77 @@ public final class PostgresqlConnectionConfiguration {
         }
 
         /**
-         * Configure the host.
+         * Configure the host. Calling this method prepares single-node configuration. This method can be only used if the builder was not configured with a multi-host configuration.
          *
          * @param host the host
          * @return this {@link Builder}
          * @throws IllegalArgumentException if {@code host} is {@code null}
+         * @throws IllegalStateException    if {@link #addHost}, {@link #targetServerType(MultiHostConnectionStrategy.TargetServerType)} or {@link #hostRecheckTime(Duration)} was configured earlier
+         *                                  to ensure a consistent configuration state
          */
         public Builder host(String host) {
             Assert.requireNonNull(host, "host must not be null");
-            if (this.singleHostConfiguration == null) {
-                this.singleHostConfiguration = SingleHostConfiguration.builder();
-            }
-            this.singleHostConfiguration.host(host);
+            prepareSingleHostConfiguration().host(host);
             return this;
         }
 
         /**
-         * Add host with default port to hosts list.
+         * Add host with default port to the hosts list. Calling this method prepares multi-node configuration. This method can be only used if the builder was not configured with a single-host
+         * configuration.
          *
          * @param host the host
          * @return this {@link Builder}
          * @throws IllegalArgumentException if {@code host} is {@code null}
+         * @throws IllegalStateException    if {@link #port(int)}, {@link #host(String)} or {@link #socket(String)} was configured earlier to ensure a consistent configuration state
+         * @since 1.0
          */
         public Builder addHost(String host) {
             Assert.requireNonNull(host, "host must not be null");
-            if (this.multiHostConfiguration == null) {
-                this.multiHostConfiguration = MultiHostConfiguration.builder();
-            }
-            this.multiHostConfiguration.addHost(host);
+            prepareMultiHostConfiguration().addHost(host);
             return this;
         }
 
         /**
-         * Add host to hosts list.
+         * Add host to the hosts list. Calling this method prepares multi-node configuration. This method can be only used if the builder was not configured with a single-host configuration.
          *
          * @param host the host
          * @param port the port
          * @return this {@link Builder}
          * @throws IllegalArgumentException if {@code host} is {@code null}
+         * @throws IllegalStateException    if {@link #port(int)}, {@link #host(String)} or {@link #socket(String)} was configured earlier to ensure a consistent configuration state
+         * @since 1.0
          */
         public Builder addHost(String host, int port) {
             Assert.requireNonNull(host, "host must not be null");
-            if (this.multiHostConfiguration == null) {
-                this.multiHostConfiguration = MultiHostConfiguration.builder();
-            }
-            this.multiHostConfiguration.addHost(host, port);
+            prepareMultiHostConfiguration().addHost(host, port);
             return this;
         }
 
         /**
-         * Controls how long the knowledge about a host state is cached connection factory. The default value is 10000 milliseconds.
+         * Controls how long the knowledge about a host state is cached connection factory. The default value is {@code 10 seconds}. Calling this method prepares multi-node configuration. This
+         * method can be only used if the builder was not configured with a single-host configuration.
          *
          * @param hostRecheckTime host recheck time
          * @return this {@link Builder}
+         * @throws IllegalStateException if {@link #port(int)}, {@link #host(String)} or {@link #socket(String)} was configured earlier to ensure a consistent configuration state
+         * @since 1.0
          */
         public Builder hostRecheckTime(Duration hostRecheckTime) {
-            if (this.multiHostConfiguration == null) {
-                this.multiHostConfiguration = MultiHostConfiguration.builder();
-            }
-            this.multiHostConfiguration.hostRecheckTime(hostRecheckTime);
+            prepareMultiHostConfiguration().hostRecheckTime(hostRecheckTime);
             return this;
         }
 
         /**
-         * In default mode (disabled) hosts are connected in the given order. If enabled hosts are chosen randomly from the set of suitable candidates.
+         * In default mode (disabled) hosts are connected in the given order. If enabled hosts are chosen randomly from the set of suitable candidates. Calling this method prepares multi-node
+         * configuration. This method can be only used if the builder was not configured with a single-host configuration.
          *
          * @param loadBalanceHosts is load balance mode enabled
          * @return this {@link Builder}
+         * @throws IllegalStateException if {@link #port(int)}, {@link #host(String)} or {@link #socket(String)} was configured earlier to ensure a consistent configuration state
+         * @since 1.0
          */
         public Builder loadBalanceHosts(boolean loadBalanceHosts) {
-            if (this.multiHostConfiguration == null) {
-                this.multiHostConfiguration = MultiHostConfiguration.builder();
-            }
-            this.multiHostConfiguration.loadBalanceHosts(loadBalanceHosts);
+            prepareMultiHostConfiguration().loadBalanceHosts(loadBalanceHosts);
             return this;
         }
 
@@ -718,16 +737,16 @@ public final class PostgresqlConnectionConfiguration {
         }
 
         /**
-         * Configure the port.  Defaults to {@code 5432}.
+         * Configure the port. Defaults to {@code 5432}. Calling this method prepares single-node configuration. This method can be only used if the builder was not configured with a multi-host
+         * configuration.
          *
          * @param port the port
          * @return this {@link Builder}
+         * @throws IllegalStateException if {@link #addHost}, {@link #targetServerType(MultiHostConnectionStrategy.TargetServerType)} or {@link #hostRecheckTime(Duration)} was configured earlier to
+         *                               ensure a consistent configuration state
          */
         public Builder port(int port) {
-            if (this.singleHostConfiguration == null) {
-                this.singleHostConfiguration = SingleHostConfiguration.builder();
-            }
-            this.singleHostConfiguration.port(port);
+            prepareSingleHostConfiguration().port(port);
             return this;
         }
 
@@ -770,18 +789,18 @@ public final class PostgresqlConnectionConfiguration {
         }
 
         /**
-         * Configure the unix domain socket to connect to.
+         * Configure the unix domain socket to connect to. Calling this method prepares single-node configuration. This method can be only used if the builder was not configured with a multi-host
+         * configuration.
          *
          * @param socket the socket path
          * @return this {@link Builder}
          * @throws IllegalArgumentException if {@code socket} is {@code null}
+         * @throws IllegalStateException    if {@link #addHost}, {@link #targetServerType(MultiHostConnectionStrategy.TargetServerType)} or {@link #hostRecheckTime(Duration)} was configured earlier
+         *                                  to ensure a consistent configuration state
          */
         public Builder socket(String socket) {
             Assert.requireNonNull(socket, "host must not be null");
-            if (this.singleHostConfiguration == null) {
-                this.singleHostConfiguration = SingleHostConfiguration.builder();
-            }
-            this.singleHostConfiguration.socket(socket);
+            prepareSingleHostConfiguration().socket(socket);
 
             sslMode(SSLMode.DISABLE);
             return this;
@@ -917,20 +936,18 @@ public final class PostgresqlConnectionConfiguration {
         }
 
         /**
-         * Allows opening connections to only servers with required state, the allowed values are any, master, secondary and preferSecondary.
-         * The master/secondary distinction is currently done by observing if the server allows writes.
-         * The value preferSecondary tries to connect to secondary if any are available, otherwise allows falls back to connecting also to master.
-         * Default value is any.
+         * Allows opening connections to only servers with required state.
+         * The primary/secondary distinction is currently done by observing if the server allows writes.
+         * The value {@link MultiHostConnectionStrategy.TargetServerType#PREFER_SECONDARY} tries to connect to a secondary if any are available, otherwise allows falls back to a primary.
+         * Default value is {@link MultiHostConnectionStrategy.TargetServerType#ANY}.
          *
          * @param targetServerType target server type
          * @return this {@link Builder}
          * @throws IllegalArgumentException if {@code targetServerType} is {@code null}
+         * @since 1.0
          */
-        public Builder targetServerType(TargetServerType targetServerType) {
-            if (this.multiHostConfiguration == null) {
-                this.multiHostConfiguration = MultiHostConfiguration.builder();
-            }
-            this.multiHostConfiguration.targetServerType(targetServerType);
+        public Builder targetServerType(MultiHostConnectionStrategy.TargetServerType targetServerType) {
+            prepareMultiHostConfiguration().targetServerType(targetServerType);
             return this;
         }
 
@@ -1074,6 +1091,32 @@ public final class PostgresqlConnectionConfiguration {
                     throw new IllegalStateException("Failed to create SslContext", e);
                 }
             };
+        }
+
+        private SingleHostConfiguration.Builder prepareSingleHostConfiguration() {
+
+            if (this.multiHostConfiguration != null) {
+                throw new IllegalStateException("Cannot configure single-host properties because the builder is already configured with a multi-host configuration.");
+            }
+
+            if (this.singleHostConfiguration == null) {
+                this.singleHostConfiguration = SingleHostConfiguration.builder();
+            }
+
+            return this.singleHostConfiguration;
+        }
+
+        private MultiHostConfiguration.Builder prepareMultiHostConfiguration() {
+
+            if (this.singleHostConfiguration != null) {
+                throw new IllegalStateException("Cannot configure multi-host properties because the builder is already configured with a single-host configuration.");
+            }
+
+            if (this.multiHostConfiguration == null) {
+                this.multiHostConfiguration = MultiHostConfiguration.builder();
+            }
+
+            return this.multiHostConfiguration;
         }
 
         interface StreamConsumer {

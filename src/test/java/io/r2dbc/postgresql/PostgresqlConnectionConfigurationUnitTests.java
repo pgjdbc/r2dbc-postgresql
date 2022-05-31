@@ -42,13 +42,13 @@ final class PostgresqlConnectionConfigurationUnitTests {
     @Test
     void builderNoHostConfiguration() {
         assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().build())
-            .withMessage("either multiHostConfiguration or singleHostConfiguration must not be null");
+            .withMessage("Connection must be configured for either multi-host or single host connectivity");
     }
 
     @Test
     void builderHostAndSocket() {
         assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().host("host").socket("socket").build())
-            .withMessageContaining("either host/port or socket");
+            .withMessageContaining("Connection must be configured for either host/port or socket usage but not both");
     }
 
     @Test

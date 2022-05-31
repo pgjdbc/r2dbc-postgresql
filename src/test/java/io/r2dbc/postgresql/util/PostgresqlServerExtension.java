@@ -48,6 +48,8 @@ import static org.testcontainers.utility.MountableFile.forHostPath;
  */
 public final class PostgresqlServerExtension implements BeforeAllCallback, AfterAllCallback {
 
+    static final String IMAGE_NAME = "postgres:13.3";
+
     static PostgreSQLContainer<?> containerInstance = null;
 
     static Network containerNetwork = null;
@@ -187,7 +189,7 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
     }
 
     private <T extends PostgreSQLContainer<T>> T container() {
-        T container = new PostgreSQLContainer<T>("postgres:13.3")
+        T container = new PostgreSQLContainer<T>(IMAGE_NAME)
             .withCopyFileToContainer(getHostPath("server.crt", 0600), "/var/server.crt")
             .withCopyFileToContainer(getHostPath("server.key", 0600), "/var/server.key")
             .withCopyFileToContainer(getHostPath("client.crt", 0600), "/var/client.crt")

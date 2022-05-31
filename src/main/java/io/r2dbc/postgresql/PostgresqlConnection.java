@@ -94,6 +94,10 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
         return this.client;
     }
 
+    ConnectionResources getResources() {
+        return this.resources;
+    }
+
     @Override
     public Mono<Void> beginTransaction() {
         return beginTransaction(EmptyTransactionDefinition.INSTANCE);
