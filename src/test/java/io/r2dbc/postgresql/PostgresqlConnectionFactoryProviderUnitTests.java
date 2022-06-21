@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TimeZone;
 
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.AUTODETECT_EXTENSIONS;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.COMPATIBILITY_MODE;
@@ -58,6 +59,7 @@ import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.STATEMENT_
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.TARGET_SERVER_TYPE;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.TCP_KEEPALIVE;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.TCP_NODELAY;
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.TIME_ZONE;
 import static io.r2dbc.spi.ConnectionFactoryOptions.DRIVER;
 import static io.r2dbc.spi.ConnectionFactoryOptions.HOST;
 import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
@@ -469,6 +471,34 @@ final class PostgresqlConnectionFactoryProviderUnitTests {
             .build());
 
         assertThat(factory.getConfiguration().isTcpNoDelay()).isTrue();
+    }
+
+    @Test
+    void shouldConfigureTimeZone() {
+
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(TIME_ZONE, TimeZone.getTimeZone("Europe/Amsterdam"))
+            .build());
+
+        assertThat(factory.getConfiguration().getTimeZone()).isEqualTo(TimeZone.getTimeZone("Europe/Amsterdam"));
+    }
+
+    @Test
+    void shouldConfigureTimeZoneAsString() {
+
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(Option.valueOf("timeZone"), "Europe/Amsterdam")
+            .build());
+
+        assertThat(factory.getConfiguration().getTimeZone()).isEqualTo(TimeZone.getTimeZone("Europe/Amsterdam"));
     }
 
     @Test

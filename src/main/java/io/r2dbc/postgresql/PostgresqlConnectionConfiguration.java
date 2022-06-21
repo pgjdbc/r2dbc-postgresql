@@ -54,6 +54,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.TimeZone;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
@@ -120,6 +121,8 @@ public final class PostgresqlConnectionConfiguration {
 
     private final boolean tcpNoDelay;
 
+    private final TimeZone timeZone;
+
     private final String username;
 
     private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions, @Nullable boolean compatibilityMode, @Nullable Duration connectTimeout, @Nullable String database,
@@ -130,7 +133,7 @@ public final class PostgresqlConnectionConfiguration {
                                               LogLevel noticeLogLevel, @Nullable Map<String, String> options, @Nullable CharSequence password, boolean preferAttachedBuffers,
                                               int preparedStatementCacheQueries, @Nullable String schema,
                                               @Nullable SingleHostConfiguration singleHostConfiguration, SSLConfig sslConfig, @Nullable Duration statementTimeout,
-                                              boolean tcpKeepAlive, boolean tcpNoDelay,
+                                              boolean tcpKeepAlive, boolean tcpNoDelay, TimeZone timeZone,
                                               String username) {
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
         this.autodetectExtensions = autodetectExtensions;
@@ -167,6 +170,7 @@ public final class PostgresqlConnectionConfiguration {
         this.sslConfig = sslConfig;
         this.tcpKeepAlive = tcpKeepAlive;
         this.tcpNoDelay = tcpNoDelay;
+        this.timeZone = timeZone;
         this.username = Assert.requireNonNull(username, "username must not be null");
     }
 
@@ -202,6 +206,7 @@ public final class PostgresqlConnectionConfiguration {
             ", statementTimeout=" + this.statementTimeout +
             ", tcpKeepAlive=" + this.tcpKeepAlive +
             ", tcpNoDelay=" + this.tcpNoDelay +
+            ", timeZone=" + this.timeZone +
             ", username='" + this.username + '\'' +
             '}';
     }
@@ -303,6 +308,10 @@ public final class PostgresqlConnectionConfiguration {
 
     boolean isTcpNoDelay() {
         return this.tcpNoDelay;
+    }
+
+    TimeZone getTimeZone() {
+        return this.timeZone;
     }
 
     SSLConfig getSslConfig() {
@@ -408,6 +417,8 @@ public final class PostgresqlConnectionConfiguration {
 
         private boolean tcpNoDelay = true;
 
+        private TimeZone timeZone = TimeZone.getDefault();
+
         @Nullable
         private LoopResources loopResources = null;
 
@@ -467,7 +478,7 @@ public final class PostgresqlConnectionConfiguration {
                 this.extensions, this.fetchSize, this.forceBinary, this.lockWaitTimeout, this.loopResources, multiHostConfiguration,
                 this.noticeLogLevel, this.options, this.password, this.preferAttachedBuffers,
                 this.preparedStatementCacheQueries, this.schema, singleHostConfiguration,
-                this.createSslConfig(), this.statementTimeout, this.tcpKeepAlive, this.tcpNoDelay, this.username);
+                this.createSslConfig(), this.statementTimeout, this.tcpKeepAlive, this.tcpNoDelay, this.timeZone, this.username);
         }
 
         /**
@@ -978,6 +989,33 @@ public final class PostgresqlConnectionConfiguration {
         }
 
         /**
+         * Configure the session timezone.
+         *
+         * @param timeZone the timeZone identifier
+         * @return this {@link Builder}
+         * @throws IllegalArgumentException if {@code timeZone} is empty or {@code null}
+         * @see TimeZone#getTimeZone(String)
+         * @since 1.0
+         */
+        public Builder timeZone(String timeZone) {
+            return timeZone(TimeZone.getTimeZone(Assert.requireNotEmpty(timeZone, "timeZone must not be empty")));
+        }
+
+        /**
+         * Configure the session timezone.
+         *
+         * @param timeZone the timeZone identifier
+         * @return this {@link Builder}
+         * @throws IllegalArgumentException if {@code timeZone} is {@code null}
+         * @see TimeZone#getTimeZone(String)
+         * @since 1.0
+         */
+        public Builder timeZone(TimeZone timeZone) {
+            this.timeZone = Assert.requireNonNull(timeZone, "timeZone must not be null");
+            return this;
+        }
+
+        /**
          * Configure the username.
          *
          * @param username the username
@@ -1019,6 +1057,7 @@ public final class PostgresqlConnectionConfiguration {
                 ", sslHostnameVerifier='" + this.sslHostnameVerifier + '\'' +
                 ", tcpKeepAlive='" + this.tcpKeepAlive + '\'' +
                 ", tcpNoDelay='" + this.tcpNoDelay + '\'' +
+                ", timeZone='" + this.timeZone + '\'' +
                 ", username='" + this.username + '\'' +
                 '}';
         }

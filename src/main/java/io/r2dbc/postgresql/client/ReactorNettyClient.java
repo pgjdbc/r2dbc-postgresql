@@ -70,6 +70,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.StringJoiner;
+import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
@@ -115,6 +116,8 @@ public final class ReactorNettyClient implements Client {
     private volatile Integer processId;
 
     private volatile Integer secretKey;
+
+    private volatile TimeZone timeZone;
 
     private volatile TransactionStatus transactionStatus = IDLE;
 
@@ -298,24 +301,32 @@ public final class ReactorNettyClient implements Client {
 
     private void handleParameterStatus(ParameterStatus message) {
 
-        Version existingVersion = this.version;
+        String name = message.getName();
 
-        String versionString = existingVersion.getVersion();
-        int versionNum = existingVersion.getVersionNumber();
+        if (name.equals("server_version_num") || name.equals("server_version")) {
+            Version existingVersion = this.version;
 
-        if (message.getName().equals("server_version_num")) {
-            versionNum = Integer.parseInt(message.getValue());
-        }
+            String versionString = existingVersion.getVersion();
+            int versionNum = existingVersion.getVersionNumber();
 
-        if (message.getName().equals("server_version")) {
-            versionString = message.getValue();
-
-            if (versionNum == 0) {
-                versionNum = Version.parseServerVersionStr(versionString);
+            if (name.equals("server_version_num")) {
+                versionNum = Integer.parseInt(message.getValue());
             }
+
+            if (name.equals("server_version")) {
+                versionString = message.getValue();
+
+                if (versionNum == 0) {
+                    versionNum = Version.parseServerVersionStr(versionString);
+                }
+            }
+
+            this.version = new Version(versionString, versionNum);
         }
 
-        this.version = new Version(versionString, versionNum);
+        if (name.equals("TimeZone")) {
+            this.timeZone = TimeZoneUtils.parseBackendTimeZone(message.getValue());
+        }
     }
 
     /**
@@ -444,6 +455,11 @@ public final class ReactorNettyClient implements Client {
     @Override
     public Optional<Integer> getSecretKey() {
         return Optional.ofNullable(this.secretKey);
+    }
+
+    @Override
+    public Optional<TimeZone> getTimeZone() {
+        return Optional.ofNullable(this.timeZone);
     }
 
     @Override

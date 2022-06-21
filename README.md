@@ -106,6 +106,7 @@ Optional)_
 | `targetServerType`              | Type of server to use when using multi-host operations. Supported values: `ANY`, `PRIMARY`, `SECONDARY`, `PREFER_SECONDARY`. Defaults to `ANY`. _(Optional)_
 | `tcpNoDelay`                    | Enable/disable TCP NoDelay. Enabled by default. _(Optional)_
 | `tcpKeepAlive`                  | Enable/disable TCP KeepAlive. Disabled by default. _(Optional)_
+| `timeZone`                      | Configure the session timezone to control conversion of local temporal representations. Defaults to `TimeZone.getDefault()` _(Optional)_
 
 **Programmatic Configuration**
 

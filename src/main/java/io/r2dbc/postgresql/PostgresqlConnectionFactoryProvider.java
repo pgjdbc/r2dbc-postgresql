@@ -31,9 +31,11 @@ import reactor.netty.resources.LoopResources;
 
 import javax.net.ssl.HostnameVerifier;
 import java.time.Duration;
+import java.time.ZoneId;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.function.Function;
 
 import static io.r2dbc.spi.ConnectionFactoryOptions.CONNECT_TIMEOUT;
@@ -246,6 +248,13 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<Boolean> TCP_NODELAY = Option.valueOf("tcpNoDelay");
 
     /**
+     * Configure the session time zone.
+     *
+     * @since 1.0
+     */
+    public static final Option<TimeZone> TIME_ZONE = Option.valueOf("timeZone");
+
+    /**
      * Returns a new {@link PostgresqlConnectionConfiguration.Builder} configured with the given {@link ConnectionFactoryOptions}.
      *
      * @param connectionFactoryOptions {@link ConnectionFactoryOptions} used to initialize the {@link PostgresqlConnectionConfiguration.Builder}.
@@ -342,6 +351,18 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         mapper.from(STATEMENT_TIMEOUT).map(OptionMapper::toDuration).to(builder::statementTimeout);
         mapper.from(TCP_KEEPALIVE).map(OptionMapper::toBoolean).to(builder::tcpKeepAlive);
         mapper.from(TCP_NODELAY).map(OptionMapper::toBoolean).to(builder::tcpNoDelay);
+        mapper.from(TIME_ZONE).map(it -> {
+
+            if (it instanceof TimeZone) {
+                return (TimeZone) it;
+            }
+
+            if (it instanceof ZoneId) {
+                return TimeZone.getTimeZone((ZoneId) it);
+            }
+
+            return TimeZone.getTimeZone(it.toString());
+        }).to(builder::timeZone);
         builder.username("" + options.getRequiredValue(USER));
 
         return builder;

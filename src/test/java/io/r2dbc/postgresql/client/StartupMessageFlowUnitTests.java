@@ -44,7 +44,7 @@ final class StartupMessageFlowUnitTests {
         // @formatter:off
         Client client = TestClient.builder()
             .window()
-                .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username", null)).thenRespond(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))
+                .expectRequest(new StartupMessage("test-database", "test-username", new TestStartupParameterProvider())).thenRespond(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))
                 .expectRequest(new PasswordMessage("test-password")).thenRespond(AuthenticationOk.INSTANCE)
                 .done()
             .build();
@@ -61,7 +61,7 @@ final class StartupMessageFlowUnitTests {
     @Test
     void exchangeAuthenticationMessageFail() {
         Client client = TestClient.builder()
-            .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username", null)).thenRespond(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))
+            .expectRequest(new StartupMessage("test-database", "test-username", new TestStartupParameterProvider())).thenRespond(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))
             .build();
 
         when(this.authenticationHandler.handle(new AuthenticationMD5Password(TEST.buffer(4).writeInt(100)))).thenThrow(new IllegalArgumentException());
@@ -75,7 +75,7 @@ final class StartupMessageFlowUnitTests {
     @Test
     void exchangeAuthenticationOk() {
         Client client = TestClient.builder()
-            .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username", null)).thenRespond(AuthenticationOk.INSTANCE)
+            .expectRequest(new StartupMessage("test-database", "test-username", new TestStartupParameterProvider())).thenRespond(AuthenticationOk.INSTANCE)
             .build();
 
         StartupMessageFlow
@@ -87,7 +87,7 @@ final class StartupMessageFlowUnitTests {
     @Test
     void exchangeAuthenticationOther() {
         Client client = TestClient.builder()
-            .expectRequest(new StartupMessage("test-application-name", "test-database", "test-username", null)).thenRespond(AuthenticationOk.INSTANCE, new BackendKeyData(100, 200))
+            .expectRequest(new StartupMessage("test-database", "test-username", new TestStartupParameterProvider())).thenRespond(AuthenticationOk.INSTANCE, new BackendKeyData(100, 200))
             .build();
 
         StartupMessageFlow
@@ -117,7 +117,7 @@ final class StartupMessageFlowUnitTests {
 
     @Test
     void exchangeNoUsername() {
-        assertThatIllegalArgumentException().isThrownBy(() -> StartupMessageFlow.exchange("test-application-name", m -> this.authenticationHandler, NO_OP, "test-database", null))
+        assertThatIllegalArgumentException().isThrownBy(() -> StartupMessageFlow.exchange(m -> this.authenticationHandler, NO_OP, "test-database", null, null))
             .withMessage("username must not be null");
     }
 

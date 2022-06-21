@@ -24,6 +24,7 @@ import java.nio.ByteBuffer;
 import java.util.function.Function;
 
 import static io.netty.util.CharsetUtil.UTF_8;
+import static java.nio.charset.StandardCharsets.US_ASCII;
 
 final class FrontendMessageUtils {
 
@@ -82,6 +83,15 @@ final class FrontendMessageUtils {
         Assert.requireNonNull(s, "s must not be null");
 
         out.writeCharSequence(s, UTF_8);
+        out.writeByte(TERMINAL);
+        return out;
+    }
+
+    static ByteBuf writeCStringASCII(ByteBuf out, CharSequence s) {
+        Assert.requireNonNull(out, "out must not be null");
+        Assert.requireNonNull(s, "s must not be null");
+
+        out.writeCharSequence(s, US_ASCII);
         out.writeByte(TERMINAL);
         return out;
     }

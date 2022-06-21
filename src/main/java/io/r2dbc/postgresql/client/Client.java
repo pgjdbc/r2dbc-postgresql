@@ -30,6 +30,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Optional;
+import java.util.TimeZone;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -126,6 +127,14 @@ public interface Client {
      * @return the connected process secret key if it has been communicated
      */
     Optional<Integer> getSecretKey();
+
+    /**
+     * Returns the current time zone.
+     *
+     * @return the current time zone
+     * @since 1.0
+     */
+    Optional<TimeZone> getTimeZone();
 
     /**
      * Returns the current transaction status.

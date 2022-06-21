@@ -21,6 +21,7 @@ import io.r2dbc.postgresql.authentication.PasswordAuthenticationHandler;
 import io.r2dbc.postgresql.authentication.SASLAuthenticationHandler;
 import io.r2dbc.postgresql.client.Client;
 import io.r2dbc.postgresql.client.ConnectionSettings;
+import io.r2dbc.postgresql.client.PostgresStartupParameterProvider;
 import io.r2dbc.postgresql.client.StartupMessageFlow;
 import io.r2dbc.postgresql.message.backend.AuthenticationMessage;
 import io.r2dbc.postgresql.util.Assert;
@@ -44,8 +45,13 @@ final class SingleHostConnectionFunction implements ConnectionFunction {
 
         return this.upstreamFunction.connect(endpoint, settings)
             .delayUntil(client -> StartupMessageFlow
-                .exchange(this.configuration.getApplicationName(), this::getAuthenticationHandler, client, this.configuration.getDatabase(), this.configuration.getUsername(), settings)
+                .exchange(this::getAuthenticationHandler, client, this.configuration.getDatabase(), this.configuration.getUsername(),
+                    getParameterProvider(this.configuration, settings))
                 .handle(ExceptionFactory.INSTANCE::handleErrorResponse));
+    }
+
+    private static PostgresStartupParameterProvider getParameterProvider(PostgresqlConnectionConfiguration configuration, ConnectionSettings settings) {
+        return new PostgresStartupParameterProvider(configuration.getApplicationName(), configuration.getTimeZone(), settings);
     }
 
     protected AuthenticationHandler getAuthenticationHandler(AuthenticationMessage message) {

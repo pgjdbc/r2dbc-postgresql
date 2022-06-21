@@ -28,6 +28,7 @@ import reactor.core.publisher.Sinks;
 import reactor.util.annotation.Nullable;
 
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
@@ -47,55 +48,37 @@ public final class StartupMessageFlow {
      * @param client                        the {@link Client} to exchange messages with
      * @param database                      the database to connect to
      * @param username                      the username to authenticate with
-     * @param settings                      the connection settings
-     * @return the messages received after authentication is complete, in response to this exchange
-     * @throws IllegalArgumentException if {@code applicationName}, {@code authenticationHandler}, {@code client}, or {@code username} is {@code null}
-     */
-    public static Flux<BackendMessage> exchange(String applicationName, Function<AuthenticationMessage, AuthenticationHandler> authenticationHandlerProvider, Client client,
-                                                @Nullable String database, String username, ConnectionSettings settings) {
-        return exchange(applicationName, authenticationHandlerProvider, client, database, username, settings.getStartupOptions());
-    }
-
-    /**
-     * Execute the <a href="https://www.postgresql.org/docs/10/static/protocol-flow.html#idm46428664018352">Start-up</a> message flow.
-     *
-     * @param applicationName               the name of the application connecting to the server
-     * @param authenticationHandlerProvider the {@link Function} used to provide an {@link AuthenticationHandler} to use for authentication
-     * @param client                        the {@link Client} to exchange messages with
-     * @param database                      the database to connect to
-     * @param username                      the username to authenticate with
      * @return the messages received after authentication is complete, in response to this exchange
      * @throws IllegalArgumentException if {@code applicationName}, {@code authenticationHandler}, {@code client}, or {@code username} is {@code null}
      */
     public static Flux<BackendMessage> exchange(String applicationName, Function<AuthenticationMessage, AuthenticationHandler> authenticationHandlerProvider, Client client,
                                                 @Nullable String database, String username) {
-        return exchange(applicationName, authenticationHandlerProvider, client, database, username, (Map<String, String>) null);
+        return exchange(authenticationHandlerProvider, client, database, username, new PostgresStartupParameterProvider(applicationName, TimeZone.getDefault(), (Map<String, String>) null));
     }
 
     /**
      * Execute the <a href="https://www.postgresql.org/docs/10/static/protocol-flow.html#idm46428664018352">Start-up</a> message flow.
      *
-     * @param applicationName               the name of the application connecting to the server
      * @param authenticationHandlerProvider the {@link Function} used to provide an {@link AuthenticationHandler} to use for authentication
      * @param client                        the {@link Client} to exchange messages with
      * @param database                      the database to connect to
      * @param username                      the username to authenticate with
-     * @param options                       the connection options
+     * @param parameterProvider             the parameter provider providing connection options
      * @return the messages received after authentication is complete, in response to this exchange
      * @throws IllegalArgumentException if {@code applicationName}, {@code authenticationHandler}, {@code client}, or {@code username} is {@code null}
      */
-    public static Flux<BackendMessage> exchange(String applicationName, Function<AuthenticationMessage, AuthenticationHandler> authenticationHandlerProvider, Client client,
-                                                @Nullable String database, String username, @Nullable Map<String, String> options) {
+    public static Flux<BackendMessage> exchange(Function<AuthenticationMessage, AuthenticationHandler> authenticationHandlerProvider, Client client,
+                                                @Nullable String database, String username, StartupMessage.StartupParameterProvider parameterProvider) {
 
-        Assert.requireNonNull(applicationName, "applicationName must not be null");
         Assert.requireNonNull(authenticationHandlerProvider, "authenticationHandlerProvider must not be null");
         Assert.requireNonNull(client, "client must not be null");
         Assert.requireNonNull(username, "username must not be null");
+        Assert.requireNonNull(parameterProvider, "parameterProvider must not be null");
 
         Sinks.Many<FrontendMessage> requests = Sinks.many().unicast().onBackpressureBuffer();
         AtomicReference<AuthenticationHandler> authenticationHandler = new AtomicReference<>(null);
 
-        return client.exchange(requests.asFlux().startWith(new StartupMessage(applicationName, database, username, options)))
+        return client.exchange(requests.asFlux().startWith(new StartupMessage(database, username, parameterProvider)))
             .handle((message, sink) -> {
                 if (message instanceof AuthenticationOk) {
                     requests.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
