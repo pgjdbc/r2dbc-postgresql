@@ -193,7 +193,7 @@ final class HighAvailabilityClusterIntegrationTests {
         PostgreSQLContainer<?> firstServer = servers[0];
         PostgresqlConnectionConfiguration.Builder builder = PostgresqlConnectionConfiguration.builder();
         for (PostgreSQLContainer<?> server : servers) {
-            builder.addHost(server.getContainerIpAddress(), server.getMappedPort(5432));
+            builder.addHost(server.getHost(), server.getMappedPort(5432));
         }
         PostgresqlConnectionConfiguration configuration = builder
             .targetServerType(targetServerType)

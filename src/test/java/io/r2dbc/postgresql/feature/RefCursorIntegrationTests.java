@@ -22,7 +22,6 @@ import io.r2dbc.postgresql.api.RefCursor;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.postgresql.jdbc.PgResultSet;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import reactor.test.StepVerifier;
@@ -80,24 +79,6 @@ final class RefCursorIntegrationTests extends AbstractIntegrationTests {
             .flatMap(PostgresqlResult::getRowsUpdated)
             .as(StepVerifier::create)
             .verifyError(R2dbcNonTransientResourceException.class);
-    }
-
-    @Test
-    void shouldReturnSingleRefCursorFromJdbc() {
-
-        DataSourceTransactionManager tm = new DataSourceTransactionManager(SERVER.getDataSource());
-
-        TransactionTemplate tt = new TransactionTemplate(tm);
-
-        Map<String, Object> object = tt.execute(transactionStatus -> {
-            return SERVER.getJdbcOperations().queryForMap("SELECT show_cities()");
-        });
-
-        assertThat(object).containsKey("show_cities");
-        assertThat(object.get("show_cities")).isInstanceOf(PgResultSet.class);
-
-        PgResultSet rs = (PgResultSet) object.get("show_cities");
-        assertThat(rs.getRefCursor()).isNotEmpty();
     }
 
     @Test

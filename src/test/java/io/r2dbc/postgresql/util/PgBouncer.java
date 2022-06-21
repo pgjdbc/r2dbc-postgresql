@@ -51,7 +51,7 @@ public final class PgBouncer implements AutoCloseable {
     }
 
     public String getHost() {
-        return this.container.getContainerIpAddress();
+        return this.container.getHost();
     }
 
     public int getPort() {

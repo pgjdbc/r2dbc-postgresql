@@ -306,7 +306,7 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
 
         @Override
         public String getHost() {
-            return this.container.getContainerIpAddress();
+            return this.container.getHost();
         }
 
         @Override

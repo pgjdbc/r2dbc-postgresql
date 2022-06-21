@@ -32,26 +32,26 @@
     <url>https://github.com/pgjdbc/r2dbc-postgresql</url>
 
     <properties>
-        <assertj.version>3.22.0</assertj.version>
+        <assertj.version>3.23.1</assertj.version>
         <awaitility.version>4.2.0</awaitility.version>
         <blockhound.version>1.0.6.RELEASE</blockhound.version>
         <hikari-cp.version>4.0.3</hikari-cp.version>
         <java.version>1.8</java.version>
         <jsr305.version>3.0.2</jsr305.version>
         <junit.version>5.8.2</junit.version>
-        <jmh.version>1.33</jmh.version>
+        <jmh.version>1.35</jmh.version>
         <mbr.version>0.3.0.RELEASE</mbr.version>
         <logback.version>1.2.9</logback.version>
-        <mockito.version>4.4.0</mockito.version>
-        <netty.version>4.1.77.Final</netty.version>
-        <postgresql.version>42.3.3</postgresql.version>
+        <mockito.version>4.6.1</mockito.version>
+        <netty.version>4.1.78.Final</netty.version>
+        <postgresql.version>42.4.0</postgresql.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <r2dbc-spi.version>1.0.0.RELEASE</r2dbc-spi.version>
         <reactor.version>2022.0.0-M2</reactor.version>
         <scram-client.version>2.1</scram-client.version>
-        <spring-framework.version>5.3.19</spring-framework.version>
-        <testcontainers.version>1.16.3</testcontainers.version>
+        <spring-framework.version>5.3.21</spring-framework.version>
+        <testcontainers.version>1.17.2</testcontainers.version>
         <jts-core.version>1.18.2</jts-core.version>
     </properties>
 
@@ -263,7 +263,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
+                <version>3.10.1</version>
                 <configuration>
                     <compilerArgs>
                         <arg>-Werror</arg>
@@ -281,7 +281,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.2.1</version>
+                <version>3.2.2</version>
                 <configuration>
                     <archive>
                         <manifest>
@@ -303,7 +303,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.1.0</version>
                 <executions>
                     <execution>
                         <id>enforce-no-snapshots</id>
@@ -324,7 +324,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.3.1</version>
+                <version>3.4.0</version>
                 <configuration>
                     <excludePackageNames>
                         io.r2dbc.postgresql.authentication,io.r2dbc.postgresql.client,io.r2dbc.postgresql.message,io.r2dbc.postgresql.util
@@ -599,7 +599,7 @@
                         <plugin>
                             <groupId>org.sonatype.plugins</groupId>
                             <artifactId>nexus-staging-maven-plugin</artifactId>
-                            <version>1.6.8</version>
+                            <version>1.6.13</version>
                             <extensions>true</extensions>
                             <configuration>
                                 <serverId>sonatype</serverId>
