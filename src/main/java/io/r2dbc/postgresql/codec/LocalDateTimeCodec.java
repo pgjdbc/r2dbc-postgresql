@@ -27,14 +27,18 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.function.Supplier;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMESTAMP;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMESTAMP_ARRAY;
 
 final class LocalDateTimeCodec extends AbstractTemporalCodec<LocalDateTime> {
 
-    LocalDateTimeCodec(ByteBufAllocator byteBufAllocator) {
+    private final Supplier<ZoneId> zoneIdSupplier;
+
+    LocalDateTimeCodec(ByteBufAllocator byteBufAllocator, Supplier<ZoneId> zoneIdSupplier) {
         super(LocalDateTime.class, byteBufAllocator, TIMESTAMP, TIMESTAMP_ARRAY, LocalDateTime::toString);
+        this.zoneIdSupplier = Assert.requireNonNull(zoneIdSupplier, "zoneIdSupplier must not be null");
     }
 
     @Override
@@ -42,11 +46,15 @@ final class LocalDateTimeCodec extends AbstractTemporalCodec<LocalDateTime> {
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         return decodeTemporal(buffer, dataType, format, LocalDateTime.class, temporal -> {
+            ZoneId zone = this.zoneIdSupplier.get();
+
             if (temporal instanceof LocalDate) {
-                return ((LocalDate) temporal).atStartOfDay(ZoneId.systemDefault()).toLocalDateTime();
+                return ((LocalDate) temporal).atStartOfDay(zone).toLocalDateTime();
             }
 
-            return Instant.from(temporal).atOffset(ZoneOffset.UTC).toLocalDateTime();
+            Instant instant = Instant.from(temporal);
+            ZoneOffset offset = zone.getRules().getOffset(instant);
+            return instant.atOffset(offset).toLocalDateTime();
         });
     }
 

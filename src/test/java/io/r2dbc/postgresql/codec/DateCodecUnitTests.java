@@ -44,9 +44,11 @@ final class DateCodecUnitTests {
 
     private static final int dataType = TIMESTAMP.getObjectId();
 
+    private final DateCodec codec = new DateCodec(TEST, ZoneId::systemDefault);
+
     @Test
     void constructorNoByteBufAllocator() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new DateCodec(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new DateCodec(null, null))
             .withMessage("byteBufAllocator must not be null");
     }
 
@@ -55,7 +57,7 @@ final class DateCodecUnitTests {
         Instant testInstant = LocalDateTime.parse("2010-02-01T10:08:04.412").atZone(ZoneId.systemDefault()).toInstant();
         Date date = Date.from(testInstant);
 
-        assertThat(new DateCodec(TEST).decode(encode(TEST, "2010-02-01 10:08:04.412"), dataType, FORMAT_TEXT, Date.class))
+        assertThat(this.codec.decode(encode(TEST, "2010-02-01 10:08:04.412"), dataType, FORMAT_TEXT, Date.class))
             .isEqualTo(date);
     }
 
@@ -63,18 +65,18 @@ final class DateCodecUnitTests {
     void decodeFromDate() {
         Date date = Date.from(LocalDateTime.parse("2018-11-04T00:00:00.000").atZone(ZoneId.systemDefault()).toInstant());
 
-        assertThat(new DateCodec(TEST).decode(encode(TEST, "2018-11-04"), DATE.getObjectId(), FORMAT_TEXT, Date.class))
+        assertThat(this.codec.decode(encode(TEST, "2018-11-04"), DATE.getObjectId(), FORMAT_TEXT, Date.class))
             .isEqualTo(date);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new DateCodec(TEST).decode(null, dataType, FORMAT_TEXT, Date.class)).isNull();
+        assertThat(this.codec.decode(null, dataType, FORMAT_TEXT, Date.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
-        DateCodec codec = new DateCodec(TEST);
+        DateCodec codec = this.codec;
 
         assertThat(codec.doCanDecode(TIMESTAMP, FORMAT_BINARY)).isTrue();
         assertThat(codec.doCanDecode(MONEY, FORMAT_TEXT)).isFalse();
@@ -83,13 +85,13 @@ final class DateCodecUnitTests {
 
     @Test
     void doCanDecodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new DateCodec(TEST).doCanDecode(VARCHAR, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> this.codec.doCanDecode(VARCHAR, null))
             .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new DateCodec(TEST).doCanDecode(null, FORMAT_TEXT))
+        assertThatIllegalArgumentException().isThrownBy(() -> this.codec.doCanDecode(null, FORMAT_TEXT))
             .withMessage("type must not be null");
     }
 
@@ -98,7 +100,7 @@ final class DateCodecUnitTests {
         Instant testInstant = LocalDateTime.parse("2010-02-01T10:08:04.412").atZone(ZoneId.systemDefault()).toInstant();
         Date date = Date.from(testInstant);
 
-        assertThat(new DateCodec(TEST).doEncode(date))
+        assertThat(this.codec.doEncode(date))
             .hasFormat(FORMAT_TEXT)
             .hasType(TIMESTAMP.getObjectId())
             .hasValue(encode(TEST, "2010-02-01T10:08:04.412"));
@@ -106,13 +108,13 @@ final class DateCodecUnitTests {
 
     @Test
     void doEncodeNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new DateCodec(TEST).doEncode(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> this.codec.doEncode(null))
             .withMessage("value must not be null");
     }
 
     @Test
     void encodeNull() {
-        assertThat(new DateCodec(TEST).encodeNull())
+        assertThat(this.codec.encodeNull())
             .isEqualTo(new EncodedParameter(FORMAT_TEXT, TIMESTAMP.getObjectId(), NULL_VALUE));
     }
 

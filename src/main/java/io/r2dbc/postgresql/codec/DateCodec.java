@@ -26,16 +26,19 @@ import reactor.util.annotation.Nullable;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.function.Supplier;
 
 final class DateCodec extends AbstractCodec<Date> implements ArrayCodecDelegate<Date> {
 
     private final LocalDateTimeCodec delegate;
 
-    DateCodec(ByteBufAllocator byteBufAllocator) {
+    private final Supplier<ZoneId> zoneIdSupplier;
+
+    DateCodec(ByteBufAllocator byteBufAllocator, Supplier<ZoneId> zoneIdSupplier) {
         super(Date.class);
 
-        Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
-        this.delegate = new LocalDateTimeCodec(byteBufAllocator);
+        this.delegate = new LocalDateTimeCodec(byteBufAllocator, zoneIdSupplier);
+        this.zoneIdSupplier = Assert.requireNonNull(zoneIdSupplier, "zoneIdSupplier must not be null");
     }
 
     @Override
@@ -61,7 +64,7 @@ final class DateCodec extends AbstractCodec<Date> implements ArrayCodecDelegate<
         Assert.requireNonNull(buffer, "byteBuf must not be null");
 
         LocalDateTime intermediary = this.delegate.doDecode(buffer, dataType, format, LocalDateTime.class);
-        return Date.from(intermediary.atZone(ZoneId.systemDefault()).toInstant());
+        return Date.from(intermediary.atZone(this.zoneIdSupplier.get()).toInstant());
     }
 
     @Override
@@ -90,8 +93,8 @@ final class DateCodec extends AbstractCodec<Date> implements ArrayCodecDelegate<
         return this.delegate.getArrayDataType();
     }
 
-    private static LocalDateTime normalize(Date value) {
-        return value.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+    private LocalDateTime normalize(Date value) {
+        return value.toInstant().atZone(this.zoneIdSupplier.get()).toLocalDateTime();
     }
 
 }

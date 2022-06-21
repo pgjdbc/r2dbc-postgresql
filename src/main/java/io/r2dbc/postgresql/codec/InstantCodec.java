@@ -27,14 +27,18 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.function.Supplier;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMESTAMPTZ;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMESTAMPTZ_ARRAY;
 
 final class InstantCodec extends AbstractTemporalCodec<Instant> {
 
-    InstantCodec(ByteBufAllocator byteBufAllocator) {
+    private final Supplier<ZoneId> zoneIdSupplier;
+
+    InstantCodec(ByteBufAllocator byteBufAllocator, Supplier<ZoneId> zoneIdSupplier) {
         super(Instant.class, byteBufAllocator, TIMESTAMPTZ, TIMESTAMPTZ_ARRAY, Instant::toString);
+        this.zoneIdSupplier = zoneIdSupplier;
     }
 
     @Override
@@ -44,11 +48,15 @@ final class InstantCodec extends AbstractTemporalCodec<Instant> {
         return decodeTemporal(buffer, dataType, format, Instant.class, temporal -> {
 
             if (temporal instanceof LocalDateTime) {
-                return ((LocalDateTime) temporal).toInstant(ZoneOffset.UTC);
+                ZoneId zoneId = this.zoneIdSupplier.get();
+                ZoneOffset offset = zoneId.getRules().getOffset((LocalDateTime) temporal);
+                return ((LocalDateTime) temporal).toInstant(offset);
             }
 
             if (temporal instanceof LocalDate) {
-                return ((LocalDate) temporal).atStartOfDay(ZoneId.systemDefault()).toInstant();
+                ZoneId zoneId = this.zoneIdSupplier.get();
+
+                return ((LocalDate) temporal).atStartOfDay(zoneId).toInstant();
             }
 
             return Instant.from(temporal);

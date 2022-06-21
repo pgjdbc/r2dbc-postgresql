@@ -20,6 +20,7 @@ import io.r2dbc.postgresql.client.EncodedParameter;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 import static io.r2dbc.postgresql.client.ParameterAssert.assertThat;
@@ -40,9 +41,11 @@ final class LocalDateTimeCodecUnitTests {
 
     private static final int dataType = TIMESTAMP.getObjectId();
 
+    private final LocalDateTimeCodec codec = new LocalDateTimeCodec(TEST, ZoneId::systemDefault);
+
     @Test
     void constructorNoByteBufAllocator() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new LocalDateTimeCodec(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new LocalDateTimeCodec(null, null))
             .withMessage("byteBufAllocator must not be null");
     }
 
@@ -50,7 +53,7 @@ final class LocalDateTimeCodecUnitTests {
     void decode() {
         LocalDateTime localDateTime = LocalDateTime.parse("2018-11-05T00:06:31.700426");
 
-        assertThat(new LocalDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:06:31.700426"), dataType, FORMAT_TEXT, LocalDateTime.class))
+        assertThat(this.codec.decode(encode(TEST, "2018-11-05 00:06:31.700426"), dataType, FORMAT_TEXT, LocalDateTime.class))
             .isEqualTo(localDateTime);
     }
 
@@ -58,22 +61,22 @@ final class LocalDateTimeCodecUnitTests {
     void decodeUTC() {
         LocalDateTime localDateTime = LocalDateTime.parse("2018-11-05T00:06:31.700426");
 
-        assertThat(new LocalDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:06:31.700426+00:00"), dataType, FORMAT_TEXT, LocalDateTime.class))
+        assertThat(this.codec.decode(encode(TEST, "2018-11-05 00:06:31.700426+00:00"), dataType, FORMAT_TEXT, LocalDateTime.class))
             .isEqualTo(localDateTime);
-        assertThat(new LocalDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:06:31.700426+00"), dataType, FORMAT_TEXT, LocalDateTime.class))
+        assertThat(this.codec.decode(encode(TEST, "2018-11-05 00:06:31.700426+00"), dataType, FORMAT_TEXT, LocalDateTime.class))
             .isEqualTo(localDateTime);
-        assertThat(new LocalDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:06:31.700426+00:00:00"), dataType, FORMAT_TEXT, LocalDateTime.class))
-                .isEqualTo(localDateTime);
+        assertThat(this.codec.decode(encode(TEST, "2018-11-05 00:06:31.700426+00:00:00"), dataType, FORMAT_TEXT, LocalDateTime.class))
+            .isEqualTo(localDateTime);
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new LocalDateTimeCodec(TEST).decode(null, dataType, FORMAT_TEXT, LocalDateTime.class)).isNull();
+        assertThat(this.codec.decode(null, dataType, FORMAT_TEXT, LocalDateTime.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
-        LocalDateTimeCodec codec = new LocalDateTimeCodec(TEST);
+        LocalDateTimeCodec codec = this.codec;
 
         assertThat(codec.doCanDecode(TIMESTAMP, FORMAT_BINARY)).isTrue();
         assertThat(codec.doCanDecode(MONEY, FORMAT_TEXT)).isFalse();
@@ -82,13 +85,13 @@ final class LocalDateTimeCodecUnitTests {
 
     @Test
     void doCanDecodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new LocalDateTimeCodec(TEST).doCanDecode(VARCHAR, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> this.codec.doCanDecode(VARCHAR, null))
             .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new LocalDateTimeCodec(TEST).doCanDecode(null, FORMAT_TEXT))
+        assertThatIllegalArgumentException().isThrownBy(() -> this.codec.doCanDecode(null, FORMAT_TEXT))
             .withMessage("type must not be null");
     }
 
@@ -96,7 +99,7 @@ final class LocalDateTimeCodecUnitTests {
     void doEncode() {
         LocalDateTime localDateTime = LocalDateTime.now();
 
-        assertThat(new LocalDateTimeCodec(TEST).doEncode(localDateTime))
+        assertThat(this.codec.doEncode(localDateTime))
             .hasFormat(FORMAT_TEXT)
             .hasType(TIMESTAMP.getObjectId())
             .hasValue(encode(TEST, localDateTime.toString()));
@@ -104,13 +107,13 @@ final class LocalDateTimeCodecUnitTests {
 
     @Test
     void doEncodeNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new LocalDateTimeCodec(TEST).doEncode(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> this.codec.doEncode(null))
             .withMessage("value must not be null");
     }
 
     @Test
     void encodeNull() {
-        assertThat(new LocalDateTimeCodec(TEST).encodeNull())
+        assertThat(this.codec.encodeNull())
             .isEqualTo(new EncodedParameter(FORMAT_TEXT, TIMESTAMP.getObjectId(), NULL_VALUE));
     }
 

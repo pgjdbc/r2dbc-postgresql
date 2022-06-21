@@ -34,11 +34,13 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 
 /**
  * An implementation of {@link ConnectionFactory} for creating connections to a PostgreSQL database.
@@ -115,17 +117,20 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
 
         ConnectionSettings connectionSettings = this.configuration.getConnectionSettings().mutate(builder -> builder.startupOptions(options));
 
-        ConnectionStrategy connectionStrategy = ConnectionStrategyFactory.getConnectionStrategy(connectionFunction, this.configuration, connectionSettings);
+        ConnectionStrategy connectionStrategy = ConnectionStrategyFactory.getConnectionStrategy(this.connectionFunction, this.configuration, connectionSettings);
 
         return doCreateConnection(true, connectionStrategy).map(DefaultPostgresqlReplicationConnection::new);
     }
 
     private Mono<PostgresqlConnection> doCreateConnection(boolean forReplication, ConnectionStrategy connectionStrategy) {
 
+        ZoneId defaultZone = TimeZone.getDefault().toZoneId();
+
         return connectionStrategy.connect()
             .flatMap(client -> {
 
-                DefaultCodecs codecs = new DefaultCodecs(client.getByteBufAllocator(), this.configuration.isPreferAttachedBuffers());
+                DefaultCodecs codecs = new DefaultCodecs(client.getByteBufAllocator(), this.configuration.isPreferAttachedBuffers(),
+                    () -> client.getTimeZone().map(TimeZone::toZoneId).orElse(defaultZone));
                 StatementCache statementCache = StatementCache.fromPreparedStatementCacheQueries(client, this.configuration.getPreparedStatementCacheQueries());
 
                 // early connection object to retrieve initialization details
