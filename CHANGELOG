@@ -1,6 +1,32 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+1.0.0.RC1
+-----------------------------------------
+* Support for Postgresql multi-host failover functionality #120
+* Parameter values are not sent in the correct order #482
+* Support for postgis geometry parent type #483
+* Let `Result.getRowsUpdated()` return `Long` #484
+* Remove deprecated `RowMetadata.getColumnNames()` method #485
+* Consider lowercase `sslmode` for easier JDBC URL adaption #486
+* Can't process CITEXT #488
+* ReactorNettyClient `requestProcessor` can retain data from queries #492
+* Update Readme as LOB types are already supported #493
+* Upgrade to postgresql 42.3.3 #494
+* Fix postgres OID type decoding #495
+* Release 0.8.12.RELEASE #496
+* Add `COPY FROM` support #500
+* Upgrade to Reactor 2022.0.0-M1 #503
+* Upgrade to Reactor 2022.0.0-M2 #506
+* Upgrade to R2DBC 1.0 #508
+* Issue parsing timestamp with timezone having offset of format `+hh:mm:ss` #509
+* `CachedCodecLookup` wrongly assumes uniqueness of `hashCode()` #511
+* Extend `PostgresqlSqlLexer` to handle PG14 SQL-standard function body syntax #512
+* Upgrade to netty 4.1.77.Final to address epoll_wait() not implemented on Linux #514
+* using an EnumCodec with no enums generates invalid SQL #515
+* Add configuration for `TimeZone` #520
+* Align `LocalDate` conversion to configured time zone #521
+
 0.9.0.RELEASE
 -----------------------------------------
 * Polishing #478
