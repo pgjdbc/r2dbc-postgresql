@@ -22,6 +22,8 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
+import io.r2dbc.postgresql.api.ErrorDetails;
+import io.r2dbc.postgresql.api.PostgresqlException;
 import io.r2dbc.spi.R2dbcPermissionDeniedException;
 import reactor.core.publisher.Mono;
 
@@ -86,10 +88,18 @@ abstract class AbstractPostgresSSLHandlerAdapter extends ChannelInboundHandlerAd
     /**
      * Postgres-specific {@link R2dbcPermissionDeniedException}.
      */
-    static final class PostgresqlSslException extends R2dbcPermissionDeniedException {
+    static final class PostgresqlSslException extends R2dbcPermissionDeniedException implements PostgresqlException {
 
-        PostgresqlSslException(String msg) {
-            super(msg);
+        private final ErrorDetails errorDetails;
+
+        PostgresqlSslException(String reason) {
+            super(reason, ReactorNettyClient.CONNECTION_FAILURE, 0, (String) null);
+            this.errorDetails = ErrorDetails.fromCodeAndMessage(ReactorNettyClient.CONNECTION_FAILURE, reason);
+        }
+
+        @Override
+        public ErrorDetails getErrorDetails() {
+            return this.errorDetails;
         }
 
     }
