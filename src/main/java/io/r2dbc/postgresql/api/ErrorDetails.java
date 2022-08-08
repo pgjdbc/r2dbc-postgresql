@@ -23,6 +23,7 @@ import io.r2dbc.postgresql.util.Assert;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -128,6 +129,22 @@ public final class ErrorDetails {
      */
     public static ErrorDetails fromMessage(String message) {
         return new ErrorDetails(Collections.singletonMap(MESSAGE, message));
+    }
+
+    /**
+     * Create a new {@link ErrorDetails}
+     *
+     * @param code    the error code
+     * @param message the error message
+     * @return the {@link ErrorDetails} object
+     */
+    public static ErrorDetails fromCodeAndMessage(String code, String message) {
+
+        Map<FieldType, String> details = new LinkedHashMap<>(2);
+        details.put(CODE, code);
+        details.put(MESSAGE, message);
+
+        return new ErrorDetails(details);
     }
 
     @Override

@@ -28,6 +28,8 @@ import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+import io.r2dbc.postgresql.api.ErrorDetails;
+import io.r2dbc.postgresql.api.PostgresqlException;
 import io.r2dbc.postgresql.message.backend.BackendKeyData;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.BackendMessageDecoder;
@@ -87,6 +89,8 @@ import static io.r2dbc.postgresql.client.TransactionStatus.IDLE;
  * @see TcpClient
  */
 public final class ReactorNettyClient implements Client {
+
+    static final String CONNECTION_FAILURE = "08006";
 
     private static final Logger logger = Loggers.getLogger(ReactorNettyClient.class);
 
@@ -535,38 +539,70 @@ public final class ReactorNettyClient implements Client {
 
     }
 
-    static class PostgresConnectionClosedException extends R2dbcNonTransientResourceException {
+    static class PostgresConnectionClosedException extends R2dbcNonTransientResourceException implements PostgresqlException {
+
+        private final ErrorDetails errorDetails;
 
         public PostgresConnectionClosedException(String reason) {
-            super(reason);
+            super(reason, CONNECTION_FAILURE, 0, (String) null);
+            this.errorDetails = ErrorDetails.fromCodeAndMessage(CONNECTION_FAILURE, reason);
         }
 
         public PostgresConnectionClosedException(String reason, @Nullable Throwable cause) {
-            super(reason, cause);
+            super(reason, CONNECTION_FAILURE, 0, null, cause);
+            this.errorDetails = ErrorDetails.fromCodeAndMessage(CONNECTION_FAILURE, reason);
+        }
+
+        @Override
+        public ErrorDetails getErrorDetails() {
+            return this.errorDetails;
         }
 
     }
 
-    static class PostgresConnectionException extends R2dbcNonTransientResourceException {
+    static class PostgresConnectionException extends R2dbcNonTransientResourceException implements PostgresqlException {
+
+        private final static ErrorDetails ERROR_DETAILS = ErrorDetails.fromCodeAndMessage(CONNECTION_FAILURE, "An I/O error occurred while sending to the backend or receiving from the backend");
 
         public PostgresConnectionException(Throwable cause) {
-            super(cause);
+            super(ERROR_DETAILS.getMessage(), ERROR_DETAILS.getCode(), 0, null, cause);
+        }
+
+        @Override
+        public ErrorDetails getErrorDetails() {
+            return ERROR_DETAILS;
         }
 
     }
 
-    static class RequestQueueException extends R2dbcTransientResourceException {
+    static class RequestQueueException extends R2dbcTransientResourceException implements PostgresqlException {
+
+        private final ErrorDetails errorDetails;
 
         public RequestQueueException(String message) {
-            super(message);
+            super(message, CONNECTION_FAILURE, 0, (String) null);
+            this.errorDetails = ErrorDetails.fromCodeAndMessage(CONNECTION_FAILURE, message);
+        }
+
+        @Override
+        public ErrorDetails getErrorDetails() {
+            return this.errorDetails;
         }
 
     }
 
-    static class ResponseQueueException extends R2dbcNonTransientResourceException {
+    static class ResponseQueueException extends R2dbcNonTransientResourceException implements PostgresqlException {
+
+        private final ErrorDetails errorDetails;
 
         public ResponseQueueException(String message) {
-            super(message);
+            super(message, CONNECTION_FAILURE, 0, (String) null);
+            this.errorDetails = ErrorDetails.fromCodeAndMessage(CONNECTION_FAILURE, message);
+        }
+
+        @Override
+        public ErrorDetails getErrorDetails() {
+            return this.errorDetails;
         }
 
     }

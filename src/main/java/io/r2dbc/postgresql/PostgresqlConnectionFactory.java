@@ -18,6 +18,8 @@ package io.r2dbc.postgresql;
 
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.unix.DomainSocketAddress;
+import io.r2dbc.postgresql.api.ErrorDetails;
+import io.r2dbc.postgresql.api.PostgresqlException;
 import io.r2dbc.postgresql.authentication.AuthenticationHandler;
 import io.r2dbc.postgresql.authentication.PasswordAuthenticationHandler;
 import io.r2dbc.postgresql.authentication.SASLAuthenticationHandler;
@@ -262,10 +264,20 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
             })).defaultIfEmpty(IsolationLevel.READ_COMMITTED).last();
     }
 
-    static class PostgresConnectionException extends R2dbcNonTransientResourceException {
+    static class PostgresConnectionException extends R2dbcNonTransientResourceException implements PostgresqlException {
 
-        public PostgresConnectionException(String msg, @Nullable Throwable cause) {
-            super(msg, cause);
+        private static final String CONNECTION_DOES_NOT_EXIST = "08003";
+
+        private final ErrorDetails errorDetails;
+
+        public PostgresConnectionException(String reason, @Nullable Throwable cause) {
+            super(reason, CONNECTION_DOES_NOT_EXIST, 0, null, cause);
+            this.errorDetails = ErrorDetails.fromCodeAndMessage(CONNECTION_DOES_NOT_EXIST, reason);
+        }
+
+        @Override
+        public ErrorDetails getErrorDetails() {
+            return this.errorDetails;
         }
 
     }
