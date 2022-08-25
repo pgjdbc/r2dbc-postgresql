@@ -29,12 +29,14 @@ import io.r2dbc.postgresql.client.TransactionStatus;
 import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
+import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.NotificationResponse;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.Operators;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.IsolationLevel;
 import io.r2dbc.spi.Option;
+import io.r2dbc.spi.R2dbcException;
 import io.r2dbc.spi.TransactionDefinition;
 import io.r2dbc.spi.ValidationDepth;
 import org.reactivestreams.Publisher;
@@ -184,6 +186,8 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
 
     @Override
     public Mono<Void> commitTransaction() {
+
+        AtomicReference<R2dbcException> ref = new AtomicReference<>();
         return useTransactionStatus(transactionStatus -> {
             if (IDLE != transactionStatus) {
                 return Flux.from(exchange("COMMIT"))
@@ -198,13 +202,17 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
                         // See discussion in pgsql-hackers: https://www.postgresql.org/message-id/b9fb50dc-0f6e-15fb-6555-8ddb86f4aa71%40postgresfriends.org
 
                         if ("ROLLBACK".equalsIgnoreCase(message.getCommand())) {
-                            sink.error(new ExceptionFactory.PostgresqlRollbackException(ErrorDetails.fromMessage("The database returned ROLLBACK, so the transaction cannot be committed. Transaction" +
-                                " " +
-                                "failure is not known (check server logs?)"), "COMMIT"));
+                            ErrorDetails details = ErrorDetails.fromMessage("The database returned ROLLBACK, so the transaction cannot be committed. Transaction " +
+                                "failure is not known (check server logs?)");
+                            ref.set(new ExceptionFactory.PostgresqlRollbackException(details, "COMMIT"));
                             return;
                         }
 
                         sink.next(message);
+                    }).doOnComplete(() -> {
+                        if (ref.get() != null) {
+                            throw ref.get();
+                        }
                     });
             } else {
                 this.logger.debug(this.connectionContext.getMessage("Skipping commit transaction because status is {}"), transactionStatus);
@@ -442,9 +450,21 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
 
     @SuppressWarnings("unchecked")
     private <T> Flux<T> exchange(String sql) {
-        ExceptionFactory exceptionFactory = ExceptionFactory.withSql(sql);
+        AtomicReference<R2dbcException> ref = new AtomicReference<>();
         return (Flux<T>) SimpleQueryMessageFlow.exchange(this.client, sql)
-            .handle(exceptionFactory::handleErrorResponse);
+            .handle((backendMessage, synchronousSink) -> {
+
+                if (backendMessage instanceof ErrorResponse) {
+                    ref.set(ExceptionFactory.createException((ErrorResponse) backendMessage, sql));
+                } else {
+                    synchronousSink.next(backendMessage);
+                }
+            })
+            .doOnComplete(() -> {
+                if (ref.get() != null) {
+                    throw ref.get();
+                }
+            });
     }
 
     private void cleanupIsolationLevel() {
