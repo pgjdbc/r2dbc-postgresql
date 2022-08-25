@@ -18,11 +18,14 @@ package io.r2dbc.postgresql;
 
 import io.r2dbc.postgresql.api.PostgresqlConnection;
 import io.r2dbc.postgresql.api.PostgresqlResult;
+import io.r2dbc.postgresql.client.Client;
+import io.r2dbc.postgresql.client.TransactionStatus;
 import io.r2dbc.spi.R2dbcBadGrammarException;
-import io.r2dbc.spi.R2dbcRollbackException;
-import org.awaitility.Awaitility;
+import io.r2dbc.spi.R2dbcException;
 import org.junit.jupiter.api.Test;
 import reactor.test.StepVerifier;
+
+import java.lang.reflect.Field;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -37,10 +40,24 @@ final class PostgresqlConnectionErrorsIntegrationTests extends AbstractIntegrati
         this.connection.beginTransaction().as(StepVerifier::create).verifyComplete();
         this.connection.createStatement("error").execute().flatMap(PostgresqlResult::getRowsUpdated).as(StepVerifier::create).verifyError(R2dbcBadGrammarException.class);
 
-        this.connection.commitTransaction().as(StepVerifier::create).verifyError(R2dbcRollbackException.class);
+        this.connection.commitTransaction().as(StepVerifier::create).verifyErrorSatisfies(throwable -> {
+            assertThat(throwable).isInstanceOf(R2dbcException.class);
 
-        Awaitility.await().until(() -> this.connection.isAutoCommit());
+            Client client = extractClient();
+            assertThat(client.getTransactionStatus()).isEqualTo(TransactionStatus.IDLE);
+        });
+
         assertThat(this.connection.isAutoCommit()).isTrue();
+    }
+
+    private Client extractClient() {
+        try {
+            Field field = io.r2dbc.postgresql.PostgresqlConnection.class.getDeclaredField("client");
+            field.setAccessible(true);
+            return (Client) field.get(this.connection);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Test
