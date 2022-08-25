@@ -60,7 +60,7 @@ final class ExceptionFactory {
      * @return the {@link R2dbcException}.
      * @see ErrorResponse
      */
-    private static R2dbcException createException(ErrorResponse response, String sql) {
+    static R2dbcException createException(ErrorResponse response, String sql) {
 
         ErrorDetails errorDetails = new ErrorDetails(response.getFields());
 
