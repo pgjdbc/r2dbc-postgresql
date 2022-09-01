@@ -17,7 +17,7 @@
 package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
@@ -26,6 +26,7 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKBReader;
+import org.locationtech.jts.io.WKBWriter;
 import org.locationtech.jts.io.WKTWriter;
 import reactor.core.publisher.Mono;
 
@@ -43,19 +44,14 @@ final class PostgisGeometryCodec implements Codec<Geometry>, CodecMetadata {
 
     private static final Class<Geometry> TYPE = Geometry.class;
 
-    private final ByteBufAllocator byteBufAllocator;
-
     private final GeometryFactory geometryFactory = new GeometryFactory();
 
     private final int oid;
 
     /**
      * Create a new {@link PostgisGeometryCodec}.
-     *
-     * @param byteBufAllocator the type handled by this codec
      */
-    PostgisGeometryCodec(ByteBufAllocator byteBufAllocator, int oid) {
-        this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
+    PostgisGeometryCodec(int oid) {
         this.oid = oid;
     }
 
@@ -64,7 +60,8 @@ final class PostgisGeometryCodec implements Codec<Geometry>, CodecMetadata {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 
-        return dataType == this.oid && TYPE.isAssignableFrom(type);
+        // Object = Geometry or Geometry = type (Geometry subtype)
+        return dataType == this.oid && (type.isAssignableFrom(TYPE) || TYPE.isAssignableFrom(type));
     }
 
     @Override
@@ -101,8 +98,10 @@ final class PostgisGeometryCodec implements Codec<Geometry>, CodecMetadata {
         Assert.requireType(value, Geometry.class, "value must be Geometry type");
         Geometry geometry = (Geometry) value;
 
-        return new EncodedParameter(Format.FORMAT_TEXT, this.oid, Mono.fromSupplier(
-            () -> ByteBufUtils.encode(this.byteBufAllocator, geometry.toText())
+        WKBWriter writer = new WKBWriter(2, true);
+
+        return new EncodedParameter(FORMAT_BINARY, this.oid, Mono.fromSupplier(
+            () -> Unpooled.wrappedBuffer(writer.write(geometry))
         ));
     }
 
@@ -125,4 +124,5 @@ final class PostgisGeometryCodec implements Codec<Geometry>, CodecMetadata {
     public Iterable<PostgresTypeIdentifier> getDataTypes() {
         return Collections.singleton(AbstractCodec.getDataType(this.oid));
     }
+
 }

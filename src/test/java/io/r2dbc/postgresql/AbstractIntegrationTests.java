@@ -81,7 +81,9 @@ public abstract class AbstractIntegrationTests {
 
     @AfterEach
     void tearDown() {
-        this.connection.close().as(StepVerifier::create).verifyComplete();
+        if (this.connection != null) {
+            this.connection.close().as(StepVerifier::create).verifyComplete();
+        }
     }
 
 }

@@ -33,7 +33,6 @@ public class BuiltinDynamicCodecs implements CodecRegistrar {
 
     private static final Object EMPTY = new Object();
 
-
     enum BuiltinCodec {
 
         HSTORE("hstore"),
@@ -59,7 +58,7 @@ public class BuiltinDynamicCodecs implements CodecRegistrar {
                 case HSTORE:
                     return new HStoreCodec(byteBufAllocator, oid);
                 case POSTGIS_GEOMETRY:
-                    return new PostgisGeometryCodec(byteBufAllocator, oid);
+                    return new PostgisGeometryCodec(oid);
                 default:
                     throw new UnsupportedOperationException(String.format("Codec %s for OID %d not supported", name(), oid));
             }
