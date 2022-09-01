@@ -96,7 +96,6 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
     }
 
     @Override
-    @SuppressWarnings("rawtypes")
     public void afterAll(ExtensionContext context) {
 
         if (this.dataSource != null) {
@@ -105,7 +104,6 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
     }
 
     @Override
-    @SuppressWarnings("rawtypes")
     public void beforeAll(ExtensionContext context) {
         initialize();
     }
@@ -183,7 +181,7 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
     }
 
     public DatabaseContainer getPostgres() {
-        return postgres;
+        return this.postgres;
     }
 
     private <T extends PostgreSQLContainer<T>> T container() {
