@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.client.ParameterAssert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
@@ -54,106 +55,100 @@ final class PostgisGeometryCodecUnitTests {
 
     private static final int dataType = 23456;
 
-    private final PostgisGeometryCodec codec = new PostgisGeometryCodec(TEST, dataType);
+    private final PostgisGeometryCodec codec = new PostgisGeometryCodec(dataType);
 
     private final WKBWriter wkbWriter = new WKBWriter();
 
     private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), WGS84_SRID);
 
-    private final Point point = geometryFactory.createPoint(new Coordinate(1.0, 1.0));
-
-    @Test
-    void constructorNoByteBufAllocator() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgisGeometryCodec(null, dataType))
-            .withMessage("byteBufAllocator must not be null");
-    }
+    private final Point point = this.geometryFactory.createPoint(new Coordinate(1.0, 1.0));
 
     @Test
     void canDecodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> codec.canDecode(dataType, null, Geometry.class))
+        assertThatIllegalArgumentException().isThrownBy(() -> this.codec.canDecode(dataType, null, Geometry.class))
             .withMessage("format must not be null");
     }
 
     @Test
     void canDecodeNoClass() {
-        assertThatIllegalArgumentException().isThrownBy(() -> codec.canDecode(dataType, FORMAT_TEXT, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> this.codec.canDecode(dataType, FORMAT_TEXT, null))
             .withMessage("type must not be null");
     }
 
     @Test
     void canDecode() {
-        assertThat(codec.canDecode(dataType, FORMAT_TEXT, Geometry.class)).isTrue();
-        assertThat(codec.canDecode(dataType, FORMAT_BINARY, Geometry.class)).isTrue();
+        assertThat(this.codec.canDecode(dataType, FORMAT_TEXT, Geometry.class)).isTrue();
+        assertThat(this.codec.canDecode(dataType, FORMAT_BINARY, Geometry.class)).isTrue();
 
-        assertThat(codec.canDecode(dataType, FORMAT_TEXT, Point.class)).isTrue();
-        assertThat(codec.canDecode(dataType, FORMAT_TEXT, MultiPoint.class)).isTrue();
-        assertThat(codec.canDecode(dataType, FORMAT_TEXT, LineString.class)).isTrue();
-        assertThat(codec.canDecode(dataType, FORMAT_TEXT, LinearRing.class)).isTrue();
-        assertThat(codec.canDecode(dataType, FORMAT_TEXT, MultiLineString.class)).isTrue();
-        assertThat(codec.canDecode(dataType, FORMAT_TEXT, Polygon.class)).isTrue();
-        assertThat(codec.canDecode(dataType, FORMAT_TEXT, MultiPolygon.class)).isTrue();
-        assertThat(codec.canDecode(dataType, FORMAT_TEXT, GeometryCollection.class)).isTrue();
+        assertThat(this.codec.canDecode(dataType, FORMAT_TEXT, Point.class)).isTrue();
+        assertThat(this.codec.canDecode(dataType, FORMAT_TEXT, MultiPoint.class)).isTrue();
+        assertThat(this.codec.canDecode(dataType, FORMAT_TEXT, LineString.class)).isTrue();
+        assertThat(this.codec.canDecode(dataType, FORMAT_TEXT, LinearRing.class)).isTrue();
+        assertThat(this.codec.canDecode(dataType, FORMAT_TEXT, MultiLineString.class)).isTrue();
+        assertThat(this.codec.canDecode(dataType, FORMAT_TEXT, Polygon.class)).isTrue();
+        assertThat(this.codec.canDecode(dataType, FORMAT_TEXT, MultiPolygon.class)).isTrue();
+        assertThat(this.codec.canDecode(dataType, FORMAT_TEXT, GeometryCollection.class)).isTrue();
 
-        assertThat(codec.canDecode(VARCHAR.getObjectId(), FORMAT_BINARY, Geometry.class)).isFalse();
-        assertThat(codec.canDecode(JSON.getObjectId(), FORMAT_TEXT, Geometry.class)).isFalse();
-        assertThat(codec.canDecode(JSONB.getObjectId(), FORMAT_BINARY, Geometry.class)).isFalse();
+        assertThat(this.codec.canDecode(VARCHAR.getObjectId(), FORMAT_BINARY, Geometry.class)).isFalse();
+        assertThat(this.codec.canDecode(JSON.getObjectId(), FORMAT_TEXT, Geometry.class)).isFalse();
+        assertThat(this.codec.canDecode(JSONB.getObjectId(), FORMAT_BINARY, Geometry.class)).isFalse();
     }
 
     @Test
     void canEncodeNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> codec.canEncode(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> this.codec.canEncode(null))
             .withMessage("value must not be null");
     }
 
     @Test
     void canEncode() {
-        assertThat(codec.canEncode(geometryFactory.createPoint())).isTrue();
-        assertThat(codec.canEncode(geometryFactory.createMultiPoint())).isTrue();
-        assertThat(codec.canEncode(geometryFactory.createLineString())).isTrue();
-        assertThat(codec.canEncode(geometryFactory.createLinearRing())).isTrue();
-        assertThat(codec.canEncode(geometryFactory.createMultiLineString())).isTrue();
-        assertThat(codec.canEncode(geometryFactory.createPolygon())).isTrue();
-        assertThat(codec.canEncode(geometryFactory.createMultiPolygon())).isTrue();
-        assertThat(codec.canEncode(geometryFactory.createGeometryCollection())).isTrue();
+        assertThat(this.codec.canEncode(this.geometryFactory.createPoint())).isTrue();
+        assertThat(this.codec.canEncode(this.geometryFactory.createMultiPoint())).isTrue();
+        assertThat(this.codec.canEncode(this.geometryFactory.createLineString())).isTrue();
+        assertThat(this.codec.canEncode(this.geometryFactory.createLinearRing())).isTrue();
+        assertThat(this.codec.canEncode(this.geometryFactory.createMultiLineString())).isTrue();
+        assertThat(this.codec.canEncode(this.geometryFactory.createPolygon())).isTrue();
+        assertThat(this.codec.canEncode(this.geometryFactory.createMultiPolygon())).isTrue();
+        assertThat(this.codec.canEncode(this.geometryFactory.createGeometryCollection())).isTrue();
 
-        assertThat(codec.canEncode("Geometry")).isFalse();
-        assertThat(codec.canEncode(1)).isFalse();
+        assertThat(this.codec.canEncode("Geometry")).isFalse();
+        assertThat(this.codec.canEncode(1)).isFalse();
     }
 
     @Test
     @SuppressWarnings("unchecked")
     void decode() {
-        byte[] pointBytes = wkbWriter.write(point);
+        byte[] pointBytes = this.wkbWriter.write(this.point);
         ByteBuf pointByteBuf = ByteBufUtils.encode(TEST, WKBWriter.toHex(pointBytes));
 
-        assertThat(codec.decode(pointByteBuf, dataType, FORMAT_TEXT, Geometry.class)).isEqualTo(point);
+        assertThat(this.codec.decode(pointByteBuf, dataType, FORMAT_TEXT, Geometry.class)).isEqualTo(this.point);
     }
 
     @Test
     @SuppressWarnings("unchecked")
     void decodeNoByteBuf() {
-        assertThat(codec.decode(null, dataType, FORMAT_TEXT, Geometry.class)).isNull();
+        assertThat(this.codec.decode(null, dataType, FORMAT_TEXT, Geometry.class)).isNull();
     }
 
     @Test
     void encode() {
-        ByteBuf encoded = ByteBufUtils.encode(TEST, point.toText());
+        ByteBuf encoded = Unpooled.wrappedBuffer(new WKBWriter(2, true).write(this.point));
 
-        ParameterAssert.assertThat(codec.encode(point))
-            .hasFormat(FORMAT_TEXT)
+        ParameterAssert.assertThat(this.codec.encode(this.point))
+            .hasFormat(FORMAT_BINARY)
             .hasType(dataType)
             .hasValue(encoded);
     }
 
     @Test
     void encodeNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> codec.encode(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> this.codec.encode(null))
             .withMessage("value must not be null");
     }
 
     @Test
     void encodeNull() {
-        assertThat(new PostgisGeometryCodec(TEST, dataType).encodeNull())
+        assertThat(new PostgisGeometryCodec(dataType).encodeNull())
             .isEqualTo(new EncodedParameter(FORMAT_BINARY, dataType, NULL_VALUE));
     }
 
