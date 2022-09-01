@@ -1,6 +1,15 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+0.8.13.RELEASE
+-----------------------------------------
+* Consider lowercase `sslmode` for easier JDBC URL adaption #486
+* Issue parsing timestamp with timezone having offset of format `+hh:mm:ss` #509
+* `CachedCodecLookup` wrongly assumes uniqueness of `hashCode()` #511
+* Upgrade to netty 4.1.77.Final to address epoll_wait() not implemented on Linux #514
+* using an EnumCodec with no enums generates invalid SQL #515
+* Await `ReadyForQuery` before emitting errors from transactional control methods #541
+
 0.8.12.RELEASE
 -----------------------------------------
 * Parameter values are not sent in the correct order #482
