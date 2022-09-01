@@ -31,6 +31,7 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.infra.Blackhole;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.concurrent.TimeUnit;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.FLOAT4;
@@ -62,9 +63,11 @@ public class CodecRegistryBenchmarks extends BenchmarkSettings {
 
         final ByteBufAllocator byteBufAllocator = new UnpooledByteBufAllocator(false, true);
 
-        DefaultCodecs cacheEnabledRegistry = new DefaultCodecs(this.byteBufAllocator, false, CachedCodecLookup::new);
+        final ZoneId zoneId = ZoneId.systemDefault();
 
-        DefaultCodecs cacheDisabledRegistry = new DefaultCodecs(this.byteBufAllocator, false, DefaultCodecLookup::new);
+        DefaultCodecs cacheEnabledRegistry = new DefaultCodecs(this.byteBufAllocator, false, () -> this.zoneId, CachedCodecLookup::new);
+
+        DefaultCodecs cacheDisabledRegistry = new DefaultCodecs(this.byteBufAllocator, false, () -> this.zoneId, DefaultCodecLookup::new);
 
     }
 
