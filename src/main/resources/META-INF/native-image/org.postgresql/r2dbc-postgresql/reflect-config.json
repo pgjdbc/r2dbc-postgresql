@@ -1,0 +1,146 @@
+[
+  {
+    "name": "[Lio.r2dbc.postgresql.codec.Box;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Lio.r2dbc.postgresql.codec.Circle;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Lio.r2dbc.postgresql.codec.Interval;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Lio.r2dbc.postgresql.codec.Line;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Lio.r2dbc.postgresql.codec.Lseg;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Lio.r2dbc.postgresql.codec.Path;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Lio.r2dbc.postgresql.codec.Point;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Lio.r2dbc.postgresql.codec.Polygon;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.lang.Boolean;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.lang.Byte;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.lang.Character;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.lang.Double;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.lang.Float;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.lang.Integer;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.lang.Long;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.lang.Short;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.lang.String;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.math.BigDecimal;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.math.BigInteger;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.net.InetAddress;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.net.URI;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.net.URL;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.nio.ByteBuffer;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.time.Instant;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.time.LocalDate;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.time.LocalDateTime;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.time.LocalTime;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.time.OffsetDateTime;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.time.OffsetTime;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.time.ZoneId;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.time.ZonedDateTime;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.util.Date;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.util.UUID;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[[B",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[B",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "java.net.InetSocketAddress",
+    "unsafeAllocated": true
+  }
+]
