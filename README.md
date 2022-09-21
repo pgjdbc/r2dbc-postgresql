@@ -277,6 +277,38 @@ The following types are supported for JSON exchange:
 * `String`
 * `InputStream` (must be closed after usage to avoid memory leaks)
 
+## CITEXT support
+
+[CITEXT](https://www.postgresql.org/docs/current/citext.html) is a built-in extension to support case-insensitive `text` columns. By default, the driver sends all string values as `VARCHAR` that cannot be used directly with `CITEXT` (without casting or converting values in your SQL).
+   
+If you cast input, then you can send parameters to the server without further customization of the driver:
+
+```sql
+CREATE TABLE test (ci CITEXT);
+SELECT ci FROM test WHERE ci = $1::citext;
+```
+
+If you want to send individual `String`-values in a CITEXT-compatible way, then use `Parameters.in(…)`:
+
+```java
+connection.createStatement("SELECT ci FROM test WHERE ci = $1")
+            .bind("$1", Parameters.in(PostgresqlObjectId.UNSPECIFIED, "Hello"))
+            .execute();
+```
+
+If you do not have control over the created SQL or you want to send all `String` values in a CITEXT-compatible way, then you can customize the driver configuration by registering a `StringCodec` to send `String` values with the `UNSPECIFIED` OID to let Postgres infer the value type from the provided values:
+                      
+```java
+Builder builder = PostgresqlConnectionConfiguration.builder();
+
+builder.codecRegistrar((connection, allocator, registry) -> {
+    registry.addFirst(new StringCodec(allocator, PostgresqlObjectId.UNSPECIFIED, PostgresqlObjectId.VARCHAR_ARRAY));
+    return Mono.empty();
+});
+```
+
+You can register also the `CodecRegistrar` as [`Extension`](#extension-mechanism) so that it gets auto-detected during `ConnectionFactory` creation.
+
 ## Cursors
 
 The driver can consume cursors that were created by PL/pgSQL as `refcursor`. 
