@@ -35,7 +35,7 @@ public interface Codec<T> {
      * Determine whether this {@link Codec} is capable of decoding a value for the given {@code dataType} and {@link Format} and whether it can represent the decoded value as the desired
      * {@link Class type}.
      *
-     * @param dataType the the Postgres OID to decode
+     * @param dataType the Postgres OID to decode
      * @param format   the data type {@link Format}, text or binary
      * @param type     the desired value type
      * @return {@code true} if this codec is able to decode values for tge given {@code dataType} and {@link Format}
