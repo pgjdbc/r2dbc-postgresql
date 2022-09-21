@@ -842,7 +842,7 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
 
     private <W, R> void testCodecReadAs(W toWrite, Class<R> javaTypeToRead, Consumer<R> equality, String sqlType) {
         SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS test");
-        SERVER.getJdbcOperations().execute(String.format("CREATE TABLE test ( value %s )", sqlType));
+        SERVER.getJdbcOperations().execute(String.format("CREATE TABLE test (value %s)", sqlType));
 
         try {
             this.connectionFactory.create()
