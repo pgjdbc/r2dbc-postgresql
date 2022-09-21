@@ -39,7 +39,7 @@ import static io.r2dbc.postgresql.codec.PostgresqlObjectId.VARCHAR_ARRAY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
-final class StringCodec extends AbstractCodec<String> implements ArrayCodecDelegate<String> {
+public final class StringCodec extends AbstractCodec<String> implements ArrayCodecDelegate<String> {
 
     static final Codec<String> STRING_DECODER = StringDecoder.INSTANCE;
 
@@ -53,11 +53,11 @@ final class StringCodec extends AbstractCodec<String> implements ArrayCodecDeleg
 
     private final PostgresTypeIdentifier arrayType;
 
-    StringCodec(ByteBufAllocator byteBufAllocator) {
+    public StringCodec(ByteBufAllocator byteBufAllocator) {
         this(byteBufAllocator, VARCHAR, VARCHAR_ARRAY);
     }
 
-    StringCodec(ByteBufAllocator byteBufAllocator, PostgresTypeIdentifier defaultType, PostgresTypeIdentifier arrayType) {
+    public StringCodec(ByteBufAllocator byteBufAllocator, PostgresTypeIdentifier defaultType, PostgresTypeIdentifier arrayType) {
         super(String.class);
         this.byteBufAllocator = Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
         this.defaultType = Assert.requireNonNull(defaultType, "defaultType must not be null");
