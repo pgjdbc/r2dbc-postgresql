@@ -28,12 +28,12 @@ import java.time.LocalTime;
 import java.time.ZoneOffset;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIME;
-import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMETZ_ARRAY;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIME_ARRAY;
 
 final class LocalTimeCodec extends AbstractTemporalCodec<LocalTime> {
 
     LocalTimeCodec(ByteBufAllocator byteBufAllocator) {
-        super(LocalTime.class, byteBufAllocator, TIME, TIMETZ_ARRAY, LocalTime::toString);
+        super(LocalTime.class, byteBufAllocator, TIME, TIME_ARRAY, LocalTime::toString);
     }
 
     @Override
