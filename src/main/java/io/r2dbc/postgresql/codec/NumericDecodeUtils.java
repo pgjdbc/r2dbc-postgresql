@@ -23,6 +23,7 @@ import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 
@@ -110,40 +111,18 @@ final class NumericDecodeUtils {
             digits[i] = byteBuf.readShort();
         }
 
-        StringBuilder builder = new StringBuilder();
-        // whole part
-        builder.append(digits[0]);
-        for (short i = 0; i < weight * 4; i++) {
-            builder.append(0);
+        StringBuilder sb = new StringBuilder();
+        if (sign != 0) {
+            sb.append("-");
         }
-        // decimal part
-        if (scale > 0) {
-            builder.append('.');
-            for (short i = 0; i < scale; i++) {
-                builder.append(0);
-            }
+        sb.append("0.");
+        for (short digit : digits) {
+            sb.append(String.format("%04d", digit));
         }
 
-        int expectedLength = builder.length();
-        int baseOffset = Short.toString(digits[0]).length();
-
-        for (short i = 1; i < numOfDigits; i++) {
-            weight--;
-            String temp = Short.toString(digits[i]);
-            int offset = baseOffset + 4 * i - temp.length();
-            if (weight < 0) {
-                offset++; // dot between whole and decimal parts
-            }
-            builder.replace(offset, offset + temp.length(), temp);
-        }
-
-        builder.setLength(expectedLength); // remove zeros from the end
-
-        if (sign == 0) {
-            return new BigDecimal(builder.toString());
-        } else {
-            return new BigDecimal("-" + builder.toString());
-        }
+        return new BigDecimal(sb.toString())
+            .movePointRight((weight + 1) * 4)
+            .setScale(scale, RoundingMode.DOWN);
     }
 
 }
