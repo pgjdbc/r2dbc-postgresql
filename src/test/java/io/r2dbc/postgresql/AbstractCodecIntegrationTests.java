@@ -164,20 +164,15 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
 
     @Test
     void blob() {
-        BiConsumer<Blob, Blob> equality = (actual, expected) -> Flux.zip(
-            Flux.from(actual.stream()).reduce(TEST.heapBuffer(), ByteBuf::writeBytes),
-            Flux.from(expected.stream()).reduce(TEST.heapBuffer(), ByteBuf::writeBytes)
-        )
-            .as(StepVerifier::create)
-            .assertNext(t -> {
-                try {
-                    assertThat(t.getT1()).isEqualTo(t.getT2());
-                } finally {
-                    t.getT1().release();
-                    t.getT2().release();
-                }
-            })
-            .verifyComplete();
+        BiConsumer<Blob, Blob> equality = (actual, expected) -> Flux.zip(Flux.from(actual.stream()).reduce(TEST.heapBuffer(), ByteBuf::writeBytes),
+            Flux.from(expected.stream()).reduce(TEST.heapBuffer(), ByteBuf::writeBytes)).as(StepVerifier::create).assertNext(t -> {
+            try {
+                assertThat(t.getT1()).isEqualTo(t.getT2());
+            } finally {
+                t.getT1().release();
+                t.getT2().release();
+            }
+        }).verifyComplete();
 
         Function<byte[], Blob> byteToBlob = (bytes) -> new Blob() {
 
@@ -209,33 +204,25 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
 
     @Test
     void circleTwoDimensionalArray() {
-        testCodec(Circle[][].class, new Circle[][]{{Circle.of(Point.of(1.12, 2.12), 3.12), Circle.of(Point.of(Double.MIN_VALUE, Double.MIN_VALUE), Double.MAX_VALUE)},
-            {Circle.of(Point.of(-2.4, -456.2), 20), null}}, "CIRCLE[][]");
+        testCodec(Circle[][].class, new Circle[][]{{Circle.of(Point.of(1.12, 2.12), 3.12), Circle.of(Point.of(Double.MIN_VALUE, Double.MIN_VALUE), Double.MAX_VALUE)}, {Circle.of(Point.of(-2.4,
+            -456.2), 20), null}}, "CIRCLE[][]");
     }
 
     @Test
     void clob() {
-        testCodec(Clob.class,
-            new Clob() {
+        testCodec(Clob.class, new Clob() {
 
-                @Override
-                public Publisher<Void> discard() {
-                    return Mono.empty();
-                }
+            @Override
+            public Publisher<Void> discard() {
+                return Mono.empty();
+            }
 
-                @Override
-                public Publisher<CharSequence> stream() {
-                    return Mono.just("test-value");
-                }
-            },
-            (actual, expected) -> Flux.zip(
-                Flux.from(actual.stream()).reduce(new StringBuilder(), StringBuilder::append).map(StringBuilder::toString),
-                Flux.from(expected.stream()).reduce(new StringBuilder(), StringBuilder::append).map(StringBuilder::toString)
-            )
-                .as(StepVerifier::create)
-                .assertNext(t -> assertThat(t.getT1()).isEqualToIgnoringWhitespace(t.getT2()))
-                .verifyComplete()
-            , "TEXT");
+            @Override
+            public Publisher<CharSequence> stream() {
+                return Mono.just("test-value");
+            }
+        }, (actual, expected) -> Flux.zip(Flux.from(actual.stream()).reduce(new StringBuilder(), StringBuilder::append).map(StringBuilder::toString),
+            Flux.from(expected.stream()).reduce(new StringBuilder(), StringBuilder::append).map(StringBuilder::toString)).as(StepVerifier::create).assertNext(t -> assertThat(t.getT1()).isEqualToIgnoringWhitespace(t.getT2())).verifyComplete(), "TEXT");
     }
 
     @Test
@@ -469,8 +456,19 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     }
 
     @Test
+    void localDateTimeArray() {
+        testCodec(LocalDateTime[].class, new LocalDateTime[]{LocalDateTime.now().truncatedTo(ChronoUnit.MICROS)}, "TIMESTAMP[]");
+        testCodec(LocalDateTime[].class, new LocalDateTime[]{LocalDateTime.now().truncatedTo(ChronoUnit.MICROS)}, "TIMESTAMPTZ[]");
+    }
+
+    @Test
     void localTime() {
         testCodec(LocalTime.class, LocalTime.now().truncatedTo(ChronoUnit.MICROS), "TIME");
+    }
+
+    @Test
+    void localTimeArray() {
+        testCodec(LocalTime[].class, new LocalTime[]{LocalTime.now().truncatedTo(ChronoUnit.MICROS)}, "TIME[]");
     }
 
     @Test
@@ -672,8 +670,8 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
 
     @Test
     void polygonArray() {
-        testCodec(Polygon[].class, new Polygon[]{Polygon.of(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(.42, 5.3)),
-            Polygon.of(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(.42, 5.3), Point.of(-3.5, 0.))}, "POLYGON[]");
+        testCodec(Polygon[].class, new Polygon[]{Polygon.of(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(.42, 5.3)), Polygon.of(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(.42,
+            5.3), Point.of(-3.5, 0.))}, "POLYGON[]");
     }
 
     @Test
@@ -689,9 +687,7 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     }
 
     private static <T> Mono<T> close(Connection connection) {
-        return Mono.from(connection
-            .close())
-            .then(Mono.empty());
+        return Mono.from(connection.close()).then(Mono.empty());
     }
 
     private <T> void testCodec(Class<T> javaType, T value, String sqlType) {
@@ -750,94 +746,64 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
 
             if (parameterType == null) {
 
-                this.connectionFactory.create()
-                    .flatMapMany(connection -> connection
+                this.connectionFactory.create().flatMapMany(connection -> connection
 
-                        .createStatement("INSERT INTO test VALUES (" + insertPlaceholder + ")")
-                        .bindNull("$1", javaType)
-                        .execute()
+                    .createStatement("INSERT INTO test VALUES (" + insertPlaceholder + ")").bindNull("$1", javaType).execute()
 
-                        .flatMap(PostgresqlResult::getRowsUpdated)
+                    .flatMap(PostgresqlResult::getRowsUpdated)
 
-                        .concatWith(close(connection)))
-                    .as(StepVerifier::create)
-                    .expectNext(1L)
-                    .verifyComplete();
+                    .concatWith(close(connection))).as(StepVerifier::create).expectNext(1L).verifyComplete();
 
                 SERVER.getJdbcOperations().execute("DELETE FROM test");
 
-                this.connectionFactory.create()
-                    .flatMapMany(connection -> connection
+                this.connectionFactory.create().flatMapMany(connection -> connection
 
-                        .createStatement("INSERT INTO test VALUES (" + insertPlaceholder + ")")
-                        .bind("$1", value)
-                        .execute()
+                    .createStatement("INSERT INTO test VALUES (" + insertPlaceholder + ")").bind("$1", value).execute()
 
-                        .flatMap(PostgresqlResult::getRowsUpdated)
+                    .flatMap(PostgresqlResult::getRowsUpdated)
 
-                        .concatWith(close(connection)))
-                    .as(StepVerifier::create)
-                    .expectNext(1L)
-                    .verifyComplete();
+                    .concatWith(close(connection))).as(StepVerifier::create).expectNext(1L).verifyComplete();
             } else {
 
-                this.connectionFactory.create()
-                    .flatMapMany(connection -> connection
+                this.connectionFactory.create().flatMapMany(connection -> connection
 
-                        .createStatement("INSERT INTO test VALUES (" + insertPlaceholder + ")")
-                        .bind("$1", Parameters.in(parameterType))
-                        .execute()
+                    .createStatement("INSERT INTO test VALUES (" + insertPlaceholder + ")").bind("$1", Parameters.in(parameterType)).execute()
 
-                        .flatMap(PostgresqlResult::getRowsUpdated)
+                    .flatMap(PostgresqlResult::getRowsUpdated)
 
-                        .concatWith(close(connection)))
-                    .as(StepVerifier::create)
-                    .expectNext(1L)
-                    .verifyComplete();
+                    .concatWith(close(connection))).as(StepVerifier::create).expectNext(1L).verifyComplete();
 
                 SERVER.getJdbcOperations().execute("DELETE FROM test");
 
-                this.connectionFactory.create()
-                    .flatMapMany(connection -> connection
+                this.connectionFactory.create().flatMapMany(connection -> connection
 
-                        .createStatement("INSERT INTO test VALUES (" + insertPlaceholder + ")")
-                        .bind("$1", Parameters.in(parameterType, value))
-                        .execute()
+                    .createStatement("INSERT INTO test VALUES (" + insertPlaceholder + ")").bind("$1", Parameters.in(parameterType, value)).execute()
 
-                        .flatMap(PostgresqlResult::getRowsUpdated)
+                    .flatMap(PostgresqlResult::getRowsUpdated)
 
-                        .concatWith(close(connection)))
-                    .as(StepVerifier::create)
-                    .expectNext(1L)
-                    .verifyComplete();
+                    .concatWith(close(connection))).as(StepVerifier::create).expectNext(1L).verifyComplete();
             }
 
             if (value instanceof Buffer) {
                 ((Buffer) value).rewind();
             }
 
-            this.connectionFactory.create()
-                .flatMapMany(connection -> {
+            this.connectionFactory.create().flatMapMany(connection -> {
 
-                    PostgresqlStatement statement;
-                    if (insertPlaceholder.equals("$1")) {
-                        statement = connection
-                            // where clause added to force using extended query instead of simple query
-                            .createStatement("SELECT value FROM test WHERE " + insertPlaceholder + " <> 1")
-                            .bind("$1", 2);
-                    } else {
-                        statement = connection.createStatement("SELECT value FROM test");
-                    }
-                    return statement.execute()
+                PostgresqlStatement statement;
+                if (insertPlaceholder.equals("$1")) {
+                    statement = connection
+                        // where clause added to force using extended query instead of simple query
+                        .createStatement("SELECT value FROM test WHERE " + insertPlaceholder + " <> 1").bind("$1", 2);
+                } else {
+                    statement = connection.createStatement("SELECT value FROM test");
+                }
+                return statement.execute()
 
-                        .map(result -> result.map((row, metadata) -> row.get("value", outType)))
-                        .flatMap(Function.identity())
+                    .map(result -> result.map((row, metadata) -> row.get("value", outType))).flatMap(Function.identity())
 
-                        .concatWith(close(connection));
-                })
-                .as(StepVerifier::create)
-                .assertNext(r2dbc -> equality.accept(r2dbc, value))
-                .verifyComplete();
+                    .concatWith(close(connection));
+            }).as(StepVerifier::create).assertNext(r2dbc -> equality.accept(r2dbc, value)).verifyComplete();
         } finally {
             SERVER.getJdbcOperations().execute("DROP TABLE test");
         }
@@ -868,32 +834,21 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         SERVER.getJdbcOperations().execute(String.format("CREATE TABLE test (value %s)", sqlType));
 
         try {
-            this.connectionFactory.create()
-                .flatMapMany(connection -> connection
+            this.connectionFactory.create().flatMapMany(connection -> connection
 
-                    .createStatement("INSERT INTO test VALUES ($1)")
-                    .bind("$1", toWrite)
-                    .execute()
+                .createStatement("INSERT INTO test VALUES ($1)").bind("$1", toWrite).execute()
 
-                    .flatMap(PostgresqlResult::getRowsUpdated)
+                .flatMap(PostgresqlResult::getRowsUpdated)
 
-                    .concatWith(close(connection)))
-                .as(StepVerifier::create)
-                .expectNext(1L)
-                .verifyComplete();
+                .concatWith(close(connection))).as(StepVerifier::create).expectNext(1L).verifyComplete();
 
-            this.connectionFactory.create()
-                .flatMapMany(connection -> {
-                    return connection.createStatement("SELECT value FROM test").execute()
+            this.connectionFactory.create().flatMapMany(connection -> {
+                return connection.createStatement("SELECT value FROM test").execute()
 
-                        .map(result -> result.map((row, metadata) -> row.get("value", javaTypeToRead)))
-                        .flatMap(Function.identity())
+                    .map(result -> result.map((row, metadata) -> row.get("value", javaTypeToRead))).flatMap(Function.identity())
 
-                        .concatWith(close(connection));
-                })
-                .as(StepVerifier::create)
-                .assertNext(equality)
-                .verifyComplete();
+                    .concatWith(close(connection));
+            }).as(StepVerifier::create).assertNext(equality).verifyComplete();
         } finally {
             SERVER.getJdbcOperations().execute("DROP TABLE test");
         }
