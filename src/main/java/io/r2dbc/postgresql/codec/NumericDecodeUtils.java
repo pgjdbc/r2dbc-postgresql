@@ -111,18 +111,24 @@ final class NumericDecodeUtils {
             digits[i] = byteBuf.readShort();
         }
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder((sign != 0 ? 1 : 0) + 2 + (digits.length * 4));
         if (sign != 0) {
             sb.append("-");
         }
         sb.append("0.");
         for (short digit : digits) {
-            sb.append(String.format("%04d", digit));
+            String rendered = "" + digit;
+            int padded = rendered.length();
+
+            while (padded < 4) {
+                sb.append("0");
+                padded++;
+            }
+
+            sb.append(rendered);
         }
 
-        return new BigDecimal(sb.toString())
-            .movePointRight((weight + 1) * 4)
-            .setScale(scale, RoundingMode.DOWN);
+        return new BigDecimal(sb.toString()).movePointRight((weight + 1) * 4).setScale(scale, RoundingMode.DOWN);
     }
 
 }

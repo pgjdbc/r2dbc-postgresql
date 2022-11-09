@@ -103,7 +103,10 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(BigDecimal.class, new BigDecimal("-1"), "NUMERIC");
         testCodec(BigDecimal.class, new BigDecimal("10000.0000023"), "NUMERIC");
         testCodec(BigDecimal.class, new BigDecimal("10010.1200023"), "NUMERIC");
+        testCodec(BigDecimal.class, new BigDecimal("-10010.1200023"), "NUMERIC");
         testCodec(BigDecimal.class, new BigDecimal("2000010010.1200023"), "NUMERIC");
+        testCodec(BigDecimal.class, new BigDecimal("0.1200023"), "NUMERIC");
+        testCodec(BigDecimal.class, new BigDecimal("-0.1200023"), "NUMERIC");
         testCodec(BigDecimal.class, new BigDecimal("0"), "NUMERIC");
         testCodec(BigDecimal.class, new BigDecimal("100"), "INT2");
         testCodec(BigDecimal.class, new BigDecimal("100"), "INT4");

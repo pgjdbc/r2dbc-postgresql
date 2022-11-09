@@ -13,6 +13,9 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Unit tests for {@link NumericDecodeUtils}.
+ */
 class NumericDecodeUtilsTest {
 
     static Stream<Object[]> bigDecimalValues() {
@@ -82,6 +85,7 @@ class NumericDecodeUtilsTest {
         ByteBuf byteBuf = TestByteBufAllocator.TEST.buffer();
         byteBuf.writeBytes(ByteConverter.numeric(value));
         assertThat(NumericDecodeUtils.decodeBinary(byteBuf)).isEqualByComparingTo(value);
+        byteBuf.release();
     }
 
 }
