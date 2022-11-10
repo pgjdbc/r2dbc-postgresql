@@ -1,6 +1,20 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+1.0.0.RELEASE
+-----------------------------------------
+* Associate `PostgresConnectionClosedException` with error code `08006` #538
+* Bump postgresql from 42.4.0 to 42.4.1 #539
+* Await `ReadyForQuery` before emitting errors from transactional control methods #541
+* SRID not preserved in Geometry types (Point) since it is encoded as text using the WKTWriter #542
+* Release 1.0.0.RELEASE #544
+* Add GraalVM native reflection hints #549
+* Allow `StringCodec` registration for `CITEXT` usage #551
+* Upgrade to Reactor 2022.0.0 #554
+* Fix `LocalTimeCodec` array OID #555
+* Fix `NumericDecodeUtils.decodeBinary(byteBuf)` decoding #558
+* Ensure buffer release on copyIn failure #560
+
 1.0.0.RC1
 -----------------------------------------
 * Support for Postgresql multi-host failover functionality #120
