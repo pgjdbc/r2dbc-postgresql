@@ -38,6 +38,7 @@ import reactor.core.publisher.Sinks;
 import reactor.util.annotation.Nullable;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static io.r2dbc.postgresql.PostgresqlResult.toResult;
 
@@ -55,19 +56,31 @@ final class PostgresqlCopyIn {
     Mono<Long> copy(String sql, Publisher<? extends Publisher<ByteBuf>> stdin) {
 
         ExceptionFactory exceptionFactory = ExceptionFactory.withSql(sql);
-
+        AtomicReference<CopyData> toReleaseOnError = new AtomicReference<>();
         return Flux.from(stdin)
             .<FrontendMessage>concatMap(data -> {
 
                 CompositeByteBuf composite = this.context.getClient().getByteBufAllocator().compositeBuffer();
 
                 return Flux.from(data)
-                    .reduce(composite, (l, r) -> l.addComponent(true, r))
+                    .reduce(composite, (l, r) -> {
+                        return l.addComponent(true, r);
+                    })
                     .map(CopyData::new)
+                    .doOnNext(toReleaseOnError::set)
                     .doOnDiscard(ReferenceCounted.class, ReferenceCountUtil::release);
 
             }).concatWithValues(CopyDone.INSTANCE).startWith(new Query(sql))
-            .as(messages -> copyIn(exceptionFactory, messages));
+            .as(messages -> copyIn(exceptionFactory, messages))
+            .doFinally(signalType -> {
+
+                CopyData copyData = toReleaseOnError.get();
+                if (copyData != null) {
+                    if (copyData.refCnt() > 0) {
+                        copyData.release();
+                    }
+                }
+            });
     }
 
     private Mono<Long> copyIn(ExceptionFactory exceptionFactory, Flux<FrontendMessage> copyDataMessages) {
