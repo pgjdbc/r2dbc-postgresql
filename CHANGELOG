@@ -1,6 +1,12 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+0.9.3.RELEASE
+-----------------------------------------
+* Allow `StringCodec` registration for `CITEXT` usage #551
+* Fix `LocalTimeCodec` array OID #555
+* Fix `NumericDecodeUtils.decodeBinary(byteBuf)` decoding #558
+
 0.9.2.RELEASE
 -----------------------------------------
 * Consider lowercase `sslmode` for easier JDBC URL adaption #486
