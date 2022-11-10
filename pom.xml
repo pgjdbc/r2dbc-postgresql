@@ -38,20 +38,20 @@
         <hikari-cp.version>4.0.3</hikari-cp.version>
         <java.version>1.8</java.version>
         <jsr305.version>3.0.2</jsr305.version>
-        <junit.version>5.9.0</junit.version>
+        <junit.version>5.9.1</junit.version>
         <jmh.version>1.33</jmh.version>
         <mbr.version>0.3.0.RELEASE</mbr.version>
         <logback.version>1.2.9</logback.version>
-        <mockito.version>4.7.0</mockito.version>
-        <netty.version>4.1.80.Final</netty.version>
+        <mockito.version>4.8.1</mockito.version>
+        <netty.version>4.1.85.Final</netty.version>
         <postgresql.version>42.5.0</postgresql.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <r2dbc-spi.version>0.9.1.RELEASE</r2dbc-spi.version>
-        <reactor.version>2020.0.17</reactor.version>
+        <reactor.version>2020.0.24</reactor.version>
         <scram-client.version>2.1</scram-client.version>
-        <spring-framework.version>5.3.22</spring-framework.version>
-        <testcontainers.version>1.17.3</testcontainers.version>
+        <spring-framework.version>5.3.23</spring-framework.version>
+        <testcontainers.version>1.17.5</testcontainers.version>
         <jts-core.version>1.18.2</jts-core.version>
     </properties>
 
