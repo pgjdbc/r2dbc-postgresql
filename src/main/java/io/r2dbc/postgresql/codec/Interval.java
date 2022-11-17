@@ -828,16 +828,24 @@ public final class Interval implements ChronoPeriod, Serializable {
 
                 token = st.nextToken();
 
-                // This handles years, months, days for both, ISO and
+                // This handles millenniums, centuries, decades, years, months, weeks, days for both, ISO and
                 // Non-ISO intervals. Hours, minutes, seconds and microseconds
                 // are handled for Non-ISO intervals here.
 
-                if (token.startsWith("year") || token.startsWith("yr")) {
-                    years = Integer.parseInt(valueToken);
+                if (token.startsWith("mill")) {
+                    years = Math.addExact(years, Math.toIntExact(Math.multiplyExact(Integer.parseInt(valueToken), 1000)));
+                } else if (token.startsWith("cent") || token.equals("c")) {
+                    years = Math.addExact(years, Math.toIntExact(Math.multiplyExact(Integer.parseInt(valueToken), 100)));
+                } else if (token.startsWith("dec")) {
+                    years = Math.addExact(years, Math.toIntExact(Math.multiplyExact(Integer.parseInt(valueToken), 10)));
+                } else if (token.startsWith("year") || token.startsWith("yr")) {
+                    years = Math.addExact(years, Math.toIntExact(Integer.parseInt(valueToken)));
                 } else if (token.startsWith("mon")) {
                     months = Integer.parseInt(valueToken);
+                } else if (token.startsWith("week") || token.equals("w")) {
+                    days = Math.addExact(days, Math.toIntExact(Math.multiplyExact(Integer.parseInt(valueToken), 7)));
                 } else if (token.startsWith("day")) {
-                    days = Integer.parseInt(valueToken);
+                    days = Math.addExact(days, Math.toIntExact(Integer.parseInt(valueToken)));
                 } else if (token.startsWith("hour") || token.startsWith("hr")) {
                     hours = Integer.parseInt(valueToken);
                 } else if (token.startsWith("min")) {
