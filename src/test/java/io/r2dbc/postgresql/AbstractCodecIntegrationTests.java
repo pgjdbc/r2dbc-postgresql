@@ -435,7 +435,7 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(LocalDateTime.class, LocalDateTime.now().truncatedTo(ChronoUnit.MICROS), "TIMESTAMP");
         testCodec(LocalDateTime.class, LocalDateTime.now().truncatedTo(ChronoUnit.MICROS), "TIMESTAMPTZ");
 
-        Instant now = Instant.now();
+        Instant now = Instant.now().truncatedTo(ChronoUnit.MICROS);
         LocalDateTime ldt = now.atZone(ZoneId.systemDefault()).toLocalDateTime();
         testCodec(LocalDateTime.class, ldt, Instant.class, (actual, expected) -> {
 
