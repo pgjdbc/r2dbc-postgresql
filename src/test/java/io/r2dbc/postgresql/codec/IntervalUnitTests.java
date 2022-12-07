@@ -63,6 +63,12 @@ final class IntervalUnitTests {
             new Object[]{"8 years 2 mons 3 days 04:05", Interval.of(8, 2, 3, 4, 5, 0, 0)},
             new Object[]{"00:00:00", Interval.ZERO},
             new Object[]{"-1 years -2 mons +3 days -04:05:06", Interval.of(-1, -2, 3, -4, -5, -6, 0)},
+            new Object[]{"4 weeks", Interval.of(0, 0, 28, 0, 0, 0.0)},
+            new Object[]{"1 w 3 days", Interval.of(0, 0, 10, 0, 0, 0.0)},
+            new Object[]{"2 millenniums 4 years", Interval.of(2004, 0, 0, 0, 0, 0.0)},
+            new Object[]{"1 dec 8 yrs", Interval.of(18, 0, 0, 0, 0, 0.0)},
+            new Object[]{"2 c 2 decade", Interval.of(220, 0, 0, 0, 0, 0.0)},
+            new Object[]{"1 century 4 days", Interval.of(100, 0, 4, 0, 0, 0.0)},
 
             // intervalstyle=postgres_verbose
             new Object[]{"@ 3 days 4 hours 5 mins 6 secs", Interval.of(0, 0, 3, 4, 5, 6, 0)},
