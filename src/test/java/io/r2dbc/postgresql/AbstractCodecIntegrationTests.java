@@ -325,6 +325,7 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     @Test
     void instant() {
         testCodec(Instant.class, Instant.now().truncatedTo(ChronoUnit.MICROS), "TIMESTAMPTZ");
+        testCodec(Instant.class, Instant.parse("0000-12-31T01:01:00Z"), "TIMESTAMPTZ");
     }
 
     @Test
