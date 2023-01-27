@@ -126,7 +126,7 @@ final class InstantCodecUnitTests {
         assertThat(this.codec.doEncode(instant))
             .hasFormat(FORMAT_TEXT)
             .hasType(TIMESTAMPTZ.getObjectId())
-            .hasValue(encode(TEST, instant.toString()));
+            .hasValue(encode(TEST, PostgresqlDateTimeFormatter.format(instant)));
     }
 
     @Test

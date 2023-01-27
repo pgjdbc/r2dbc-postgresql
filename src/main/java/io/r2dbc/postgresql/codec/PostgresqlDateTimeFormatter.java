@@ -16,25 +16,30 @@
 
 package io.r2dbc.postgresql.codec;
 
+import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.time.format.SignStyle;
+import java.time.temporal.Temporal;
 import java.time.temporal.TemporalQuery;
 
+import static java.time.ZoneOffset.UTC;
+import static java.time.format.TextStyle.SHORT;
 import static java.time.temporal.ChronoField.DAY_OF_MONTH;
+import static java.time.temporal.ChronoField.ERA;
 import static java.time.temporal.ChronoField.HOUR_OF_DAY;
 import static java.time.temporal.ChronoField.MINUTE_OF_HOUR;
 import static java.time.temporal.ChronoField.MONTH_OF_YEAR;
 import static java.time.temporal.ChronoField.NANO_OF_SECOND;
 import static java.time.temporal.ChronoField.SECOND_OF_MINUTE;
-import static java.time.temporal.ChronoField.YEAR;
+import static java.time.temporal.ChronoField.YEAR_OF_ERA;
 
 class PostgresqlDateTimeFormatter {
 
     private static final DateTimeFormatter FULL_OFFSET =
         new DateTimeFormatterBuilder()
-            .appendValue(YEAR, 4, 10, SignStyle.EXCEEDS_PAD)
+            .appendValue(YEAR_OF_ERA, 4, 10, SignStyle.NEVER)
             .appendLiteral('-')
             .appendValue(MONTH_OF_YEAR, 2)
             .appendLiteral('-')
@@ -52,11 +57,15 @@ class PostgresqlDateTimeFormatter {
             .optionalStart()
             .appendOffset("+HH:MM:ss", "+00:00:00")
             .optionalEnd()
+            .optionalStart()
+            .appendLiteral(' ')
+            .appendText(ERA, SHORT)
+            .optionalEnd()
             .toFormatter();
 
     private static final DateTimeFormatter SHORT_OFFSET =
         new DateTimeFormatterBuilder()
-            .appendValue(YEAR, 4, 10, SignStyle.EXCEEDS_PAD)
+            .appendValue(YEAR_OF_ERA, 4, 10, SignStyle.NEVER)
             .appendLiteral('-')
             .appendValue(MONTH_OF_YEAR, 2)
             .appendLiteral('-')
@@ -73,6 +82,10 @@ class PostgresqlDateTimeFormatter {
             .optionalEnd()
             .optionalStart()
             .appendOffset("+HH:mm", "+00:00")
+            .optionalEnd()
+            .optionalStart()
+            .appendLiteral(' ')
+            .appendText(ERA, SHORT)
             .optionalEnd()
             .toFormatter();
 
@@ -102,6 +115,13 @@ class PostgresqlDateTimeFormatter {
         } catch (DateTimeParseException e) {
             return FULL_OFFSET.parse(text, query);
         }
+    }
+
+    static String format(Temporal temporal) {
+        if (temporal instanceof Instant) {
+            temporal = ((Instant) temporal).atOffset(UTC);
+        }
+        return SHORT_OFFSET.format(temporal);
     }
 
 }
