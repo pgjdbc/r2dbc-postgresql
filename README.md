@@ -4,7 +4,7 @@ This project contains the [PostgreSQL][p] implementation of the [R2DBC SPI][r]. 
 
 This driver provides the following features:
 
-* Implements R2DBC 0.9
+* Implements R2DBC 1.0
 * Login with username/password (MD5, SASL/SCRAM) or implicit trust
 * SCRAM authentication
 * Unix Domain Socket transport
