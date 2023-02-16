@@ -37,7 +37,7 @@ final class InstantCodec extends AbstractTemporalCodec<Instant> {
     private final Supplier<ZoneId> zoneIdSupplier;
 
     InstantCodec(ByteBufAllocator byteBufAllocator, Supplier<ZoneId> zoneIdSupplier) {
-        super(Instant.class, byteBufAllocator, TIMESTAMPTZ, TIMESTAMPTZ_ARRAY, Instant::toString);
+        super(Instant.class, byteBufAllocator, TIMESTAMPTZ, TIMESTAMPTZ_ARRAY, it -> PostgresqlDateTimeFormatter.toString(it));
         this.zoneIdSupplier = zoneIdSupplier;
     }
 

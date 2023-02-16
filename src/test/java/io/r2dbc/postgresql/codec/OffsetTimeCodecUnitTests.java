@@ -88,12 +88,12 @@ class OffsetTimeCodecUnitTests {
 
     @Test
     void doEncode() {
-        OffsetTime offsetTime = OffsetTime.now();
+        OffsetTime offsetTime = OffsetTime.parse("15:10:14.74+01:00");
 
         ParameterAssert.assertThat(new OffsetTimeCodec(TEST).doEncode(offsetTime))
             .hasFormat(FORMAT_TEXT)
             .hasType(TIMETZ.getObjectId())
-            .hasValue(encode(TEST, offsetTime.toString()));
+            .hasValue(encode(TEST, "15:10:14.74+01"));
     }
 
     @Test

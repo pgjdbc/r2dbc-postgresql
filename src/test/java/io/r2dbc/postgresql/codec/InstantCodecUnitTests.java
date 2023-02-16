@@ -121,12 +121,12 @@ final class InstantCodecUnitTests {
 
     @Test
     void doEncode() {
-        Instant instant = Instant.now();
+        Instant instant = Instant.parse("2018-11-05T00:20:25.039883Z");
 
         assertThat(this.codec.doEncode(instant))
             .hasFormat(FORMAT_TEXT)
             .hasType(TIMESTAMPTZ.getObjectId())
-            .hasValue(encode(TEST, instant.toString()));
+            .hasValue(encode(TEST, "2018-11-05 00:20:25.039883+00"));
     }
 
     @Test

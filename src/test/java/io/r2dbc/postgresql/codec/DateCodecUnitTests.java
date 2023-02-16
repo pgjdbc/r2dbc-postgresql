@@ -103,7 +103,7 @@ final class DateCodecUnitTests {
         assertThat(this.codec.doEncode(date))
             .hasFormat(FORMAT_TEXT)
             .hasType(TIMESTAMP.getObjectId())
-            .hasValue(encode(TEST, "2010-02-01T10:08:04.412"));
+            .hasValue(encode(TEST, "2010-02-01 10:08:04.412"));
     }
 
     @Test

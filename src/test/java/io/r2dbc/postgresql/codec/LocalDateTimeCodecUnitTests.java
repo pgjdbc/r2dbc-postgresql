@@ -97,12 +97,12 @@ final class LocalDateTimeCodecUnitTests {
 
     @Test
     void doEncode() {
-        LocalDateTime localDateTime = LocalDateTime.now();
+        LocalDateTime localDateTime = LocalDateTime.parse("2023-02-16T15:13:46.23");
 
         assertThat(this.codec.doEncode(localDateTime))
             .hasFormat(FORMAT_TEXT)
             .hasType(TIMESTAMP.getObjectId())
-            .hasValue(encode(TEST, localDateTime.toString()));
+            .hasValue(encode(TEST, "2023-02-16 15:13:46.23"));
     }
 
     @Test

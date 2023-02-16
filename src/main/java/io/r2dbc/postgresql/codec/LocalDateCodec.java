@@ -33,7 +33,7 @@ import static io.r2dbc.postgresql.codec.PostgresqlObjectId.DATE_ARRAY;
 final class LocalDateCodec extends AbstractTemporalCodec<LocalDate> {
 
     LocalDateCodec(ByteBufAllocator byteBufAllocator) {
-        super(LocalDate.class, byteBufAllocator, DATE, DATE_ARRAY, LocalDate::toString);
+        super(LocalDate.class, byteBufAllocator, DATE, DATE_ARRAY, PostgresqlDateTimeFormatter::toString);
     }
 
     @Override

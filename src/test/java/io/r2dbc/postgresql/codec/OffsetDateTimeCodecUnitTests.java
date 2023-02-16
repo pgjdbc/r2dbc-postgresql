@@ -65,9 +65,25 @@ final class OffsetDateTimeCodecUnitTests {
         assertThat(new OffsetDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:16:00.899797+00:00"), dataType, FORMAT_TEXT, OffsetDateTime.class))
             .isEqualTo(offsetDateTime);
         assertThat(new OffsetDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:16:00.899797+00:00:00"), dataType, FORMAT_TEXT, OffsetDateTime.class))
-                .isEqualTo(offsetDateTime);
+            .isEqualTo(offsetDateTime);
         assertThat(new OffsetDateTimeCodec(TEST).decode(encode(TEST, "2018-11-05 00:16:00.899797+00"), dataType, FORMAT_TEXT, OffsetDateTime.class))
             .isEqualTo(offsetDateTime);
+    }
+
+    @Test
+    void decodeBC() {
+
+        assertThat(new OffsetDateTimeCodec(TEST).decode(encode(TEST, "0001-12-31 00:54:28+00:53:28 BC"), dataType, FORMAT_TEXT, OffsetDateTime.class))
+            .isEqualTo(OffsetDateTime.parse("0000-12-31T00:54:28+00:53:28"));
+
+        assertThat(new OffsetDateTimeCodec(TEST).decode(encode(TEST, "0001-12-31 00:54:28+00:53:28 BC"), dataType, FORMAT_TEXT, OffsetDateTime.class))
+            .isEqualTo(OffsetDateTime.parse("0000-12-31T00:01Z"));
+
+
+        assertThat(new OffsetDateTimeCodec(TEST).decode(encode(TEST, "0001-12-31 00:54:28+00:53:28 BC"), dataType, FORMAT_TEXT, OffsetDateTime.class))
+            .isEqualTo(OffsetDateTime.parse("0000-12-31T01:01:00+01:00"));
+
+        assertThat(OffsetDateTime.parse("0000-12-31T00:01Z")).isEqualTo(OffsetDateTime.parse("0000-12-31T00:54:28+00:53:28"));
     }
 
     @Test
@@ -98,12 +114,12 @@ final class OffsetDateTimeCodecUnitTests {
 
     @Test
     void doEncode() {
-        OffsetDateTime offsetDateTime = OffsetDateTime.now();
+        OffsetDateTime offsetDateTime = OffsetDateTime.parse("2023-02-16T15:09:12.15+01:00");
 
         assertThat(new OffsetDateTimeCodec(TEST).doEncode(offsetDateTime))
             .hasFormat(FORMAT_TEXT)
             .hasType(TIMESTAMPTZ.getObjectId())
-            .hasValue(encode(TEST, offsetDateTime.toString()));
+            .hasValue(encode(TEST, "2023-02-16 15:09:12.15+01"));
     }
 
     @Test
