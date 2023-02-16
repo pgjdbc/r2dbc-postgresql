@@ -24,12 +24,10 @@ import io.r2dbc.postgresql.util.ByteBufUtils;
 import reactor.util.annotation.Nullable;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.time.temporal.Temporal;
 import java.util.EnumSet;
 import java.util.Set;
@@ -118,28 +116,28 @@ abstract class AbstractTemporalCodec<T extends Temporal> extends BuiltinCodecSup
                     return EpochTime.fromLong(buffer.readLong()).toLocalDateTime();
                 }
 
-                return PostgresqlDateTimeFormatter.parse(ByteBufUtils.decode(buffer), LocalDateTime::from);
+                return PostgresqlDateTimeFormatter.parseLocalDateTime(ByteBufUtils.decode(buffer));
             case DATE:
             case DATE_ARRAY:
                 if (FORMAT_BINARY == format) {
                     return LocalDate.ofEpochDay(EpochTime.fromInt(buffer.readInt()).getJavaDays());
                 }
 
-                return LocalDate.parse(ByteBufUtils.decode(buffer));
+                return PostgresqlDateTimeFormatter.parseLocalDate(ByteBufUtils.decode(buffer));
             case TIME:
             case TIME_ARRAY:
                 if (FORMAT_BINARY == format) {
                     return LocalTime.ofNanoOfDay(buffer.readLong() * 1000);
                 }
 
-                return LocalTime.parse(ByteBufUtils.decode(buffer));
+                return PostgresqlTimeFormatter.parseLocalTime(ByteBufUtils.decode(buffer));
             case TIMESTAMPTZ:
             case TIMESTAMPTZ_ARRAY:
                 if (FORMAT_BINARY == format) {
                     return EpochTime.fromLong(buffer.readLong()).toInstant().atOffset(OffsetDateTime.now().getOffset());
                 }
 
-                return PostgresqlDateTimeFormatter.parse(ByteBufUtils.decode(buffer), ZonedDateTime::from);
+                return PostgresqlDateTimeFormatter.parseOffsetDateTime(ByteBufUtils.decode(buffer));
             case TIMETZ:
             case TIMETZ_ARRAY:
                 if (FORMAT_BINARY == format) {
@@ -148,7 +146,7 @@ abstract class AbstractTemporalCodec<T extends Temporal> extends BuiltinCodecSup
                     return OffsetTime.of(LocalTime.ofNanoOfDay(timeNano), ZoneOffset.ofTotalSeconds(offsetSec));
                 }
 
-                return PostgresqlTimeFormatter.parse(ByteBufUtils.decode(buffer), OffsetTime::from);
+                return PostgresqlTimeFormatter.parseOffsetTime(ByteBufUtils.decode(buffer));
         }
 
         throw new UnsupportedOperationException(String.format("Cannot decode value for type %s, format %s", dataType, format));

@@ -30,7 +30,7 @@ import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMESTAMPTZ_ARRAY;
 final class ZonedDateTimeCodec extends AbstractTemporalCodec<ZonedDateTime> implements ArrayCodecDelegate<ZonedDateTime> {
 
     ZonedDateTimeCodec(ByteBufAllocator byteBufAllocator) {
-        super(ZonedDateTime.class, byteBufAllocator, TIMESTAMPTZ, TIMESTAMPTZ_ARRAY, value -> value.toOffsetDateTime().toString());
+        super(ZonedDateTime.class, byteBufAllocator, TIMESTAMPTZ, TIMESTAMPTZ_ARRAY, value -> PostgresqlDateTimeFormatter.toString(value.toOffsetDateTime()));
     }
 
     @Override

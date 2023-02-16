@@ -30,7 +30,7 @@ import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TIMESTAMPTZ_ARRAY;
 final class OffsetDateTimeCodec extends AbstractTemporalCodec<OffsetDateTime> {
 
     OffsetDateTimeCodec(ByteBufAllocator byteBufAllocator) {
-        super(OffsetDateTime.class, byteBufAllocator, TIMESTAMPTZ, TIMESTAMPTZ_ARRAY, OffsetDateTime::toString);
+        super(OffsetDateTime.class, byteBufAllocator, TIMESTAMPTZ, TIMESTAMPTZ_ARRAY, PostgresqlDateTimeFormatter::toString);
     }
 
     @Override

@@ -80,7 +80,8 @@ import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Integrations tests for our built-in codecs. Executed typically in text and binary mode.
+ * Integrations tests for our built-in codecs.
+ * Executed typically in text and binary mode through subclasses.
  *
  * @see CodecBinaryFormatIntegrationTests
  * @see CodecTextFormatIntegrationTests
