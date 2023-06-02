@@ -137,7 +137,8 @@ final class BoundedStatementCache implements StatementCache {
     /**
      * Synchronized cache access: Retrieve statement name by key.
      *
-     * @param key
+     * @param key Cache key
+     * @see CacheKey
      * @return statement name by key
      */
     @Nullable
