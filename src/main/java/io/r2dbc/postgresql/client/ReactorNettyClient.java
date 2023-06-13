@@ -25,6 +25,7 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.util.AttributeKey;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -101,6 +102,8 @@ public final class ReactorNettyClient implements Client {
 
     private static final Supplier<PostgresConnectionClosedException> EXPECTED = () -> new PostgresConnectionClosedException("Connection closed");
 
+    private static final AttributeKey<Mono<Void>> SSL_HANDSHAKE_KEY = AttributeKey.valueOf("ssl-handshake");
+
     private final ByteBufAllocator byteBufAllocator;
 
     private final ConnectionSettings settings;
@@ -144,7 +147,7 @@ public final class ReactorNettyClient implements Client {
         Assert.requireNonNull(connection, "Connection must not be null");
         this.settings = Assert.requireNonNull(settings, "ConnectionSettings must not be null");
 
-        connection.addHandlerFirst(new EnsureSubscribersCompleteChannelHandler(this.requestSink));
+        connection.addHandlerLast(new EnsureSubscribersCompleteChannelHandler(this.requestSink));
         connection.addHandlerLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE - 5, 1, 4, -4, 0));
         this.connection = connection;
         this.byteBufAllocator = connection.outbound().alloc();
@@ -392,9 +395,8 @@ public final class ReactorNettyClient implements Client {
             tcpClient = tcpClient.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, settings.getConnectTimeoutMs());
         }
 
-        return tcpClient.connect().flatMap(it -> {
-
-            ChannelPipeline pipeline = it.channel().pipeline();
+        return tcpClient.doOnChannelInit((observer, channel, remoteAddress) -> {
+            ChannelPipeline pipeline = channel.pipeline();
 
             InternalLogger logger = InternalLoggerFactory.getInstance(ReactorNettyClient.class);
             if (logger.isTraceEnabled()) {
@@ -402,33 +404,34 @@ public final class ReactorNettyClient implements Client {
                     new LoggingHandler(ReactorNettyClient.class, LogLevel.TRACE));
             }
 
-            return registerSslHandler(settings.getSslConfig(), it).thenReturn(new ReactorNettyClient(it, settings));
-        });
+            registerSslHandler(settings.getSslConfig(), channel);
+        }).connect().flatMap(it ->
+            getSslHandshake(it.channel()).thenReturn(new ReactorNettyClient(it, settings))
+        );
     }
 
-    private static Mono<? extends Void> registerSslHandler(SSLConfig sslConfig, Connection it) {
-
+    private static void registerSslHandler(SSLConfig sslConfig, Channel channel) {
         try {
             if (sslConfig.getSslMode().startSsl()) {
 
-                return Mono.defer(() -> {
-                    AbstractPostgresSSLHandlerAdapter sslAdapter;
-                    if (sslConfig.getSslMode() == SSLMode.TUNNEL) {
-                        sslAdapter = new SSLTunnelHandlerAdapter(it.outbound().alloc(), sslConfig);
-                    } else {
-                        sslAdapter = new SSLSessionHandlerAdapter(it.outbound().alloc(), sslConfig);
-                    }
+                AbstractPostgresSSLHandlerAdapter sslAdapter;
+                if (sslConfig.getSslMode() == SSLMode.TUNNEL) {
+                    sslAdapter = new SSLTunnelHandlerAdapter(channel.alloc(), sslConfig);
+                } else {
+                    sslAdapter = new SSLSessionHandlerAdapter(channel.alloc(), sslConfig);
+                }
 
-                    it.addHandlerFirst(sslAdapter);
-                    return sslAdapter.getHandshake();
-
-                }).subscribeOn(Schedulers.boundedElastic());
+                channel.pipeline().addFirst(sslAdapter);
+                channel.attr(SSL_HANDSHAKE_KEY).set(sslAdapter.getHandshake());
             }
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
+    }
 
-        return Mono.empty();
+    private static Mono<Void> getSslHandshake(Channel channel) {
+        Mono<Void> sslHandshake = channel.attr(SSL_HANDSHAKE_KEY).getAndSet(null);
+        return (sslHandshake == null) ? Mono.empty() : sslHandshake;
     }
 
     @Override
