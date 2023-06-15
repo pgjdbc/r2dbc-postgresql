@@ -54,7 +54,7 @@ final class PostgresqlCopyInUnitTests {
             .expectRequest(new Query("some-sql"), new CopyData(byteBuffer), CopyDone.INSTANCE)
             .thenRespond(
                 new CopyInResponse(emptySet(), Format.FORMAT_TEXT),
-                new CommandComplete("cmd", 1, 1),
+                new CommandComplete("cmd", 1, 1L),
                 new ReadyForQuery(IDLE)
             ).build();
 
@@ -85,7 +85,7 @@ final class PostgresqlCopyInUnitTests {
             .transactionStatus(TransactionStatus.IDLE)
             .expectRequest(new Query("some-sql"), CopyDone.INSTANCE).thenRespond(
                 new CopyInResponse(emptySet(), Format.FORMAT_TEXT),
-                new CommandComplete("cmd", 1, 0),
+                new CommandComplete("cmd", 1, 0L),
                 new ReadyForQuery(ReadyForQuery.TransactionStatus.IDLE)
             )
             .build();
@@ -128,7 +128,7 @@ final class PostgresqlCopyInUnitTests {
                 new CopyFail("Copy operation failed: Cancelled")
             ).thenRespond(
                 new CopyInResponse(emptySet(), Format.FORMAT_TEXT),
-                new CommandComplete("cmd", 1, 1),
+                new CommandComplete("cmd", 1, 1L),
                 new ReadyForQuery(IDLE)
             ).build();
 

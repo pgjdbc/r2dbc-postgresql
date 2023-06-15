@@ -64,7 +64,7 @@ final class PostgresqlResult extends AbstractReferenceCounted implements io.r2db
     public Mono<Long> getRowsUpdated() {
 
         return this.messages
-            .<Integer>handle((message, sink) -> {
+            .<Long>handle((message, sink) -> {
 
                 if (message instanceof ErrorResponse) {
                     this.factory.handleErrorResponse(message, (SynchronousSink) sink);
@@ -77,7 +77,7 @@ final class PostgresqlResult extends AbstractReferenceCounted implements io.r2db
 
                 if (message instanceof CommandComplete) {
 
-                    Integer rowCount = ((CommandComplete) message).getRows();
+                    Long rowCount = ((CommandComplete) message).getRows();
                     if (rowCount != null) {
                         sink.next(rowCount);
                     }
@@ -91,8 +91,8 @@ final class PostgresqlResult extends AbstractReferenceCounted implements io.r2db
 
                 long sum = 0;
 
-                for (Integer integer : list) {
-                    sum += integer;
+                for (Long value : list) {
+                    sum += value;
                 }
 
                 sink.next(sum);

@@ -89,7 +89,7 @@ class PostgresqlSegmentResultUnitTests {
     void shouldConsumeRowsUpdated() {
 
         PostgresqlSegmentResult result = PostgresqlSegmentResult.toResult(MockContext.empty(), Flux.just(new CommandComplete
-            ("test", null, 42)), ExceptionFactory.INSTANCE);
+            ("test", null, 42L)), ExceptionFactory.INSTANCE);
 
         result.getRowsUpdated()
             .as(StepVerifier::create)
@@ -101,7 +101,7 @@ class PostgresqlSegmentResultUnitTests {
     void filterShouldRetainUpdateCount() {
 
         PostgresqlSegmentResult result = PostgresqlSegmentResult.toResult(MockContext.empty(), Flux.just(new CommandComplete
-            ("test", null, 42)), ExceptionFactory.INSTANCE);
+            ("test", null, 42L)), ExceptionFactory.INSTANCE);
 
         result.filter(Result.UpdateCount.class::isInstance).getRowsUpdated()
             .as(StepVerifier::create)
@@ -193,7 +193,7 @@ class PostgresqlSegmentResultUnitTests {
 
         PostgresqlSegmentResult result = PostgresqlSegmentResult.toResult(MockContext.empty(), Flux.just(new ErrorResponse(Collections.emptyList()), new RowDescription(Collections.emptyList()),
             new DataRow(), new CommandComplete
-                ("test", null, 42)), ExceptionFactory.INSTANCE);
+                ("test", null, 42L)), ExceptionFactory.INSTANCE);
 
         Flux.from(result.flatMap(Mono::just))
             .as(StepVerifier::create)
