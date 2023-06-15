@@ -35,7 +35,7 @@ final class PostgresqlResultUnitTests {
 
     @Test
     void toResultCommandComplete() {
-        PostgresqlResult result = PostgresqlResult.toResult(MockContext.empty(), Flux.just(new CommandComplete("test", null, 1)), ExceptionFactory.INSTANCE);
+        PostgresqlResult result = PostgresqlResult.toResult(MockContext.empty(), Flux.just(new CommandComplete("test", null, 1L)), ExceptionFactory.INSTANCE);
 
         result.map((row, rowMetadata) -> row)
             .as(StepVerifier::create)
@@ -49,7 +49,7 @@ final class PostgresqlResultUnitTests {
 
     @Test
     void toResultCommandCompleteUsingSegments() {
-        io.r2dbc.postgresql.api.PostgresqlResult result = PostgresqlResult.toResult(MockContext.empty(), Flux.just(new CommandComplete("test", null, 1)), ExceptionFactory.INSTANCE).filter(it -> true);
+        io.r2dbc.postgresql.api.PostgresqlResult result = PostgresqlResult.toResult(MockContext.empty(), Flux.just(new CommandComplete("test", null, 1L)), ExceptionFactory.INSTANCE).filter(it -> true);
 
         result.map((row, rowMetadata) -> row)
             .as(StepVerifier::create)
