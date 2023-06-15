@@ -83,7 +83,7 @@ final class PostgresqlSegmentResult extends AbstractReferenceCounted implements 
 
                 if (message instanceof CommandComplete) {
 
-                    Integer rowCount = ((CommandComplete) message).getRows();
+                    Long rowCount = ((CommandComplete) message).getRows();
                     if (rowCount != null) {
                         sink.next(new PostgresqlUpdateCountSegment(rowCount));
                     }

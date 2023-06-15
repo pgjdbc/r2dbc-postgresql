@@ -138,7 +138,7 @@ final class BackendMessageDecoderUnitTests {
 
             return buffer;
         });
-        assertThat(message).isEqualTo(new CommandComplete("COPY", null, 100));
+        assertThat(message).isEqualTo(new CommandComplete("COPY", null, 100L));
     }
 
     @Test

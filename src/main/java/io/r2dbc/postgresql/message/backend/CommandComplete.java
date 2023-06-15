@@ -35,7 +35,7 @@ public final class CommandComplete implements BackendMessage {
 
     private final Integer rowId;
 
-    private final Integer rows;
+    private final Long rows;
 
     /**
      * Create a new message.
@@ -45,7 +45,7 @@ public final class CommandComplete implements BackendMessage {
      * @param rows    the number of rows affected by the command
      * @throws IllegalArgumentException if {@code command} is {@code null}
      */
-    public CommandComplete(String command, @Nullable Integer rowId, @Nullable Integer rows) {
+    public CommandComplete(String command, @Nullable Integer rowId, @Nullable Long rows) {
         this.command = Assert.requireNonNull(command, "command must not be null");
         this.rowId = rowId;
         this.rows = rows;
@@ -90,7 +90,7 @@ public final class CommandComplete implements BackendMessage {
      * @return the number of rows affected by the command
      */
     @Nullable
-    public Integer getRows() {
+    public Long getRows() {
         return this.rows;
     }
 
@@ -122,7 +122,7 @@ public final class CommandComplete implements BackendMessage {
             String rowId = tag.substring(index1 + 1, index2);
             String rows = tag.substring(index2 + 1, index3 != -1 ? index3 : tag.length());
 
-            return new CommandComplete(command, Integer.parseInt(rowId), Integer.parseInt(rows));
+            return new CommandComplete(command, Integer.parseInt(rowId), Long.parseLong(rows));
         } else if (isNoRowId(tag)) {
 
             int index1 = tag.indexOf(' ');
@@ -130,7 +130,7 @@ public final class CommandComplete implements BackendMessage {
             String command = tag.substring(0, index1 != -1 ? index1 : tag.length());
             String rows = index1 != -1 ? tag.substring(index1 + 1, index2 != -1 ? index2 : tag.length()) : null;
 
-            return new CommandComplete(command, null, rows != null ? Integer.parseInt(rows) : null);
+            return new CommandComplete(command, null, rows != null ? Long.parseLong(rows) : null);
         } else {
             return new CommandComplete(tag, null, null);
         }

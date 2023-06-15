@@ -517,7 +517,7 @@ final class PostgresqlConnectionUnitTests {
             .expectRequest(new Query("some-sql"), new CopyData(Unpooled.EMPTY_BUFFER), CopyDone.INSTANCE)
             .thenRespond(
                 new CopyInResponse(emptySet(), Format.FORMAT_TEXT),
-                new CommandComplete("cmd", 1, 0),
+                new CommandComplete("cmd", 1, 0L),
                 new ReadyForQuery(ReadyForQuery.TransactionStatus.IDLE)
             )
             .build();

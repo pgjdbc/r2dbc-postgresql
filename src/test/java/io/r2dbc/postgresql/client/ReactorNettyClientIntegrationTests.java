@@ -200,7 +200,7 @@ final class ReactorNettyClientIntegrationTests {
             .as(StepVerifier::create)
             .assertNext(message -> assertThat(message).isInstanceOf(RowDescription.class))
             .assertNext(message -> assertThat(message).isInstanceOf(DataRow.class))
-            .expectNext(new CommandComplete("SELECT", null, 1))
+            .expectNext(new CommandComplete("SELECT", null, 1L))
             .verifyComplete();
     }
 
@@ -286,8 +286,8 @@ final class ReactorNettyClientIntegrationTests {
             .assertNext(message -> assertThat(message).isInstanceOf(RowDescription.class))
             .assertNext(message -> assertThat(message).isInstanceOf(DataRow.class))
             .assertNext(message -> assertThat(message).isInstanceOf(DataRow.class))
-            .expectNext(new CommandComplete("SELECT", null, 1))
-            .expectNext(new CommandComplete("SELECT", null, 1))
+            .expectNext(new CommandComplete("SELECT", null, 1L))
+            .expectNext(new CommandComplete("SELECT", null, 1L))
             .verifyComplete();
     }
 
