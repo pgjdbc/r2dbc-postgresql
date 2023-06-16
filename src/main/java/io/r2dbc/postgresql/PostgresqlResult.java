@@ -92,7 +92,12 @@ final class PostgresqlResult extends AbstractReferenceCounted implements io.r2db
                 long sum = 0;
 
                 for (Long value : list) {
-                    sum += value;
+                    try {
+                        sum = Math.addExact(sum, value);
+                    } catch (ArithmeticException e) {
+                        sum = Long.MAX_VALUE;
+                        break;
+                    }
                 }
 
                 sink.next(sum);
