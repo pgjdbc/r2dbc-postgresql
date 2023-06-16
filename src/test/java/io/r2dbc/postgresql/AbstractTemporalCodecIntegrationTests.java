@@ -27,6 +27,7 @@ import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.TimeZone;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -201,7 +202,7 @@ abstract class AbstractTemporalCodecIntegrationTests extends AbstractIntegration
         insert(Instant.parse("0000-12-31T01:01:00Z"));
         expectValue(Instant.parse("0000-12-31T01:01:00Z"));
 
-        Instant now = Instant.now();
+        Instant now = Instant.now().truncatedTo(ChronoUnit.MICROS);
         insert(now);
         expectValue(now);
     }
