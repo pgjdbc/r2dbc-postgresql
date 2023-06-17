@@ -40,17 +40,17 @@ final class SSLSessionHandlerAdapter extends AbstractPostgresSSLHandlerAdapter {
     }
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) {
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
         Mono.from(SSLRequest.INSTANCE.encode(this.alloc)).subscribe(ctx::writeAndFlush);
-        ctx.fireChannelActive();
+        super.channelActive(ctx);
     }
 
     @Override
-    public void channelInactive(ChannelHandlerContext ctx) {
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         // If we receive channel inactive before removing this handler, then the inbound has closed early.
         PostgresqlSslException e = new PostgresqlSslException("Connection closed during SSL negotiation");
         completeHandshakeExceptionally(e);
-        ctx.fireChannelInactive();
+        super.channelInactive(ctx);
     }
 
     @Override
