@@ -23,6 +23,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.Timeout;
+import org.springframework.jdbc.core.JdbcOperations;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -42,12 +44,18 @@ final class PostgresCancelIntegrationTests extends AbstractIntegrationTests {
 
         super.setUp();
 
-        SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS insert_test;");
-        SERVER.getJdbcOperations().execute("CREATE TABLE insert_test\n" +
+        JdbcOperations jdbc = SERVER.getJdbcOperations();
+        jdbc.execute("DROP TABLE IF EXISTS insert_test;");
+        jdbc.execute("CREATE TABLE insert_test\n" +
             "(\n" +
             "    id    SERIAL PRIMARY KEY,\n" +
             "    value CHAR(1) NOT NULL\n" +
             ");");
+
+
+        jdbc.execute("DROP TABLE IF EXISTS lots_of_data;");
+        jdbc.execute("CREATE TABLE lots_of_data AS \n"
+            + "  SELECT i FROM generate_series(1,200000) as i;");
     }
 
     @AfterAll
@@ -111,4 +119,34 @@ final class PostgresCancelIntegrationTests extends AbstractIntegrationTests {
             .verify(Duration.ofSeconds(5));
     }
 
+    @Timeout(10)
+    @RepeatedTest(20)
+    void shouldCancelParametrizedWithFetchSize() {
+
+        this.connection.createStatement("SELECT * FROM lots_of_data WHERE $1 = $1 ORDER BY i")
+            .fetchSize(10)
+            .bind(0, 1)
+            .execute()
+            .flatMap(r -> r.map((row, meta) -> row.get(0, Integer.class)))
+            .as(StepVerifier::create)
+            .expectNext(1)
+            .expectNextCount(5)
+            .thenCancel()
+            .verify(Duration.ofSeconds(5));
+    }
+
+    @Timeout(10)
+    @RepeatedTest(20)
+    void shouldCancelSimpleWithFetchSize() {
+
+        this.connection.createStatement("SELECT * FROM lots_of_data ORDER BY i")
+            .fetchSize(10)
+            .execute()
+            .flatMap(r -> r.map((row, meta) -> row.get(0, Integer.class)))
+            .as(StepVerifier::create)
+            .expectNext(1)
+            .expectNextCount(5)
+            .thenCancel()
+            .verify(Duration.ofSeconds(5));
+    }
 }
