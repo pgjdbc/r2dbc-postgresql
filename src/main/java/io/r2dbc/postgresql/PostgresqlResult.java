@@ -109,7 +109,7 @@ final class PostgresqlResult extends AbstractReferenceCounted implements io.r2db
     public <T> Flux<T> map(BiFunction<Row, RowMetadata, ? extends T> f) {
         Assert.requireNonNull(f, "f must not be null");
 
-        return this.messages
+        return (Flux<T>) this.messages
             .handle((message, sink) -> {
 
                 try {
