@@ -33,6 +33,8 @@ final class SSLSessionHandlerAdapter extends AbstractPostgresSSLHandlerAdapter {
 
     private final SSLConfig sslConfig;
 
+    private boolean negotiating = true;
+
     SSLSessionHandlerAdapter(ByteBufAllocator alloc, SSLConfig sslConfig) {
         super(alloc, sslConfig);
         this.alloc = alloc;
@@ -41,47 +43,54 @@ final class SSLSessionHandlerAdapter extends AbstractPostgresSSLHandlerAdapter {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        Mono.from(SSLRequest.INSTANCE.encode(this.alloc)).subscribe(ctx::writeAndFlush);
+        if (negotiating) {
+            Mono.from(SSLRequest.INSTANCE.encode(this.alloc)).subscribe(ctx::writeAndFlush);
+        }
         super.channelActive(ctx);
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        // If we receive channel inactive before removing this handler, then the inbound has closed early.
-        PostgresqlSslException e = new PostgresqlSslException("Connection closed during SSL negotiation");
-        completeHandshakeExceptionally(e);
+        if (negotiating) {
+            // If we receive channel inactive before negotiated, then the inbound has closed early.
+            PostgresqlSslException e = new PostgresqlSslException("Connection closed during SSL negotiation");
+            completeHandshakeExceptionally(e);
+        }
         super.channelInactive(ctx);
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) {
-        ByteBuf buf = (ByteBuf) msg;
-        char response = (char) buf.readByte();
-        try {
-            switch (response) {
-                case 'S':
-                    processSslEnabled(ctx, buf);
-                    break;
-                case 'N':
-                    processSslDisabled(ctx);
-                    break;
-                default:
-                    buf.release();
-                    throw new IllegalStateException("Unknown SSLResponse from server: '" + response + "'");
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        if (negotiating) {
+            ByteBuf buf = (ByteBuf) msg;
+            char response = (char) buf.readByte();
+            try {
+                switch (response) {
+                    case 'S':
+                        processSslEnabled(ctx, buf);
+                        break;
+                    case 'N':
+                        processSslDisabled();
+                        break;
+                    default:
+                        throw new IllegalStateException("Unknown SSLResponse from server: '" + response + "'");
+                }
+            } finally {
+                buf.release();
+                negotiating = false;
             }
-        } finally {
-            buf.release();
+        } else {
+            super.channelRead(ctx, msg);
         }
     }
 
-    private void processSslDisabled(ChannelHandlerContext ctx) {
+    private void processSslDisabled() {
         if (this.sslConfig.getSslMode().requireSsl()) {
             PostgresqlSslException e =
                 new PostgresqlSslException("Server support for SSL connection is disabled, but client was configured with SSL mode " + this.sslConfig.getSslMode());
             completeHandshakeExceptionally(e);
         } else {
             completeHandshake();
-            ctx.channel().pipeline().remove(this);
         }
     }
 
@@ -92,9 +101,7 @@ final class SSLSessionHandlerAdapter extends AbstractPostgresSSLHandlerAdapter {
             completeHandshakeExceptionally(e);
             return;
         }
-        ctx.channel().pipeline()
-            .addFirst(this.getSslHandler())
-            .remove(this);
+        ctx.channel().pipeline().addFirst(this.getSslHandler());
         ctx.fireChannelRead(msg.retain());
     }
 

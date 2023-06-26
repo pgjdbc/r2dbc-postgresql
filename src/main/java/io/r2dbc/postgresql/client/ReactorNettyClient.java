@@ -25,7 +25,6 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-import io.netty.util.AttributeKey;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -101,8 +100,6 @@ public final class ReactorNettyClient implements Client {
     private static final Supplier<PostgresConnectionClosedException> UNEXPECTED = () -> new PostgresConnectionClosedException("Connection unexpectedly closed");
 
     private static final Supplier<PostgresConnectionClosedException> EXPECTED = () -> new PostgresConnectionClosedException("Connection closed");
-
-    private static final AttributeKey<Mono<Void>> SSL_HANDSHAKE_KEY = AttributeKey.valueOf("ssl-handshake");
 
     private final ByteBufAllocator byteBufAllocator;
 
@@ -422,7 +419,6 @@ public final class ReactorNettyClient implements Client {
                 }
 
                 channel.pipeline().addFirst(sslAdapter);
-                channel.attr(SSL_HANDSHAKE_KEY).set(sslAdapter.getHandshake());
             }
         } catch (Throwable e) {
             throw new RuntimeException(e);
@@ -430,8 +426,8 @@ public final class ReactorNettyClient implements Client {
     }
 
     private static Mono<Void> getSslHandshake(Channel channel) {
-        Mono<Void> sslHandshake = channel.attr(SSL_HANDSHAKE_KEY).getAndSet(null);
-        return (sslHandshake == null) ? Mono.empty() : sslHandshake;
+        AbstractPostgresSSLHandlerAdapter sslAdapter = channel.pipeline().get(AbstractPostgresSSLHandlerAdapter.class);
+        return (sslAdapter != null) ? sslAdapter.getHandshake() : Mono.empty();
     }
 
     @Override

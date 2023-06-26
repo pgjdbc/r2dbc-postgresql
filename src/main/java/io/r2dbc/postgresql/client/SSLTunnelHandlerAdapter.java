@@ -40,9 +40,7 @@ final class SSLTunnelHandlerAdapter extends AbstractPostgresSSLHandlerAdapter {
             completeHandshakeExceptionally(e);
             return;
         }
-        ctx.channel().pipeline()
-            .addFirst(this.getSslHandler())
-            .remove(this);
+        ctx.channel().pipeline().addFirst(this.getSslHandler());
     }
 
 }
