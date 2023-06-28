@@ -109,8 +109,8 @@ public final class StringCodec extends AbstractCodec<String> implements ArrayCod
     }
 
     @Override
-    public Iterable<PostgresTypeIdentifier> getDataTypes() {
-        return Stream.concat(Stream.of(this.defaultType), SUPPORTED_TYPES.stream()).map(PostgresTypeIdentifier.class::cast).collect(Collectors.toSet());
+    public Iterable<? extends PostgresTypeIdentifier> getDataTypes() {
+        return Stream.concat(Stream.of(this.defaultType), SUPPORTED_TYPES.stream()).collect(Collectors.toSet());
     }
 
     private static class StringDecoder implements Codec<String>, Decoder<String> {

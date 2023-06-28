@@ -99,7 +99,7 @@ class StringCodecDelegate<T> extends AbstractCodec<T> implements ArrayCodecDeleg
     }
 
     @Override
-    public Iterable<PostgresTypeIdentifier> getDataTypes() {
+    public Iterable<? extends PostgresTypeIdentifier> getDataTypes() {
         return this.delegate.getDataTypes();
     }
 

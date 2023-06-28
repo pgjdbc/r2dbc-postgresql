@@ -22,7 +22,6 @@ import io.r2dbc.postgresql.util.Assert;
 
 import java.util.EnumSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.JSON;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.JSONB;
@@ -55,8 +54,8 @@ abstract class AbstractJsonCodec<T> extends AbstractCodec<T> {
     }
 
     @Override
-    public Iterable<PostgresTypeIdentifier> getDataTypes() {
-        return SUPPORTED_TYPES.stream().map(PostgresTypeIdentifier.class::cast).collect(Collectors.toList());
+    public Iterable<? extends PostgresTypeIdentifier> getDataTypes() {
+        return SUPPORTED_TYPES;
     }
 
 }

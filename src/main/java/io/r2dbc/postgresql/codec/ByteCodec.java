@@ -84,7 +84,7 @@ final class ByteCodec extends AbstractCodec<Byte> implements ArrayCodecDelegate<
     }
 
     @Override
-    public Iterable<PostgresTypeIdentifier> getDataTypes() {
+    public Iterable<? extends PostgresTypeIdentifier> getDataTypes() {
         return this.delegate.getDataTypes();
     }
 

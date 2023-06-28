@@ -27,7 +27,6 @@ import reactor.util.annotation.Nullable;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.FLOAT4;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.FLOAT8;
@@ -146,8 +145,8 @@ abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> i
     }
 
     @Override
-    public Iterable<PostgresTypeIdentifier> getDataTypes() {
-        return SUPPORTED_TYPES.stream().map(PostgresTypeIdentifier.class::cast).collect(Collectors.toList());
+    public Iterable<? extends PostgresTypeIdentifier> getDataTypes() {
+        return SUPPORTED_TYPES;
     }
 
     /**

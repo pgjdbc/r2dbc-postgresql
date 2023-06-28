@@ -86,7 +86,7 @@ final class CharacterCodec extends AbstractCodec<Character> implements ArrayCode
     }
 
     @Override
-    public Iterable<PostgresTypeIdentifier> getDataTypes() {
+    public Iterable<? extends PostgresTypeIdentifier> getDataTypes() {
         return this.delegate.getDataTypes();
     }
 

@@ -50,6 +50,6 @@ public interface CodecMetadata {
      *
      * @return the datatypes
      */
-    Iterable<PostgresTypeIdentifier> getDataTypes();
+    Iterable<? extends PostgresTypeIdentifier> getDataTypes();
 
 }
