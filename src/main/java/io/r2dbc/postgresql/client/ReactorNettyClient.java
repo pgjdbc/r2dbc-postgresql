@@ -268,9 +268,7 @@ public final class ReactorNettyClient implements Client {
         }
 
         if (message.getClass() == NoticeResponse.class) {
-
             this.settings.getNoticeLogLevel().log(logger, () -> this.context.getMessage(String.format("Notice: %s", toString(((NoticeResponse) message).getFields()))));
-            return true;
         }
 
         if (message.getClass() == BackendKeyData.class) {
