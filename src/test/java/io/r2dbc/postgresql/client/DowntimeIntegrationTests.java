@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,29 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class DowntimeIntegrationTests {
 
+    @Test
+    void failSslHandshakeIfInboundClosed() {
+        verifyError(SSLMode.REQUIRE, error ->
+            assertThat(error)
+                .isInstanceOf(AbstractPostgresSSLHandlerAdapter.PostgresqlSslException.class)
+                .hasMessage("Connection closed during SSL negotiation"));
+    }
+
+    @Test
+    void failSslTunnelIfInboundClosed() {
+        verifyError(SSLMode.TUNNEL, error -> {
+            assertThat(error)
+                .isInstanceOf(PostgresqlException.class)
+                .cause()
+                .isInstanceOf(ClosedChannelException.class);
+
+            assertThat(error.getCause().getSuppressed()).hasSize(1);
+
+            assertThat(error.getCause().getSuppressed()[0])
+                .hasMessage("Connection closed while SSL/TLS handshake was in progress");
+        });
+    }
+
     // Simulate server downtime, where connections are accepted and then closed immediately
     static DisposableServer newServer() {
         return TcpServer.create()
@@ -52,31 +75,11 @@ public class DowntimeIntegrationTests {
     static void verifyError(SSLMode sslMode, Consumer<Throwable> assertions) {
         DisposableServer server = newServer();
         PostgresqlConnectionFactory connectionFactory = newConnectionFactory(server, sslMode);
-        connectionFactory.create().as(StepVerifier::create).verifyErrorSatisfies(assertions);
-        server.disposeNow();
-    }
-
-    @Test
-    void failSslHandshakeIfInboundClosed() {
-        verifyError(SSLMode.REQUIRE, error ->
-            assertThat(error)
-                .isInstanceOf(AbstractPostgresSSLHandlerAdapter.PostgresqlSslException.class)
-                .hasMessage("Connection closed during SSL negotiation"));
-    }
-
-    @Test
-    void failSslTunnelIfInboundClosed() {
-        verifyError(SSLMode.TUNNEL, error -> {
-            assertThat(error)
-                .isInstanceOf(PostgresqlException.class)
-                .cause()
-                .isInstanceOf(ClosedChannelException.class);
-
-            assertThat(error.getCause().getSuppressed().length).isOne();
-
-            assertThat(error.getCause().getSuppressed()[0])
-                .hasMessage("Connection closed while SSL/TLS handshake was in progress");
-        });
+        try {
+            connectionFactory.create().as(StepVerifier::create).verifyErrorSatisfies(assertions);
+        } finally {
+            server.disposeNow();
+        }
     }
 
 }
