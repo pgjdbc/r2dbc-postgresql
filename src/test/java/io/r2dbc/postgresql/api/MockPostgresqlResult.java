@@ -16,7 +16,6 @@
 
 package io.r2dbc.postgresql.api;
 
-import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 import org.reactivestreams.Publisher;
@@ -56,7 +55,7 @@ public final class MockPostgresqlResult implements PostgresqlResult {
     }
 
     @Override
-    public Result filter(Predicate<Segment> filter) {
+    public PostgresqlResult filter(Predicate<Segment> filter) {
         throw new UnsupportedOperationException();
     }
 
