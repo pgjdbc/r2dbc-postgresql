@@ -1,6 +1,17 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+1.0.2.RELEASE
+-----------------------------------------
+* Cancel signal does not interrupt cursored query fetching #536
+* Expose API to subscribe to Postgres notice messages #570
+* key param javadoc description #593
+* Adapt integration test to be Java 11 forward-compatible #594
+* Creating connections can hang during server downtime #595
+* Driver reports I/O error when rowsUpdated is greater than Integer.MAX_VALUE #597
+* Add `PostgresqlResult.filter(…)` overrides to return `PostgresqlResult` instead of `Result` #602
+* Upgrade to Reactor 2022.0.9 #604
+
 1.0.0.RELEASE
 -----------------------------------------
 * Associate `PostgresConnectionClosedException` with error code `08006` #538
