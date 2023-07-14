@@ -583,7 +583,6 @@
                                 <nexusUrl>https://oss.sonatype.org/</nexusUrl>
                                 <autoReleaseAfterClose>false</autoReleaseAfterClose>
                                 <keepStagingRepositoryOnFailure>true</keepStagingRepositoryOnFailure>
-                                <skipStagingRepositoryClose>true</skipStagingRepositoryClose>
                             </configuration>
                         </plugin>
                     </plugins>
