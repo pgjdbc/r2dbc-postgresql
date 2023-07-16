@@ -27,10 +27,14 @@ import io.r2dbc.spi.Row;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * An implementation of {@link Row} for a PostgreSQL database.
@@ -43,6 +47,8 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
 
     private final List<RowDescription.Field> fields;
 
+    private final Map<String, Integer> nameToIndex;
+
     private final ByteBuf[] data;
 
     private volatile boolean isReleased = false;
@@ -52,6 +58,7 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
         this.metadata = Assert.requireNonNull(metadata, "metadata must not be null");
         this.fields = Assert.requireNonNull(fields, "fields must not be null");
         this.data = Assert.requireNonNull(data, "data must not be null");
+        this.nameToIndex = IntStream.range(0, fields.size()).boxed().collect(Collectors.toMap(index -> fields.get(index).getName(), Function.identity()));
     }
 
     @Override
@@ -165,25 +172,12 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
     }
 
     private int getColumn(String name) {
-        for (int i = 0; i < this.fields.size(); i++) {
-            RowDescription.Field field = this.fields.get(i);
-
-            if (field.getName().equalsIgnoreCase(name)) {
-                return i;
-            }
-        }
-
-        throw new NoSuchElementException(String.format("Column name '%s' does not exist in column names %s", name, toColumnNames()));
+        return Optional.ofNullable(nameToIndex.get(name))
+            .orElseThrow(() -> new NoSuchElementException(String.format("Column name '%s' does not exist in column names %s", name, toColumnNames())));
     }
 
     private List<String> toColumnNames() {
-        List<String> names = new ArrayList<>(this.fields.size());
-
-        for (RowDescription.Field field : this.fields) {
-            names.add(field.getName());
-        }
-
-        return names;
+        return fields.stream().map(RowDescription.Field::getName).collect(Collectors.toList());
     }
 
     private int getColumn(int index) {
