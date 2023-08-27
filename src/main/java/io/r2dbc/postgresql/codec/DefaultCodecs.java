@@ -44,9 +44,9 @@ import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
  */
 public final class DefaultCodecs implements Codecs, CodecRegistry {
 
-    private final List<Codec<?>> codecs;
-
     private final CodecLookup codecLookup;
+
+    private final List<Codec<?>> codecs;
 
     /**
      * Create a new instance of {@link DefaultCodecs} preferring detached (copied buffers).
@@ -94,97 +94,6 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
         this.codecLookup = codecLookupFunction.apply(this);
         this.codecs = getDefaultCodecs(byteBufAllocator, preferAttachedBuffers, configuration);
         this.codecLookup.afterCodecAdded();
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private static List<Codec<?>> getDefaultCodecs(ByteBufAllocator byteBufAllocator, boolean preferAttachedBuffers, CodecConfiguration configuration) {
-
-        List<Codec<?>> codecs = new CopyOnWriteArrayList<>(Arrays.asList(
-
-            // Prioritized Codecs
-            new StringCodec(byteBufAllocator),
-            new InstantCodec(byteBufAllocator, configuration::getZoneId),
-            new ZonedDateTimeCodec(byteBufAllocator),
-            new BinaryByteBufferCodec(byteBufAllocator),
-            new BinaryByteArrayCodec(byteBufAllocator),
-
-            new BigDecimalCodec(byteBufAllocator),
-            new BigIntegerCodec(byteBufAllocator),
-            new BooleanCodec(byteBufAllocator),
-            new CharacterCodec(byteBufAllocator),
-            new DoubleCodec(byteBufAllocator),
-            new FloatCodec(byteBufAllocator),
-            new InetAddressCodec(byteBufAllocator),
-            new IntegerCodec(byteBufAllocator),
-            new IntervalCodec(byteBufAllocator),
-            new LocalDateCodec(byteBufAllocator),
-            new LocalDateTimeCodec(byteBufAllocator, configuration::getZoneId),
-            new LocalTimeCodec(byteBufAllocator),
-            new LongCodec(byteBufAllocator),
-            new OffsetDateTimeCodec(byteBufAllocator),
-            new OffsetTimeCodec(byteBufAllocator),
-            new ShortCodec(byteBufAllocator),
-            new UriCodec(byteBufAllocator),
-            new UrlCodec(byteBufAllocator),
-            new UuidCodec(byteBufAllocator),
-            new ZoneIdCodec(byteBufAllocator),
-
-            // JSON
-            new JsonCodec(byteBufAllocator, preferAttachedBuffers),
-            new JsonByteArrayCodec(byteBufAllocator),
-            new JsonByteBufCodec(byteBufAllocator),
-            new JsonByteBufferCodec(byteBufAllocator),
-            new JsonInputStreamCodec(byteBufAllocator),
-            new JsonStringCodec(byteBufAllocator),
-
-            // Fallback for Object.class
-            new ByteCodec(byteBufAllocator),
-            new DateCodec(byteBufAllocator, configuration::getZoneId),
-
-            new BlobCodec(byteBufAllocator),
-            new ClobCodec(byteBufAllocator),
-            RefCursorCodec.INSTANCE,
-            RefCursorNameCodec.INSTANCE,
-
-            // Array
-            new StringArrayCodec(byteBufAllocator),
-
-            // Geometry
-            new CircleCodec(byteBufAllocator),
-            new PointCodec(byteBufAllocator),
-            new BoxCodec(byteBufAllocator),
-            new LineCodec(byteBufAllocator),
-            new LsegCodec(byteBufAllocator),
-            new PathCodec(byteBufAllocator),
-            new PolygonCodec(byteBufAllocator)
-        ));
-
-        List<Codec<?>> defaultArrayCodecs = new ArrayList<>();
-
-        for (Codec<?> codec : codecs) {
-
-            if (codec instanceof ArrayCodecDelegate<?>) {
-
-                Assert.requireType(codec, AbstractCodec.class, "Codec " + codec + " must be a subclass of AbstractCodec to be registered as generic array codec");
-                ArrayCodecDelegate<?> delegate = (ArrayCodecDelegate<?>) codec;
-                Class<?> componentType = delegate.type();
-
-                if (codec instanceof BoxCodec) {
-                    // BOX[] uses a ';' as a delimiter (i.e. "{(3.7,4.6),(1.9,2.8);(5,7),(1.5,3.3)}")
-                    defaultArrayCodecs.add(new ArrayCodec(byteBufAllocator, delegate.getArrayDataType(), delegate, componentType, (byte) ';'));
-                } else if (codec instanceof AbstractNumericCodec) {
-                    defaultArrayCodecs.add(new ConvertingArrayCodec(byteBufAllocator, delegate, componentType, ConvertingArrayCodec.NUMERIC_ARRAY_TYPES));
-                } else if (codec instanceof AbstractTemporalCodec) {
-                    defaultArrayCodecs.add(new ConvertingArrayCodec(byteBufAllocator, delegate, componentType, ConvertingArrayCodec.DATE_ARRAY_TYPES));
-                } else {
-                    defaultArrayCodecs.add(new ArrayCodec(byteBufAllocator, delegate, componentType));
-                }
-            }
-        }
-
-        codecs.addAll(defaultArrayCodecs);
-
-        return codecs;
     }
 
     @Override
@@ -264,6 +173,35 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
         return encodeParameterValue(value, dataType, parameterValue);
     }
 
+    @Override
+    public EncodedParameter encodeNull(Class<?> type) {
+        Assert.requireNonNull(type, "type must not be null");
+
+        Codec<?> codec = this.codecLookup.findEncodeNullCodec(type);
+        if (codec != null) {
+            return codec.encodeNull();
+        }
+
+        throw new IllegalArgumentException(String.format("Cannot encode null parameter of type %s", type.getName()));
+    }
+
+    @Override
+    public Iterator<Codec<?>> iterator() {
+        return Collections.unmodifiableList(new ArrayList<>(this.codecs)).iterator();
+    }
+
+    @Override
+    public Class<?> preferredType(int dataType, Format format) {
+        Assert.requireNonNull(format, "format must not be null");
+
+        Codec<?> codec = this.codecLookup.findDecodeCodec(dataType, format, Object.class);
+        if (codec instanceof CodecMetadata) {
+            return ((CodecMetadata) codec).type();
+        }
+
+        return null;
+    }
+
     EncodedParameter encodeParameterValue(Object value, @Nullable PostgresTypeIdentifier dataType, @Nullable Object parameterValue) {
         if (dataType == null) {
 
@@ -290,33 +228,101 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
         throw new IllegalArgumentException(String.format("Cannot encode parameter of type %s (%s)", value.getClass().getName(), parameterValue));
     }
 
-    @Override
-    public EncodedParameter encodeNull(Class<?> type) {
-        Assert.requireNonNull(type, "type must not be null");
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static List<Codec<?>> getDefaultCodecs(ByteBufAllocator byteBufAllocator, boolean preferAttachedBuffers, CodecConfiguration configuration) {
 
-        Codec<?> codec = this.codecLookup.findEncodeNullCodec(type);
-        if (codec != null) {
-            return codec.encodeNull();
+        List<Codec<?>> codecs = new CopyOnWriteArrayList<>(Arrays.asList(
+
+            // Prioritized Codecs
+            new StringCodec(byteBufAllocator),
+            new InstantCodec(byteBufAllocator, configuration::getZoneId),
+            new ZonedDateTimeCodec(byteBufAllocator),
+            new BinaryByteBufferCodec(byteBufAllocator),
+            new BinaryByteArrayCodec(byteBufAllocator),
+
+            new BigDecimalCodec(byteBufAllocator),
+            new BigIntegerCodec(byteBufAllocator),
+            new BooleanCodec(byteBufAllocator),
+            new CharacterCodec(byteBufAllocator),
+            new DoubleCodec(byteBufAllocator),
+            new FloatCodec(byteBufAllocator),
+            new InetAddressCodec(byteBufAllocator),
+            new IntegerCodec(byteBufAllocator),
+            new IntervalCodec(byteBufAllocator),
+            new LocalDateCodec(byteBufAllocator),
+            new LocalDateTimeCodec(byteBufAllocator, configuration::getZoneId),
+            new LocalTimeCodec(byteBufAllocator),
+            new LongCodec(byteBufAllocator),
+            new OffsetDateTimeCodec(byteBufAllocator),
+            new OffsetTimeCodec(byteBufAllocator),
+            new ShortCodec(byteBufAllocator),
+            new UriCodec(byteBufAllocator),
+            new UrlCodec(byteBufAllocator),
+            new UuidCodec(byteBufAllocator),
+            new ZoneIdCodec(byteBufAllocator),
+            new DayOfWeekCodec(byteBufAllocator),
+            new MonthCodec(byteBufAllocator),
+            new MonthDayCodec(byteBufAllocator),
+            new PeriodCodec(byteBufAllocator),
+            new YearCodec(byteBufAllocator),
+            new YearMonthCodec(byteBufAllocator),
+
+            // JSON
+            new JsonCodec(byteBufAllocator, preferAttachedBuffers),
+            new JsonByteArrayCodec(byteBufAllocator),
+            new JsonByteBufCodec(byteBufAllocator),
+            new JsonByteBufferCodec(byteBufAllocator),
+            new JsonInputStreamCodec(byteBufAllocator),
+            new JsonStringCodec(byteBufAllocator),
+
+            // Fallback for Object.class
+            new ByteCodec(byteBufAllocator),
+            new DateCodec(byteBufAllocator, configuration::getZoneId),
+
+            new BlobCodec(byteBufAllocator),
+            new ClobCodec(byteBufAllocator),
+            RefCursorCodec.INSTANCE,
+            RefCursorNameCodec.INSTANCE,
+
+            // Array
+            new StringArrayCodec(byteBufAllocator),
+
+            // Geometry
+            new CircleCodec(byteBufAllocator),
+            new PointCodec(byteBufAllocator),
+            new BoxCodec(byteBufAllocator),
+            new LineCodec(byteBufAllocator),
+            new LsegCodec(byteBufAllocator),
+            new PathCodec(byteBufAllocator),
+            new PolygonCodec(byteBufAllocator)
+        ));
+
+        List<Codec<?>> defaultArrayCodecs = new ArrayList<>();
+
+        for (Codec<?> codec : codecs) {
+
+            if (codec instanceof ArrayCodecDelegate<?>) {
+
+                Assert.requireType(codec, AbstractCodec.class, "Codec " + codec + " must be a subclass of AbstractCodec to be registered as generic array codec");
+                ArrayCodecDelegate<?> delegate = (ArrayCodecDelegate<?>) codec;
+                Class<?> componentType = delegate.type();
+
+                if (codec instanceof BoxCodec) {
+                    // BOX[] uses a ';' as a delimiter (i.e. "{(3.7,4.6),(1.9,2.8);(5,7),(1.5,3.3)}")
+                    defaultArrayCodecs.add(new ArrayCodec(byteBufAllocator, delegate.getArrayDataType(), delegate, componentType, (byte) ';'));
+                } else if (codec instanceof AbstractNumericCodec) {
+                    defaultArrayCodecs.add(new ConvertingArrayCodec(byteBufAllocator, delegate, componentType, ConvertingArrayCodec.NUMERIC_ARRAY_TYPES));
+                } else if (codec instanceof AbstractTemporalCodec) {
+                    defaultArrayCodecs.add(new ConvertingArrayCodec(byteBufAllocator, delegate, componentType, ConvertingArrayCodec.DATE_ARRAY_TYPES));
+                } else {
+                    defaultArrayCodecs.add(new ArrayCodec(byteBufAllocator, delegate, componentType));
+                }
+            }
         }
 
-        throw new IllegalArgumentException(String.format("Cannot encode null parameter of type %s", type.getName()));
-    }
+        codecs.addAll(defaultArrayCodecs);
 
-    @Override
-    public Class<?> preferredType(int dataType, Format format) {
-        Assert.requireNonNull(format, "format must not be null");
-
-        Codec<?> codec = this.codecLookup.findDecodeCodec(dataType, format, Object.class);
-        if (codec instanceof CodecMetadata) {
-            return ((CodecMetadata) codec).type();
-        }
-
-        return null;
-    }
-
-    @Override
-    public Iterator<Codec<?>> iterator() {
-        return Collections.unmodifiableList(new ArrayList<>(this.codecs)).iterator();
+        return codecs;
     }
 
 }

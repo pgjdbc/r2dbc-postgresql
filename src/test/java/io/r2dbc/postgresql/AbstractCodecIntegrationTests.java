@@ -21,22 +21,8 @@ import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
-import io.r2dbc.postgresql.codec.Box;
-import io.r2dbc.postgresql.codec.Circle;
-import io.r2dbc.postgresql.codec.EnumCodec;
-import io.r2dbc.postgresql.codec.Json;
-import io.r2dbc.postgresql.codec.Line;
-import io.r2dbc.postgresql.codec.Lseg;
-import io.r2dbc.postgresql.codec.Path;
-import io.r2dbc.postgresql.codec.Point;
-import io.r2dbc.postgresql.codec.Polygon;
-import io.r2dbc.postgresql.codec.PostgresqlObjectId;
-import io.r2dbc.spi.Blob;
-import io.r2dbc.spi.Clob;
-import io.r2dbc.spi.Connection;
-import io.r2dbc.spi.Parameters;
-import io.r2dbc.spi.R2dbcType;
-import io.r2dbc.spi.Type;
+import io.r2dbc.postgresql.codec.*;
+import io.r2dbc.spi.*;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 import org.reactivestreams.Publisher;
@@ -51,22 +37,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.OffsetDateTime;
-import java.time.OffsetTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -75,6 +49,7 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.IntStream;
 
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -576,6 +551,31 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     @Test
     void uuid() {
         testCodec(UUID.class, UUID.randomUUID(), "UUID");
+    }
+
+    @Test
+    void year() {
+        testCodec(Year.class, Year.now(), "INT4");
+    }
+
+    @Test
+    void month() {
+        IntStream.rangeClosed(1, 12).forEach(month -> testCodec(Month.class, Month.of(month), "INT4"));
+    }
+
+    @Test
+    void dayOfWeek() {
+        IntStream.rangeClosed(1, 7).forEach(month -> testCodec(DayOfWeek.class, DayOfWeek.of(month), "INT4"));
+    }
+
+    @Test
+    void monthDay() {
+        testCodec(MonthDay.class, MonthDay.now(), "VARCHAR");
+    }
+
+    @Test
+    void yearMonth() {
+        testCodec(YearMonth.class, YearMonth.now(), "VARCHAR");
     }
 
     @Test
