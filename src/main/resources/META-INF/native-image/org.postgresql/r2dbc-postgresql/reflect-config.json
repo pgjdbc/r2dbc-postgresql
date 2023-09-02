@@ -1,5 +1,17 @@
 [
   {
+    "name": "[Ljava.time.Period;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.time.MonthDay;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.time.YearMonth;",
+    "unsafeAllocated": true
+  },
+  {
     "name": "[Lio.r2dbc.postgresql.codec.Box;",
     "unsafeAllocated": true
   },
