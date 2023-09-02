@@ -44,9 +44,9 @@ import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
  */
 public final class DefaultCodecs implements Codecs, CodecRegistry {
 
-    private final CodecLookup codecLookup;
-
     private final List<Codec<?>> codecs;
+
+    private final CodecLookup codecLookup;
 
     /**
      * Create a new instance of {@link DefaultCodecs} preferring detached (copied buffers).
@@ -94,138 +94,6 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
         this.codecLookup = codecLookupFunction.apply(this);
         this.codecs = getDefaultCodecs(byteBufAllocator, preferAttachedBuffers, configuration);
         this.codecLookup.afterCodecAdded();
-    }
-
-    @Override
-    public void addFirst(Codec<?> codec) {
-        Assert.requireNonNull(codec, "codec must not be null");
-        this.codecs.add(0, codec);
-        this.codecLookup.afterCodecAdded();
-    }
-
-    @Override
-    public void addLast(Codec<?> codec) {
-        Assert.requireNonNull(codec, "codec must not be null");
-        this.codecs.add(codec);
-        this.codecLookup.afterCodecAdded();
-    }
-
-    @Override
-    @Nullable
-    @SuppressWarnings("unchecked")
-    public <T> T decode(@Nullable ByteBuf buffer, int dataType, Format format, Class<? extends T> type) {
-        Assert.requireNonNull(format, "format must not be null");
-        Assert.requireNonNull(type, "type must not be null");
-
-        if (buffer == null) {
-            return null;
-        }
-
-        Codec<T> codec = this.codecLookup.findDecodeCodec(dataType, format, type);
-        if (codec != null) {
-            return codec.decode(buffer, dataType, format, type);
-        }
-
-        if (String.class == type) {
-            int varcharType = PostgresqlObjectId.VARCHAR.getObjectId();
-            Codec<T> varcharFallback = this.codecLookup.findDecodeCodec(varcharType, format, type);
-            if (varcharFallback != null) {
-                return varcharFallback.decode(buffer, varcharType, format, type);
-            }
-        }
-
-        if (StringCodec.STRING_DECODER.canDecode(dataType, format, type)) {
-            return type.cast(StringCodec.STRING_DECODER.decode(buffer, dataType, format, (Class<String>) type));
-        }
-
-        if (StringCodec.STRING_ARRAY_DECODER.canDecode(dataType, format, type)) {
-            return type.cast(StringCodec.STRING_ARRAY_DECODER.decode(buffer, dataType, format, (Class<String[]>) type));
-        }
-
-        throw new IllegalArgumentException(String.format("Cannot decode value of type %s with OID %d", type.getName(), dataType));
-    }
-
-    @Override
-    public EncodedParameter encode(Object value) {
-        Assert.requireNonNull(value, "value must not be null");
-
-        PostgresTypeIdentifier dataType = null;
-        Object parameterValue = value;
-
-        if (value instanceof Parameter) {
-
-            Parameter parameter = (Parameter) value;
-            parameterValue = parameter.getValue();
-
-            if (parameter.getType() instanceof Type.InferredType && parameterValue == null) {
-                return encodeNull(parameter.getType().getJavaType());
-            }
-
-            if (parameter.getType() instanceof R2dbcType) {
-                dataType = PostgresqlObjectId.valueOf((R2dbcType) parameter.getType());
-            }
-
-            if (parameter.getType() instanceof PostgresTypeIdentifier) {
-                dataType = (PostgresTypeIdentifier) parameter.getType();
-            }
-        }
-
-        return encodeParameterValue(value, dataType, parameterValue);
-    }
-
-    @Override
-    public EncodedParameter encodeNull(Class<?> type) {
-        Assert.requireNonNull(type, "type must not be null");
-
-        Codec<?> codec = this.codecLookup.findEncodeNullCodec(type);
-        if (codec != null) {
-            return codec.encodeNull();
-        }
-
-        throw new IllegalArgumentException(String.format("Cannot encode null parameter of type %s", type.getName()));
-    }
-
-    @Override
-    public Iterator<Codec<?>> iterator() {
-        return Collections.unmodifiableList(new ArrayList<>(this.codecs)).iterator();
-    }
-
-    @Override
-    public Class<?> preferredType(int dataType, Format format) {
-        Assert.requireNonNull(format, "format must not be null");
-
-        Codec<?> codec = this.codecLookup.findDecodeCodec(dataType, format, Object.class);
-        if (codec instanceof CodecMetadata) {
-            return ((CodecMetadata) codec).type();
-        }
-
-        return null;
-    }
-
-    EncodedParameter encodeParameterValue(Object value, @Nullable PostgresTypeIdentifier dataType, @Nullable Object parameterValue) {
-        if (dataType == null) {
-
-            if (parameterValue == null) {
-                throw new IllegalArgumentException(String.format("Cannot encode null value %s using type inference", value));
-            }
-
-            Codec<?> codec = this.codecLookup.findEncodeCodec(parameterValue);
-            if (codec != null) {
-                return codec.encode(parameterValue);
-            }
-        } else {
-
-            if (parameterValue == null) {
-                return new EncodedParameter(Format.FORMAT_BINARY, dataType.getObjectId(), NULL_VALUE);
-            }
-
-            Codec<?> codec = this.codecLookup.findEncodeCodec(parameterValue);
-            if (codec != null) {
-                return codec.encode(parameterValue, dataType.getObjectId());
-            }
-        }
-
-        throw new IllegalArgumentException(String.format("Cannot encode parameter of type %s (%s)", value.getClass().getName(), parameterValue));
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -323,6 +191,138 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
         codecs.addAll(defaultArrayCodecs);
 
         return codecs;
+    }
+
+    @Override
+    public void addFirst(Codec<?> codec) {
+        Assert.requireNonNull(codec, "codec must not be null");
+        this.codecs.add(0, codec);
+        this.codecLookup.afterCodecAdded();
+    }
+
+    @Override
+    public void addLast(Codec<?> codec) {
+        Assert.requireNonNull(codec, "codec must not be null");
+        this.codecs.add(codec);
+        this.codecLookup.afterCodecAdded();
+    }
+
+    @Override
+    @Nullable
+    @SuppressWarnings("unchecked")
+    public <T> T decode(@Nullable ByteBuf buffer, int dataType, Format format, Class<? extends T> type) {
+        Assert.requireNonNull(format, "format must not be null");
+        Assert.requireNonNull(type, "type must not be null");
+
+        if (buffer == null) {
+            return null;
+        }
+
+        Codec<T> codec = this.codecLookup.findDecodeCodec(dataType, format, type);
+        if (codec != null) {
+            return codec.decode(buffer, dataType, format, type);
+        }
+
+        if (String.class == type) {
+            int varcharType = PostgresqlObjectId.VARCHAR.getObjectId();
+            Codec<T> varcharFallback = this.codecLookup.findDecodeCodec(varcharType, format, type);
+            if (varcharFallback != null) {
+                return varcharFallback.decode(buffer, varcharType, format, type);
+            }
+        }
+
+        if (StringCodec.STRING_DECODER.canDecode(dataType, format, type)) {
+            return type.cast(StringCodec.STRING_DECODER.decode(buffer, dataType, format, (Class<String>) type));
+        }
+
+        if (StringCodec.STRING_ARRAY_DECODER.canDecode(dataType, format, type)) {
+            return type.cast(StringCodec.STRING_ARRAY_DECODER.decode(buffer, dataType, format, (Class<String[]>) type));
+        }
+
+        throw new IllegalArgumentException(String.format("Cannot decode value of type %s with OID %d", type.getName(), dataType));
+    }
+
+    @Override
+    public EncodedParameter encode(Object value) {
+        Assert.requireNonNull(value, "value must not be null");
+
+        PostgresTypeIdentifier dataType = null;
+        Object parameterValue = value;
+
+        if (value instanceof Parameter) {
+
+            Parameter parameter = (Parameter) value;
+            parameterValue = parameter.getValue();
+
+            if (parameter.getType() instanceof Type.InferredType && parameterValue == null) {
+                return encodeNull(parameter.getType().getJavaType());
+            }
+
+            if (parameter.getType() instanceof R2dbcType) {
+                dataType = PostgresqlObjectId.valueOf((R2dbcType) parameter.getType());
+            }
+
+            if (parameter.getType() instanceof PostgresTypeIdentifier) {
+                dataType = (PostgresTypeIdentifier) parameter.getType();
+            }
+        }
+
+        return encodeParameterValue(value, dataType, parameterValue);
+    }
+
+    EncodedParameter encodeParameterValue(Object value, @Nullable PostgresTypeIdentifier dataType, @Nullable Object parameterValue) {
+        if (dataType == null) {
+
+            if (parameterValue == null) {
+                throw new IllegalArgumentException(String.format("Cannot encode null value %s using type inference", value));
+            }
+
+            Codec<?> codec = this.codecLookup.findEncodeCodec(parameterValue);
+            if (codec != null) {
+                return codec.encode(parameterValue);
+            }
+        } else {
+
+            if (parameterValue == null) {
+                return new EncodedParameter(Format.FORMAT_BINARY, dataType.getObjectId(), NULL_VALUE);
+            }
+
+            Codec<?> codec = this.codecLookup.findEncodeCodec(parameterValue);
+            if (codec != null) {
+                return codec.encode(parameterValue, dataType.getObjectId());
+            }
+        }
+
+        throw new IllegalArgumentException(String.format("Cannot encode parameter of type %s (%s)", value.getClass().getName(), parameterValue));
+    }
+
+    @Override
+    public EncodedParameter encodeNull(Class<?> type) {
+        Assert.requireNonNull(type, "type must not be null");
+
+        Codec<?> codec = this.codecLookup.findEncodeNullCodec(type);
+        if (codec != null) {
+            return codec.encodeNull();
+        }
+
+        throw new IllegalArgumentException(String.format("Cannot encode null parameter of type %s", type.getName()));
+    }
+
+    @Override
+    public Class<?> preferredType(int dataType, Format format) {
+        Assert.requireNonNull(format, "format must not be null");
+
+        Codec<?> codec = this.codecLookup.findDecodeCodec(dataType, format, Object.class);
+        if (codec instanceof CodecMetadata) {
+            return ((CodecMetadata) codec).type();
+        }
+
+        return null;
+    }
+
+    @Override
+    public Iterator<Codec<?>> iterator() {
+        return Collections.unmodifiableList(new ArrayList<>(this.codecs)).iterator();
     }
 
 }
