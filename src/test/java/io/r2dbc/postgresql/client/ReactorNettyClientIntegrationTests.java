@@ -507,7 +507,7 @@ final class ReactorNettyClientIntegrationTests {
                 .host(SERVER.getHost())
                 .port(SERVER.getPort())
                 .username("test-ssl-with-cert")
-                .password(null)
+                .password((String) null)
                 .sslMode(SSLMode.VERIFY_FULL)
                 .sslHostnameVerifier(new NoVerification());
             new PostgresqlConnectionFactory(configurer.apply(defaultConfig).build()).create()

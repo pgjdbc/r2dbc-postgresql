@@ -27,6 +27,7 @@ import io.r2dbc.postgresql.util.LogLevel;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.ConnectionFactoryProvider;
 import io.r2dbc.spi.Option;
+import org.reactivestreams.Publisher;
 import reactor.netty.resources.LoopResources;
 
 import javax.net.ssl.HostnameVerifier;
@@ -37,6 +38,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static io.r2dbc.spi.ConnectionFactoryOptions.CONNECT_TIMEOUT;
 import static io.r2dbc.spi.ConnectionFactoryOptions.DATABASE;
@@ -290,6 +292,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
      * @return this {@link PostgresqlConnectionConfiguration.Builder}
      * @throws IllegalArgumentException if {@code options} is {@code null}
      */
+    @SuppressWarnings("unchecked")
     private static PostgresqlConnectionConfiguration.Builder fromConnectionFactoryOptions(ConnectionFactoryOptions options) {
 
         Assert.requireNonNull(options, "connectionFactoryOptions must not be null");
@@ -344,7 +347,6 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         mapper.fromTyped(LOOP_RESOURCES).to(builder::loopResources);
         mapper.from(NOTICE_LOG_LEVEL).map(it -> OptionMapper.toEnum(it, LogLevel.class)).to(builder::noticeLogLevel);
         mapper.from(OPTIONS).map(PostgresqlConnectionFactoryProvider::convertToMap).to(builder::options);
-        mapper.fromTyped(PASSWORD).to(builder::password);
         mapper.from(PORT).map(OptionMapper::toInteger).to(builder::port);
         mapper.from(PREFER_ATTACHED_BUFFERS).map(OptionMapper::toBoolean).to(builder::preferAttachedBuffers);
         mapper.from(PREPARED_STATEMENT_CACHE_QUERIES).map(OptionMapper::toInteger).to(builder::preparedStatementCacheQueries);
@@ -363,7 +365,26 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
 
             return TimeZone.getTimeZone(it.toString());
         }).to(builder::timeZone);
-        builder.username("" + options.getRequiredValue(USER));
+
+        Object user = options.getRequiredValue(USER);
+        Object password = options.getValue(PASSWORD);
+
+        if (user instanceof Supplier) {
+            builder.username((Supplier<String>) user);
+        } else if (user instanceof Publisher) {
+            builder.username((Publisher<String>) user);
+        } else {
+            builder.username("" + user);
+        }
+        if (password != null) {
+            if (password instanceof Supplier) {
+                builder.password((Supplier<CharSequence>) password);
+            } else if (password instanceof Publisher) {
+                builder.password((Publisher<CharSequence>) password);
+            } else {
+                builder.password((CharSequence) password);
+            }
+        }
 
         return builder;
     }

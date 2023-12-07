@@ -53,7 +53,7 @@ final class PostgresqlConnectionConfigurationUnitTests {
 
     @Test
     void builderNoUsername() {
-        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().username(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().username((String) null))
             .withMessage("username must not be null");
     }
 
@@ -84,9 +84,7 @@ final class PostgresqlConnectionConfigurationUnitTests {
             .hasFieldOrPropertyWithValue("database", "test-database")
             .hasFieldOrPropertyWithValue("singleHostConfiguration.host", "test-host")
             .hasFieldOrProperty("options")
-            .hasFieldOrPropertyWithValue("password", null)
             .hasFieldOrPropertyWithValue("singleHostConfiguration.port", 100)
-            .hasFieldOrPropertyWithValue("username", "test-username")
             .hasFieldOrProperty("sslConfig")
             .hasFieldOrPropertyWithValue("tcpKeepAlive", true)
             .hasFieldOrPropertyWithValue("tcpNoDelay", false)
@@ -116,9 +114,7 @@ final class PostgresqlConnectionConfigurationUnitTests {
             .hasFieldOrPropertyWithValue("database", "test-database")
             .hasFieldOrPropertyWithValue("singleHostConfiguration.host", "test-host")
             .hasFieldOrProperty("options")
-            .hasFieldOrPropertyWithValue("password", null)
             .hasFieldOrPropertyWithValue("singleHostConfiguration.port", 100)
-            .hasFieldOrPropertyWithValue("username", "test-username")
             .hasFieldOrProperty("sslConfig")
             .hasFieldOrPropertyWithValue("tcpKeepAlive", true)
             .hasFieldOrPropertyWithValue("tcpNoDelay", false)
@@ -160,10 +156,8 @@ final class PostgresqlConnectionConfigurationUnitTests {
             .hasFieldOrPropertyWithValue("applicationName", "r2dbc-postgresql")
             .hasFieldOrPropertyWithValue("database", "test-database")
             .hasFieldOrPropertyWithValue("singleHostConfiguration.host", "test-host")
-            .hasFieldOrPropertyWithValue("password", "test-password")
             .hasFieldOrPropertyWithValue("singleHostConfiguration.port", 5432)
             .hasFieldOrProperty("options")
-            .hasFieldOrPropertyWithValue("username", "test-username")
             .hasFieldOrProperty("sslConfig")
             .hasFieldOrPropertyWithValue("tcpKeepAlive", false)
             .hasFieldOrPropertyWithValue("tcpNoDelay", true)
