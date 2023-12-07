@@ -24,6 +24,7 @@ import org.reactivestreams.Publisher;
 import reactor.util.annotation.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 /**
@@ -44,7 +45,7 @@ public class BuiltinDynamicCodecs implements CodecRegistrar {
             public boolean isSupported() {
                 return this.jtsPresent;
             }
-        };
+        }, VECTOR("vector");
 
         private final String name;
 
@@ -52,13 +53,16 @@ public class BuiltinDynamicCodecs implements CodecRegistrar {
             this.name = name;
         }
 
-        public Codec<?> createCodec(ByteBufAllocator byteBufAllocator, int oid) {
+        public Iterable<Codec<?>> createCodec(ByteBufAllocator byteBufAllocator, int oid, int typarray) {
 
             switch (this) {
                 case HSTORE:
-                    return new HStoreCodec(byteBufAllocator, oid);
+                    return Collections.singletonList(new HStoreCodec(byteBufAllocator, oid));
                 case POSTGIS_GEOMETRY:
-                    return new PostgisGeometryCodec(oid);
+                    return Collections.singletonList(new PostgisGeometryCodec(oid));
+                case VECTOR:
+                    VectorCodec vectorCodec = new VectorCodec(byteBufAllocator, oid, typarray);
+                    return Arrays.asList(vectorCodec, new VectorCodec.VectorArrayCodec(byteBufAllocator, vectorCodec), new VectorFloatCodec(byteBufAllocator, oid));
                 default:
                     throw new UnsupportedOperationException(String.format("Codec %s for OID %d not supported", name(), oid));
             }
@@ -93,11 +97,12 @@ public class BuiltinDynamicCodecs implements CodecRegistrar {
             .flatMap(it -> it.map((row, rowMetadata) -> {
 
                     int oid = PostgresqlObjectId.toInt(row.get("oid", Long.class));
+                    int typarray = PostgresqlObjectId.toInt(row.get("typarray", Long.class));
                     String typname = row.get("typname", String.class);
 
                     BuiltinCodec lookup = BuiltinCodec.lookup(typname);
                     if (lookup.isSupported()) {
-                        registry.addLast(lookup.createCodec(byteBufAllocator, oid));
+                        lookup.createCodec(byteBufAllocator, oid, typarray).forEach(registry::addLast);
                     }
 
                     return EMPTY;
@@ -106,7 +111,7 @@ public class BuiltinDynamicCodecs implements CodecRegistrar {
     }
 
     private PostgresqlStatement createQuery(PostgresqlConnection connection) {
-        return connection.createStatement(String.format("SELECT oid, typname FROM pg_catalog.pg_type WHERE typname IN (%s)", getPlaceholders()));
+        return connection.createStatement(String.format("SELECT oid, typname, typarray FROM pg_catalog.pg_type WHERE typname IN (%s)", getPlaceholders()));
     }
 
     private static String getPlaceholders() {
