@@ -31,6 +31,7 @@ import io.r2dbc.postgresql.codec.Path;
 import io.r2dbc.postgresql.codec.Point;
 import io.r2dbc.postgresql.codec.Polygon;
 import io.r2dbc.postgresql.codec.PostgresqlObjectId;
+import io.r2dbc.postgresql.codec.Vector;
 import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.Clob;
 import io.r2dbc.spi.Connection;
@@ -70,6 +71,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiConsumer;
@@ -78,6 +80,7 @@ import java.util.function.Function;
 
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
 /**
  * Integrations tests for our built-in codecs.
@@ -688,6 +691,16 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     void polygonTwoDimensionalArray() {
         testCodec(Polygon[][].class, new Polygon[][]{{null, Polygon.of(Point.of(1.1, 2.2), Point.of(10.10, 10.10), Point.of(.42, 5.3))}, {Polygon.of(Point.of(1.1, 2.2), Point.of(10.10, 10.10),
             Point.of(.42, 5.3), Point.of(-3.5, 0.)), null}}, "POLYGON[][]");
+    }
+
+    @Test
+    void vector() {
+
+        List<Map<String, Object>> extensions = SERVER.getJdbcOperations().queryForList("select * from pg_available_extensions() where name = 'vector'");
+        assumeThat(extensions).isNotEmpty();
+
+        SERVER.getJdbcOperations().execute("CREATE EXTENSION IF NOT EXISTS vector");
+        testCodec(Vector.class, Vector.of(1, 2.2f, 3), "VECTOR");
     }
 
     private static <T> Mono<T> close(Connection connection) {

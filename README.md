@@ -424,54 +424,55 @@ When available, the driver registers also an array variant of the codec.
 
 This reference table shows the type mapping between [PostgreSQL][p] and Java data types:
 
-| PostgreSQL Type                                 | Supported Data Type                                                                                                                           | 
-|:------------------------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------|
-| [`bigint`][psql-bigint-ref]                     | [**`Long`**][java-long-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Integer`][java-integer-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref] |
-| [`bit`][psql-bit-ref]                           | Not yet supported.|
-| [`bit varying`][psql-bit-ref]                   | Not yet supported.|
-| [`boolean or bool`][psql-boolean-ref]           | [`Boolean`][java-boolean-ref]|
-| [`box`][psql-box-ref]                           | **`Box`**|
-| [`bytea`][psql-bytea-ref]                       | [**`ByteBuffer`**][java-ByteBuffer-ref], [`byte[]`][java-byte-ref], [`Blob`][r2dbc-blob-ref]|
-| [`character`][psql-character-ref]               | [`String`][java-string-ref]|
-| [`character varying`][psql-character-ref]       | [`String`][java-string-ref]|
-| [`cidr`][psql-cidr-ref]                         | Not yet supported.|
-| [`circle`][psql-circle-ref]                     | **`Circle`**|
-| [`date`][psql-date-ref]                         | [`LocalDate`][java-ld-ref]|
-| [`double precision`][psql-floating-point-ref]   | [**`Double`**][java-double-ref], [`Float`][java-float-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Integer`][java-integer-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
-| [enumerated types][psql-enum-ref]               | Client code `Enum` types through `EnumCodec`|
-| [`geometry`][postgis-ref]                       | **`org.locationtech.jts.geom.Geometry`**|
-| [`hstore`][psql-hstore-ref]                     | [**`Map`**][java-map-ref]|
-| [`inet`][psql-inet-ref]                         | [**`InetAddress`**][java-inet-ref]|
-| [`integer`][psql-integer-ref]                   | [**`Integer`**][java-integer-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
-| [`interval`][psql-interval-ref]                 | **`Interval`**|
-| [`json`][psql-json-ref]                         | **`Json`**, [`String`][java-string-ref]. Reading: `ByteBuf`[`byte[]`][java-primitive-ref], [`ByteBuffer`][java-ByteBuffer-ref], [`String`][java-string-ref], [`InputStream`][java-inputstream-ref]|
-| [`jsonb`][psql-json-ref]                        | **`Json`**, [`String`][java-string-ref]. Reading: `ByteBuf`[`byte[]`][java-primitive-ref], [`ByteBuffer`][java-ByteBuffer-ref], [`String`][java-string-ref], [`InputStream`][java-inputstream-ref]|
-| [`line`][psql-line-ref]                         | **`Line`**|
-| [`lseg`][psql-lseq-ref]                         | **`Lseg`**|
-| [`macaddr`][psql-macaddr-ref]                   | Not yet supported.|
-| [`macaddr8`][psql-macaddr8-ref]                 | Not yet supported.|
-| [`money`][psql-money-ref]                       | Not yet supported. Please don't use this type. It is a very poor implementation. |
-| [`name`][psql-name-ref]                         | [**`String`**][java-string-ref]
-| [`numeric`][psql-bignumeric-ref]                | [`BigDecimal`][java-bigdecimal-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Integer`][java-integer-ref], [`Long`][java-long-ref], [`BigInteger`][java-biginteger-ref]|
-| [`oid`][psql-oid-ref]                           | [**`Integer`**][java-integer-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
-| [`path`][psql-path-ref]                         | **`Path`**|
-| [`pg_lsn`][psql-pg_lsn-ref]                     | Not yet supported.|
-| [`point`][psql-point-ref]                       | **`Point`**|
-| [`polygon`][psql-polygon-ref]                   | **`Polygon`**|
-| [`real`][psql-real-ref]                         | [**`Float`**][java-float-ref], [`Double`][java-double-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Integer`][java-integer-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
-| [`smallint`][psql-smallint-ref]                 | [**`Short`**][java-short-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Integer`][java-integer-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
-| [`smallserial`][psql-smallserial-ref]           | [**`Integer`**][java-integer-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
-| [`serial`][psql-serial-ref]                     | [**`Long`**][java-long-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Integer`][java-integer-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
-| [`text`][psql-text-ref]                         | [**`String`**][java-string-ref], [`Clob`][r2dbc-clob-ref]|
-| [`time [without time zone]`][psql-time-ref]     | [`LocalTime`][java-lt-ref]|
-| [`time [with time zone]`][psql-time-ref]        | [`OffsetTime`][java-ot-ref]|
-| [`timestamp [without time zone]`][psql-time-ref]|[**`LocalDateTime`**][java-ldt-ref], [`LocalTime`][java-lt-ref], [`LocalDate`][java-ld-ref], [`java.util.Date`][java-legacy-date-ref]|
-| [`timestamp [with time zone]`][psql-time-ref]   | [**`OffsetDatetime`**][java-odt-ref], [`ZonedDateTime`][java-zdt-ref], [`Instant`][java-instant-ref]|
-| [`tsquery`][psql-tsquery-ref]                   | Not yet supported.|
-| [`tsvector`][psql-tsvector-ref]                 | Not yet supported.|
-| [`txid_snapshot`][psql-txid_snapshot-ref]       | Not yet supported.|
-| [`uuid`][psql-uuid-ref]                         | [**`UUID`**][java-uuid-ref], [`String`][java-string-ref]||
-| [`xml`][psql-xml-ref]                           | Not yet supported. |
+| PostgreSQL Type                                  | Supported Data Type                                                                                                                         | 
+|:-------------------------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------|
+| [`bigint`][psql-bigint-ref]                      | [**`Long`**][java-long-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Integer`][java-integer-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref] |
+| [`bit`][psql-bit-ref]                            | Not yet supported.|
+| [`bit varying`][psql-bit-ref]                    | Not yet supported.|
+| [`boolean or bool`][psql-boolean-ref]            | [`Boolean`][java-boolean-ref]|
+| [`box`][psql-box-ref]                            | **`Box`**|
+| [`bytea`][psql-bytea-ref]                        | [**`ByteBuffer`**][java-ByteBuffer-ref], [`byte[]`][java-byte-ref], [`Blob`][r2dbc-blob-ref]|
+| [`character`][psql-character-ref]                | [`String`][java-string-ref]|
+| [`character varying`][psql-character-ref]        | [`String`][java-string-ref]|
+| [`cidr`][psql-cidr-ref]                          | Not yet supported.|
+| [`circle`][psql-circle-ref]                      | **`Circle`**|
+| [`date`][psql-date-ref]                          | [`LocalDate`][java-ld-ref]|
+| [`double precision`][psql-floating-point-ref]    | [**`Double`**][java-double-ref], [`Float`][java-float-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Integer`][java-integer-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
+| [enumerated types][psql-enum-ref]                | Client code `Enum` types through `EnumCodec`|
+| [`geometry`][postgis-ref]                        | **`org.locationtech.jts.geom.Geometry`**|
+| [`hstore`][psql-hstore-ref]                      | [**`Map`**][java-map-ref]|
+| [`inet`][psql-inet-ref]                          | [**`InetAddress`**][java-inet-ref]|
+| [`integer`][psql-integer-ref]                    | [**`Integer`**][java-integer-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
+| [`interval`][psql-interval-ref]                  | **`Interval`**|
+| [`json`][psql-json-ref]                          | **`Json`**, [`String`][java-string-ref]. Reading: `ByteBuf`[`byte[]`][java-primitive-ref], [`ByteBuffer`][java-ByteBuffer-ref], [`String`][java-string-ref], [`InputStream`][java-inputstream-ref]|
+| [`jsonb`][psql-json-ref]                         | **`Json`**, [`String`][java-string-ref]. Reading: `ByteBuf`[`byte[]`][java-primitive-ref], [`ByteBuffer`][java-ByteBuffer-ref], [`String`][java-string-ref], [`InputStream`][java-inputstream-ref]|
+| [`line`][psql-line-ref]                          | **`Line`**|
+| [`lseg`][psql-lseq-ref]                          | **`Lseg`**|
+| [`macaddr`][psql-macaddr-ref]                    | Not yet supported.|
+| [`macaddr8`][psql-macaddr8-ref]                  | Not yet supported.|
+| [`money`][psql-money-ref]                        | Not yet supported. Please don't use this type. It is a very poor implementation. |
+| [`name`][psql-name-ref]                          | [**`String`**][java-string-ref]
+| [`numeric`][psql-bignumeric-ref]                 | [`BigDecimal`][java-bigdecimal-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Integer`][java-integer-ref], [`Long`][java-long-ref], [`BigInteger`][java-biginteger-ref]|
+| [`oid`][psql-oid-ref]                            | [**`Integer`**][java-integer-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
+| [`path`][psql-path-ref]                          | **`Path`**|
+| [`pg_lsn`][psql-pg_lsn-ref]                      | Not yet supported.|
+| [`point`][psql-point-ref]                        | **`Point`**|
+| [`polygon`][psql-polygon-ref]                    | **`Polygon`**|
+| [`real`][psql-real-ref]                          | [**`Float`**][java-float-ref], [`Double`][java-double-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Integer`][java-integer-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
+| [`smallint`][psql-smallint-ref]                  | [**`Short`**][java-short-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Integer`][java-integer-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
+| [`smallserial`][psql-smallserial-ref]            | [**`Integer`**][java-integer-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Long`][java-long-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
+| [`serial`][psql-serial-ref]                      | [**`Long`**][java-long-ref], [`Boolean`][java-boolean-ref], [`Byte`][java-byte-ref], [`Short`][java-short-ref], [`Integer`][java-integer-ref], [`BigDecimal`][java-bigdecimal-ref], [`BigInteger`][java-biginteger-ref]|
+| [`text`][psql-text-ref]                          | [**`String`**][java-string-ref], [`Clob`][r2dbc-clob-ref]|
+| [`time [without time zone]`][psql-time-ref]      | [`LocalTime`][java-lt-ref]|
+| [`time [with time zone]`][psql-time-ref]         | [`OffsetTime`][java-ot-ref]|
+| [`timestamp [without time zone]`][psql-time-ref] |[**`LocalDateTime`**][java-ldt-ref], [`LocalTime`][java-lt-ref], [`LocalDate`][java-ld-ref], [`java.util.Date`][java-legacy-date-ref]|
+| [`timestamp [with time zone]`][psql-time-ref]    | [**`OffsetDatetime`**][java-odt-ref], [`ZonedDateTime`][java-zdt-ref], [`Instant`][java-instant-ref]|
+| [`tsquery`][psql-tsquery-ref]                    | Not yet supported.|
+| [`tsvector`][psql-tsvector-ref]                  | Not yet supported.|
+| [`txid_snapshot`][psql-txid_snapshot-ref]        | Not yet supported.|
+| [`uuid`][psql-uuid-ref]                          | [**`UUID`**][java-uuid-ref], [`String`][java-string-ref]||
+| [`xml`][psql-xml-ref]                            | Not yet supported. |
+| [`vector`][psql-vector-ref]                      | **`Vector`**, [`float[]`][java-float-ref] | 
 
 Types in **bold** indicate the native (default) Java type.
 
@@ -549,6 +550,7 @@ Support for the following single-dimensional arrays (read and write):
 [psql-xml-ref]: https://www.postgresql.org/docs/current/datatype-xml.html
 [psql-runtime-config]: https://www.postgresql.org/docs/current/runtime-config-client.html
 [postgis-ref]: http://postgis.net/workshops/postgis-intro/geometries.html
+[psql-vector-ref]: https://github.com/pgvector/pgvector
 
 [r2dbc-blob-ref]: https://r2dbc.io/spec/0.9.0.RELEASE/api/io/r2dbc/spi/Blob.html
 [r2dbc-clob-ref]: https://r2dbc.io/spec/0.9.0.RELEASE/api/io/r2dbc/spi/Clob.html
