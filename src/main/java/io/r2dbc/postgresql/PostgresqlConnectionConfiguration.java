@@ -36,6 +36,8 @@ import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.NoticeResponse;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.LogLevel;
+import org.reactivestreams.Publisher;
+import reactor.core.publisher.Mono;
 import reactor.netty.resources.LoopResources;
 import reactor.util.annotation.Nullable;
 
@@ -103,7 +105,7 @@ public final class PostgresqlConnectionConfiguration {
 
     private final Map<String, String> options;
 
-    private final CharSequence password;
+    private final Publisher<CharSequence> password;
 
     private final boolean preferAttachedBuffers;
 
@@ -123,18 +125,18 @@ public final class PostgresqlConnectionConfiguration {
 
     private final TimeZone timeZone;
 
-    private final String username;
+    private final Publisher<String> username;
 
     private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions, @Nullable boolean compatibilityMode, @Nullable Duration connectTimeout, @Nullable String database,
                                               LogLevel errorResponseLogLevel,
                                               List<Extension> extensions, ToIntFunction<String> fetchSize, boolean forceBinary, @Nullable Duration lockWaitTimeout,
                                               @Nullable LoopResources loopResources,
                                               @Nullable MultiHostConfiguration multiHostConfiguration,
-                                              LogLevel noticeLogLevel, @Nullable Map<String, String> options, @Nullable CharSequence password, boolean preferAttachedBuffers,
+                                              LogLevel noticeLogLevel, @Nullable Map<String, String> options, Publisher<CharSequence> password, boolean preferAttachedBuffers,
                                               int preparedStatementCacheQueries, @Nullable String schema,
                                               @Nullable SingleHostConfiguration singleHostConfiguration, SSLConfig sslConfig, @Nullable Duration statementTimeout,
                                               boolean tcpKeepAlive, boolean tcpNoDelay, TimeZone timeZone,
-                                              String username) {
+                                              Publisher<String> username) {
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
         this.autodetectExtensions = autodetectExtensions;
         this.compatibilityMode = compatibilityMode;
@@ -200,7 +202,7 @@ public final class PostgresqlConnectionConfiguration {
             ", multiHostConfiguration='" + this.multiHostConfiguration + '\'' +
             ", noticeLogLevel='" + this.noticeLogLevel + '\'' +
             ", options='" + this.options + '\'' +
-            ", password='" + obfuscate(this.password != null ? this.password.length() : 0) + '\'' +
+            ", password='" + obfuscate(this.password != null ? 4 : 0) + '\'' +
             ", preferAttachedBuffers=" + this.preferAttachedBuffers +
             ", singleHostConfiguration=" + this.singleHostConfiguration +
             ", statementTimeout=" + this.statementTimeout +
@@ -261,8 +263,7 @@ public final class PostgresqlConnectionConfiguration {
         return Collections.unmodifiableMap(this.options);
     }
 
-    @Nullable
-    CharSequence getPassword() {
+    Publisher<CharSequence> getPassword() {
         return this.password;
     }
 
@@ -290,7 +291,7 @@ public final class PostgresqlConnectionConfiguration {
         return config;
     }
 
-    String getUsername() {
+    Publisher<String> getUsername() {
         return this.username;
     }
 
@@ -380,7 +381,7 @@ public final class PostgresqlConnectionConfiguration {
         private Map<String, String> options;
 
         @Nullable
-        private CharSequence password;
+        private Publisher<CharSequence> password;
 
         private boolean preferAttachedBuffers = false;
 
@@ -423,7 +424,7 @@ public final class PostgresqlConnectionConfiguration {
         private LoopResources loopResources = null;
 
         @Nullable
-        private String username;
+        private Publisher<String> username;
 
         private Builder() {
         }
@@ -743,7 +744,31 @@ public final class PostgresqlConnectionConfiguration {
          * @return this {@link Builder}
          */
         public Builder password(@Nullable CharSequence password) {
-            this.password = password;
+            this.password = Mono.justOrEmpty(password);
+            return this;
+        }
+
+        /**
+         * Configure the password publisher. The publisher is used on each authentication attempt.
+         *
+         * @param password the password
+         * @return this {@link Builder}
+         * @since 1.0.3
+         */
+        public Builder password(Publisher<CharSequence> password) {
+            this.password = Mono.from(password);
+            return this;
+        }
+
+        /**
+         * Configure the password supplier. The supplier is used on each authentication attempt.
+         *
+         * @param password the password
+         * @return this {@link Builder}
+         * @since 1.0.3
+         */
+        public Builder password(Supplier<CharSequence> password) {
+            this.password = Mono.fromSupplier(password);
             return this;
         }
 
@@ -780,7 +805,6 @@ public final class PostgresqlConnectionConfiguration {
          *
          * @param preparedStatementCacheQueries the preparedStatementCacheQueries
          * @return this {@link Builder}
-         * @throws IllegalArgumentException if {@code username} is {@code null}
          * @since 0.8.1
          */
         public Builder preparedStatementCacheQueries(int preparedStatementCacheQueries) {
@@ -1023,7 +1047,31 @@ public final class PostgresqlConnectionConfiguration {
          * @throws IllegalArgumentException if {@code username} is {@code null}
          */
         public Builder username(String username) {
+            this.username = Mono.just(Assert.requireNonNull(username, "username must not be null"));
+            return this;
+        }
+
+        /**
+         * Configure the username publisher. The publisher is used on each authentication attempt.
+         *
+         * @param username the username
+         * @return this {@link Builder}
+         * @throws IllegalArgumentException if {@code username} is {@code null}
+         */
+        public Builder username(Publisher<String> username) {
             this.username = Assert.requireNonNull(username, "username must not be null");
+            return this;
+        }
+
+        /**
+         * Configure the username supplier. The supplier is used on each authentication attempt.
+         *
+         * @param username the username
+         * @return this {@link Builder}
+         * @throws IllegalArgumentException if {@code username} is {@code null}
+         */
+        public Builder username(Supplier<String> username) {
+            this.username = Mono.fromSupplier(Assert.requireNonNull(username, "username must not be null"));
             return this;
         }
 
@@ -1044,7 +1092,7 @@ public final class PostgresqlConnectionConfiguration {
                 ", multiHostConfiguration='" + this.multiHostConfiguration + '\'' +
                 ", noticeLogLevel='" + this.noticeLogLevel + '\'' +
                 ", parameters='" + this.options + '\'' +
-                ", password='" + obfuscate(this.password != null ? this.password.length() : 0) + '\'' +
+                ", password='" + obfuscate(this.password != null ? 4 : 0) + '\'' +
                 ", preparedStatementCacheQueries='" + this.preparedStatementCacheQueries + '\'' +
                 ", schema='" + this.schema + '\'' +
                 ", singleHostConfiguration='" + this.singleHostConfiguration + '\'' +

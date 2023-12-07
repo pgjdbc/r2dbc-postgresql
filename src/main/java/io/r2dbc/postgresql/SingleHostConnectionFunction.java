@@ -26,6 +26,7 @@ import io.r2dbc.postgresql.client.StartupMessageFlow;
 import io.r2dbc.postgresql.message.backend.AuthenticationMessage;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.core.publisher.Mono;
+import reactor.util.annotation.Nullable;
 
 import java.net.SocketAddress;
 
@@ -44,9 +45,9 @@ final class SingleHostConnectionFunction implements ConnectionFunction {
     public Mono<Client> connect(SocketAddress endpoint, ConnectionSettings settings) {
 
         return this.upstreamFunction.connect(endpoint, settings)
-            .delayUntil(client -> StartupMessageFlow
-                .exchange(this::getAuthenticationHandler, client, this.configuration.getDatabase(), this.configuration.getUsername(),
-                    getParameterProvider(this.configuration, settings))
+            .delayUntil(client -> getCredentials().flatMapMany(credentials -> StartupMessageFlow
+                    .exchange(auth -> getAuthenticationHandler(auth, credentials), client, this.configuration.getDatabase(), credentials.getUsername(),
+                        getParameterProvider(this.configuration, settings)))
                 .handle(ExceptionFactory.INSTANCE::handleErrorResponse));
     }
 
@@ -54,15 +55,43 @@ final class SingleHostConnectionFunction implements ConnectionFunction {
         return new PostgresStartupParameterProvider(configuration.getApplicationName(), configuration.getTimeZone(), settings);
     }
 
-    protected AuthenticationHandler getAuthenticationHandler(AuthenticationMessage message) {
+    protected AuthenticationHandler getAuthenticationHandler(AuthenticationMessage message, UsernameAndPassword usernameAndPassword) {
         if (PasswordAuthenticationHandler.supports(message)) {
-            CharSequence password = Assert.requireNonNull(this.configuration.getPassword(), "Password must not be null");
-            return new PasswordAuthenticationHandler(password, this.configuration.getUsername());
+            CharSequence password = Assert.requireNonNull(usernameAndPassword.getPassword(), "Password must not be null");
+            return new PasswordAuthenticationHandler(password, usernameAndPassword.getUsername());
         } else if (SASLAuthenticationHandler.supports(message)) {
-            CharSequence password = Assert.requireNonNull(this.configuration.getPassword(), "Password must not be null");
-            return new SASLAuthenticationHandler(password, this.configuration.getUsername());
+            CharSequence password = Assert.requireNonNull(usernameAndPassword.getPassword(), "Password must not be null");
+            return new SASLAuthenticationHandler(password, usernameAndPassword.getUsername());
         } else {
             throw new IllegalStateException(String.format("Unable to provide AuthenticationHandler capable of handling %s", message));
+        }
+    }
+
+    Mono<UsernameAndPassword> getCredentials() {
+
+        return Mono.zip(Mono.from(this.configuration.getUsername()).single(), Mono.from(this.configuration.getPassword()).singleOptional()).map(it -> {
+            return new UsernameAndPassword(it.getT1(), it.getT2().orElse(null));
+        });
+    }
+
+    static class UsernameAndPassword {
+
+        final String username;
+
+        final @Nullable CharSequence password;
+
+        public UsernameAndPassword(String username, @Nullable CharSequence password) {
+            this.username = username;
+            this.password = password;
+        }
+
+        public String getUsername() {
+            return this.username;
+        }
+
+        @Nullable
+        public CharSequence getPassword() {
+            return this.password;
         }
     }
 

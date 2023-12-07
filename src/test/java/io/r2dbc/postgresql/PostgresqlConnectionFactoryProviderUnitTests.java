@@ -25,6 +25,8 @@ import io.r2dbc.postgresql.util.LogLevel;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.Option;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -33,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TimeZone;
+import java.util.function.Supplier;
 
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.AUTODETECT_EXTENSIONS;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.COMPATIBILITY_MODE;
@@ -615,6 +618,34 @@ final class PostgresqlConnectionFactoryProviderUnitTests {
             .build());
 
         assertThat(factory.getConfiguration().getExtensions()).containsExactly(testExtension1, testExtension2);
+    }
+
+    @Test
+    void supportsUsernameAndPasswordSupplier() {
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, LEGACY_POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(Option.valueOf("password"), (Supplier<String>) () -> "test-password")
+            .option(Option.valueOf("user"), (Supplier<String>) () -> "test-user")
+            .option(USER, "test-user")
+            .build());
+
+        StepVerifier.create(factory.getConfiguration().getPassword()).expectNext("test-password").verifyComplete();
+        StepVerifier.create(factory.getConfiguration().getUsername()).expectNext("test-user").verifyComplete();
+    }
+
+    @Test
+    void supportsUsernameAndPasswordPublisher() {
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, LEGACY_POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(Option.valueOf("password"), Mono.just("test-password"))
+            .option(Option.valueOf("user"), Mono.just("test-user"))
+            .option(USER, "test-user")
+            .build());
+
+        StepVerifier.create(factory.getConfiguration().getPassword()).expectNext("test-password").verifyComplete();
+        StepVerifier.create(factory.getConfiguration().getUsername()).expectNext("test-user").verifyComplete();
     }
 
     private static class TestExtension implements Extension {
