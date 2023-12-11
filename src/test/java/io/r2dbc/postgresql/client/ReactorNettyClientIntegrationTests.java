@@ -22,7 +22,7 @@ import io.netty.util.ReferenceCountUtil;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.postgresql.api.PostgresqlConnection;
-import io.r2dbc.postgresql.authentication.PasswordAuthenticationHandler;
+import io.r2dbc.postgresql.authentication.SASLAuthenticationHandler;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.DataRow;
@@ -86,20 +86,26 @@ final class ReactorNettyClientIntegrationTests {
 
     private final ReactorNettyClient client = ReactorNettyClient.connect(SERVER.getHost(), SERVER.getPort())
         .delayUntil(client -> StartupMessageFlow
-            .exchange(this.getClass().getName(), m -> new PasswordAuthenticationHandler(SERVER.getPassword(), SERVER.getUsername()), client, SERVER.getDatabase(), SERVER.getUsername()))
+            .exchange(this.getClass().getName(), m -> new SASLAuthenticationHandler(SERVER.getPassword(), SERVER.getUsername(), client.getContext()), client, SERVER.getDatabase(), SERVER.getUsername()))
         .block();
 
     @BeforeEach
     void before() {
-        SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS test");
-        SERVER.getJdbcOperations().execute("CREATE TABLE test ( value INTEGER )");
+        if (SERVER.getJdbcOperations() != null) {
+            SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS test");
+            SERVER.getJdbcOperations().execute("CREATE TABLE test ( value INTEGER )");
+        }
     }
 
     @AfterEach
     void after() {
-        SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS test");
-        this.client.close()
-            .block();
+        if (SERVER.getJdbcOperations() != null) {
+            SERVER.getJdbcOperations().execute("DROP TABLE IF EXISTS test");
+        }
+        if (this.client != null) {
+            this.client.close()
+                .block();
+        }
     }
 
     @Test
@@ -312,11 +318,10 @@ final class ReactorNettyClientIntegrationTests {
     @Test
     @DisabledOnOs(OS.WINDOWS)
     void unixDomainSocketTest() {
-
         String socket = "/tmp/.s.PGSQL.5432";
 
         assumeThat(KQueue.isAvailable() || Epoll.isAvailable()).describedAs("EPoll or KQueue must be available").isTrue();
-        assumeThat(new File(socket)).exists();
+        assumeThat(new File(socket)).describedAs("Local server must be running").exists();
 
         PostgresqlConnectionFactory postgresqlConnectionFactory = new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
             .socket(socket)
