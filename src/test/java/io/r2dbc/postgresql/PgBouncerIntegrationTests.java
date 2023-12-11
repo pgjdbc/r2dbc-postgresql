@@ -30,7 +30,7 @@ import reactor.test.StepVerifier;
 final class PgBouncerIntegrationTests {
 
     @RegisterExtension
-    static final PostgresqlServerExtension SERVER = new PostgresqlServerExtension();
+    static final PostgresqlServerExtension SERVER = new PostgresqlServerExtension("pg_hba_pgbouncer.conf");
 
     @ParameterizedTest
     @ValueSource(strings = {"transaction", "statement"})
