@@ -48,7 +48,7 @@ import static org.testcontainers.utility.MountableFile.forHostPath;
  */
 public final class PostgresqlServerExtension implements BeforeAllCallback, AfterAllCallback {
 
-    static final String IMAGE_NAME = "postgres:13.3";
+    static final String IMAGE_NAME = "postgres:16-alpine";
 
     static PostgreSQLContainer<?> containerInstance = null;
 
@@ -64,15 +64,24 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
         return PostgresqlServerExtension.containerInstance = container();
     };
 
-    private final DatabaseContainer postgres = getContainer();
+    private final DatabaseContainer postgres;
 
-    private final boolean useTestContainer = this.postgres instanceof TestContainer;
+    private final boolean useTestContainer;
 
     private HikariDataSource dataSource;
 
     private JdbcOperations jdbcOperations;
 
+    private final String hbaConf;
+
     public PostgresqlServerExtension() {
+        this("pg_hba.conf");
+    }
+
+    public PostgresqlServerExtension(String hbaConf) {
+        this.hbaConf = hbaConf;
+        this.postgres = getContainer();
+        this.useTestContainer = postgres instanceof TestContainer;
     }
 
     private DatabaseContainer getContainer() {
@@ -191,7 +200,7 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
             .withCopyFileToContainer(getHostPath("server.crt", 0600), "/var/server.crt")
             .withCopyFileToContainer(getHostPath("server.key", 0600), "/var/server.key")
             .withCopyFileToContainer(getHostPath("client.crt", 0600), "/var/client.crt")
-            .withCopyFileToContainer(getHostPath("pg_hba.conf", 0600), "/var/pg_hba.conf")
+            .withCopyFileToContainer(getHostPath(hbaConf, 0600), "/var/pg_hba.conf")
             .withCopyFileToContainer(getHostPath("setup.sh", 0755), "/var/setup.sh")
             .withCopyFileToContainer(getHostPath("test-db-init-script.sql", 0755), "/docker-entrypoint-initdb.d/test-db-init-script.sql")
             .withReuse(true)

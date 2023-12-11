@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-VERSION=$(./mvnw org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version -o | grep -v INFO)
+VERSION=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
 
 if [[ $VERSION =~ [^.*-SNAPSHOT$] ]] ; then
 
@@ -36,4 +36,3 @@ else
   echo "Not a release: $VERSION"
   exit 1
 fi
-
