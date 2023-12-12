@@ -1,6 +1,12 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+1.0.3.RELEASE
+-----------------------------------------
+* Support for pgvector #612
+* Add support for dynamic usernames and passwords #613
+* Upgrade dependencies #616
+
 1.0.2.RELEASE
 -----------------------------------------
 * Cancel signal does not interrupt cursored query fetching #536
