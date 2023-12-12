@@ -32,6 +32,10 @@
     "unsafeAllocated": true
   },
   {
+    "name": "[Lio.r2dbc.postgresql.codec.Vector;",
+    "unsafeAllocated": true
+  },
+  {
     "name": "[Ljava.lang.Boolean;",
     "unsafeAllocated": true
   },
