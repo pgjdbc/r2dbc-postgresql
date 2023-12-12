@@ -6,6 +6,7 @@ This driver provides the following features:
 
 * Implements R2DBC 1.0
 * Login with username/password (MD5, SASL/SCRAM) or implicit trust
+* Supports credential rotation by providing `Supplier<String>` or `Publisher<String>` 
 * SCRAM authentication
 * Unix Domain Socket transport
 * Connection Fail-over supporting multiple hosts
@@ -76,8 +77,8 @@ Mono<Connection> connectionMono = Mono.from(connectionFactory.create());
 | `host`                          | Server hostname to connect to. May contain a comma-separated list of hosts with ports when using the `failover` protocol.
 | `port`                          | Server port to connect to. Defaults to `5432`. _(Optional)_
 | `socket`                        | Unix Domain Socket path to connect to as alternative to TCP. _(Optional)_
-| `username`                      | Login username.
-| `password`                      | Login password. _(Optional when using TLS Certificate authentication)_
+| `username`                      | Login username. Can be a plain `String`, `Supplier<String>`, or `Publisher<String>`.
+| `password`                      | Login password. Can be a plain `CharSequence`, `Supplier<CharSequence>`, or `Publisher<CharSequence>`. _(Optional when using TLS Certificate authentication)_
 | `database`                      | Database to select. _(Optional)_
 | `applicationName`               | The name of the application connecting to the database. Defaults to `r2dbc-postgresql`. _(Optional)_
 | `autodetectExtensions`          | Whether to auto-detect and register `Extension`s from the class path. Defaults to `true`. _(Optional)_
