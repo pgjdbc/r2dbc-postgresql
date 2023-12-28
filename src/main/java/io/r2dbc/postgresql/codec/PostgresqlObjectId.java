@@ -584,7 +584,7 @@ public enum PostgresqlObjectId implements Type, PostgresTypeIdentifier {
 
     public static int toInt(long oid) {
         if ((oid & 0xFFFFFFFF00000000L) != 0) {
-            throw new IllegalArgumentException("Value is not an OID:" + oid);
+            throw new IllegalArgumentException("Value is not an OID: " + oid);
         }
 
         return (int) oid;

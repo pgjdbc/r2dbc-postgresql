@@ -114,6 +114,35 @@ final class EnumCodecUnitTests {
     }
 
     @Test
+    void shouldRegisterCodecWithoutTyparray() {
+        CodecRegistrar codecRegistrar = EnumCodec
+            .builder()
+            .withRegistrationPriority(RegistrationPriority.FIRST)
+            .withEnum("foo", MyEnum.class)
+            .build();
+
+        ByteBufAllocator mockByteBufAllocator = mock(ByteBufAllocator.class);
+        CodecRegistry mockCodecRegistry = mock(CodecRegistry.class);
+
+        MockPostgresqlStatement mockPostgresqlStatement = MockPostgresqlStatement.builder()
+            .result(MockPostgresqlResult.builder()
+                .row(MockRow.builder()
+                    .identified("oid", Long.class, 42L)
+                    .identified("typname", String.class, "foo")
+                    .identified("typcategory", String.class, "E")
+                    .build())
+                .build())
+            .build();
+        MockPostgresqlConnection mockPostgresqlConnection = new MockPostgresqlConnection(mockPostgresqlStatement);
+
+        Publisher<Void> register = codecRegistrar.register(mockPostgresqlConnection, mockByteBufAllocator, mockCodecRegistry);
+        StepVerifier.create(register).verifyComplete();
+
+        verify(mockCodecRegistry, only()).addFirst(any(EnumCodec.class));
+        verify(mockCodecRegistry, never()).addLast(any(EnumCodec.class));
+    }
+
+    @Test
     void shouldRegisterCodecAsLast() {
         CodecRegistrar codecRegistrar = EnumCodec
             .builder()

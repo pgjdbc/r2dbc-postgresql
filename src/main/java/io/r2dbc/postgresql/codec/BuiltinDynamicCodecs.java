@@ -23,8 +23,10 @@ import io.r2dbc.postgresql.extension.CodecRegistrar;
 import org.reactivestreams.Publisher;
 import reactor.util.annotation.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -62,7 +64,13 @@ public class BuiltinDynamicCodecs implements CodecRegistrar {
                     return Collections.singletonList(new PostgisGeometryCodec(oid));
                 case VECTOR:
                     VectorCodec vectorCodec = new VectorCodec(byteBufAllocator, oid, typarray);
-                    return Arrays.asList(vectorCodec, new VectorCodec.VectorArrayCodec(byteBufAllocator, vectorCodec), new VectorFloatCodec(byteBufAllocator, oid));
+                    List<Codec<?>> codecs = new ArrayList<>(3);
+                    codecs.add(vectorCodec);
+                    if (typarray != PostgresTypes.NO_SUCH_TYPE) {
+                        codecs.add(new VectorCodec.VectorArrayCodec(byteBufAllocator, vectorCodec));
+                    }
+                    codecs.add(new VectorFloatCodec(byteBufAllocator, oid));
+                    return codecs;
                 default:
                     throw new UnsupportedOperationException(String.format("Codec %s for OID %d not supported", name(), oid));
             }
@@ -97,7 +105,7 @@ public class BuiltinDynamicCodecs implements CodecRegistrar {
             .flatMap(it -> it.map((row, rowMetadata) -> {
 
                     int oid = PostgresqlObjectId.toInt(row.get("oid", Long.class));
-                    int typarray = PostgresqlObjectId.toInt(row.get("typarray", Long.class));
+                    int typarray = rowMetadata.contains("typarray") ? PostgresqlObjectId.toInt(row.get("typarray", Long.class)) : PostgresTypes.NO_SUCH_TYPE;
                     String typname = row.get("typname", String.class);
 
                     BuiltinCodec lookup = BuiltinCodec.lookup(typname);
