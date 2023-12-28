@@ -177,6 +177,16 @@ final class PostgresqlConnectionConfigurationUnitTests {
     }
 
     @Test
+    void constructorNoPassword() {
+        PostgresqlConnectionConfiguration configuration = PostgresqlConnectionConfiguration.builder()
+            .host("test-host")
+            .username("foo")
+            .build();
+
+        assertThat(configuration.getPassword()).isNotNull();
+    }
+
+    @Test
     void constructorInvalidOptions() {
         assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder()
             .host("test-host")
