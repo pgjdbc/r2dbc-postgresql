@@ -105,6 +105,7 @@ public final class PostgresqlConnectionConfiguration {
 
     private final Map<String, String> options;
 
+    @Nullable
     private final Publisher<CharSequence> password;
 
     private final boolean preferAttachedBuffers;
@@ -127,16 +128,12 @@ public final class PostgresqlConnectionConfiguration {
 
     private final Publisher<String> username;
 
-    private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions, @Nullable boolean compatibilityMode, @Nullable Duration connectTimeout, @Nullable String database,
-                                              LogLevel errorResponseLogLevel,
-                                              List<Extension> extensions, ToIntFunction<String> fetchSize, boolean forceBinary, @Nullable Duration lockWaitTimeout,
-                                              @Nullable LoopResources loopResources,
-                                              @Nullable MultiHostConfiguration multiHostConfiguration,
-                                              LogLevel noticeLogLevel, @Nullable Map<String, String> options, Publisher<CharSequence> password, boolean preferAttachedBuffers,
-                                              int preparedStatementCacheQueries, @Nullable String schema,
-                                              @Nullable SingleHostConfiguration singleHostConfiguration, SSLConfig sslConfig, @Nullable Duration statementTimeout,
-                                              boolean tcpKeepAlive, boolean tcpNoDelay, TimeZone timeZone,
-                                              Publisher<String> username) {
+    private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions, @Nullable boolean compatibilityMode, @Nullable Duration connectTimeout, @Nullable String database
+        , LogLevel errorResponseLogLevel, List<Extension> extensions, ToIntFunction<String> fetchSize, boolean forceBinary, @Nullable Duration lockWaitTimeout,
+                                              @Nullable LoopResources loopResources, @Nullable MultiHostConfiguration multiHostConfiguration, LogLevel noticeLogLevel,
+                                              @Nullable Map<String, String> options, @Nullable Publisher<CharSequence> password, boolean preferAttachedBuffers, int preparedStatementCacheQueries,
+                                              @Nullable String schema, @Nullable SingleHostConfiguration singleHostConfiguration, SSLConfig sslConfig, @Nullable Duration statementTimeout,
+                                              boolean tcpKeepAlive, boolean tcpNoDelay, TimeZone timeZone, Publisher<String> username) {
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
         this.autodetectExtensions = autodetectExtensions;
         this.compatibilityMode = compatibilityMode;
@@ -264,7 +261,7 @@ public final class PostgresqlConnectionConfiguration {
     }
 
     Publisher<CharSequence> getPassword() {
-        return this.password;
+        return this.password == null ? Mono.empty() : this.password;
     }
 
     boolean isPreferAttachedBuffers() {
