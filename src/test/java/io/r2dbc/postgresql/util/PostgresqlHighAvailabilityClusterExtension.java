@@ -21,10 +21,13 @@ import com.zaxxer.hikari.HikariDataSource;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
+import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
 import java.net.URISyntaxException;
@@ -118,7 +121,7 @@ public class PostgresqlHighAvailabilityClusterExtension implements BeforeAllCall
     }
 
     private void startStandby(Network network) {
-        this.standby = new PostgreSQLContainer<>(PostgresqlServerExtension.IMAGE_NAME)
+        this.standby = new CustomPostgreSQLContainer(PostgresqlServerExtension.IMAGE_NAME)
             .withNetwork(network)
             .withCopyFileToContainer(getHostPath("setup-standby.sh", 0755), "/setup-standby.sh")
             .withCommand("/setup-standby.sh")
@@ -126,16 +129,24 @@ public class PostgresqlHighAvailabilityClusterExtension implements BeforeAllCall
             .withEnv("PG_REP_PASSWORD", "replication_password")
             .withEnv("PG_MASTER_HOST", "postgres-primary")
             .withEnv("PG_MASTER_PORT", "5432");
-        this.standby.setWaitStrategy(new LogMessageWaitStrategy()
-            .withRegEx(".*database system is ready to accept .* connections.*\\s")
-            .withTimes(1)
-            .withStartupTimeout(Duration.of(60L, ChronoUnit.SECONDS)));
         this.standby.start();
         HikariConfig standbyConfig = new HikariConfig();
         standbyConfig.setJdbcUrl(this.standby.getJdbcUrl());
         standbyConfig.setUsername(this.standby.getUsername());
         standbyConfig.setPassword(this.standby.getPassword());
         this.standbyDataSource = new HikariDataSource(standbyConfig);
+    }
+
+    // setWaitStrategy() doesn't seem to work, only inside constructor
+    static class CustomPostgreSQLContainer extends PostgreSQLContainer<CustomPostgreSQLContainer> {
+        public CustomPostgreSQLContainer(String dockerImageName) {
+            super(DockerImageName.parse(dockerImageName));
+            this.waitStrategy =
+                    new LogMessageWaitStrategy()
+                            .withRegEx(".*database system is ready to accept .*connections.*\\s")
+                            .withTimes(1)
+                            .withStartupTimeout(Duration.of(60L, ChronoUnit.SECONDS));
+        }
     }
 
 }
