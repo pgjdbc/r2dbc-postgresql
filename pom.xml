@@ -24,7 +24,7 @@
 
     <groupId>org.postgresql</groupId>
     <artifactId>r2dbc-postgresql</artifactId>
-    <version>1.0.4.BUILD-SNAPSHOT</version>
+    <version>1.0.4.RELEASE</version>
     <packaging>jar</packaging>
 
     <name>Reactive Relational Database Connectivity - Postgresql</name>
