@@ -88,7 +88,7 @@ Mono<Connection> connectionMono = Mono.from(connectionFactory.create());
 | `fetchSize`                     | The default number of rows to return when fetching results. Defaults to `0` for unlimited. _(Optional)_
 | `forceBinary`                   | Whether to force binary transfer. Defaults to `false`. _(Optional)_
 | `hostRecheckTime`               | Host status recheck time when using multi-server operations. Defaults to `10 seconds`. _(Optional)_
-| `loadBalanceHosts`              | Whether to shuffle the list of given hostnames before connect when using multi-server operations. Defaults to `true. _(Optional)_
+| `loadBalanceHosts`              | Whether to shuffle the list of given hostnames before connect when using multi-server operations. Defaults to `true`. _(Optional)_
 | `loopResources`                 | TCP/Socket LoopResources (depends on the endpoint connection type). _(Optional)_
 | `lockWaitTimeout`               | Lock wait timeout. _(Optional)_
 | `noticeLogLevel`                | Log level for error responses. Any of `OFF`, `DEBUG`, `INFO`, `WARN` or `ERROR`  Defaults to `DEBUG`. _(Optional)_
