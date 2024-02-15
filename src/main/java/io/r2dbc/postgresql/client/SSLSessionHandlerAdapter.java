@@ -22,6 +22,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.r2dbc.postgresql.message.frontend.SSLRequest;
 import reactor.core.publisher.Mono;
 
+import java.net.SocketAddress;
+
 /**
  * SSL handler assuming the endpoint a Postgres endpoint following the {@link SSLRequest} flow.
  *
@@ -35,8 +37,8 @@ final class SSLSessionHandlerAdapter extends AbstractPostgresSSLHandlerAdapter {
 
     private boolean negotiating = true;
 
-    SSLSessionHandlerAdapter(ByteBufAllocator alloc, SSLConfig sslConfig) {
-        super(alloc, sslConfig);
+    SSLSessionHandlerAdapter(ByteBufAllocator alloc, SocketAddress socketAddress, SSLConfig sslConfig) {
+        super(alloc, socketAddress, sslConfig);
         this.alloc = alloc;
         this.sslConfig = sslConfig;
     }

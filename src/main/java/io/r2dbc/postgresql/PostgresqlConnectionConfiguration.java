@@ -42,12 +42,18 @@ import reactor.netty.resources.LoopResources;
 import reactor.util.annotation.Nullable;
 
 import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SNIHostName;
+import javax.net.ssl.SNIServerName;
+import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLParameters;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.URL;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -411,6 +417,12 @@ public final class PostgresqlConnectionConfiguration {
 
         private Function<SslContextBuilder, SslContextBuilder> sslContextBuilderCustomizer = Function.identity();
 
+        private Function<SSLEngine, SSLEngine> sslEngineCustomizer = Function.identity();
+
+        private Function<SocketAddress, SSLParameters> sslParametersFactory = it -> new SSLParameters();
+
+        private boolean sslSni = true;
+
         private boolean tcpKeepAlive = false;
 
         private boolean tcpNoDelay = true;
@@ -476,7 +488,7 @@ public final class PostgresqlConnectionConfiguration {
                 this.extensions, this.fetchSize, this.forceBinary, this.lockWaitTimeout, this.loopResources, multiHostConfiguration,
                 this.noticeLogLevel, this.options, this.password, this.preferAttachedBuffers,
                 this.preparedStatementCacheQueries, this.schema, singleHostConfiguration,
-                this.createSslConfig(), this.statementTimeout, this.tcpKeepAlive, this.tcpNoDelay, this.timeZone, this.username);
+                this.createSslConfig(this.sslSni), this.statementTimeout, this.tcpKeepAlive, this.tcpNoDelay, this.timeZone, this.username);
         }
 
         /**
@@ -853,6 +865,47 @@ public final class PostgresqlConnectionConfiguration {
         }
 
         /**
+         * Configure a {@link SSLEngine} customizer. The customizer gets applied on each SSL connection attempt to allow for just-in-time configuration updates. The {@link Function} gets
+         * called with a {@link SSLEngine} instance that has all configuration options applied. The customizer may return the same builder or return a new builder instance to be used to
+         * build the SSL context.
+         *
+         * @param sslEngineCustomizer customizer function
+         * @return this {@link Builder}
+         * @throws IllegalArgumentException if {@code sslEngineCustomizer} is {@code null}
+         */
+        public Builder sslEngineCustomizer(Function<SSLEngine, SSLEngine> sslEngineCustomizer) {
+            this.sslEngineCustomizer = Assert.requireNonNull(sslEngineCustomizer, "sslEngineCustomizer must not be null");
+            return this;
+        }
+
+        /**
+         * Configure a {@link SSLParameters} provider for a given {@link SocketAddress}. The provider gets applied on each SSL connection attempt to allow for just-in-time configuration updates.
+         * Typically used to configure SSL protocols
+         *
+         * @param sslParametersFactory customizer function
+         * @return this {@link Builder}
+         * @throws IllegalArgumentException if {@code sslParametersFactory} is {@code null}
+         * @since 1.0.4
+         */
+        public Builder sslParameters(Function<SocketAddress, SSLParameters> sslParametersFactory) {
+            this.sslParametersFactory = Assert.requireNonNull(sslParametersFactory, "sslParametersFactory must not be null");
+            return this;
+        }
+
+        /**
+         * Configure whether to indicate the hostname and port via SNI to the server. Enabled by default.
+         *
+         * @param sslSni whether to indicate the hostname and port via SNI. Sets {@link SSLParameters#setServerNames(List)} on the {@link SSLParameters} instance provided by
+         *               {@link #sslParameters(Function)}.
+         * @return this {@link Builder}
+         * @since 1.0.4
+         */
+        public Builder sslSni(boolean sslSni) {
+            this.sslSni = sslSni;
+            return this;
+        }
+
+        /**
          * Configure ssl cert for client certificate authentication. Can point to either a resource within the classpath or a file.
          *
          * @param sslCert an X.509 certificate chain file in PEM format
@@ -1094,10 +1147,13 @@ public final class PostgresqlConnectionConfiguration {
                 ", schema='" + this.schema + '\'' +
                 ", singleHostConfiguration='" + this.singleHostConfiguration + '\'' +
                 ", sslContextBuilderCustomizer='" + this.sslContextBuilderCustomizer + '\'' +
+                ", sslEngineCustomizer='" + this.sslEngineCustomizer + '\'' +
+                ", sslParametersFactory='" + this.sslParametersFactory + '\'' +
                 ", sslMode='" + this.sslMode + '\'' +
                 ", sslRootCert='" + this.sslRootCert + '\'' +
                 ", sslCert='" + this.sslCert + '\'' +
                 ", sslKey='" + this.sslKey + '\'' +
+                ", sslSni='" + this.sslSni + '\'' +
                 ", statementTimeout='" + this.statementTimeout + '\'' +
                 ", sslHostnameVerifier='" + this.sslHostnameVerifier + '\'' +
                 ", tcpKeepAlive='" + this.tcpKeepAlive + '\'' +
@@ -1107,14 +1163,46 @@ public final class PostgresqlConnectionConfiguration {
                 '}';
         }
 
-        private SSLConfig createSslConfig() {
+        private SSLConfig createSslConfig(boolean sslSni) {
             if (this.singleHostConfiguration != null && this.singleHostConfiguration.getSocket() != null || this.sslMode == SSLMode.DISABLE) {
                 return SSLConfig.disabled();
             }
 
-            HostnameVerifier hostnameVerifier = this.sslHostnameVerifier;
-            return new SSLConfig(this.sslMode, createSslProvider(), hostnameVerifier);
+            Function<SocketAddress, SSLParameters> sslParametersFunctionToUse = getSslParametersFactory(sslSni, this.sslParametersFactory);
+            return new SSLConfig(this.sslMode, createSslProvider(), this.sslEngineCustomizer, sslParametersFunctionToUse, this.sslHostnameVerifier);
         }
+
+        private static Function<SocketAddress, SSLParameters> getSslParametersFactory(boolean sslSni, Function<SocketAddress, SSLParameters> sslParametersFunction) {
+            if (!sslSni) {
+                return sslParametersFunction;
+            }
+
+            return socket -> {
+
+                SSLParameters sslParameters = sslParametersFunction.apply(socket);
+
+                if (socket instanceof InetSocketAddress) {
+
+                    InetSocketAddress inetSocketAddress = (InetSocketAddress) socket;
+                    String hostString = inetSocketAddress.getHostString();
+                    if (SSLConfig.isValidSniHostname(hostString)) {
+                        appendSniHost(sslParameters, hostString);
+                    }
+                }
+
+                return sslParameters;
+            };
+        }
+
+        private static void appendSniHost(SSLParameters sslParameters, String hostString) {
+
+            List<SNIServerName> existingServerNames = sslParameters.getServerNames();
+            List<SNIServerName> serverNames = existingServerNames == null ? new ArrayList<>() : new ArrayList<>(existingServerNames);
+            serverNames.add(new SNIHostName(hostString));
+
+            sslParameters.setServerNames(serverNames);
+        }
+
 
         private Supplier<SslContext> createSslProvider() {
             SslContextBuilder sslContextBuilder = SslContextBuilder.forClient();

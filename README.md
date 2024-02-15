@@ -102,6 +102,7 @@ Mono<Connection> connectionMono = Mono.from(connectionFactory.create());
 | `sslCert`                       | Path to SSL certificate for TLS authentication in PEM format. Can be also a resource path. _(Optional)_
 | `sslPassword`                   | Key password to decrypt SSL key. _(Optional)_
 | `sslHostnameVerifier`           | `javax.net.ssl.HostnameVerifier` implementation. _(Optional)_
+| `sslSni`                        | Enable/disable SNI to send the configured `host` name during the SSL handshake.  Defaults to `true`. _(Optional)_
 | `statementTimeout`              | Statement timeout. _(Optional)_
 | `targetServerType`              | Type of server to use when using multi-host operations. Supported values: `ANY`, `PRIMARY`, `SECONDARY`, `PREFER_SECONDARY`. Defaults to `ANY`. _(Optional)_
 | `tcpNoDelay`                    | Enable/disable TCP NoDelay. Enabled by default. _(Optional)_

@@ -222,6 +222,13 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<String> SSL_ROOT_CERT = Option.valueOf("sslRootCert");
 
     /**
+     * Configure whether to use SNI on SSL connections. Enabled by default.
+     *
+     * @since 1.0.4
+     */
+    public static final Option<Boolean> SSL_SNI = Option.valueOf("sslSni");
+
+    /**
      * Statement timeout.
      *
      * @since 0.8.9
@@ -406,6 +413,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         mapper.fromTyped(SSL_KEY).to(builder::sslKey);
         mapper.fromTyped(SSL_ROOT_CERT).to(builder::sslRootCert);
         mapper.fromTyped(SSL_PASSWORD).to(builder::sslPassword);
+        mapper.fromTyped(SSL_SNI).map(OptionMapper::toBoolean).to(builder::sslSni);
 
         mapper.from(SSL_HOSTNAME_VERIFIER).map(it -> {
 

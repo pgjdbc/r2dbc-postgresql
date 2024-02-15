@@ -28,6 +28,8 @@ import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import javax.net.ssl.SSLParameters;
+import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -58,6 +60,7 @@ import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_CONTEX
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_KEY;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_MODE;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_ROOT_CERT;
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_SNI;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.STATEMENT_TIMEOUT;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.TARGET_SERVER_TYPE;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.TCP_KEEPALIVE;
@@ -446,6 +449,27 @@ final class PostgresqlConnectionFactoryProviderUnitTests {
             .build());
 
         assertThatIllegalStateException().isThrownBy(() -> factory.getConfiguration().getSslConfig().getSslProvider().get()).withMessageContaining("Works!");
+
+        SSLParameters sslParameters = factory.getConfiguration().getSslConfig().getSslParametersFactory().apply(InetSocketAddress.createUnresolved("myhost", 1));
+
+        assertThat(sslParameters.getServerNames()).hasSize(1);
+    }
+
+    @Test
+    void shouldApplySslSni() {
+
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(SSL_MODE, SSLMode.ALLOW)
+            .option(SSL_SNI, false)
+            .build());
+
+        SSLParameters sslParameters = factory.getConfiguration().getSslConfig().getSslParametersFactory().apply(InetSocketAddress.createUnresolved("myhost", 1));
+
+        assertThat(sslParameters.getServerNames()).isNull();
     }
 
     @Test

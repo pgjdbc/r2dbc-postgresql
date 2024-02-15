@@ -28,7 +28,9 @@ import io.r2dbc.spi.R2dbcPermissionDeniedException;
 import reactor.core.publisher.Mono;
 
 import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLParameters;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.concurrent.CompletableFuture;
 
 abstract class AbstractPostgresSSLHandlerAdapter extends ChannelInboundHandlerAdapter implements GenericFutureListener<Future<Channel>> {
@@ -41,9 +43,14 @@ abstract class AbstractPostgresSSLHandlerAdapter extends ChannelInboundHandlerAd
 
     private final CompletableFuture<Void> handshakeFuture;
 
-    AbstractPostgresSSLHandlerAdapter(ByteBufAllocator alloc, SSLConfig sslConfig) {
+    AbstractPostgresSSLHandlerAdapter(ByteBufAllocator alloc, SocketAddress socketAddress, SSLConfig sslConfig) {
         this.sslConfig = sslConfig;
-        this.sslEngine = sslConfig.getSslProvider().get().newEngine(alloc);
+
+        SSLEngine sslEngine = sslConfig.getSslProvider().get().newEngine(alloc);
+        SSLParameters sslParameters = sslConfig.getSslParametersFactory().apply(socketAddress);
+        sslEngine.setSSLParameters(sslParameters);
+
+        this.sslEngine = sslConfig.getSslEngineCustomizer().apply(sslEngine);
         this.handshakeFuture = new CompletableFuture<>();
         this.sslHandler = new SslHandler(this.sslEngine);
         this.sslHandler.handshakeFuture().addListener(this);
