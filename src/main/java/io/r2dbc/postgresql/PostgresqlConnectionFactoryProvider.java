@@ -224,7 +224,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     /**
      * Configure whether to use SNI on SSL connections. Enabled by default.
      *
-     * @since 1.0.4
+     * @since 1.0.5
      */
     public static final Option<Boolean> SSL_SNI = Option.valueOf("sslSni");
 

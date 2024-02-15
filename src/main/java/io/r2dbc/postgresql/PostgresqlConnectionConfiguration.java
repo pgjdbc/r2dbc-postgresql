@@ -885,7 +885,7 @@ public final class PostgresqlConnectionConfiguration {
          * @param sslParametersFactory customizer function
          * @return this {@link Builder}
          * @throws IllegalArgumentException if {@code sslParametersFactory} is {@code null}
-         * @since 1.0.4
+         * @since 1.0.5
          */
         public Builder sslParameters(Function<SocketAddress, SSLParameters> sslParametersFactory) {
             this.sslParametersFactory = Assert.requireNonNull(sslParametersFactory, "sslParametersFactory must not be null");
@@ -898,7 +898,7 @@ public final class PostgresqlConnectionConfiguration {
          * @param sslSni whether to indicate the hostname and port via SNI. Sets {@link SSLParameters#setServerNames(List)} on the {@link SSLParameters} instance provided by
          *               {@link #sslParameters(Function)}.
          * @return this {@link Builder}
-         * @since 1.0.4
+         * @since 1.0.5
          */
         public Builder sslSni(boolean sslSni) {
             this.sslSni = sslSni;
