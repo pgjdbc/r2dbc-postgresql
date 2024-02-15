@@ -40,7 +40,7 @@ public class PostgresTypes {
     public final static int NO_SUCH_TYPE = -1;
 
     // parameterized with %s for the comparator (=, IN), %s for the actual criteria value and %s for a potential LIMIT 1 statement
-    private static final String SELECT_PG_TYPE = "SELECT pg_type.oid, typarray, typname, typcategory "
+    private static final String SELECT_PG_TYPE = "SELECT pg_type.* "
         + "  FROM pg_catalog.pg_type "
         + "  LEFT "
         + "  JOIN (select ns.oid as nspoid, ns.nspname, r.r "
