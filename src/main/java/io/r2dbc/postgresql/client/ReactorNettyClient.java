@@ -399,21 +399,21 @@ public final class ReactorNettyClient implements Client {
                     new LoggingHandler(ReactorNettyClient.class, LogLevel.TRACE));
             }
 
-            registerSslHandler(settings.getSslConfig(), channel);
+            registerSslHandler(socketAddress, settings.getSslConfig(), channel);
         }).connect().flatMap(it ->
             getSslHandshake(it.channel()).thenReturn(new ReactorNettyClient(it, settings))
         );
     }
 
-    private static void registerSslHandler(SSLConfig sslConfig, Channel channel) {
+    private static void registerSslHandler(SocketAddress socketAddress, SSLConfig sslConfig, Channel channel) {
         try {
             if (sslConfig.getSslMode().startSsl()) {
 
                 AbstractPostgresSSLHandlerAdapter sslAdapter;
                 if (sslConfig.getSslMode() == SSLMode.TUNNEL) {
-                    sslAdapter = new SSLTunnelHandlerAdapter(channel.alloc(), sslConfig);
+                    sslAdapter = new SSLTunnelHandlerAdapter(channel.alloc(), socketAddress, sslConfig);
                 } else {
-                    sslAdapter = new SSLSessionHandlerAdapter(channel.alloc(), sslConfig);
+                    sslAdapter = new SSLSessionHandlerAdapter(channel.alloc(), socketAddress, sslConfig);
                 }
 
                 channel.pipeline().addFirst(sslAdapter);

@@ -19,6 +19,8 @@ package io.r2dbc.postgresql.client;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelHandlerContext;
 
+import java.net.SocketAddress;
+
 /**
  * SSL handler assuming the endpoint is a SSL tunnel and not a Postgres endpoint.
  */
@@ -26,8 +28,8 @@ final class SSLTunnelHandlerAdapter extends AbstractPostgresSSLHandlerAdapter {
 
     private final SSLConfig sslConfig;
 
-    SSLTunnelHandlerAdapter(ByteBufAllocator alloc, SSLConfig sslConfig) {
-        super(alloc, sslConfig);
+    SSLTunnelHandlerAdapter(ByteBufAllocator alloc, SocketAddress socketAddress, SSLConfig sslConfig) {
+        super(alloc, socketAddress, sslConfig);
         this.sslConfig = sslConfig;
     }
 
