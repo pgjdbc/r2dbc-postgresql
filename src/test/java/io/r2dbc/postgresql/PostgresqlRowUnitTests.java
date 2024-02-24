@@ -132,6 +132,7 @@ final class PostgresqlRowUnitTests {
             .build();
 
         assertThat(new PostgresqlRow(MockContext.builder().codecs(codecs).build(), new PostgresqlRowMetadata(Collections.emptyList()), this.columns, this.data).get("test-name-2", Object.class)).isSameAs(value);
+        assertThat(new PostgresqlRow(MockContext.builder().codecs(codecs).build(), new PostgresqlRowMetadata(Collections.emptyList()), this.columns, this.data).get("tEsT-nAme-2", Object.class)).isSameAs(value);
     }
 
     @Test

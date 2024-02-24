@@ -24,6 +24,9 @@ import io.r2dbc.postgresql.message.backend.DataRow;
 import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Row;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
@@ -46,6 +49,8 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
     private final ByteBuf[] data;
 
     private volatile boolean isReleased = false;
+
+    private Map<String, Integer> columnNameIndexCacheMap;
 
     PostgresqlRow(ConnectionResources context, io.r2dbc.postgresql.api.PostgresqlRowMetadata metadata, List<RowDescription.Field> fields, ByteBuf[] data) {
         this.context = Assert.requireNonNull(context, "context must not be null");
@@ -138,6 +143,15 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
             '}';
     }
 
+    static Map<String, Integer> createColumnNameIndexMap(List<RowDescription.Field> fields) {
+        Map<String, Integer> columnNameIndexMap = new HashMap<>(fields.size() * 2);
+        for (int i = fields.size() - 1; i >= 0; i--) {
+            columnNameIndexMap.put(fields.get(i).getName().toLowerCase(Locale.US), i);
+        }
+
+        return columnNameIndexMap;
+    }
+
     static PostgresqlRow toRow(ConnectionResources context, DataRow dataRow, Codecs codecs, RowDescription rowDescription) {
         Assert.requireNonNull(dataRow, "dataRow must not be null");
         Assert.requireNonNull(codecs, "rowDescription must not be null");
@@ -165,12 +179,19 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
     }
 
     private int getColumn(String name) {
-        for (int i = 0; i < this.fields.size(); i++) {
-            RowDescription.Field field = this.fields.get(i);
+        if (this.columnNameIndexCacheMap == null) {
+            this.columnNameIndexCacheMap = createColumnNameIndexMap(this.fields);
+        }
 
-            if (field.getName().equalsIgnoreCase(name)) {
-                return i;
-            }
+        Integer index = this.columnNameIndexCacheMap.get(name);
+        if (index != null) {
+            return index;
+        }
+
+        index = this.columnNameIndexCacheMap.get(name.toLowerCase(Locale.US));
+        if (index != null) {
+            this.columnNameIndexCacheMap.put(name, index);
+            return index;
         }
 
         throw new NoSuchElementException(String.format("Column name '%s' does not exist in column names %s", name, toColumnNames()));
