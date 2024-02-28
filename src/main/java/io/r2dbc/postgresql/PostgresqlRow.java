@@ -24,14 +24,14 @@ import io.r2dbc.postgresql.message.backend.DataRow;
 import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Row;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
@@ -144,9 +144,9 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
     }
 
     static Map<String, Integer> createColumnNameIndexMap(List<RowDescription.Field> fields) {
-        Map<String, Integer> columnNameIndexMap = new HashMap<>(fields.size() * 2);
+        Map<String, Integer> columnNameIndexMap = new HashMap<>(fields.size(), 1);
         for (int i = fields.size() - 1; i >= 0; i--) {
-            columnNameIndexMap.put(fields.get(i).getName().toLowerCase(Locale.US), i);
+            columnNameIndexMap.put(fields.get(i).getName().toLowerCase(Locale.ROOT), i);
         }
 
         return columnNameIndexMap;
@@ -188,7 +188,7 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
             return index;
         }
 
-        index = this.columnNameIndexCacheMap.get(name.toLowerCase(Locale.US));
+        index = this.columnNameIndexCacheMap.get(name.toLowerCase(Locale.ROOT));
         if (index != null) {
             this.columnNameIndexCacheMap.put(name, index);
             return index;
