@@ -50,13 +50,21 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
 
     private volatile boolean isReleased = false;
 
-    private Map<String, Integer> columnNameIndexCacheMap;
+    private final Map<String, Integer> columnNameIndexCacheMap;
 
     PostgresqlRow(ConnectionResources context, io.r2dbc.postgresql.api.PostgresqlRowMetadata metadata, List<RowDescription.Field> fields, ByteBuf[] data) {
         this.context = Assert.requireNonNull(context, "context must not be null");
         this.metadata = Assert.requireNonNull(metadata, "metadata must not be null");
         this.fields = Assert.requireNonNull(fields, "fields must not be null");
         this.data = Assert.requireNonNull(data, "data must not be null");
+
+        if (metadata instanceof PostgresqlRowMetadata) {
+            this.columnNameIndexCacheMap = Assert.requireNonNull(
+                ((PostgresqlRowMetadata) metadata).getColumnNameIndexMap(),
+                "columnNameIndexCacheMap must not be null");
+        } else {
+            this.columnNameIndexCacheMap = createColumnNameIndexMap(this.fields);
+        }
     }
 
     @Override
@@ -179,18 +187,8 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
     }
 
     private int getColumn(String name) {
-        if (this.columnNameIndexCacheMap == null) {
-            this.columnNameIndexCacheMap = createColumnNameIndexMap(this.fields);
-        }
-
-        Integer index = this.columnNameIndexCacheMap.get(name);
+        Integer index = this.columnNameIndexCacheMap.get(name.toLowerCase(Locale.ROOT));
         if (index != null) {
-            return index;
-        }
-
-        index = this.columnNameIndexCacheMap.get(name.toLowerCase(Locale.ROOT));
-        if (index != null) {
-            this.columnNameIndexCacheMap.put(name, index);
             return index;
         }
 

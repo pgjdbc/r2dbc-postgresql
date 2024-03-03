@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql;
 
 import io.netty.buffer.ByteBuf;
+import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.codec.MockCodecs;
 import io.r2dbc.postgresql.message.backend.DataRow;
 import io.r2dbc.postgresql.message.backend.RowDescription;
@@ -28,6 +29,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
@@ -50,6 +52,11 @@ final class PostgresqlRowUnitTests {
         new RowDescription.Field((short) 300, 400, 300, (short) 400, FORMAT_TEXT, "test-name-2", 500),
         new RowDescription.Field((short) 400, 400, 300, (short) 400, FORMAT_TEXT, "test-name-3", 500)
     );
+
+    private final PostgresqlRowMetadata metadata = new PostgresqlRowMetadata(columns
+        .stream()
+        .map(field -> PostgresqlColumnMetadata.toColumnMetadata(mock(Codecs.class), field))
+        .collect(Collectors.toList()));
 
     private final ByteBuf[] data = new ByteBuf[]{TEST.buffer(4).writeInt(100), TEST.buffer(4).writeInt(300), null};
 
@@ -78,7 +85,7 @@ final class PostgresqlRowUnitTests {
             .decoding(TEST.buffer(4).writeInt(300), 400, FORMAT_TEXT, Object.class, value)
             .build();
 
-        PostgresqlRow row = new PostgresqlRow(MockContext.builder().codecs(codecs).build(), new PostgresqlRowMetadata(Collections.emptyList()), this.columns, new ByteBuf[0]);
+        PostgresqlRow row = new PostgresqlRow(MockContext.builder().codecs(codecs).build(), this.metadata, this.columns, new ByteBuf[0]);
         row.release();
 
         assertThatIllegalStateException().isThrownBy(() -> row.get("test-name-2", Object.class))
@@ -93,7 +100,7 @@ final class PostgresqlRowUnitTests {
             .decoding(TEST.buffer(4).writeInt(300), 400, FORMAT_TEXT, Object.class, value)
             .build();
 
-        assertThat(new PostgresqlRow(MockContext.builder().codecs(codecs).build(), new PostgresqlRowMetadata(Collections.emptyList()), this.columns, this.data).get("test-name-2")).isSameAs(value);
+        assertThat(new PostgresqlRow(MockContext.builder().codecs(codecs).build(), this.metadata, this.columns, this.data).get("test-name-2")).isSameAs(value);
     }
 
     @Test
@@ -104,12 +111,12 @@ final class PostgresqlRowUnitTests {
             .decoding(TEST.buffer(4).writeInt(300), 400, FORMAT_TEXT, Object.class, value)
             .build();
 
-        assertThat(new PostgresqlRow(MockContext.builder().codecs(codecs).build(), new PostgresqlRowMetadata(Collections.emptyList()), this.columns, this.data).get(1, Object.class)).isSameAs(value);
+        assertThat(new PostgresqlRow(MockContext.builder().codecs(codecs).build(), this.metadata, this.columns, this.data).get(1, Object.class)).isSameAs(value);
     }
 
     @Test
     void getInvalidIndex() {
-        assertThatExceptionOfType(IndexOutOfBoundsException.class).isThrownBy(() -> new PostgresqlRow(MockContext.empty(), new PostgresqlRowMetadata(Collections.emptyList()), this.columns,
+        assertThatExceptionOfType(IndexOutOfBoundsException.class).isThrownBy(() -> new PostgresqlRow(MockContext.empty(), this.metadata, this.columns,
                 new ByteBuf[0]).get(3,
                 Object.class))
             .withMessage("Column index 3 is larger than the number of columns 3");
@@ -117,7 +124,7 @@ final class PostgresqlRowUnitTests {
 
     @Test
     void getInvalidName() {
-        assertThatExceptionOfType(NoSuchElementException.class).isThrownBy(() -> new PostgresqlRow(MockContext.empty(), new PostgresqlRowMetadata(Collections.emptyList()), this.columns,
+        assertThatExceptionOfType(NoSuchElementException.class).isThrownBy(() -> new PostgresqlRow(MockContext.empty(), this.metadata, this.columns,
                 new ByteBuf[0]).get("test-name" +
                 "-4", Object.class))
             .withMessageMatching("Column name 'test-name-4' does not exist in column names \\[test-name-[\\d], test-name-[\\d], test-name-[\\d]\\]");
@@ -131,20 +138,20 @@ final class PostgresqlRowUnitTests {
             .decoding(TEST.buffer(4).writeInt(300), 400, FORMAT_TEXT, Object.class, value)
             .build();
 
-        assertThat(new PostgresqlRow(MockContext.builder().codecs(codecs).build(), new PostgresqlRowMetadata(Collections.emptyList()), this.columns, this.data).get("test-name-2", Object.class)).isSameAs(value);
-        assertThat(new PostgresqlRow(MockContext.builder().codecs(codecs).build(), new PostgresqlRowMetadata(Collections.emptyList()), this.columns, this.data).get("tEsT-nAme-2", Object.class)).isSameAs(value);
+        assertThat(new PostgresqlRow(MockContext.builder().codecs(codecs).build(), this.metadata, this.columns, this.data).get("test-name-2", Object.class)).isSameAs(value);
+        assertThat(new PostgresqlRow(MockContext.builder().codecs(codecs).build(), this.metadata, this.columns, this.data).get("tEsT-nAme-2", Object.class)).isSameAs(value);
     }
 
     @Test
     void getNoIdentifier() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRow(MockContext.empty(), new PostgresqlRowMetadata(Collections.emptyList()), this.columns, new ByteBuf[0]).get(null,
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRow(MockContext.empty(), this.metadata, this.columns, new ByteBuf[0]).get(null,
             Object.class))
             .withMessage("name must not be null");
     }
 
     @Test
     void getNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRow(MockContext.empty(), new PostgresqlRowMetadata(Collections.emptyList()), this.columns, new ByteBuf[0]).get("", null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new PostgresqlRow(MockContext.empty(), this.metadata, this.columns, new ByteBuf[0]).get("", null))
             .withMessage("type must not be null");
     }
 
@@ -154,7 +161,7 @@ final class PostgresqlRowUnitTests {
             .decoding(null, 400, FORMAT_TEXT, Object.class, null)
             .build();
 
-        assertThat(new PostgresqlRow(MockContext.builder().codecs(codecs).build(), new PostgresqlRowMetadata(Collections.emptyList()), this.columns, this.data).get("test-name-3", Object.class)).isNull();
+        assertThat(new PostgresqlRow(MockContext.builder().codecs(codecs).build(), this.metadata, this.columns, this.data).get("test-name-3", Object.class)).isNull();
     }
 
     @Test
