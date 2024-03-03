@@ -26,9 +26,11 @@ import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -42,14 +44,19 @@ final class PostgresqlRowMetadata extends AbstractCollection<String> implements 
 
     private final Map<String, PostgresqlColumnMetadata> nameKeyedColumns;
 
+    private final Map<String, Integer> columnNameIndexMap;
+
     PostgresqlRowMetadata(List<PostgresqlColumnMetadata> columnMetadatas) {
         this.columnMetadatas = Assert.requireNonNull(columnMetadatas, "columnMetadatas must not be null");
         this.nameKeyedColumns = new LinkedHashMap<>();
+        this.columnNameIndexMap = new HashMap<>(columnMetadatas.size(), 1);
 
+        int i = 0;
         for (PostgresqlColumnMetadata columnMetadata : columnMetadatas) {
             if (!this.nameKeyedColumns.containsKey(columnMetadata.getName())) {
                 this.nameKeyedColumns.put(columnMetadata.getName(), columnMetadata);
             }
+            columnNameIndexMap.putIfAbsent(columnMetadata.getName().toLowerCase(Locale.ROOT), i++);
         }
     }
 
@@ -181,6 +188,10 @@ final class PostgresqlRowMetadata extends AbstractCollection<String> implements 
         }
 
         return column;
+    }
+
+    Map<String, Integer> getColumnNameIndexMap() {
+        return this.columnNameIndexMap;
     }
 
     static PostgresqlRowMetadata toRowMetadata(Codecs codecs, RowDescription rowDescription) {
