@@ -48,15 +48,13 @@ final class PostgresqlRowMetadata extends AbstractCollection<String> implements 
 
     PostgresqlRowMetadata(List<PostgresqlColumnMetadata> columnMetadatas) {
         this.columnMetadatas = Assert.requireNonNull(columnMetadatas, "columnMetadatas must not be null");
-        this.nameKeyedColumns = new LinkedHashMap<>();
+        this.nameKeyedColumns = new LinkedHashMap<>(columnMetadatas.size(), 1);
         this.columnNameIndexMap = new HashMap<>(columnMetadatas.size(), 1);
 
         int i = 0;
         for (PostgresqlColumnMetadata columnMetadata : columnMetadatas) {
-            if (!this.nameKeyedColumns.containsKey(columnMetadata.getName())) {
-                this.nameKeyedColumns.put(columnMetadata.getName(), columnMetadata);
-            }
-            columnNameIndexMap.putIfAbsent(columnMetadata.getName().toLowerCase(Locale.ROOT), i++);
+            this.nameKeyedColumns.putIfAbsent(columnMetadata.getName(), columnMetadata);
+            this.columnNameIndexMap.putIfAbsent(columnMetadata.getName().toLowerCase(Locale.ROOT), i++);
         }
     }
 
