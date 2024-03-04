@@ -59,9 +59,7 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
         this.data = Assert.requireNonNull(data, "data must not be null");
 
         if (metadata instanceof PostgresqlRowMetadata) {
-            this.columnNameIndexCacheMap = Assert.requireNonNull(
-                ((PostgresqlRowMetadata) metadata).getColumnNameIndexMap(),
-                "columnNameIndexCacheMap must not be null");
+            this.columnNameIndexCacheMap = ((PostgresqlRowMetadata) metadata).getColumnNameIndexMap();
         } else {
             this.columnNameIndexCacheMap = createColumnNameIndexMap(this.fields);
         }
