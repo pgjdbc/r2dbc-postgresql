@@ -1,10 +1,9 @@
 package io.r2dbc.postgresql.authentication;
 
 import com.ongres.scram.client.ScramClient;
-import com.ongres.scram.client.ScramSession;
-import com.ongres.scram.common.exception.ScramInvalidServerSignatureException;
-import com.ongres.scram.common.exception.ScramParseException;
-import com.ongres.scram.common.exception.ScramServerErrorException;
+import com.ongres.scram.common.StringPreparation;
+import com.ongres.scram.common.exception.ScramException;
+
 import io.r2dbc.postgresql.message.backend.AuthenticationMessage;
 import io.r2dbc.postgresql.message.backend.AuthenticationSASL;
 import io.r2dbc.postgresql.message.backend.AuthenticationSASLContinue;
@@ -17,18 +16,13 @@ import io.r2dbc.postgresql.util.ByteBufferUtils;
 import reactor.core.Exceptions;
 import reactor.util.annotation.Nullable;
 
-import static com.ongres.scram.client.ScramClient.ChannelBinding.NO;
-import static com.ongres.scram.common.stringprep.StringPreparations.NO_PREPARATION;
-
 public class SASLAuthenticationHandler implements AuthenticationHandler {
 
     private final CharSequence password;
 
     private final String username;
 
-    private ScramSession.ClientFinalProcessor clientFinalProcessor;
-
-    private ScramSession scramSession;
+    private ScramClient scramClient;
 
     /**
      * Create a new handler.
@@ -73,25 +67,22 @@ public class SASLAuthenticationHandler implements AuthenticationHandler {
     }
 
     private FrontendMessage handleAuthenticationSASL(AuthenticationSASL message) {
-        ScramClient scramClient = ScramClient
-            .channelBinding(NO)
-            .stringPreparation(NO_PREPARATION)
-            .selectMechanismBasedOnServerAdvertised(message.getAuthenticationMechanisms().toArray(new String[0]))
-            .setup();
+        this.scramClient = ScramClient.builder()
+            .advertisedMechanisms(message.getAuthenticationMechanisms())
+            .username(username) // ignored by the server, use startup message
+            .password(password.toString().toCharArray())
+            .stringPreparation(StringPreparation.POSTGRESQL_PREPARATION)
+            .build();
 
-        this.scramSession = scramClient.scramSession(this.username);
-
-        return new SASLInitialResponse(ByteBufferUtils.encode(this.scramSession.clientFirstMessage()), scramClient.getScramMechanism().getName());
+        return new SASLInitialResponse(ByteBufferUtils.encode(this.scramClient.clientFirstMessage().toString()), scramClient.getScramMechanism().getName());
     }
 
     private FrontendMessage handleAuthenticationSASLContinue(AuthenticationSASLContinue message) {
         try {
-            this.clientFinalProcessor = this.scramSession
-                .receiveServerFirstMessage(ByteBufferUtils.decode(message.getData()))
-                .clientFinalProcessor(this.password.toString());
+            this.scramClient.serverFirstMessage(ByteBufferUtils.decode(message.getData()));
 
-            return new SASLResponse(ByteBufferUtils.encode(clientFinalProcessor.clientFinalMessage()));
-        } catch (ScramParseException e) {
+            return new SASLResponse(ByteBufferUtils.encode(this.scramClient.clientFinalMessage().toString()));
+        } catch (ScramException e) {
             throw Exceptions.propagate(e);
         }
     }
@@ -99,9 +90,9 @@ public class SASLAuthenticationHandler implements AuthenticationHandler {
     @Nullable
     private FrontendMessage handleAuthenticationSASLFinal(AuthenticationSASLFinal message) {
         try {
-            this.clientFinalProcessor.receiveServerFinalMessage(ByteBufferUtils.decode(message.getAdditionalData()));
+            this.scramClient.serverFinalMessage(ByteBufferUtils.decode(message.getAdditionalData()));
             return null;
-        } catch (ScramParseException | ScramInvalidServerSignatureException | ScramServerErrorException e) {
+        } catch (ScramException e) {
             throw Exceptions.propagate(e);
         }
     }
