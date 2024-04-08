@@ -25,6 +25,7 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.ssl.SslHandler;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -148,7 +149,23 @@ public final class ReactorNettyClient implements Client {
         connection.addHandlerLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE - 5, 1, 4, -4, 0));
         this.connection = connection;
         this.byteBufAllocator = connection.outbound().alloc();
-        this.context = new ConnectionContext().withChannelId(connection.channel().toString());
+
+        ConnectionContext connectionContext = new ConnectionContext().withChannelId(connection.channel().toString());
+        SslHandler sslHandler = this.connection.channel().pipeline().get(SslHandler.class);
+
+        if (sslHandler == null) {
+            SSLSessionHandlerAdapter handlerAdapter = this.connection.channel().pipeline().get(SSLSessionHandlerAdapter.class);
+            if (handlerAdapter != null) {
+                sslHandler = handlerAdapter.getSslHandler();
+            }
+        }
+
+        if (sslHandler != null) {
+            SslHandler toUse = sslHandler;
+            connectionContext = connectionContext.withSslSession(() -> toUse.engine().getSession());
+        }
+
+        this.context = connectionContext;
 
         AtomicReference<Throwable> receiveError = new AtomicReference<>();
 

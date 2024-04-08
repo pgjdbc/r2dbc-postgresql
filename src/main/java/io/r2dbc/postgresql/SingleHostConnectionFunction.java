@@ -20,6 +20,7 @@ import io.r2dbc.postgresql.authentication.AuthenticationHandler;
 import io.r2dbc.postgresql.authentication.PasswordAuthenticationHandler;
 import io.r2dbc.postgresql.authentication.SASLAuthenticationHandler;
 import io.r2dbc.postgresql.client.Client;
+import io.r2dbc.postgresql.client.ConnectionContext;
 import io.r2dbc.postgresql.client.ConnectionSettings;
 import io.r2dbc.postgresql.client.PostgresStartupParameterProvider;
 import io.r2dbc.postgresql.client.StartupMessageFlow;
@@ -46,7 +47,7 @@ final class SingleHostConnectionFunction implements ConnectionFunction {
 
         return this.upstreamFunction.connect(endpoint, settings)
             .delayUntil(client -> getCredentials().flatMapMany(credentials -> StartupMessageFlow
-                    .exchange(auth -> getAuthenticationHandler(auth, credentials), client, this.configuration.getDatabase(), credentials.getUsername(),
+                    .exchange(auth -> getAuthenticationHandler(auth, credentials, client.getContext()), client, this.configuration.getDatabase(), credentials.getUsername(),
                         getParameterProvider(this.configuration, settings)))
                 .handle(ExceptionFactory.INSTANCE::handleErrorResponse));
     }
@@ -55,13 +56,13 @@ final class SingleHostConnectionFunction implements ConnectionFunction {
         return new PostgresStartupParameterProvider(configuration.getApplicationName(), configuration.getTimeZone(), settings);
     }
 
-    protected AuthenticationHandler getAuthenticationHandler(AuthenticationMessage message, UsernameAndPassword usernameAndPassword) {
+    protected AuthenticationHandler getAuthenticationHandler(AuthenticationMessage message, UsernameAndPassword usernameAndPassword, ConnectionContext context) {
         if (PasswordAuthenticationHandler.supports(message)) {
             CharSequence password = Assert.requireNonNull(usernameAndPassword.getPassword(), "Password must not be null");
             return new PasswordAuthenticationHandler(password, usernameAndPassword.getUsername());
         } else if (SASLAuthenticationHandler.supports(message)) {
             CharSequence password = Assert.requireNonNull(usernameAndPassword.getPassword(), "Password must not be null");
-            return new SASLAuthenticationHandler(password, usernameAndPassword.getUsername());
+            return new SASLAuthenticationHandler(password, usernameAndPassword.getUsername(), context);
         } else {
             throw new IllegalStateException(String.format("Unable to provide AuthenticationHandler capable of handling %s", message));
         }

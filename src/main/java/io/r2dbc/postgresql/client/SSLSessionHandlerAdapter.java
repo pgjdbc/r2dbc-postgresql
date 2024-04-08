@@ -45,7 +45,7 @@ final class SSLSessionHandlerAdapter extends AbstractPostgresSSLHandlerAdapter {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        if (negotiating) {
+        if (this.negotiating) {
             Mono.from(SSLRequest.INSTANCE.encode(this.alloc)).subscribe(ctx::writeAndFlush);
         }
         super.channelActive(ctx);
@@ -53,7 +53,7 @@ final class SSLSessionHandlerAdapter extends AbstractPostgresSSLHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        if (negotiating) {
+        if (this.negotiating) {
             // If we receive channel inactive before negotiated, then the inbound has closed early.
             PostgresqlSslException e = new PostgresqlSslException("Connection closed during SSL negotiation");
             completeHandshakeExceptionally(e);
@@ -63,7 +63,7 @@ final class SSLSessionHandlerAdapter extends AbstractPostgresSSLHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if (negotiating) {
+        if (this.negotiating) {
             ByteBuf buf = (ByteBuf) msg;
             char response = (char) buf.readByte();
             try {
@@ -79,7 +79,7 @@ final class SSLSessionHandlerAdapter extends AbstractPostgresSSLHandlerAdapter {
                 }
             } finally {
                 buf.release();
-                negotiating = false;
+                this.negotiating = false;
             }
         } else {
             super.channelRead(ctx, msg);

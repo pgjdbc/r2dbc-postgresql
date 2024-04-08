@@ -452,6 +452,21 @@ final class ReactorNettyClientIntegrationTests {
         }
 
         @Test
+        void exchangeSslWitScram() {
+            client(
+                c -> c
+                    .sslRootCert(SERVER.getServerCrt())
+                    .username("test-ssl-scram")
+                    .password("test-ssl-scram"),
+                c -> c.map(client -> client.createStatement("SELECT 10")
+                    .execute()
+                    .flatMap(r -> r.map((row, meta) -> row.get(0, Integer.class)))
+                    .as(StepVerifier::create)
+                    .expectNext(10)
+                    .verifyComplete()));
+        }
+
+        @Test
         void exchangeSslWithPassword() {
             client(
                 c -> c

@@ -3,7 +3,8 @@ package io.r2dbc.postgresql.authentication;
 import com.ongres.scram.client.ScramClient;
 import com.ongres.scram.common.StringPreparation;
 import com.ongres.scram.common.exception.ScramException;
-
+import com.ongres.scram.common.util.TlsServerEndpoint;
+import io.r2dbc.postgresql.client.ConnectionContext;
 import io.r2dbc.postgresql.message.backend.AuthenticationMessage;
 import io.r2dbc.postgresql.message.backend.AuthenticationSASL;
 import io.r2dbc.postgresql.message.backend.AuthenticationSASLContinue;
@@ -14,13 +15,25 @@ import io.r2dbc.postgresql.message.frontend.SASLResponse;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufferUtils;
 import reactor.core.Exceptions;
+import reactor.util.Logger;
+import reactor.util.Loggers;
 import reactor.util.annotation.Nullable;
 
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLSession;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+
 public class SASLAuthenticationHandler implements AuthenticationHandler {
+
+    private static final Logger LOG = Loggers.getLogger(SASLAuthenticationHandler.class);
 
     private final CharSequence password;
 
     private final String username;
+
+    private final ConnectionContext context;
 
     private ScramClient scramClient;
 
@@ -29,11 +42,13 @@ public class SASLAuthenticationHandler implements AuthenticationHandler {
      *
      * @param password the password to use for authentication
      * @param username the username to use for authentication
+     * @param context  the connection context
      * @throws IllegalArgumentException if {@code password} or {@code user} is {@code null}
      */
-    public SASLAuthenticationHandler(CharSequence password, String username) {
+    public SASLAuthenticationHandler(CharSequence password, String username, ConnectionContext context) {
         this.password = Assert.requireNonNull(password, "password must not be null");
         this.username = Assert.requireNonNull(username, "username must not be null");
+        this.context = Assert.requireNonNull(context, "context must not be null");
     }
 
     /**
@@ -67,14 +82,44 @@ public class SASLAuthenticationHandler implements AuthenticationHandler {
     }
 
     private FrontendMessage handleAuthenticationSASL(AuthenticationSASL message) {
-        this.scramClient = ScramClient.builder()
-            .advertisedMechanisms(message.getAuthenticationMechanisms())
-            .username(username) // ignored by the server, use startup message
-            .password(password.toString().toCharArray())
-            .stringPreparation(StringPreparation.POSTGRESQL_PREPARATION)
-            .build();
 
-        return new SASLInitialResponse(ByteBufferUtils.encode(this.scramClient.clientFirstMessage().toString()), scramClient.getScramMechanism().getName());
+        char[] password = new char[this.password.length()];
+        for (int i = 0; i < password.length; i++) {
+            password[i] = this.password.charAt(i);
+        }
+
+        ScramClient.FinalBuildStage builder = ScramClient.builder()
+            .advertisedMechanisms(message.getAuthenticationMechanisms())
+            .username(this.username) // ignored by the server, use startup message
+            .password(password)
+            .stringPreparation(StringPreparation.POSTGRESQL_PREPARATION);
+
+        SSLSession sslSession = this.context.getSslSession();
+
+        if (sslSession != null && sslSession.isValid()) {
+            builder.channelBinding(TlsServerEndpoint.TLS_SERVER_END_POINT, extractSslEndpoint(sslSession));
+        }
+
+        this.scramClient = builder.build();
+
+        return new SASLInitialResponse(ByteBufferUtils.encode(this.scramClient.clientFirstMessage().toString()), this.scramClient.getScramMechanism().getName());
+    }
+
+    private static byte[] extractSslEndpoint(SSLSession sslSession) {
+        try {
+            Certificate[] certificates = sslSession.getPeerCertificates();
+            if (certificates != null && certificates.length > 0) {
+                Certificate peerCert = certificates[0]; // First certificate is the peer's certificate
+                if (peerCert instanceof X509Certificate) {
+                    X509Certificate cert = (X509Certificate) peerCert;
+                    return TlsServerEndpoint.getChannelBindingData(cert);
+
+                }
+            }
+        } catch (CertificateException | SSLException e) {
+            LOG.debug("Cannot extract X509Certificate from SSL session", e);
+        }
+        return new byte[0];
     }
 
     private FrontendMessage handleAuthenticationSASLContinue(AuthenticationSASLContinue message) {
