@@ -186,8 +186,10 @@ final class BackendMessageDecoderUnitTests {
             .writeShort(1)
             .writeInt(4)
             .writeInt(100));
-        assertThat(message).isEqualTo(new DataRow(TEST.buffer(4).writeInt(100)));
+        DataRow expectedMessage = new DataRow(TEST.buffer(4).writeInt(100));
+        assertThat(message).isEqualTo(expectedMessage);
         message.release();
+        expectedMessage.release();
     }
 
     @Test
