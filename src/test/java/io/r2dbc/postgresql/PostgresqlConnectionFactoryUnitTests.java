@@ -29,14 +29,13 @@ import io.r2dbc.postgresql.message.frontend.SASLInitialResponse;
 import io.r2dbc.postgresql.message.frontend.StartupMessage;
 import io.r2dbc.postgresql.util.ByteBufferUtils;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
+
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.Collections;
 
-import static com.ongres.scram.client.ScramClient.ChannelBinding.NO;
-import static com.ongres.scram.common.stringprep.StringPreparations.NO_PREPARATION;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -82,17 +81,17 @@ final class PostgresqlConnectionFactoryUnitTests {
 
     @Test
     void createAuthenticationSASL() {
-        ScramClient scramClient = ScramClient
-            .channelBinding(NO)
-            .stringPreparation(NO_PREPARATION)
-            .selectMechanismBasedOnServerAdvertised("SCRAM-SHA-256")
-            .setup();
+        ScramClient scramClient = ScramClient.builder()
+            .advertisedMechanisms(Collections.singletonList("SCRAM-SHA-256"))
+            .username("test-username")
+            .password("test-password".toCharArray())
+            .build();
 
         // @formatter:off
         Client client = TestClient.builder()
             .window()
                 .expectRequest(new StartupMessage( "test-database", "test-username", new TestStartupParameterProvider())).thenRespond(new AuthenticationSASL(Collections.singletonList("SCRAM-SHA-256")))
-                .expectRequest(new SASLInitialResponse(ByteBufferUtils.encode(scramClient.scramSession("test-username").clientFirstMessage()), "SCRAM-SHA-256")).thenRespond(AuthenticationOk.INSTANCE)
+                .expectRequest(new SASLInitialResponse(ByteBufferUtils.encode(scramClient.clientFirstMessage().toString()), "SCRAM-SHA-256")).thenRespond(AuthenticationOk.INSTANCE)
                 .done()
             .build();
         // @formatter:on
