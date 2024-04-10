@@ -104,12 +104,12 @@ public class BuiltinDynamicCodecs implements CodecRegistrar {
         return statement.execute()
             .flatMap(it -> it.map((row, rowMetadata) -> {
 
-                    int oid = PostgresqlObjectId.toInt(row.get("oid", Long.class));
-                    int typarray = rowMetadata.contains("typarray") ? PostgresqlObjectId.toInt(row.get("typarray", Long.class)) : PostgresTypes.NO_SUCH_TYPE;
                     String typname = row.get("typname", String.class);
 
                     BuiltinCodec lookup = BuiltinCodec.lookup(typname);
                     if (lookup.isSupported()) {
+                        int oid = PostgresqlObjectId.toInt(row.get("oid", Long.class));
+                        int typarray = rowMetadata.contains("typarray") ? PostgresqlObjectId.toInt(row.get("typarray", Long.class)) : PostgresTypes.NO_SUCH_TYPE;
                         lookup.createCodec(byteBufAllocator, oid, typarray).forEach(registry::addLast);
                     }
 
