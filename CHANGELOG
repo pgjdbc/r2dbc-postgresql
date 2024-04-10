@@ -1,6 +1,14 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+1.0.5.RELEASE
+-----------------------------------------
+* Do not require typarray column when auto-registering extensions #632
+* Set SNI on SSL connections #634
+* Performance issue with PostgresqlRow.getColumn(String name) when select many columns #636
+* Resolve a LEAK warning in unit test #642
+
+
 1.0.4.RELEASE
 -----------------------------------------
 * Do not require `typarray` column when auto-registering extensions #621
