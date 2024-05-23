@@ -108,6 +108,8 @@ public final class SSLConfig {
                 return false;
             }
         }
+        if (input.endsWith("."))
+            return false;
         return true;
     }
 
