@@ -19,4 +19,9 @@ EOF
 fi
 sed -i 's/wal_level = hot_standby/wal_level = replica/g' "${PGDATA}"/postgresql.conf
 echo "ready to run"
-exec gosu postgres postgres
+# gosu isn't installed in alpine: https://github.com/docker-library/postgres/blob/master/Dockerfile-alpine.template
+if [ -x "$(type gosu >/dev/null 2>&1)" ]; then
+  exec gosu postgres postgres
+else
+  exec su-exec postgres postgres
+fi

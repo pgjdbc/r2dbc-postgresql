@@ -25,13 +25,14 @@ import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
  */
 public final class PgBouncer implements AutoCloseable {
 
-    public static String IMAGE_NAME = "edoburu/pgbouncer:1.9.0";
+    public static String IMAGE_NAME = "edoburu/pgbouncer:1.22.0-p0";
 
     private final GenericContainer<?> container;
 
     public PgBouncer(PostgresqlServerExtension server, String poolMode) {
         this.container = new GenericContainer<>(IMAGE_NAME)
             .withExposedPorts(PostgreSQLContainer.POSTGRESQL_PORT)
+            .withEnv("AUTH_TYPE", "scram-sha-256")
             .withEnv("POOL_MODE", poolMode)
             .withEnv("SERVER_RESET_QUERY_ALWAYS", "1")
             .withEnv("DB_USER", server.getUsername())

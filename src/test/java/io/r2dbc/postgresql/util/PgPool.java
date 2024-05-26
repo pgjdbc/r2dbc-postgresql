@@ -28,7 +28,7 @@ public final class PgPool implements AutoCloseable {
     private final GenericContainer<?> container;
 
     public PgPool(PostgresqlServerExtension server) {
-        this.container = new GenericContainer<>("bitnami/pgpool:4.1.0")
+        this.container = new GenericContainer<>("bitnami/pgpool:4.5.2")
             .withExposedPorts(PostgreSQLContainer.POSTGRESQL_PORT)
             .withEnv("PGPOOL_BACKEND_NODES", String.format("0:%s:%s", server.getPostgres().getNetworkAlias(), PostgreSQLContainer.POSTGRESQL_PORT))
             .withEnv("PGPOOL_SR_CHECK_USER", server.getUsername())

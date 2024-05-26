@@ -23,6 +23,7 @@ import io.r2dbc.postgresql.message.Format;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -52,6 +53,8 @@ final class HStoreCodecUnitTests {
     @Test
     void decodeAsText() {
         ByteBuf buffer = TEST.buffer();
+        // The test expects the JVM running with JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8
+        assertThat(Charset.defaultCharset()).isEqualTo(StandardCharsets.UTF_8);
         buffer.writeCharSequence("\"b\"=>\"\\\"2.2\", \"a\\\"\"=>\"1\", \"c\"=>NULL, \"d\"=>\"Zoë\", \"é\"=>\"120°\"", Charset.defaultCharset());
         Map<String, String> res = new HStoreCodec(TEST, dataType).decode(buffer, dataType, Format.FORMAT_TEXT, Map.class);
         Map<String, String> expect = new HashMap<>();
