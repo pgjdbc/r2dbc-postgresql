@@ -36,6 +36,7 @@ import reactor.test.StepVerifier;
 
 import java.util.Collections;
 
+import static com.ongres.scram.common.StringPreparation.POSTGRESQL_PREPARATION;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -85,6 +86,7 @@ final class PostgresqlConnectionFactoryUnitTests {
             .advertisedMechanisms(Collections.singletonList("SCRAM-SHA-256"))
             .username("test-username")
             .password("test-password".toCharArray())
+            .stringPreparation(POSTGRESQL_PREPARATION)
             .build();
 
         // @formatter:off
@@ -103,6 +105,12 @@ final class PostgresqlConnectionFactoryUnitTests {
             .username("test-username")
             .password("test-password")
             .build();
+
+        new PostgresqlConnectionFactory(testClientFactory(client, configuration), configuration)
+            .create()
+            .as(StepVerifier::create)
+            .expectNextCount(1)
+            .verifyComplete();
     }
 
     @Test
