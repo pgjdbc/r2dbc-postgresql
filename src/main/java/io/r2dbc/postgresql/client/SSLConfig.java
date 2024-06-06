@@ -108,7 +108,7 @@ public final class SSLConfig {
                 return false;
             }
         }
-        return true;
+        return !input.endsWith(".");
     }
 
     //
