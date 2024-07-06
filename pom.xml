@@ -32,26 +32,39 @@
     <url>https://github.com/pgjdbc/r2dbc-postgresql</url>
 
     <properties>
-        <assertj.version>3.25.3</assertj.version>
-        <awaitility.version>4.2.0</awaitility.version>
-        <hikari-cp.version>4.0.3</hikari-cp.version>
-        <java.version>1.8</java.version>
+        <assertj.version>3.26.0</assertj.version>
+        <awaitility.version>4.2.1</awaitility.version>
+        <hikari-cp.version>5.1.0</hikari-cp.version>
+        <maven.compiler.release>8</maven.compiler.release>
         <jsr305.version>3.0.2</jsr305.version>
-        <junit.version>5.10.2</junit.version>
-        <jmh.version>1.35</jmh.version>
+        <junit.version>5.10.3</junit.version>
+        <jmh.version>1.37</jmh.version>
         <mbr.version>0.3.0.RELEASE</mbr.version>
-        <logback.version>1.3.14</logback.version>
-        <mockito.version>4.11.0</mockito.version>
-        <netty.version>4.1.104.Final</netty.version>
-        <postgresql.version>42.7.2</postgresql.version>
+        <mockito.version>5.12.0</mockito.version>
+        <netty.version>4.1.111.Final</netty.version>
+        <postgresql.version>42.7.3</postgresql.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <r2dbc-spi.version>1.0.0.RELEASE</r2dbc-spi.version>
-        <reactor.version>2022.0.16</reactor.version>
-        <scram-client.version>3.0</scram-client.version>
-        <spring-framework.version>5.3.32</spring-framework.version>
-        <testcontainers.version>1.19.5</testcontainers.version>
+        <reactor.version>2023.0.7</reactor.version>
+        <scram-client.version>3.1</scram-client.version>
+        <slf4j.version>2.0.13</slf4j.version>
+        <spring-framework.version>6.1.10</spring-framework.version>
+        <testcontainers.version>1.19.8</testcontainers.version>
         <jts-core.version>1.19.0</jts-core.version>
+        <build-helper-maven-plugin.version>3.6.0</build-helper-maven-plugin.version>
+        <exec-maven-plugin.version>3.3.0</exec-maven-plugin.version>
+        <flatten-maven-plugin.version>1.6.0</flatten-maven-plugin.version>
+        <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
+        <maven-deploy-plugin.version>3.1.2</maven-deploy-plugin.version>
+        <maven-enforcer-plugin.version>3.5.0</maven-enforcer-plugin.version>
+        <maven-failsafe-plugin.version>3.3.0</maven-failsafe-plugin.version>
+        <maven-gpg-plugin.version>3.2.4</maven-gpg-plugin.version>
+        <maven-jar-plugin.version>3.4.2</maven-jar-plugin.version>
+        <maven-javadoc-plugin.version>3.7.0</maven-javadoc-plugin.version>
+        <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
+        <maven-surefire-plugin.version>3.3.0</maven-surefire-plugin.version>
+        <nexus-staging-maven-plugin.version>1.6.13</nexus-staging-maven-plugin.version>
     </properties>
 
     <licenses>
@@ -116,6 +129,13 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-bom</artifactId>
+                <version>${slf4j.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -152,7 +172,13 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport-native-kqueue</artifactId>
-            <classifier>osx-x86_64</classifier>
+            <classifier>osx-aarch_64</classifier>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-resolver-dns-native-macos</artifactId>
+          <classifier>osx-aarch_64</classifier>
             <optional>true</optional>
         </dependency>
         <dependency>
@@ -194,17 +220,7 @@
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-params</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
+            <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -239,13 +255,33 @@
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>junit</groupId>
+                    <artifactId>junit</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
             <artifactId>postgresql</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>${logback.version}</version>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-nop</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -261,7 +297,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.12.1</version>
+                <version>${maven-compiler-plugin.version}</version>
                 <configuration>
                     <compilerArgs>
                         <arg>-Werror</arg>
@@ -270,16 +306,15 @@
                         <arg>-Xlint:-options</arg>
                         <arg>-Xlint:-processing</arg>
                         <arg>-Xlint:-serial</arg>
+                        <arg>-Xlint:-classfile</arg><!-- Needed for old JDK 8: "Cannot find annotation method 'since()' in type 'java.lang.Deprecated'" -->
                     </compilerArgs>
                     <showWarnings>true</showWarnings>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>${maven-jar-plugin.version}</version>
                 <configuration>
                     <archive>
                         <manifest>
@@ -296,12 +331,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
-                <version>3.1.1</version>
+                <version>${maven-deploy-plugin.version}</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.4.1</version>
+                <version>${maven-enforcer-plugin.version}</version>
                 <executions>
                     <execution>
                         <id>enforce-no-snapshots</id>
@@ -322,7 +357,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.6.3</version>
+                <version>${maven-javadoc-plugin.version}</version>
                 <configuration>
                     <excludePackageNames>
                         io.r2dbc.postgresql.authentication,io.r2dbc.postgresql.client,io.r2dbc.postgresql.message,io.r2dbc.postgresql.util
@@ -345,7 +380,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>${maven-source-plugin.version}</version>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
@@ -358,7 +393,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.3</version>
+                <version>${maven-surefire-plugin.version}</version>
                 <configuration>
                     <runOrder>random</runOrder>
                     <excludes>
@@ -367,6 +402,9 @@
                     <includes>
                         <include>**/*Tests.java</include>
                     </includes>
+                    <environmentVariables>
+                        <JAVA_TOOL_OPTIONS>-Dfile.encoding=${project.build.sourceEncoding}</JAVA_TOOL_OPTIONS>
+                    </environmentVariables>
                     <systemPropertyVariables>
                         <io.netty.leakDetectionLevel>paranoid</io.netty.leakDetectionLevel>
                     </systemPropertyVariables>
@@ -375,7 +413,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.2.3</version>
+                <version>${maven-failsafe-plugin.version}</version>
                 <executions>
                     <execution>
                         <goals>
@@ -390,6 +428,9 @@
                         <include>**/*TestKit.java</include>
                         <include>**/*IntegrationTests.java</include>
                     </includes>
+                    <environmentVariables>
+                        <JAVA_TOOL_OPTIONS>-Dfile.encoding=${project.build.sourceEncoding}</JAVA_TOOL_OPTIONS>
+                    </environmentVariables>
                     <systemPropertyVariables>
                         <io.netty.leakDetectionLevel>paranoid</io.netty.leakDetectionLevel>
                     </systemPropertyVariables>
@@ -398,7 +439,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>
-                <version>1.5.0</version>
+                <version>${flatten-maven-plugin.version}</version>
                 <executions>
                     <execution>
                         <id>flatten</id>
@@ -472,7 +513,7 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>build-helper-maven-plugin</artifactId>
-                        <version>3.5.0</version>
+                        <version>${build-helper-maven-plugin.version}</version>
                         <executions>
                             <execution>
                                 <id>add-source</id>
@@ -506,7 +547,7 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>exec-maven-plugin</artifactId>
-                        <version>3.1.1</version>
+                        <version>${exec-maven-plugin.version}</version>
                         <executions>
                             <execution>
                                 <id>run-benchmarks</id>
@@ -558,7 +599,7 @@
                         <plugin>
                             <groupId>org.apache.maven.plugins</groupId>
                             <artifactId>maven-gpg-plugin</artifactId>
-                            <version>3.1.0</version>
+                            <version>${maven-gpg-plugin.version}</version>
                             <executions>
                                 <execution>
                                     <id>sign-artifacts</id>
@@ -581,7 +622,7 @@
                         <plugin>
                             <groupId>org.sonatype.plugins</groupId>
                             <artifactId>nexus-staging-maven-plugin</artifactId>
-                            <version>1.6.13</version>
+                            <version>${nexus-staging-maven-plugin.version}</version>
                             <extensions>true</extensions>
                             <configuration>
                                 <serverId>sonatype</serverId>
