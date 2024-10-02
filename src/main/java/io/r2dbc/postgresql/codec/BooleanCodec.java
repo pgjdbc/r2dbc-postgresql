@@ -26,10 +26,15 @@ import reactor.util.annotation.Nullable;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.BOOL;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.BOOL_ARRAY;
 
-final class BooleanCodec extends BuiltinCodecSupport<Boolean> {
+final class BooleanCodec extends BuiltinCodecSupport<Boolean> implements PrimitiveWrapperCodecProvider<Boolean> {
 
     BooleanCodec(ByteBufAllocator byteBufAllocator) {
         super(Boolean.class, byteBufAllocator, BOOL, BOOL_ARRAY, it -> it ? "t" : "f");
+    }
+
+    @Override
+    public PrimitiveCodec<Boolean> getPrimitiveCodec() {
+        return new PrimitiveCodec<>(Boolean.TYPE, Boolean.class, this);
     }
 
     @Override

@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
- * Unit tests for {@link CharacterCodec}.
+ * Unit tests for {@link CharacterCodecProvider}.
  */
 final class CharacterCodecUnitTests {
 
@@ -40,24 +40,24 @@ final class CharacterCodecUnitTests {
 
     @Test
     void constructorNoByteBufAllocator() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new CharacterCodec(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new CharacterCodecProvider(null))
             .withMessage("byteBufAllocator must not be null");
     }
 
     @Test
     void decode() {
-        assertThat(new CharacterCodec(TEST).decode(encode(TEST, "A"), dataType, FORMAT_TEXT, Character.class))
+        assertThat(new CharacterCodecProvider(TEST).decode(encode(TEST, "A"), dataType, FORMAT_TEXT, Character.class))
             .isEqualTo('A');
     }
 
     @Test
     void decodeNoByteBuf() {
-        assertThat(new CharacterCodec(TEST).decode(null, dataType, FORMAT_TEXT, Character.class)).isNull();
+        assertThat(new CharacterCodecProvider(TEST).decode(null, dataType, FORMAT_TEXT, Character.class)).isNull();
     }
 
     @Test
     void doCanDecode() {
-        CharacterCodec codec = new CharacterCodec(TEST);
+        CharacterCodecProvider codec = new CharacterCodecProvider(TEST);
 
         assertThat(codec.doCanDecode(VARCHAR, FORMAT_BINARY)).isTrue();
         assertThat(codec.doCanDecode(MONEY, FORMAT_TEXT)).isFalse();
@@ -67,19 +67,19 @@ final class CharacterCodecUnitTests {
 
     @Test
     void doCanDecodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new CharacterCodec(TEST).doCanDecode(VARCHAR, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new CharacterCodecProvider(TEST).doCanDecode(VARCHAR, null))
             .withMessage("format must not be null");
     }
 
     @Test
     void doCanDecodeNoType() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new CharacterCodec(TEST).doCanDecode(null, FORMAT_TEXT))
+        assertThatIllegalArgumentException().isThrownBy(() -> new CharacterCodecProvider(TEST).doCanDecode(null, FORMAT_TEXT))
             .withMessage("type must not be null");
     }
 
     @Test
     void doEncode() {
-        assertThat(new CharacterCodec(TEST).doEncode('A'))
+        assertThat(new CharacterCodecProvider(TEST).doEncode('A'))
             .hasFormat(FORMAT_TEXT)
             .hasType(VARCHAR.getObjectId())
             .hasValue(encode(TEST, "A"));
@@ -87,13 +87,13 @@ final class CharacterCodecUnitTests {
 
     @Test
     void doEncodeNoValue() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new CharacterCodec(TEST).doEncode(null))
+        assertThatIllegalArgumentException().isThrownBy(() -> new CharacterCodecProvider(TEST).doEncode(null))
             .withMessage("value must not be null");
     }
 
     @Test
     void encodeNull() {
-        assertThat(new CharacterCodec(TEST).encodeNull())
+        assertThat(new CharacterCodecProvider(TEST).encodeNull())
             .isEqualTo(new EncodedParameter(FORMAT_TEXT, VARCHAR.getObjectId(), NULL_VALUE));
     }
 
