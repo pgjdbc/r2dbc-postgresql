@@ -111,7 +111,7 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
             new BigDecimalCodec(byteBufAllocator),
             new BigIntegerCodec(byteBufAllocator),
             new BooleanCodec(byteBufAllocator),
-            new CharacterCodec(byteBufAllocator),
+            new CharacterCodecProvider(byteBufAllocator),
             new DoubleCodec(byteBufAllocator),
             new FloatCodec(byteBufAllocator),
             new InetAddressCodec(byteBufAllocator),
@@ -159,7 +159,7 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
             new PolygonCodec(byteBufAllocator)
         ));
 
-        List<Codec<?>> defaultArrayCodecs = new ArrayList<>();
+        List<Codec<?>> additionalCodecs = new ArrayList<>();
 
         for (Codec<?> codec : codecs) {
 
@@ -171,18 +171,22 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
 
                 if (codec instanceof BoxCodec) {
                     // BOX[] uses a ';' as a delimiter (i.e. "{(3.7,4.6),(1.9,2.8);(5,7),(1.5,3.3)}")
-                    defaultArrayCodecs.add(new ArrayCodec(byteBufAllocator, delegate.getArrayDataType(), delegate, componentType, (byte) ';'));
+                    additionalCodecs.add(new ArrayCodec(byteBufAllocator, delegate.getArrayDataType(), delegate, componentType, (byte) ';'));
                 } else if (codec instanceof AbstractNumericCodec) {
-                    defaultArrayCodecs.add(new ConvertingArrayCodec(byteBufAllocator, delegate, componentType, ConvertingArrayCodec.NUMERIC_ARRAY_TYPES));
+                    additionalCodecs.add(new ConvertingArrayCodec(byteBufAllocator, delegate, componentType, ConvertingArrayCodec.NUMERIC_ARRAY_TYPES));
                 } else if (codec instanceof AbstractTemporalCodec) {
-                    defaultArrayCodecs.add(new ConvertingArrayCodec(byteBufAllocator, delegate, componentType, ConvertingArrayCodec.DATE_ARRAY_TYPES));
+                    additionalCodecs.add(new ConvertingArrayCodec(byteBufAllocator, delegate, componentType, ConvertingArrayCodec.DATE_ARRAY_TYPES));
                 } else {
-                    defaultArrayCodecs.add(new ArrayCodec(byteBufAllocator, delegate, componentType));
+                    additionalCodecs.add(new ArrayCodec(byteBufAllocator, delegate, componentType));
                 }
+            }
+
+            if (codec instanceof PrimitiveWrapperCodecProvider<?>) {
+                additionalCodecs.add(((PrimitiveWrapperCodecProvider<?>) codec).getPrimitiveCodec());
             }
         }
 
-        codecs.addAll(defaultArrayCodecs);
+        codecs.addAll(additionalCodecs);
 
         return codecs;
     }

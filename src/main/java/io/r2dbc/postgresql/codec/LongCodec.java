@@ -25,10 +25,15 @@ import reactor.util.annotation.Nullable;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT8;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT8_ARRAY;
 
-final class LongCodec extends AbstractNumericCodec<Long> {
+final class LongCodec extends AbstractNumericCodec<Long> implements PrimitiveWrapperCodecProvider<Long> {
 
     LongCodec(ByteBufAllocator byteBufAllocator) {
         super(Long.class, byteBufAllocator);
+    }
+
+    @Override
+    public PrimitiveCodec<Long> getPrimitiveCodec() {
+        return new PrimitiveCodec<>(Long.TYPE, Long.class, this);
     }
 
     @Override

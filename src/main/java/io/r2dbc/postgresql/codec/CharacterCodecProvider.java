@@ -23,15 +23,20 @@ import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
-final class CharacterCodec extends AbstractCodec<Character> implements ArrayCodecDelegate<Character> {
+final class CharacterCodecProvider extends AbstractCodec<Character> implements ArrayCodecDelegate<Character>, PrimitiveWrapperCodecProvider<Character> {
 
     private final StringCodec delegate;
 
-    CharacterCodec(ByteBufAllocator byteBufAllocator) {
+    CharacterCodecProvider(ByteBufAllocator byteBufAllocator) {
         super(Character.class);
 
         Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
         this.delegate = new StringCodec(byteBufAllocator);
+    }
+
+    @Override
+    public PrimitiveCodec<Character> getPrimitiveCodec() {
+        return new PrimitiveCodec<>(Character.TYPE, Character.class, this);
     }
 
     @Override

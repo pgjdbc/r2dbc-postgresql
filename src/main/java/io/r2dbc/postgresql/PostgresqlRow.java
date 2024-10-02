@@ -83,7 +83,7 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
         Assert.requireNonNull(type, "type must not be null");
         requireNotReleased();
 
-        return decode(getColumn(index), type);
+        return decode(getColumn(index), null, type);
     }
 
     @Nullable
@@ -93,7 +93,7 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
         Assert.requireNonNull(type, "type must not be null");
         requireNotReleased();
 
-        return decode(getColumn(name), type);
+        return decode(getColumn(name), name, type);
     }
 
     @Override
@@ -102,9 +102,23 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
     }
 
     @Nullable
-    private <T> T decode(int index, Class<T> type) {
+    @SuppressWarnings("unchecked")
+    private <T> T decode(int index, @Nullable String name, Class<T> type) {
         ByteBuf data = this.data[index];
         if (data == null) {
+            if (type.isPrimitive()) {
+
+                String message;
+                if (name != null) {
+                    message = String.format("Value at column '%s' is null. Cannot return value for primitive '%s'", name,
+                        type.getName());
+                } else {
+                    message = String.format("Value at column index %d is null. Cannot return value for primitive '%s'", index,
+                        type.getName());
+                }
+
+                throw new NullPointerException(message);
+            }
             return null;
         }
 
@@ -114,7 +128,8 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
 
             T decoded = this.context.getCodecs().decode(data, field.getDataType(), field.getFormat(), type);
 
-            return type.cast(postProcessResult(decoded));
+            Object result = postProcessResult(decoded);
+            return type.isPrimitive() ? (T) result : type.cast(result);
 
         } finally {
             data.readerIndex(readerIndex);

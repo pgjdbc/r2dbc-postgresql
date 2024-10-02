@@ -145,6 +145,7 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     @Test
     void booleanPrimitive() {
         testCodec(Boolean.class, true, "BOOL");
+        testCodec(Boolean.TYPE, true, "BOOL");
     }
 
     @Test
@@ -161,12 +162,14 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     @Test
     void bytePrimitive() {
         testCodec(Byte.class, (byte) 10, "INT2");
+        testCodec(Byte.TYPE, (byte) 10, "INT2");
     }
 
     @Test
     void charPrimitive() {
         testCodec(Character.class, 'a', "BPCHAR(1)");
         testCodec(Character.class, 'a', "VARCHAR(1)");
+        testCodec(Character.TYPE, 'a', "VARCHAR(1)");
     }
 
     @Test
@@ -261,6 +264,7 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(Double.class, 100.1, "DECIMAL");
         testCodec(Double.class, 100.1, "FLOAT4");
         testCodec(Double.class, 100.1, "FLOAT8");
+        testCodec(Double.TYPE, 100.1, "FLOAT8");
 
         testCodec(Double.class, 100.1, "DECIMAL", R2dbcType.DECIMAL);
         testCodec(Double.class, 100.1, "FLOAT4", R2dbcType.FLOAT);
@@ -295,6 +299,7 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(Float.class, 100.1f, "DECIMAL");
         testCodec(Float.class, 100.1f, "FLOAT4");
         testCodec(Float.class, 100.1f, "FLOAT8");
+        testCodec(Float.TYPE, 100.1f, "FLOAT8");
 
         testCodec(Float.class, 100.1f, "DECIMAL", R2dbcType.DECIMAL);
         testCodec(Float.class, 100.1f, "FLOAT4", R2dbcType.FLOAT);
@@ -346,6 +351,7 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     void intPrimitive() {
         testCodec(Integer.class, 100, "INT2");
         testCodec(Integer.class, 100, "INT4");
+        testCodec(Integer.TYPE, 100, "INT4");
         testCodec(Integer.class, 100, "INT8");
         testCodec(Integer.class, 100, "OID");
         testCodec(Integer.class, 100, "NUMERIC");
@@ -488,6 +494,7 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
         testCodec(Long.class, 100L, "INT2");
         testCodec(Long.class, 100L, "INT4");
         testCodec(Long.class, 100L, "INT8");
+        testCodec(Long.TYPE, 100L, "INT8");
         testCodec(Long.class, 2314556683L, "OID");
         testCodec(Long.class, 100L, "NUMERIC");
         testCodec(Long.class, 100L, "FLOAT4");
@@ -529,6 +536,7 @@ abstract class AbstractCodecIntegrationTests extends AbstractIntegrationTests {
     @Test
     void shortPrimitive() {
         testCodec(Short.class, (short) 100, "INT2");
+        testCodec(Short.TYPE, (short) 100, "INT2");
     }
 
     @Test
