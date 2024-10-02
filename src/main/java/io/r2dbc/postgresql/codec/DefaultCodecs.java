@@ -268,7 +268,7 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
         if (dataType == null) {
 
             if (parameterValue == null) {
-                throw new IllegalArgumentException(String.format("Cannot encode null value %s using type inference", value));
+                return ObjectCodec.INSTANCE.encodeNull();
             }
 
             Codec<?> codec = this.codecLookup.findEncodeCodec(parameterValue);
@@ -293,6 +293,10 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
     @Override
     public EncodedParameter encodeNull(Class<?> type) {
         Assert.requireNonNull(type, "type must not be null");
+
+        if (type == Object.class) {
+            return ObjectCodec.INSTANCE.encodeNull();
+        }
 
         Codec<?> codec = this.codecLookup.findEncodeNullCodec(type);
         if (codec != null) {
