@@ -1,6 +1,14 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+1.0.6.RELEASE
+-----------------------------------------
+* Defer oid and typarray to stage when an extension is supported #649
+* SNIHostName is going to throw an exception when hostname has a trailing dot #656
+* Postgres 11 compatibility #657
+* Introduce fast-path handling for decoding primitive values #662
+* Introduce `ObjectCodec` to support `bindNull(Object.class)` #664
+
 1.0.5.RELEASE
 -----------------------------------------
 * Do not require typarray column when auto-registering extensions #632
