@@ -119,7 +119,7 @@ public class BuiltinDynamicCodecs implements CodecRegistrar {
     }
 
     private PostgresqlStatement createQuery(PostgresqlConnection connection) {
-        return connection.createStatement(String.format("SELECT * FROM pg_catalog.pg_type WHERE typname IN (%s)", getPlaceholders()));
+        return connection.createStatement(String.format("SELECT oid, * FROM pg_catalog.pg_type WHERE typname IN (%s)", getPlaceholders()));
     }
 
     private static String getPlaceholders() {
