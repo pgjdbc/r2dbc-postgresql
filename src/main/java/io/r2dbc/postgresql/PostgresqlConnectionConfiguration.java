@@ -1203,7 +1203,6 @@ public final class PostgresqlConnectionConfiguration {
             sslParameters.setServerNames(serverNames);
         }
 
-
         private Supplier<SslContext> createSslProvider() {
             SslContextBuilder sslContextBuilder = SslContextBuilder.forClient();
             if (this.sslMode.verifyCertificate()) {
