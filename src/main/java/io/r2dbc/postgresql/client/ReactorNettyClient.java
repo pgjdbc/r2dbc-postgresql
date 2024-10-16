@@ -22,6 +22,7 @@ import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
+import io.netty.channel.EventLoop;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
@@ -54,6 +55,7 @@ import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Operators;
 import reactor.core.publisher.Sinks;
+import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.netty.Connection;
 import reactor.netty.channel.AbortedException;
@@ -107,6 +109,8 @@ public final class ReactorNettyClient implements Client {
 
     private final Connection connection;
 
+    private final Scheduler scheduler;
+
     private ConnectionContext context;
 
     private final Sinks.Many<Publisher<FrontendMessage>> requestSink = Sinks.many().unicast().onBackpressureBuffer();
@@ -149,6 +153,9 @@ public final class ReactorNettyClient implements Client {
         this.connection = connection;
         this.byteBufAllocator = connection.outbound().alloc();
         this.context = new ConnectionContext().withChannelId(connection.channel().toString());
+
+        EventLoop eventLoop = connection.channel().eventLoop();
+        this.scheduler = Schedulers.fromExecutorService(eventLoop, eventLoop.toString());
 
         AtomicReference<Throwable> receiveError = new AtomicReference<>();
 
@@ -451,6 +458,11 @@ public final class ReactorNettyClient implements Client {
     @Override
     public Optional<Integer> getProcessId() {
         return Optional.ofNullable(this.processId);
+    }
+
+    @Override
+    public Scheduler getScheduler() {
+        return this.scheduler;
     }
 
     @Override

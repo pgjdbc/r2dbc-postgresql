@@ -28,6 +28,8 @@ import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 import reactor.util.annotation.Nullable;
 
 import java.util.ArrayList;
@@ -136,6 +138,11 @@ public final class TestClient implements Client {
     @Override
     public Optional<Integer> getProcessId() {
         return Optional.ofNullable(this.processId);
+    }
+
+    @Override
+    public Scheduler getScheduler() {
+        return Schedulers.immediate();
     }
 
     @Override

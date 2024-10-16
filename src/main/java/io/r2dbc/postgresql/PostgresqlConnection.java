@@ -40,6 +40,7 @@ import io.r2dbc.spi.Option;
 import io.r2dbc.spi.R2dbcException;
 import io.r2dbc.spi.TransactionDefinition;
 import io.r2dbc.spi.ValidationDepth;
+import io.r2dbc.spi.Wrapped;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
 import reactor.core.CoreSubscriber;
@@ -48,6 +49,7 @@ import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
+import reactor.core.scheduler.Scheduler;
 import reactor.util.Logger;
 import reactor.util.Loggers;
 import reactor.util.annotation.Nullable;
@@ -62,7 +64,7 @@ import static io.r2dbc.postgresql.client.TransactionStatus.OPEN;
 /**
  * An implementation of {@link Connection} for connecting to a PostgreSQL database.
  */
-final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlConnection {
+final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlConnection, Wrapped<Object> {
 
     private final Logger logger = Loggers.getLogger(this.getClass());
 
@@ -382,6 +384,21 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
             "client=" + this.client +
             ", codecs=" + this.codecs +
             '}';
+    }
+
+    @Override
+    public <E> E unwrap(Class<E> targetClass) {
+
+        if (targetClass == Scheduler.class) {
+            return targetClass.cast(this.client.getScheduler());
+        }
+
+        return Wrapped.super.unwrap(targetClass);
+    }
+
+    @Override
+    public Object unwrap() {
+        return null;
     }
 
     @Override

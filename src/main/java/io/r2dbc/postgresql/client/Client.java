@@ -28,6 +28,7 @@ import org.reactivestreams.Subscriber;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 
 import java.util.Optional;
 import java.util.TimeZone;
@@ -120,6 +121,12 @@ public interface Client {
      * @return the connected process id if it has been communicated
      */
     Optional<Integer> getProcessId();
+
+    /**
+     * @return returns the EventLoop as scheduler.
+     * @since 1.0.7
+     */
+    Scheduler getScheduler();
 
     /**
      * Returns the connected process secret key if it has been communicated.
