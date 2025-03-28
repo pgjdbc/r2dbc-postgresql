@@ -73,7 +73,7 @@ public final class MultiHostConnectionStrategy implements ConnectionStrategy {
 
     @Override
     public Mono<Client> connect() {
-        return connect(this.multiHostConfiguration.getTargetServerType());
+        return Mono.defer(() -> connect(this.multiHostConfiguration.getTargetServerType()));
     }
 
     @Override
@@ -85,7 +85,7 @@ public final class MultiHostConnectionStrategy implements ConnectionStrategy {
     public Mono<Client> connect(TargetServerType targetServerType) {
         AtomicReference<Throwable> exceptionRef = new AtomicReference<>();
 
-        return attemptConnection(targetServerType)
+        return Mono.defer(() -> attemptConnection(targetServerType))
             .onErrorResume(e -> {
                 if (!exceptionRef.compareAndSet(null, e)) {
                     exceptionRef.get().addSuppressed(e);
