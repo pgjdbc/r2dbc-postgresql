@@ -21,6 +21,9 @@ import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 import io.r2dbc.spi.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
@@ -40,10 +43,11 @@ public class PostgresTypes {
     public final static int NO_SUCH_TYPE = -1;
 
     // parameterized with %s for the comparator (=, IN), %s for the actual criteria value and %s for a potential LIMIT 1 statement
-    private static final String SELECT_PG_TYPE = "SELECT pg_type.* "
+    // language=sql
+    private static final String SELECT_PG_TYPE = "SELECT sp.schema_name, pg_type.* "
         + "  FROM pg_catalog.pg_type "
         + "  LEFT "
-        + "  JOIN (select ns.oid as nspoid, ns.nspname, r.r "
+        + "  JOIN (select ns.oid as nspoid, ns.nspname as schema_name, r.r "
         + "          from pg_namespace as ns "
         + "          join ( select s.r, (current_schemas(false))[s.r] as nspname "
         + "                   from generate_series(1, array_upper(current_schemas(false), 1)) as s(r) ) as r "
@@ -66,12 +70,14 @@ public class PostgresTypes {
     }
 
     /**
-     * Lookup Postgres types by {@code typname}. Please note that {@code typname} inlined to use simple statements. Therefore, {@code typname} gets verified against {@link #TYPENAME} to prevent SQL
+     * Lookup Postgres types by {@code typname}. Please note that {@code typeName} inlined to use simple statements. Therefore, {@code typname} gets verified against {@link #TYPENAME} to prevent SQL
      * injection.
      *
      * @param typeName the type name. Must comply with the pattern {@code [a-zA-Z0-9_]+}
      * @return a mono emitting the {@link PostgresType} if found or {@link Mono#empty()}  if not found
+     * @deprecated in favor of {@link #lookupTypes(String...)}
      */
+    @Deprecated
     public Mono<PostgresType> lookupType(String typeName) {
         if (!TYPENAME.matcher(Assert.requireNonNull(typeName, "typeName must not be null")).matches()) {
             throw new IllegalArgumentException(String.format("Invalid typename %s", typeName));
@@ -79,6 +85,17 @@ public class PostgresTypes {
 
         return this.connection.createStatement(String.format(SELECT_PG_TYPE, "=", "'" + typeName + "'", "LIMIT 1")).execute()
             .flatMap(it -> it.map(PostgresTypes::createType)).singleOrEmpty();
+    }
+
+    /**
+     * Lookup Postgres types by {@code typname}. Please note that {@code typeName} inlined to use simple statements. Therefore, {@code typeName} gets verified against {@link #TYPENAME} to prevent SQL
+     * injection.
+     *
+     * @param typeName the type name. Must comply with the pattern {@code [a-zA-Z0-9_]+}
+     * @return a mono emitting the {@link PostgresType} if found or {@link Mono#empty()}  if not found
+     */
+    public Flux<PostgresType> lookupTypes(String... typeName) {
+        return lookupTypes(Arrays.asList(typeName));
     }
 
     public Flux<PostgresType> lookupTypes(Iterable<String> typeNames) {
@@ -108,11 +125,12 @@ public class PostgresTypes {
         Long oid = row.get("oid", Long.class);
         String typname = row.get("typname", String.class);
         String typcategory = row.get("typcategory", String.class);
+        String schemaName = row.get("schema_name", String.class);
         Long typarrayOid = rowMetadata.contains("typarray") ? row.get("typarray", Long.class) : null;
 
         long unsignedTyparray = typarrayOid != null ? typarrayOid : NO_SUCH_TYPE;
         int typarray = typarrayOid != null ? PostgresqlObjectId.toInt(typarrayOid) : NO_SUCH_TYPE;
-        return new PostgresType(PostgresqlObjectId.toInt(oid), oid, typarray, unsignedTyparray, typname, typcategory);
+        return new PostgresType(PostgresqlObjectId.toInt(oid), oid, typarray, unsignedTyparray, typname, typcategory, schemaName);
     }
 
     public static class PostgresType implements Type, PostgresTypeIdentifier {
@@ -129,9 +147,18 @@ public class PostgresTypes {
 
         private final String category;
 
+        /**
+         * The name of the schema where pg_type is stored.
+         */
+        private final String schemaName;
+
         @Nullable
         private final PostgresqlObjectId objectId;
 
+        /**
+         * @deprecated in favor of {@link #PostgresType(int, long, int, long, String, String, String)}
+         */
+        @Deprecated
         public PostgresType(int oid, long unsignedOid, int typarray, long unsignedTyparray, String name, String category) {
             this.oid = oid;
             this.unsignedOid = unsignedOid;
@@ -140,6 +167,18 @@ public class PostgresTypes {
             this.name = name;
             this.category = category;
             this.objectId = PostgresqlObjectId.isValid(oid) ? PostgresqlObjectId.valueOf(oid) : null;
+            this.schemaName = "";
+        }
+
+        public PostgresType(int oid, long unsignedOid, int typarray, long unsignedTyparray, String name, String category, String schemaName) {
+            this.oid = oid;
+            this.unsignedOid = unsignedOid;
+            this.typarray = typarray;
+            this.unsignedTyparray = unsignedTyparray;
+            this.name = name;
+            this.category = category;
+            this.objectId = PostgresqlObjectId.isValid(oid) ? PostgresqlObjectId.valueOf(oid) : null;
+            this.schemaName = schemaName;
         }
 
         @Override
@@ -160,7 +199,7 @@ public class PostgresTypes {
 
             if (this.typarray > 0) {
 
-                return new PostgresType(this.typarray, this.unsignedTyparray, this.typarray, this.unsignedTyparray, this.name, this.category);
+                return new PostgresType(this.typarray, this.unsignedTyparray, this.typarray, this.unsignedTyparray, this.name, this.category, this.schemaName);
             }
 
             throw new IllegalStateException("No array type available for " + this);
@@ -189,6 +228,13 @@ public class PostgresTypes {
 
         public String getName() {
             return this.name;
+        }
+
+        /**
+         * @return The name of the schema where pg_type is stored.
+         */
+        public String getSchemaName() {
+            return schemaName;
         }
 
         /**

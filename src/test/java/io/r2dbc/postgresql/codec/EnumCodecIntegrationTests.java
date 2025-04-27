@@ -97,7 +97,7 @@ final class EnumCodecIntegrationTests extends AbstractIntegrationTests {
         SERVER.getJdbcOperations().execute("CREATE TABLE enum_test (the_value my_enum_with_codec);");
 
         PostgresTypes types = PostgresTypes.from(this.connection);
-        PostgresTypes.PostgresType type = types.lookupType("my_enum_with_codec").block();
+        PostgresTypes.PostgresType type = types.lookupTypes("my_enum_with_codec").blockFirst();
 
         this.connection.createStatement("INSERT INTO enum_test VALUES($1)")
             .bind("$1", Parameters.in(type, "HELLO"))
@@ -118,7 +118,7 @@ final class EnumCodecIntegrationTests extends AbstractIntegrationTests {
         SERVER.getJdbcOperations().execute("CREATE TABLE enum_test (the_value my_enum_with_codec[]);");
 
         PostgresTypes types = PostgresTypes.from(this.connection);
-        PostgresTypes.PostgresType type = types.lookupType("my_enum_with_codec").block().asArrayType();
+        PostgresTypes.PostgresType type = types.lookupTypes("my_enum_with_codec").blockFirst().asArrayType();
 
         this.connection.createStatement("INSERT INTO enum_test VALUES($1)")
             .bind("$1", Parameters.in(type, new String[]{"HELLO", "WORLD"}))
