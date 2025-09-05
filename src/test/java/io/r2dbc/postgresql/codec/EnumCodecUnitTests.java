@@ -101,6 +101,7 @@ final class EnumCodecUnitTests {
                     .identified("typarray", Long.class, 0L)
                     .identified("typname", String.class, "foo")
                     .identified("typcategory", String.class, "E")
+                    .identified("schema_name", String.class, "public")
                     .build())
                 .build())
             .build();
@@ -130,6 +131,7 @@ final class EnumCodecUnitTests {
                     .identified("oid", Long.class, 42L)
                     .identified("typname", String.class, "foo")
                     .identified("typcategory", String.class, "E")
+                    .identified("schema_name", String.class, "public")
                     .build())
                 .build())
             .build();
@@ -161,12 +163,14 @@ final class EnumCodecUnitTests {
                     .identified("typarray", Long.class, 0L)
                     .identified("typname", String.class, "foo")
                     .identified("typcategory", String.class, "E")
+                    .identified("schema_name", String.class, "public")
                     .build())
                 .row(MockRow.builder()
                     .identified("oid", Long.class, 43L)
                     .identified("typarray", Long.class, 0L)
                     .identified("typname", String.class, "bar")
                     .identified("typcategory", String.class, "E")
+                    .identified("schema_name", String.class, "public")
                     .build())
                 .build())
             .build();

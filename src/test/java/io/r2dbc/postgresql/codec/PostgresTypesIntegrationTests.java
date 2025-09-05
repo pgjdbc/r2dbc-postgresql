@@ -19,6 +19,7 @@ package io.r2dbc.postgresql.codec;
 import io.r2dbc.postgresql.AbstractIntegrationTests;
 import io.r2dbc.spi.Connection;
 import org.junit.jupiter.api.Test;
+import org.springframework.jdbc.core.JdbcOperations;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -35,10 +36,42 @@ class PostgresTypesIntegrationTests extends AbstractIntegrationTests {
     @Test
     void shouldLookupSingleType() {
 
-        Mono.usingWhen(getConnectionFactory().create(), c -> {
-            return PostgresTypes.from(c).lookupType("varchar");
-        }, Connection::close).map(PostgresTypes.PostgresType::getName).map(String::toLowerCase)
-            .as(StepVerifier::create).expectNext("varchar").verifyComplete();
+        Flux
+            .usingWhen( //
+                getConnectionFactory().create(), //
+                c -> PostgresTypes.from(c).lookupTypes("varchar"), //
+                Connection::close //
+            )
+            .map(PostgresTypes.PostgresType::getName)
+            .map(String::toLowerCase)
+            .as(StepVerifier::create)
+            .expectNext("varchar")
+            .verifyComplete();
+    }
+
+    @Test
+    void shouldLookupTypesInDifferentSchemas() {
+
+        // test enum type set up
+        JdbcOperations jdbcOperations = SERVER.getJdbcOperations();
+        jdbcOperations.execute("CREATE SCHEMA test_schema_1;");
+        jdbcOperations.execute("CREATE SCHEMA test_schema_2;");
+        jdbcOperations.execute("CREATE TYPE test_schema_1.test_enum AS ENUM ('FIRST', 'SECOND');");
+        jdbcOperations.execute("CREATE TYPE test_schema_2.test_enum AS ENUM ('FIRST', 'SECOND');");
+
+        Flux
+            .usingWhen( //
+                getConnectionFactory().create(), //
+                c -> c //
+                    .createStatement("SET SEARCH_PATH TO test_schema_1, test_schema_2;") //
+                    .execute() //
+                    .flatMap(unused -> PostgresTypes.from(c).lookupTypes("test_enum")), //
+                Connection::close //
+            )
+            .as(StepVerifier::create)
+            .expectNextMatches(type -> type.getName().equals("test_enum"))
+            .expectNextMatches(type -> type.getName().equals("test_enum"))
+            .verifyComplete();
     }
 
     @Test
