@@ -18,6 +18,7 @@ package io.r2dbc.postgresql.util;
 
 import com.zaxxer.hikari.HikariDataSource;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
+import io.r2dbc.postgresql.authentication.UsernameAndPassword;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -48,7 +49,7 @@ import static org.testcontainers.utility.MountableFile.forHostPath;
  */
 public final class PostgresqlServerExtension implements BeforeAllCallback, AfterAllCallback {
 
-    static final String IMAGE_NAME = "postgres:13.3";
+    static final String IMAGE_NAME = "postgres:18";
 
     static PostgreSQLContainer<?> containerInstance = null;
 
@@ -64,15 +65,24 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
         return PostgresqlServerExtension.containerInstance = container();
     };
 
-    private final DatabaseContainer postgres = getContainer();
+    private final String imageName;
 
-    private final boolean useTestContainer = this.postgres instanceof TestContainer;
+    private final DatabaseContainer postgres;
+
+    private final boolean useTestContainer;
 
     private HikariDataSource dataSource;
 
     private JdbcOperations jdbcOperations;
 
     public PostgresqlServerExtension() {
+        this(IMAGE_NAME);
+    }
+
+    public PostgresqlServerExtension(String imageName) {
+        this.imageName = imageName;
+        this.postgres = getContainer();
+        this.useTestContainer = this.postgres instanceof TestContainer;
     }
 
     private DatabaseContainer getContainer() {
@@ -182,12 +192,16 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
         return this.postgres.getPassword();
     }
 
+    public UsernameAndPassword getUsernameAndPassword() {
+        return new UsernameAndPassword(getUsername(), getPassword());
+    }
+
     public DatabaseContainer getPostgres() {
         return this.postgres;
     }
 
     private <T extends PostgreSQLContainer<T>> T container() {
-        T container = new PostgreSQLContainer<T>(IMAGE_NAME)
+        T container = new PostgreSQLContainer<T>(this.imageName)
             .withCopyFileToContainer(getHostPath("server.crt", 0600), "/var/server.crt")
             .withCopyFileToContainer(getHostPath("server.key", 0600), "/var/server.key")
             .withCopyFileToContainer(getHostPath("client.crt", 0600), "/var/client.crt")

@@ -44,11 +44,11 @@ public final class SingleHostConfiguration {
 
     @Nullable
     public String getHost() {
-        return host;
+        return this.host;
     }
 
     public int getPort() {
-        return port;
+        return this.port;
     }
 
     public String getRequiredHost() {
@@ -75,7 +75,7 @@ public final class SingleHostConfiguration {
 
     @Nullable
     public String getSocket() {
-        return socket;
+        return this.socket;
     }
 
     public boolean isUseSocket() {
@@ -168,7 +168,7 @@ public final class SingleHostConfiguration {
 
         @Nullable
         public String getSocket() {
-            return socket;
+            return this.socket;
         }
 
         @Override

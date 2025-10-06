@@ -26,6 +26,7 @@ import io.r2dbc.postgresql.client.DefaultHostnameVerifier;
 import io.r2dbc.postgresql.client.MultiHostConfiguration;
 import io.r2dbc.postgresql.client.SSLConfig;
 import io.r2dbc.postgresql.client.SSLMode;
+import io.r2dbc.postgresql.client.SSLNegotiation;
 import io.r2dbc.postgresql.client.SingleHostConfiguration;
 import io.r2dbc.postgresql.codec.Codec;
 import io.r2dbc.postgresql.codec.Codecs;
@@ -405,6 +406,8 @@ public final class PostgresqlConnectionConfiguration {
         private URL sslKey = null;
 
         private SSLMode sslMode = SSLMode.DISABLE;
+
+        private SSLNegotiation sslNegotiation = SSLNegotiation.POSTGRES;
 
         @Nullable
         private CharSequence sslPassword = null;
@@ -972,6 +975,18 @@ public final class PostgresqlConnectionConfiguration {
         }
 
         /**
+         * Configure ssl negotiation. Useful if the server is known to support SSL directly (e.g. Postgres 17+ or a SSL tunnel).
+         *
+         * @param sslNegotiation the SSL negotiation mechanism to use.
+         * @return this {@link Builder}
+         * @since 1.1
+         */
+        public Builder sslNegotiation(SSLNegotiation sslNegotiation) {
+            this.sslNegotiation = Assert.requireNonNull(sslNegotiation, "sslNegotiation must be not be null");
+            return this;
+        }
+
+        /**
          * Configure ssl password.
          *
          * @param sslPassword the password of the sslKey, or null if it's not password-protected
@@ -1168,18 +1183,22 @@ public final class PostgresqlConnectionConfiguration {
                 return SSLConfig.disabled();
             }
 
-            Function<SocketAddress, SSLParameters> sslParametersFunctionToUse = getSslParametersFactory(sslSni, this.sslParametersFactory);
-            return new SSLConfig(this.sslMode, createSslProvider(), this.sslEngineCustomizer, sslParametersFunctionToUse, this.sslHostnameVerifier);
+            Function<SocketAddress, SSLParameters> sslParametersFunctionToUse = getSslParametersFactory(sslSni, this.sslNegotiation, this.sslParametersFactory);
+            return new SSLConfig(this.sslNegotiation, this.sslMode, createSslProvider(), this.sslEngineCustomizer, sslParametersFunctionToUse, this.sslHostnameVerifier);
         }
 
-        private static Function<SocketAddress, SSLParameters> getSslParametersFactory(boolean sslSni, Function<SocketAddress, SSLParameters> sslParametersFunction) {
-            if (!sslSni) {
+        private static Function<SocketAddress, SSLParameters> getSslParametersFactory(boolean sslSni, SSLNegotiation sslNegotiation, Function<SocketAddress, SSLParameters> sslParametersFunction) {
+            if (!sslSni && sslNegotiation != SSLNegotiation.DIRECT) {
                 return sslParametersFunction;
             }
 
             return socket -> {
 
                 SSLParameters sslParameters = sslParametersFunction.apply(socket);
+
+                if (sslNegotiation == SSLNegotiation.DIRECT) {
+                    sslParameters.setApplicationProtocols(new String[]{"postgresql"});
+                }
 
                 if (socket instanceof InetSocketAddress) {
 

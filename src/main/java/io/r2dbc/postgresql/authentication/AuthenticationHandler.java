@@ -16,8 +16,10 @@
 
 package io.r2dbc.postgresql.authentication;
 
+import io.r2dbc.postgresql.client.ConnectionContext;
 import io.r2dbc.postgresql.message.backend.AuthenticationMessage;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
+import io.r2dbc.postgresql.util.Assert;
 import reactor.util.annotation.Nullable;
 
 /**
@@ -36,4 +38,24 @@ public interface AuthenticationHandler {
     @Nullable
     FrontendMessage handle(AuthenticationMessage message);
 
+    /**
+     * Return a suitable {@link AuthenticationHandler} for the given {@link AuthenticationMessage} and {@link UsernameAndPassword}.
+     *
+     * @param message             the message to handle
+     * @param usernameAndPassword authentication credentials
+     * @param context             connection context
+     * @return the authentication handler
+     * @since 1.1
+     */
+    static AuthenticationHandler getAuthenticationHandler(AuthenticationMessage message, UsernameAndPassword usernameAndPassword, ConnectionContext context) {
+        if (PasswordAuthenticationHandler.supports(message)) {
+            CharSequence password = Assert.requireNonNull(usernameAndPassword.getPassword(), "Password must not be null");
+            return new PasswordAuthenticationHandler(password, usernameAndPassword.getUsername());
+        } else if (SASLAuthenticationHandler.supports(message)) {
+            CharSequence password = Assert.requireNonNull(usernameAndPassword.getPassword(), "Password must not be null");
+            return new SASLAuthenticationHandler(password, usernameAndPassword.getUsername(), context);
+        } else {
+            throw new IllegalStateException(String.format("Unable to provide AuthenticationHandler capable of handling %s", message));
+        }
+    }
 }

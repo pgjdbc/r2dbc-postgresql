@@ -19,6 +19,7 @@ package io.r2dbc.postgresql;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.r2dbc.postgresql.client.DefaultHostnameVerifier;
 import io.r2dbc.postgresql.client.SSLMode;
+import io.r2dbc.postgresql.client.SSLNegotiation;
 import io.r2dbc.postgresql.codec.Codecs;
 import io.r2dbc.postgresql.codec.Json;
 import io.r2dbc.postgresql.extension.Extension;
@@ -210,6 +211,20 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
      * @since 0.9.2
      */
     public static final Option<SSLMode> SSL_MODE_ALIAS = Option.valueOf("sslmode");
+
+    /**
+     * Ssl negotiation mechanism. Default: Postgres
+     *
+     * @since 1.1
+     */
+    public static final Option<SSLNegotiation> SSL_NEGOTIATION = Option.valueOf("sslNegotiation");
+
+    /**
+     * Ssl negotiation mechanism alias. Default: Postgres
+     *
+     * @since 1.1
+     */
+    public static final Option<SSLNegotiation> SSL_NEGOTIATION_ALIAS = Option.valueOf("sslnegotiation");
 
     /**
      * SSL key password
@@ -408,6 +423,10 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
             mapper.from(SSL_MODE_ALIAS).map(PostgresqlConnectionFactoryProvider::toSSLMode).to(builder::sslMode);
         });
 
+        mapper.from(SSL_NEGOTIATION).map(PostgresqlConnectionFactoryProvider::toSSLNegotiation).to(builder::sslNegotiation).otherwise(() -> {
+            mapper.from(SSL_NEGOTIATION_ALIAS).map(PostgresqlConnectionFactoryProvider::toSSLNegotiation).to(builder::sslNegotiation);
+        });
+
         mapper.fromTyped(SSL_CERT).to(builder::sslCert);
         mapper.fromTyped(SSL_CONTEXT_BUILDER_CUSTOMIZER).to(builder::sslContextBuilderCustomizer);
         mapper.fromTyped(SSL_KEY).to(builder::sslKey);
@@ -439,6 +458,14 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         }
 
         return (SSLMode) it;
+    }
+
+    private static SSLNegotiation toSSLNegotiation(Object it) {
+        if (it instanceof String) {
+            return SSLNegotiation.fromValue(it.toString());
+        }
+
+        return (SSLNegotiation) it;
     }
 
     @SuppressWarnings("unchecked")

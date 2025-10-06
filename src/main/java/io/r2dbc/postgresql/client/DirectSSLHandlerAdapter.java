@@ -22,13 +22,13 @@ import io.netty.channel.ChannelHandlerContext;
 import java.net.SocketAddress;
 
 /**
- * SSL handler assuming the endpoint is a SSL tunnel and not a Postgres endpoint.
+ * SSL handler assuming the endpoint uses SSL directly (Postgres 17+ endpoint or an SSL tunnel).
  */
-final class SSLTunnelHandlerAdapter extends AbstractPostgresSSLHandlerAdapter {
+final class DirectSSLHandlerAdapter extends AbstractPostgresSSLHandlerAdapter {
 
     private final SSLConfig sslConfig;
 
-    SSLTunnelHandlerAdapter(ByteBufAllocator alloc, SocketAddress socketAddress, SSLConfig sslConfig) {
+    DirectSSLHandlerAdapter(ByteBufAllocator alloc, SocketAddress socketAddress, SSLConfig sslConfig) {
         super(alloc, socketAddress, sslConfig);
         this.sslConfig = sslConfig;
     }

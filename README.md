@@ -69,45 +69,46 @@ Mono<Connection> connectionMono = Mono.from(connectionFactory.create());
 
 **Supported ConnectionFactory Discovery Options**
 
-| Option                          | Description
-|---------------------------------| -----------
-| `ssl`                           | Enables SSL usage (`SSLMode.VERIFY_FULL`).
-| `driver`                        | Must be `postgresql`.
-| `protocol`                      | Protocol specifier. Empty to use single-host operations. Supported: `failover` for multi-server failover operations. _(Optional)_
-| `host`                          | Server hostname to connect to. May contain a comma-separated list of hosts with ports when using the `failover` protocol.
-| `port`                          | Server port to connect to. Defaults to `5432`. _(Optional)_
-| `socket`                        | Unix Domain Socket path to connect to as alternative to TCP. _(Optional)_
-| `username`                      | Login username. Can be a plain `String`, `Supplier<String>`, or `Publisher<String>`.
-| `password`                      | Login password. Can be a plain `CharSequence`, `Supplier<CharSequence>`, or `Publisher<CharSequence>`. _(Optional when using TLS Certificate authentication)_
-| `database`                      | Database to select. _(Optional)_
-| `applicationName`               | The name of the application connecting to the database. Defaults to `r2dbc-postgresql`. _(Optional)_
-| `autodetectExtensions`          | Whether to auto-detect and register `Extension`s from the class path. Defaults to `true`. _(Optional)_
-| `compatibilityMode`             | Enable compatibility mode for cursored fetching. Required when using newer pgpool versions. Defaults to `false`. _(Optional)_
-| `errorResponseLogLevel`         | Log level for error responses. Any of `OFF`, `DEBUG`, `INFO`, `WARN` or `ERROR`  Defaults to `DEBUG`. _(Optional)_
-| `extensions`                    | Collection of `Extension` to provide additional extensions when creating a connection factory. Defaults to empty. _(Optional)_
-| `fetchSize`                     | The default number of rows to return when fetching results. Defaults to `0` for unlimited. _(Optional)_
-| `forceBinary`                   | Whether to force binary transfer. Defaults to `false`. _(Optional)_
-| `hostRecheckTime`               | Host status recheck time when using multi-server operations. Defaults to `10 seconds`. _(Optional)_
-| `loadBalanceHosts`              | Whether to shuffle the list of given hostnames before connect when using multi-server operations. Defaults to `true`. _(Optional)_
-| `loopResources`                 | TCP/Socket LoopResources (depends on the endpoint connection type). _(Optional)_
-| `lockWaitTimeout`               | Lock wait timeout. _(Optional)_
-| `noticeLogLevel`                | Log level for error responses. Any of `OFF`, `DEBUG`, `INFO`, `WARN` or `ERROR`  Defaults to `DEBUG`. _(Optional)_
-| `preferAttachedBuffers`         |Configure whether codecs should prefer attached data buffers. The default is `false`, meaning that codecs will copy data from the input buffer into a byte array. Enabling attached buffers requires consumption of values such as `Json`  to avoid memory leaks.
-| `preparedStatementCacheQueries` | Determine the number of queries that are cached in each connection. The default is `-1`, meaning there's no limit. The value of `0` disables the cache. Any other value specifies the cache size.
-| `options`                       | A `Map<String, String>` of connection parameters. These are applied to each database connection created by the `ConnectionFactory`. Useful for setting generic [PostgreSQL connection parameters][psql-runtime-config]. _(Optional)_
-| `schema`                        | The search path to set. _(Optional)_
-| `sslMode`                       | SSL mode to use, see `SSLMode` enum. Supported values: `DISABLE`, `ALLOW`, `PREFER`, `REQUIRE`, `VERIFY_CA`, `VERIFY_FULL`, `TUNNEL`. _(Optional)_
-| `sslRootCert`                   | Path to SSL CA certificate in PEM format. Can be also a resource path. _(Optional)_
-| `sslKey`                        | Path to SSL key for TLS authentication in PEM format. Can be also a resource path. _(Optional)_
-| `sslCert`                       | Path to SSL certificate for TLS authentication in PEM format. Can be also a resource path. _(Optional)_
-| `sslPassword`                   | Key password to decrypt SSL key. _(Optional)_
-| `sslHostnameVerifier`           | `javax.net.ssl.HostnameVerifier` implementation. _(Optional)_
-| `sslSni`                        | Enable/disable SNI to send the configured `host` name during the SSL handshake.  Defaults to `true`. _(Optional)_
-| `statementTimeout`              | Statement timeout. _(Optional)_
-| `targetServerType`              | Type of server to use when using multi-host operations. Supported values: `ANY`, `PRIMARY`, `SECONDARY`, `PREFER_SECONDARY`. Defaults to `ANY`. _(Optional)_
-| `tcpNoDelay`                    | Enable/disable TCP NoDelay. Enabled by default. _(Optional)_
-| `tcpKeepAlive`                  | Enable/disable TCP KeepAlive. Disabled by default. _(Optional)_
-| `timeZone`                      | Configure the session timezone to control conversion of local temporal representations. Defaults to `TimeZone.getDefault()` _(Optional)_
+| Option                          | Description                                                                                                                                                                                                                                                       
+|---------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| `ssl`                           | Enables SSL usage (`SSLMode.VERIFY_FULL`).                                                                                                                                                                                                                        
+| `driver`                        | Must be `postgresql`.                                                                                                                                                                                                                                             
+| `protocol`                      | Protocol specifier. Empty to use single-host operations. Supported: `failover` for multi-server failover operations. _(Optional)_                                                                                                                                 
+| `host`                          | Server hostname to connect to. May contain a comma-separated list of hosts with ports when using the `failover` protocol.                                                                                                                                         
+| `port`                          | Server port to connect to. Defaults to `5432`. _(Optional)_                                                                                                                                                                                                       
+| `socket`                        | Unix Domain Socket path to connect to as alternative to TCP. _(Optional)_                                                                                                                                                                                         
+| `username`                      | Login username. Can be a plain `String`, `Supplier<String>`, or `Publisher<String>`.                                                                                                                                                                              
+| `password`                      | Login password. Can be a plain `CharSequence`, `Supplier<CharSequence>`, or `Publisher<CharSequence>`. _(Optional when using TLS Certificate authentication)_                                                                                                     
+| `database`                      | Database to select. _(Optional)_                                                                                                                                                                                                                                  
+| `applicationName`               | The name of the application connecting to the database. Defaults to `r2dbc-postgresql`. _(Optional)_                                                                                                                                                              
+| `autodetectExtensions`          | Whether to auto-detect and register `Extension`s from the class path. Defaults to `true`. _(Optional)_                                                                                                                                                            
+| `compatibilityMode`             | Enable compatibility mode for cursored fetching. Required when using newer pgpool versions. Defaults to `false`. _(Optional)_                                                                                                                                     
+| `errorResponseLogLevel`         | Log level for error responses. Any of `OFF`, `DEBUG`, `INFO`, `WARN` or `ERROR`  Defaults to `DEBUG`. _(Optional)_                                                                                                                                                
+| `extensions`                    | Collection of `Extension` to provide additional extensions when creating a connection factory. Defaults to empty. _(Optional)_                                                                                                                                    
+| `fetchSize`                     | The default number of rows to return when fetching results. Defaults to `0` for unlimited. _(Optional)_                                                                                                                                                           
+| `forceBinary`                   | Whether to force binary transfer. Defaults to `false`. _(Optional)_                                                                                                                                                                                               
+| `hostRecheckTime`               | Host status recheck time when using multi-server operations. Defaults to `10 seconds`. _(Optional)_                                                                                                                                                               
+| `loadBalanceHosts`              | Whether to shuffle the list of given hostnames before connect when using multi-server operations. Defaults to `true`. _(Optional)_                                                                                                                                
+| `loopResources`                 | TCP/Socket LoopResources (depends on the endpoint connection type). _(Optional)_                                                                                                                                                                                  
+| `lockWaitTimeout`               | Lock wait timeout. _(Optional)_                                                                                                                                                                                                                                   
+| `noticeLogLevel`                | Log level for error responses. Any of `OFF`, `DEBUG`, `INFO`, `WARN` or `ERROR`  Defaults to `DEBUG`. _(Optional)_                                                                                                                                                
+| `preferAttachedBuffers`         | Configure whether codecs should prefer attached data buffers. The default is `false`, meaning that codecs will copy data from the input buffer into a byte array. Enabling attached buffers requires consumption of values such as `Json`  to avoid memory leaks. 
+| `preparedStatementCacheQueries` | Determine the number of queries that are cached in each connection. The default is `-1`, meaning there's no limit. The value of `0` disables the cache. Any other value specifies the cache size.                                                                 
+| `options`                       | A `Map<String, String>` of connection parameters. These are applied to each database connection created by the `ConnectionFactory`. Useful for setting generic [PostgreSQL connection parameters][psql-runtime-config]. _(Optional)_                              
+| `schema`                        | The search path to set. _(Optional)_                                                                                                                                                                                                                              
+| `sslMode`                       | SSL mode to use, see `SSLMode` enum. Supported values: `DISABLE`, `ALLOW`, `PREFER`, `REQUIRE`, `VERIFY_CA`, `VERIFY_FULL`. _(Optional)_                                                                                                                          
+| `sslNegotiation`                | SSL negotiation to use, see `SSLNegotiation` enum. Supported values: `POSTGRES`, `DIRECT`, `TUNNEL`. _(Optional)_                                                                                                                                                 
+| `sslRootCert`                   | Path to SSL CA certificate in PEM format. Can be also a resource path. _(Optional)_                                                                                                                                                                               
+| `sslKey`                        | Path to SSL key for TLS authentication in PEM format. Can be also a resource path. _(Optional)_                                                                                                                                                                   
+| `sslCert`                       | Path to SSL certificate for TLS authentication in PEM format. Can be also a resource path. _(Optional)_                                                                                                                                                           
+| `sslPassword`                   | Key password to decrypt SSL key. _(Optional)_                                                                                                                                                                                                                     
+| `sslHostnameVerifier`           | `javax.net.ssl.HostnameVerifier` implementation. _(Optional)_                                                                                                                                                                                                     
+| `sslSni`                        | Enable/disable SNI to send the configured `host` name during the SSL handshake.  Defaults to `true`. _(Optional)_                                                                                                                                                 
+| `statementTimeout`              | Statement timeout. _(Optional)_                                                                                                                                                                                                                                   
+| `targetServerType`              | Type of server to use when using multi-host operations. Supported values: `ANY`, `PRIMARY`, `SECONDARY`, `PREFER_SECONDARY`. Defaults to `ANY`. _(Optional)_                                                                                                      
+| `tcpNoDelay`                    | Enable/disable TCP NoDelay. Enabled by default. _(Optional)_                                                                                                                                                                                                      
+| `tcpKeepAlive`                  | Enable/disable TCP KeepAlive. Disabled by default. _(Optional)_                                                                                                                                                                                                   
+| `timeZone`                      | Configure the session timezone to control conversion of local temporal representations. Defaults to `TimeZone.getDefault()` _(Optional)_                                                                                                                          
 
 **Programmatic Configuration**
 
@@ -219,7 +220,7 @@ Flux<Notification> listen = receiver.createStatement("LISTEN mymessage")
         .execute()
         .flatMap(PostgresqlResult::getRowsUpdated)
         .then();
-```                                                                                                                       
+```
 
 Upon subscription, the first connection enters listen mode and publishes incoming `Notification`s as `Flux`. The second connection broadcasts a notification to the `mymessage` channel upon
 subscription.

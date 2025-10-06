@@ -434,8 +434,8 @@ public final class ReactorNettyClient implements Client {
             if (sslConfig.getSslMode().startSsl()) {
 
                 AbstractPostgresSSLHandlerAdapter sslAdapter;
-                if (sslConfig.getSslMode() == SSLMode.TUNNEL) {
-                    sslAdapter = new SSLTunnelHandlerAdapter(channel.alloc(), socketAddress, sslConfig);
+                if (sslConfig.isDirectSsl()) {
+                    sslAdapter = new DirectSSLHandlerAdapter(channel.alloc(), socketAddress, sslConfig);
                 } else {
                     sslAdapter = new SSLSessionHandlerAdapter(channel.alloc(), socketAddress, sslConfig);
                 }

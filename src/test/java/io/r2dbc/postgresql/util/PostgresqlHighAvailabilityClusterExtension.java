@@ -21,11 +21,9 @@ import com.zaxxer.hikari.HikariDataSource;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
@@ -40,6 +38,8 @@ import java.time.temporal.ChronoUnit;
 import static org.testcontainers.utility.MountableFile.forHostPath;
 
 public class PostgresqlHighAvailabilityClusterExtension implements BeforeAllCallback, AfterAllCallback {
+
+    static final String IMAGE_NAME = "postgres:13.3";
 
     private PostgreSQLContainer<?> primary;
 
@@ -106,7 +106,7 @@ public class PostgresqlHighAvailabilityClusterExtension implements BeforeAllCall
     }
 
     private void startPrimary(Network network) {
-        this.primary = new PostgreSQLContainer<>(PostgresqlServerExtension.IMAGE_NAME)
+        this.primary = new PostgreSQLContainer<>(IMAGE_NAME)
             .withNetwork(network)
             .withNetworkAliases("postgres-primary")
             .withCopyFileToContainer(getHostPath("setup-primary.sh", 0755), "/docker-entrypoint-initdb.d/setup-primary.sh")
@@ -121,7 +121,7 @@ public class PostgresqlHighAvailabilityClusterExtension implements BeforeAllCall
     }
 
     private void startStandby(Network network) {
-        this.standby = new CustomPostgreSQLContainer(PostgresqlServerExtension.IMAGE_NAME)
+        this.standby = new CustomPostgreSQLContainer(IMAGE_NAME)
             .withNetwork(network)
             .withCopyFileToContainer(getHostPath("setup-standby.sh", 0755), "/setup-standby.sh")
             .withCommand("/setup-standby.sh")

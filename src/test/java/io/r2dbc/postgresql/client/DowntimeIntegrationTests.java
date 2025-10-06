@@ -41,6 +41,7 @@ public class DowntimeIntegrationTests {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void failSslTunnelIfInboundClosed() {
         verifyError(SSLMode.TUNNEL, error -> {
             assertThat(error)

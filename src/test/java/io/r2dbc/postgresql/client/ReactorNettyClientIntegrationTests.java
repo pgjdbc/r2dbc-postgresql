@@ -22,7 +22,7 @@ import io.netty.util.ReferenceCountUtil;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.postgresql.api.PostgresqlConnection;
-import io.r2dbc.postgresql.authentication.PasswordAuthenticationHandler;
+import io.r2dbc.postgresql.authentication.AuthenticationHandler;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.CommandComplete;
 import io.r2dbc.postgresql.message.backend.DataRow;
@@ -86,7 +86,8 @@ final class ReactorNettyClientIntegrationTests {
 
     private final ReactorNettyClient client = ReactorNettyClient.connect(SERVER.getHost(), SERVER.getPort())
         .delayUntil(client -> StartupMessageFlow
-            .exchange(this.getClass().getName(), m -> new PasswordAuthenticationHandler(SERVER.getPassword(), SERVER.getUsername()), client, SERVER.getDatabase(), SERVER.getUsername()))
+            .exchange(this.getClass().getName(), m -> AuthenticationHandler.getAuthenticationHandler(m, SERVER.getUsernameAndPassword(), client.getContext()), client, SERVER.getDatabase(),
+                SERVER.getUsername()))
         .block();
 
     @BeforeEach
@@ -797,6 +798,21 @@ final class ReactorNettyClientIntegrationTests {
                     c -> c
                         .as(StepVerifier::create)
                         .verifyError(R2dbcPermissionDeniedException.class));
+            }
+
+            @Test
+            void directVerifyFull() {
+                client(
+                    c -> c
+                        .sslMode(SSLMode.VERIFY_FULL)
+                        .sslNegotiation(SSLNegotiation.DIRECT)
+                        .sslRootCert(SERVER.getServerCrt())
+                        .sslKey(SERVER.getClientKey())
+                        .sslCert(SERVER.getClientCrt()),
+                    c -> c
+                        .as(StepVerifier::create)
+                        .expectNextCount(1)
+                        .verifyComplete());
             }
 
         }

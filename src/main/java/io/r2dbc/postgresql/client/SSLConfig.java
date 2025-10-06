@@ -32,6 +32,8 @@ public final class SSLConfig {
     @Nullable
     private final HostnameVerifier hostnameVerifier;
 
+    private final SSLNegotiation sslNegotiation;
+
     private final SSLMode sslMode;
 
     @Nullable
@@ -42,11 +44,13 @@ public final class SSLConfig {
     private final Function<SocketAddress, SSLParameters> sslParametersFactory;
 
     public SSLConfig(SSLMode sslMode, @Nullable Supplier<SslContext> sslProvider, @Nullable HostnameVerifier hostnameVerifier) {
-        this(sslMode, sslProvider, Function.identity(), it -> new SSLParameters(), hostnameVerifier);
+        this(SSLNegotiation.POSTGRES, sslMode, sslProvider, Function.identity(), it -> new SSLParameters(), hostnameVerifier);
     }
 
-    public SSLConfig(SSLMode sslMode, @Nullable Supplier<SslContext> sslProvider, Function<SSLEngine, SSLEngine> sslEngineCustomizer, Function<SocketAddress, SSLParameters> sslParametersFactory,
+    public SSLConfig(SSLNegotiation sslNegotiation, SSLMode sslMode, @Nullable Supplier<SslContext> sslProvider, Function<SSLEngine, SSLEngine> sslEngineCustomizer, Function<SocketAddress,
+                         SSLParameters> sslParametersFactory,
                      @Nullable HostnameVerifier hostnameVerifier) {
+        this.sslNegotiation = sslNegotiation;
         if (sslMode != SSLMode.DISABLE) {
             Assert.requireNonNull(sslProvider, "SslContext provider is required for ssl mode " + sslMode);
         }
@@ -68,6 +72,15 @@ public final class SSLConfig {
         return this.hostnameVerifier;
     }
 
+    @SuppressWarnings("deprecation")
+    public boolean isDirectSsl() {
+        return getSslMode() == SSLMode.TUNNEL || getSslNegotiation() == SSLNegotiation.DIRECT || getSslNegotiation() == SSLNegotiation.TUNNEL;
+    }
+
+    public SSLNegotiation getSslNegotiation() {
+        return this.sslNegotiation;
+    }
+
     public SSLMode getSslMode() {
         return this.sslMode;
     }
@@ -83,13 +96,13 @@ public final class SSLConfig {
         return this.sslEngineCustomizer;
     }
 
-
     public Function<SocketAddress, SSLParameters> getSslParametersFactory() {
         return this.sslParametersFactory;
     }
 
     public SSLConfig mutateMode(SSLMode newMode) {
         return new SSLConfig(
+            this.sslNegotiation,
             newMode,
             this.sslProvider,
             this.sslEngineCustomizer,

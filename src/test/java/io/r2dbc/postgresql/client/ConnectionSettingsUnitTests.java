@@ -64,7 +64,7 @@ final class ConnectionSettingsUnitTests {
             ConnectionSettings.builder().connectionProvider(ConnectionProvider.newConnection())
                 .loopResources(loopResources)
                 .errorResponseLogLevel(LogLevel.OFF).noticeLogLevel(LogLevel.ERROR)
-                .sslConfig(new SSLConfig(SSLMode.DISABLE, null, null)).build();
+                .sslConfig(SSLConfig.disabled()).build();
 
         assertThat(connectionSettings)
             .hasFieldOrPropertyWithValue("connectionProvider", ConnectionProvider.newConnection())

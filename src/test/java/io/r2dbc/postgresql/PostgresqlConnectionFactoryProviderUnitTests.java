@@ -20,6 +20,7 @@ import io.r2dbc.postgresql.client.MultiHostConfiguration;
 import io.r2dbc.postgresql.client.MultiHostConfiguration.ServerHost;
 import io.r2dbc.postgresql.client.SSLConfig;
 import io.r2dbc.postgresql.client.SSLMode;
+import io.r2dbc.postgresql.client.SSLNegotiation;
 import io.r2dbc.postgresql.extension.Extension;
 import io.r2dbc.postgresql.util.LogLevel;
 import io.r2dbc.spi.ConnectionFactoryOptions;
@@ -59,6 +60,7 @@ import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_CERT;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_CONTEXT_BUILDER_CUSTOMIZER;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_KEY;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_MODE;
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_NEGOTIATION;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_ROOT_CERT;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.SSL_SNI;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.STATEMENT_TIMEOUT;
@@ -192,6 +194,23 @@ final class PostgresqlConnectionFactoryProviderUnitTests {
         SSLConfig sslConfig = factory.getConfiguration().getSslConfig();
 
         assertThat(sslConfig.getSslMode()).isEqualTo(SSLMode.VERIFY_FULL);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Test
+    void enableSslDirect() {
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option(SSL, true)
+            .option((Option) SSL_NEGOTIATION, "Direct")
+            .build());
+
+        SSLConfig sslConfig = factory.getConfiguration().getSslConfig();
+
+        assertThat(sslConfig.getSslNegotiation()).isEqualTo(SSLNegotiation.DIRECT);
     }
 
     @Test

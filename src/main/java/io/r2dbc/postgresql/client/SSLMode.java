@@ -16,6 +16,8 @@
 
 package io.r2dbc.postgresql.client;
 
+import java.util.Arrays;
+
 public enum SSLMode {
     /**
      * I don't care about security and don't want to pay the overhead for encryption
@@ -48,8 +50,10 @@ public enum SSLMode {
     VERIFY_FULL("verify-full"),
 
     /**
-     * I want to use a SSL tunnel instead of following Postgres SSL handshake protocol.
+     * I want to use an SSL tunnel instead of following Postgres SSL handshake protocol.
+     * @deprecated since 1.1, use {@link SSLNegotiation#TUNNEL} and configure your own SSL tunnel.
      */
+    @Deprecated
     TUNNEL("tunnel");
 
     private final String value;
@@ -68,7 +72,7 @@ public enum SSLMode {
 
     @Override
     public String toString() {
-        return value;
+        return this.value;
     }
 
     public boolean verifyCertificate() {
@@ -85,6 +89,6 @@ public enum SSLMode {
                 return sslMode;
             }
         }
-        throw new IllegalArgumentException("Invalid ssl mode value: " + sslModeString);
+        throw new IllegalArgumentException("Invalid ssl mode value: " + sslModeString + ". Supported values are: " + Arrays.toString(values()));
     }
 }
