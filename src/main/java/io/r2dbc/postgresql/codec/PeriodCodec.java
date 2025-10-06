@@ -20,9 +20,13 @@ import io.netty.buffer.ByteBufAllocator;
 
 import java.time.Period;
 
+/**
+ * @since 1.0.8
+ */
 final class PeriodCodec extends StringCodecDelegate<Period> {
 
     PeriodCodec(ByteBufAllocator byteBufAllocator) {
         super(Period.class, byteBufAllocator, Period::toString, Period::parse);
     }
+
 }

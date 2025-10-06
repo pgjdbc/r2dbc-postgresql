@@ -1,15 +1,35 @@
+/*
+ * Copyright 2017 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.r2dbc.postgresql.codec;
 
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.client.ParameterAssert;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.time.DayOfWeek;
-import java.util.Arrays;
-import java.util.function.Consumer;
 
 import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
-import static io.r2dbc.postgresql.codec.PostgresqlObjectId.*;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT2;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT4;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT8;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.NUMERIC;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
@@ -24,10 +44,10 @@ class DayOfWeekCodecTest {
                 .withMessage("byteBufAllocator must not be null");
     }
 
-    @Test
-    void decode() {
-        forEveryDayOfWeek(d ->
-                assertThat(new DayOfWeekCodec(TEST).decode(TEST.buffer().writeInt(d.getValue()), INT4, FORMAT_BINARY, DayOfWeek.class)).isEqualTo(d));
+    @ParameterizedTest
+    @EnumSource(DayOfWeek.class)
+    void decode(DayOfWeek d) {
+        assertThat(new DayOfWeekCodec(TEST).decode(TEST.buffer().writeInt(d.getValue()), INT4, FORMAT_BINARY, DayOfWeek.class)).isEqualTo(d);
     }
 
     @Test
@@ -52,36 +72,31 @@ class DayOfWeekCodecTest {
                 .withMessage("type must not be null");
     }
 
-    @Test
-    void doEncodeInt() {
-
-        forEveryDayOfWeek(d -> {
-            ParameterAssert.assertThat(new DayOfWeekCodec(TEST).doEncode(d))
-                    .hasFormat(FORMAT_BINARY)
-                    .hasType(INT4.getObjectId())
-                    .hasValue(TEST.buffer().writeInt(d.getValue()));
-        });
+    @ParameterizedTest
+    @EnumSource(DayOfWeek.class)
+    void doEncodeInt(DayOfWeek d) {
+        ParameterAssert.assertThat(new DayOfWeekCodec(TEST).doEncode(d))
+            .hasFormat(FORMAT_BINARY)
+            .hasType(INT4.getObjectId())
+            .hasValue(TEST.buffer().writeInt(d.getValue()));
     }
 
-    @Test
-    void doEncodeShort() {
-        forEveryDayOfWeek(d -> {
-            ParameterAssert.assertThat(new DayOfWeekCodec(TEST).doEncode(d, INT2))
-                    .hasFormat(FORMAT_BINARY)
-                    .hasType(INT2.getObjectId())
-                    .hasValue(TEST.buffer().writeShort(d.getValue()));
-        });
+    @ParameterizedTest
+    @EnumSource(DayOfWeek.class)
+    void doEncodeShort(DayOfWeek d) {
+        ParameterAssert.assertThat(new DayOfWeekCodec(TEST).doEncode(d, INT2))
+            .hasFormat(FORMAT_BINARY)
+            .hasType(INT2.getObjectId())
+            .hasValue(TEST.buffer().writeShort(d.getValue()));
     }
 
-    @Test
-    void doEncodeLong() {
-
-        forEveryDayOfWeek(d -> {
-            ParameterAssert.assertThat(new DayOfWeekCodec(TEST).doEncode(d, INT8))
-                    .hasFormat(FORMAT_BINARY)
-                    .hasType(INT8.getObjectId())
-                    .hasValue(TEST.buffer().writeLong(d.getValue()));
-        });
+    @ParameterizedTest
+    @EnumSource(DayOfWeek.class)
+    void doEncodeLong(DayOfWeek d) {
+        ParameterAssert.assertThat(new DayOfWeekCodec(TEST).doEncode(d, INT8))
+            .hasFormat(FORMAT_BINARY)
+            .hasType(INT8.getObjectId())
+            .hasValue(TEST.buffer().writeLong(d.getValue()));
     }
 
     @Test
@@ -102,7 +117,4 @@ class DayOfWeekCodecTest {
                 .isEqualTo(new EncodedParameter(FORMAT_BINARY, INT4.getObjectId(), NULL_VALUE));
     }
 
-    private void forEveryDayOfWeek(Consumer<DayOfWeek> assertion) {
-        Arrays.stream(DayOfWeek.values()).forEach(assertion);
-    }
 }

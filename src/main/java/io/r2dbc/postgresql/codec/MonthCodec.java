@@ -20,9 +20,13 @@ import io.netty.buffer.ByteBufAllocator;
 
 import java.time.Month;
 
+/**
+ * @since 1.0.8
+ */
 final class MonthCodec extends IntegerCodecDelegate<Month> {
 
     MonthCodec(ByteBufAllocator byteBufAllocator) {
         super(Month.class, byteBufAllocator, Month::getValue, Month::of);
     }
+
 }

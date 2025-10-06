@@ -1,15 +1,35 @@
+/*
+ * Copyright 2017 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.r2dbc.postgresql.codec;
 
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.client.ParameterAssert;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.time.Month;
-import java.util.Arrays;
-import java.util.function.Consumer;
 
 import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
-import static io.r2dbc.postgresql.codec.PostgresqlObjectId.*;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT2;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT4;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT8;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.NUMERIC;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.VARCHAR;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
@@ -25,10 +45,10 @@ class MonthCodecTest {
     }
 
 
-    @Test
-    void decode() {
-        forEveryMonth(m ->
-                assertThat(new MonthCodec(TEST).decode(TEST.buffer().writeInt(m.getValue()), INT4, FORMAT_BINARY, Month.class)).isEqualTo(m));
+    @ParameterizedTest
+    @EnumSource(Month.class)
+    void decode(Month m) {
+        assertThat(new MonthCodec(TEST).decode(TEST.buffer().writeInt(m.getValue()), INT4, FORMAT_BINARY, Month.class)).isEqualTo(m);
     }
 
     @Test
@@ -53,36 +73,31 @@ class MonthCodecTest {
                 .withMessage("type must not be null");
     }
 
-    @Test
-    void doEncodeInt() {
-
-        forEveryMonth(m -> {
-            ParameterAssert.assertThat(new MonthCodec(TEST).doEncode(m))
-                    .hasFormat(FORMAT_BINARY)
-                    .hasType(INT4.getObjectId())
-                    .hasValue(TEST.buffer().writeInt(m.getValue()));
-        });
+    @ParameterizedTest
+    @EnumSource(Month.class)
+    void doEncodeInt(Month m) {
+        ParameterAssert.assertThat(new MonthCodec(TEST).doEncode(m))
+            .hasFormat(FORMAT_BINARY)
+            .hasType(INT4.getObjectId())
+            .hasValue(TEST.buffer().writeInt(m.getValue()));
     }
 
-    @Test
-    void doEncodeShort() {
-        forEveryMonth(m -> {
-            ParameterAssert.assertThat(new MonthCodec(TEST).doEncode(m, INT2))
-                    .hasFormat(FORMAT_BINARY)
-                    .hasType(INT2.getObjectId())
-                    .hasValue(TEST.buffer().writeShort(m.getValue()));
-        });
+    @ParameterizedTest
+    @EnumSource(Month.class)
+    void doEncodeShort(Month m) {
+        ParameterAssert.assertThat(new MonthCodec(TEST).doEncode(m, INT2))
+            .hasFormat(FORMAT_BINARY)
+            .hasType(INT2.getObjectId())
+            .hasValue(TEST.buffer().writeShort(m.getValue()));
     }
 
-    @Test
-    void doEncodeLong() {
-
-        forEveryMonth(m -> {
-            ParameterAssert.assertThat(new MonthCodec(TEST).doEncode(m, INT8))
-                    .hasFormat(FORMAT_BINARY)
-                    .hasType(INT8.getObjectId())
-                    .hasValue(TEST.buffer().writeLong(m.getValue()));
-        });
+    @ParameterizedTest
+    @EnumSource(Month.class)
+    void doEncodeLong(Month m) {
+        ParameterAssert.assertThat(new MonthCodec(TEST).doEncode(m, INT8))
+            .hasFormat(FORMAT_BINARY)
+            .hasType(INT8.getObjectId())
+            .hasValue(TEST.buffer().writeLong(m.getValue()));
     }
 
     @Test
@@ -103,7 +118,4 @@ class MonthCodecTest {
                 .isEqualTo(new EncodedParameter(FORMAT_BINARY, INT4.getObjectId(), NULL_VALUE));
     }
 
-    private void forEveryMonth(Consumer<Month> assertion) {
-        Arrays.stream(Month.values()).forEach(assertion);
-    }
 }
