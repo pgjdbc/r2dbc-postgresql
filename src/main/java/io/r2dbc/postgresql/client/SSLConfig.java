@@ -29,6 +29,8 @@ import java.util.function.Supplier;
 
 public final class SSLConfig {
 
+    private static SSLConfig DISABLED = new SSLConfig(SSLMode.DISABLE, null, (hostname, session) -> true);
+
     @Nullable
     private final HostnameVerifier hostnameVerifier;
 
@@ -65,7 +67,7 @@ public final class SSLConfig {
     }
 
     public static SSLConfig disabled() {
-        return new SSLConfig(SSLMode.DISABLE, null, (hostname, session) -> true);
+        return DISABLED;
     }
 
     HostnameVerifier getHostnameVerifier() {

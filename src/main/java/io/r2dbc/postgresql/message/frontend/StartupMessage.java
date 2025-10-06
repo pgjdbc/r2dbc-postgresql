@@ -125,7 +125,7 @@ public final class StartupMessage implements FrontendMessage {
     @Override
     public String toString() {
         return "StartupMessage{" +
-            ", database='" + this.database + '\'' +
+            "database='" + this.database + '\'' +
             ", username='" + this.username + '\'' +
             '}';
     }

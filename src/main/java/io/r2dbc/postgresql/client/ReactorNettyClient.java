@@ -365,7 +365,7 @@ public final class ReactorNettyClient implements Client {
     public static Mono<ReactorNettyClient> connect(String host, int port) {
         Assert.requireNonNull(host, "host must not be null");
 
-        return connect(host, port, null, new SSLConfig(SSLMode.DISABLE, null, null));
+        return connect(host, port, null, SSLConfig.disabled());
     }
 
     /**

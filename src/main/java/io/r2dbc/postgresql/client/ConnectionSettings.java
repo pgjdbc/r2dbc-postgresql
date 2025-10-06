@@ -175,7 +175,7 @@ public final class ConnectionSettings {
 
         private LogLevel noticeLogLevel = LogLevel.DEBUG;
 
-        private SSLConfig sslConfig = new SSLConfig(SSLMode.DISABLE, null, null);
+        private SSLConfig sslConfig = SSLConfig.disabled();
 
         private Map<String, String> startupOptions = Collections.emptyMap();
 
