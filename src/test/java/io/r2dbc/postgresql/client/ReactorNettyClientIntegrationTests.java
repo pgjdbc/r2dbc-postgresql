@@ -294,13 +294,13 @@ final class ReactorNettyClientIntegrationTests {
     @Test
     void timeoutTest() {
         PostgresqlConnectionFactory postgresqlConnectionFactory = new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
-            .host("example.com")
+            .host("1.2.3.4")
             .port(81)
             .username("test")
             .password("test")
             .database(SERVER.getDatabase())
             .applicationName(ReactorNettyClientIntegrationTests.class.getName())
-            .connectTimeout(Duration.ofMillis(200))
+            .connectTimeout(Duration.ofMillis(1))
             .build());
 
         postgresqlConnectionFactory.create()
