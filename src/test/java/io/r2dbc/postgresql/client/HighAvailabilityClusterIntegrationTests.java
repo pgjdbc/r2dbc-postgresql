@@ -20,6 +20,7 @@ import io.r2dbc.postgresql.MultiHostConnectionStrategy;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.postgresql.api.PostgresqlConnection;
+import io.r2dbc.postgresql.util.Disposable;
 import io.r2dbc.postgresql.util.PostgresqlHighAvailabilityClusterExtension;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.R2dbcException;
@@ -29,10 +30,10 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.testcontainers.containers.PostgreSQLContainer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.netty.DisposableChannel;
-import reactor.netty.DisposableServer;
-import reactor.netty.tcp.TcpServer;
 import reactor.test.StepVerifier;
+
+import java.net.InetSocketAddress;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -52,7 +53,7 @@ final class HighAvailabilityClusterIntegrationTests {
 
     @Test
     void testMultipleCallsOnSameFactory() {
-        PostgresqlConnectionFactory connectionFactory = this.multiHostConnectionFactory(MultiHostConnectionStrategy.TargetServerType.PREFER_SECONDARY, SERVERS.getPrimary(), SERVERS.getStandby());
+        PostgresqlConnectionFactory connectionFactory = this.configure(MultiHostConnectionStrategy.TargetServerType.PREFER_SECONDARY, SERVERS.getPrimary(), SERVERS.getStandby());
 
         Mono.usingWhen(connectionFactory.create(), this::isPrimary, Connection::close)
             .as(StepVerifier::create)
@@ -124,21 +125,16 @@ final class HighAvailabilityClusterIntegrationTests {
     }
 
     @Test
-    void testTargetPreferSecondaryConnectedToMasterOnStandbyFailure() {
-        DisposableServer failingServer = newServer();
-        try {
-            isConnectedToPrimary(MultiHostConnectionStrategy.TargetServerType.PREFER_SECONDARY, SERVERS.getPrimary(), failingServer)
-                .as(StepVerifier::create)
-                .expectNext(true)
-                .verifyComplete();
-        } finally {
-            failingServer.dispose();
-        }
+    void testTargetPreferSecondaryConnectedToMasterOnStandbyFailure(@Disposable InetSocketAddress faulty) {
+        isConnectedToPrimary(MultiHostConnectionStrategy.TargetServerType.PREFER_SECONDARY, SERVERS.getPrimary(), faulty)
+            .as(StepVerifier::create)
+            .expectNext(true)
+            .verifyComplete();
     }
 
     @Test
     void testMultipleCallsWithTargetPreferSecondaryConnectedToStandby() {
-        PostgresqlConnectionFactory connectionFactory = this.multiHostConnectionFactory(MultiHostConnectionStrategy.TargetServerType.PREFER_SECONDARY, SERVERS.getPrimary(), SERVERS.getStandby());
+        PostgresqlConnectionFactory connectionFactory = this.configure(MultiHostConnectionStrategy.TargetServerType.PREFER_SECONDARY, SERVERS.getPrimary(), SERVERS.getStandby());
 
         Mono<Boolean> allocator = Mono.usingWhen(connectionFactory.create(), this::isPrimary, Connection::close);
         Flux<Boolean> connectionPool = Flux.merge(allocator, allocator);
@@ -151,23 +147,28 @@ final class HighAvailabilityClusterIntegrationTests {
     }
 
     @Test
-    void testMultipleCallsWithTargetPreferSecondaryConnectedToMasterOnStandbyFailure() {
-        DisposableServer failingServer = newServer();
-        try {
-            PostgresqlConnectionFactory connectionFactory = this.multiHostConnectionFactoryWithFailingServer(MultiHostConnectionStrategy.TargetServerType.PREFER_SECONDARY, SERVERS.getPrimary(),
-                failingServer);
+    void testAllFaulty(@Disposable InetSocketAddress faulty1, @Disposable InetSocketAddress faulty2) {
+        PostgresqlConnectionFactory connectionFactory = this.configure(MultiHostConnectionStrategy.TargetServerType.SECONDARY, SERVERS.getPrimary(),
+            faulty1, faulty2);
 
-            Mono<Boolean> allocator = Mono.usingWhen(connectionFactory.create(), this::isPrimary, Connection::close);
-            Flux<Boolean> connectionPool = Flux.merge(allocator, allocator);
+        connectionFactory.create()
+            .as(StepVerifier::create)
+            .expectError(R2dbcNonTransientResourceException.class);
+    }
 
-            connectionPool
-                .as(StepVerifier::create)
-                .expectNext(true)
-                .expectNext(true)
-                .verifyComplete();
-        } finally {
-            failingServer.dispose();
-        }
+    @Test
+    void testMultipleCallsWithTargetPreferSecondaryConnectedToMasterOnStandbyFailure(@Disposable InetSocketAddress faulty) {
+        PostgresqlConnectionFactory connectionFactory = this.configure(MultiHostConnectionStrategy.TargetServerType.PREFER_SECONDARY, SERVERS.getPrimary(),
+            faulty);
+
+        Mono<Boolean> allocator = Mono.usingWhen(connectionFactory.create(), this::isPrimary, Connection::close);
+        Flux<Boolean> connectionPool = Flux.merge(allocator, allocator);
+
+        connectionPool
+            .as(StepVerifier::create)
+            .expectNext(true)
+            .expectNext(true)
+            .verifyComplete();
     }
 
     @Test
@@ -227,13 +228,13 @@ final class HighAvailabilityClusterIntegrationTests {
     }
 
     private Mono<Boolean> isConnectedToPrimary(MultiHostConnectionStrategy.TargetServerType targetServerType, PostgreSQLContainer<?>... servers) {
-        PostgresqlConnectionFactory connectionFactory = this.multiHostConnectionFactory(targetServerType, servers);
+        PostgresqlConnectionFactory connectionFactory = this.configure(targetServerType, servers);
 
         return Mono.usingWhen(connectionFactory.create(), this::isPrimary, Connection::close);
     }
 
-    private Mono<Boolean> isConnectedToPrimary(MultiHostConnectionStrategy.TargetServerType targetServerType, PostgreSQLContainer<?> primaryServer, DisposableServer failingServer) {
-        PostgresqlConnectionFactory connectionFactory = this.multiHostConnectionFactoryWithFailingServer(targetServerType, primaryServer, failingServer);
+    private Mono<Boolean> isConnectedToPrimary(MultiHostConnectionStrategy.TargetServerType targetServerType, PostgreSQLContainer<?> primaryServer, InetSocketAddress failingServer) {
+        PostgresqlConnectionFactory connectionFactory = this.configure(targetServerType, primaryServer, failingServer);
 
         return Mono.usingWhen(connectionFactory.create(), this::isPrimary, Connection::close);
     }
@@ -246,25 +247,36 @@ final class HighAvailabilityClusterIntegrationTests {
             .next();
     }
 
-    private PostgresqlConnectionFactory multiHostConnectionFactory(MultiHostConnectionStrategy.TargetServerType targetServerType, PostgreSQLContainer<?>... servers) {
-        PostgreSQLContainer<?> firstServer = servers[0];
-        PostgresqlConnectionConfiguration.Builder builder = PostgresqlConnectionConfiguration.builder();
-        for (PostgreSQLContainer<?> server : servers) {
-            builder.addHost(server.getHost(), server.getMappedPort(5432));
-        }
-        PostgresqlConnectionConfiguration configuration = builder
-            .targetServerType(targetServerType)
-            .username(firstServer.getUsername())
-            .password(firstServer.getPassword())
-            .build();
-        return new PostgresqlConnectionFactory(configuration);
+    private PostgresqlConnectionFactory configure(MultiHostConnectionStrategy.TargetServerType targetServerType, PostgreSQLContainer<?>... servers) {
+        return configure(targetServerType, servers[0], builder -> {
+
+
+            for (PostgreSQLContainer<?> server : servers) {
+
+                if (server == servers[0]) {
+                    continue;
+                }
+                builder.addHost(server.getHost(), server.getMappedPort(5432));
+            }
+        });
     }
 
-    private PostgresqlConnectionFactory multiHostConnectionFactoryWithFailingServer(MultiHostConnectionStrategy.TargetServerType targetServerType, PostgreSQLContainer<?> primaryServer,
-                                                                                    DisposableServer failingServer) {
+    private PostgresqlConnectionFactory configure(MultiHostConnectionStrategy.TargetServerType targetServerType, PostgreSQLContainer<?> primaryServer,
+                                                  InetSocketAddress... addresses) {
+
+        return configure(targetServerType, primaryServer, builder -> {
+
+            for (InetSocketAddress address : addresses) {
+                builder.addHost(address.getHostName(), address.getPort());
+            }
+        });
+    }
+
+    private PostgresqlConnectionFactory configure(MultiHostConnectionStrategy.TargetServerType targetServerType, PostgreSQLContainer<?> primaryServer,
+                                                  Consumer<PostgresqlConnectionConfiguration.Builder> builderCustomizer) {
         PostgresqlConnectionConfiguration.Builder builder = PostgresqlConnectionConfiguration.builder();
         builder.addHost(primaryServer.getHost(), primaryServer.getMappedPort(5432));
-        builder.addHost(failingServer.host(), failingServer.port());
+        builderCustomizer.accept(builder);
 
         PostgresqlConnectionConfiguration configuration = builder
             .targetServerType(targetServerType)
@@ -272,13 +284,6 @@ final class HighAvailabilityClusterIntegrationTests {
             .password(primaryServer.getPassword())
             .build();
         return new PostgresqlConnectionFactory(configuration);
-    }
-
-    // Simulate server downtime, where connections are accepted and then closed immediately
-    static DisposableServer newServer() {
-        return TcpServer.create()
-            .doOnConnection(DisposableChannel::dispose)
-            .bindNow();
     }
 
 }
