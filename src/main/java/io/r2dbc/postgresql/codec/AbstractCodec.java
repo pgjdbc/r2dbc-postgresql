@@ -181,7 +181,7 @@ abstract class AbstractCodec<T> implements Codec<T>, CodecMetadata {
     abstract T doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, Format format, Class<? extends T> type);
 
     /**
-     * Forwarding method to {@link #doDecode(ByteBuf, PostgresTypeIdentifier, Format, Class)} for subclasses that want to implement {@link ArrayCodecDelegate}.
+     * Forwarding method to {@code doDecode(ByteBuf, PostgresTypeIdentifier, Format, Class)} for subclasses that want to implement {@code ArrayCodecDelegate}.
      *
      * @param buffer   the data buffer
      * @param dataType the well-known {@link PostgresTypeIdentifier type OID}

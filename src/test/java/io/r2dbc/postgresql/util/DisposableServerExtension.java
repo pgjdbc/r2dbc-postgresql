@@ -47,7 +47,7 @@ final class DisposableServerExtension implements ParameterResolver, AfterAllCall
     public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
 
         ExtensionContext.Store store = extensionContext.getStore(NAMESPACE);
-        Map<Parameter, DisposableServer> servers = store.getOrComputeIfAbsent("servers", key -> new ConcurrentHashMap<>(), Map.class);
+        Map<Parameter, DisposableServer> servers = store.computeIfAbsent("servers", key -> new ConcurrentHashMap<>(), Map.class);
 
 
         DisposableServer server = servers.computeIfAbsent(parameterContext.getParameter(), key -> newServer());
