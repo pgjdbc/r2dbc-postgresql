@@ -18,7 +18,7 @@
  * Extension points for the Postgres driver.
  */
 
-@NonNullApi
+@org.jspecify.annotations.NullMarked
 package io.r2dbc.postgresql.extension;
 
-import reactor.util.annotation.NonNullApi;
+

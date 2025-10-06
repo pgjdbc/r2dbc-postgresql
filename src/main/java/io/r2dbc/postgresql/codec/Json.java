@@ -21,7 +21,7 @@ import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.util.Assert;
-import reactor.util.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -119,8 +119,7 @@ public abstract class Json {
      * @param <T>             return type.
      * @return the mapped value. Can be {@code null}.
      */
-    @Nullable
-    public abstract <T> T mapBuffer(Function<ByteBuffer, ? extends T> mappingFunction);
+    public abstract <T> @Nullable T mapBuffer(Function<ByteBuffer, ? extends T> mappingFunction);
 
     /**
      * Returns an object consisting of the result of applying the given
@@ -131,8 +130,7 @@ public abstract class Json {
      * @param <T>             return type.
      * @return the mapped value. Can be {@code null}.
      */
-    @Nullable
-    public abstract <T> T mapByteBuf(Function<ByteBuf, ? extends T> mappingFunction);
+    public abstract <T> @Nullable T mapByteBuf(Function<ByteBuf, ? extends T> mappingFunction);
 
     /**
      * Returns an object consisting of the result of applying the given
@@ -143,8 +141,7 @@ public abstract class Json {
      * @param <T>             return type.
      * @return the mapped value. Can be {@code null}.
      */
-    @Nullable
-    public abstract <T> T mapInputStream(Function<InputStream, ? extends T> mappingFunction);
+    public abstract <T> @Nullable T mapInputStream(Function<InputStream, ? extends T> mappingFunction);
 
     /**
      * Returns the value as {@code byte[]}.

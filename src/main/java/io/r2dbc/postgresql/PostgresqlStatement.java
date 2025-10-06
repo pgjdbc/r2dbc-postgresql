@@ -37,7 +37,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collections;
@@ -127,7 +126,6 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
         return this;
     }
 
-    @Nonnull
     private Binding getCurrentOrFirstBinding() {
         Binding binding = this.bindings.peekLast();
         if (binding == null) {

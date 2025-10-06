@@ -22,9 +22,9 @@ import io.netty.util.ByteProcessor;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
+import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.Mono;
 
-import javax.annotation.Nullable;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -150,8 +150,7 @@ final class HStoreCodec implements Codec<Map>, CodecMetadata {
         }
     }
 
-    @Nullable
-    private static String readString(ByteBuf buffer) {
+    private static @Nullable String readString(ByteBuf buffer) {
 
         int position = buffer.forEachByte(FIND_QUOTE);
         if (position > buffer.writerIndex()) {

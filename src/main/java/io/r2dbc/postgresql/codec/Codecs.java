@@ -19,7 +19,7 @@ package io.r2dbc.postgresql.codec;
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
-import reactor.util.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Encodes and decodes objects.
@@ -37,8 +37,7 @@ public interface Codecs {
      * @return the decoded value
      * @throws IllegalArgumentException if {@code format} or {@code type} is {@code null}
      */
-    @Nullable
-    <T> T decode(@Nullable ByteBuf buffer, int dataType, Format format, Class<? extends T> type);
+    <T> @Nullable T decode(@Nullable ByteBuf buffer, int dataType, Format format, Class<? extends T> type);
 
     /**
      * Encode a value.

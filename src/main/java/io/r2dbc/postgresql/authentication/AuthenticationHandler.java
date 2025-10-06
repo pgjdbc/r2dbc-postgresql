@@ -20,7 +20,7 @@ import io.r2dbc.postgresql.client.ConnectionContext;
 import io.r2dbc.postgresql.message.backend.AuthenticationMessage;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.util.Assert;
-import reactor.util.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A handler for {@link AuthenticationMessage}s.  Responsible for handling the entire interaction for a given authentication style.

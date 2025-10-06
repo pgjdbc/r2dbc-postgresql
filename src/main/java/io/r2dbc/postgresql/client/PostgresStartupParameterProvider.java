@@ -18,7 +18,7 @@ package io.r2dbc.postgresql.client;
 
 import io.r2dbc.postgresql.message.frontend.StartupMessage;
 import io.r2dbc.postgresql.util.Assert;
-import reactor.util.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 import java.util.TimeZone;
@@ -34,8 +34,7 @@ public final class PostgresStartupParameterProvider implements StartupMessage.St
 
     private final TimeZone timeZone;
 
-    @Nullable
-    private final Map<String, String> options;
+    private final @Nullable Map<String, String> options;
 
     public PostgresStartupParameterProvider(String applicationName, TimeZone timeZone, @Nullable Map<String, String> options) {
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");

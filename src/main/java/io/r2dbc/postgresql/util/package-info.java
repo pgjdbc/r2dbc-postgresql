@@ -18,7 +18,7 @@
  * Utility code used throughout the project.
  */
 
-@NonNullApi
+@org.jspecify.annotations.NullMarked
 package io.r2dbc.postgresql.util;
 
-import reactor.util.annotation.NonNullApi;
+

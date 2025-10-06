@@ -37,10 +37,10 @@ import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.NoticeResponse;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.LogLevel;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import reactor.netty.resources.LoopResources;
-import reactor.util.annotation.Nullable;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SNIHostName;
@@ -86,8 +86,7 @@ public final class PostgresqlConnectionConfiguration {
 
     private final boolean compatibilityMode;
 
-    @Nullable
-    private final Duration connectTimeout;
+    private final @Nullable Duration connectTimeout;
 
     private final String database;
 
@@ -99,31 +98,25 @@ public final class PostgresqlConnectionConfiguration {
 
     private final boolean forceBinary;
 
-    @Nullable
-    private final Duration lockWaitTimeout;
+    private final @Nullable Duration lockWaitTimeout;
 
-    @Nullable
-    private final LoopResources loopResources;
+    private final @Nullable LoopResources loopResources;
 
-    @Nullable
-    private final MultiHostConfiguration multiHostConfiguration;
+    private final @Nullable MultiHostConfiguration multiHostConfiguration;
 
     private final LogLevel noticeLogLevel;
 
     private final Map<String, String> options;
 
-    @Nullable
-    private final Publisher<CharSequence> password;
+    private final @Nullable Publisher<CharSequence> password;
 
     private final boolean preferAttachedBuffers;
 
     private final int preparedStatementCacheQueries;
 
-    @Nullable
-    private final SingleHostConfiguration singleHostConfiguration;
+    private final @Nullable SingleHostConfiguration singleHostConfiguration;
 
-    @Nullable
-    private final Duration statementTimeout;
+    private final @Nullable Duration statementTimeout;
 
     private final SSLConfig sslConfig;
 
@@ -135,7 +128,7 @@ public final class PostgresqlConnectionConfiguration {
 
     private final Publisher<String> username;
 
-    private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions, @Nullable boolean compatibilityMode, @Nullable Duration connectTimeout, @Nullable String database
+    private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions, boolean compatibilityMode, @Nullable Duration connectTimeout, @Nullable String database
         , LogLevel errorResponseLogLevel, List<Extension> extensions, ToIntFunction<String> fetchSize, boolean forceBinary, @Nullable Duration lockWaitTimeout,
                                               @Nullable LoopResources loopResources, @Nullable MultiHostConfiguration multiHostConfiguration, LogLevel noticeLogLevel,
                                               @Nullable Map<String, String> options, @Nullable Publisher<CharSequence> password, boolean preferAttachedBuffers, int preparedStatementCacheQueries,
@@ -230,7 +223,6 @@ public final class PostgresqlConnectionConfiguration {
         return this.connectTimeout;
     }
 
-    @Nullable
     String getDatabase() {
         return this.database;
     }
@@ -360,11 +352,9 @@ public final class PostgresqlConnectionConfiguration {
 
         private boolean compatibilityMode = false;
 
-        @Nullable
-        private Duration connectTimeout;
+        private @Nullable Duration connectTimeout;
 
-        @Nullable
-        private String database;
+        private @Nullable String database;
 
         private LogLevel errorResponseLogLevel = LogLevel.DEBUG;
 
@@ -374,49 +364,39 @@ public final class PostgresqlConnectionConfiguration {
 
         private boolean forceBinary = false;
 
-        @Nullable
-        private Duration lockWaitTimeout;
+        private @Nullable Duration lockWaitTimeout;
 
-        @Nullable
-        private MultiHostConfiguration.Builder multiHostConfiguration;
+        private MultiHostConfiguration.@Nullable Builder multiHostConfiguration;
 
         private LogLevel noticeLogLevel = LogLevel.DEBUG;
 
-        private Map<String, String> options;
+        private @Nullable Map<String, String> options;
 
-        @Nullable
-        private Publisher<CharSequence> password;
+        private @Nullable Publisher<CharSequence> password;
 
         private boolean preferAttachedBuffers = false;
 
         private int preparedStatementCacheQueries = -1;
 
-        @Nullable
-        private String schema;
+        private @Nullable String schema;
 
-        @Nullable
-        private SingleHostConfiguration.Builder singleHostConfiguration;
+        private SingleHostConfiguration.@Nullable Builder singleHostConfiguration;
 
-        @Nullable
-        private URL sslCert = null;
+        private @Nullable URL sslCert = null;
 
         private HostnameVerifier sslHostnameVerifier = DefaultHostnameVerifier.INSTANCE;
 
-        @Nullable
-        private URL sslKey = null;
+        private @Nullable URL sslKey = null;
 
         private SSLMode sslMode = SSLMode.DISABLE;
 
         private SSLNegotiation sslNegotiation = SSLNegotiation.POSTGRES;
 
-        @Nullable
-        private CharSequence sslPassword = null;
+        private @Nullable CharSequence sslPassword = null;
 
-        @Nullable
-        private URL sslRootCert = null;
+        private @Nullable URL sslRootCert = null;
 
-        @Nullable
-        private Duration statementTimeout = null;
+        private @Nullable Duration statementTimeout = null;
 
         private Function<SslContextBuilder, SslContextBuilder> sslContextBuilderCustomizer = Function.identity();
 
@@ -432,11 +412,9 @@ public final class PostgresqlConnectionConfiguration {
 
         private TimeZone timeZone = TimeZone.getDefault();
 
-        @Nullable
-        private LoopResources loopResources = null;
+        private @Nullable LoopResources loopResources = null;
 
-        @Nullable
-        private Publisher<String> username;
+        private @Nullable Publisher<String> username;
 
         private Builder() {
         }

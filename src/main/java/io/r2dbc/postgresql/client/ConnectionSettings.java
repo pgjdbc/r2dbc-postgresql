@@ -21,9 +21,9 @@ import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.NoticeResponse;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.LogLevel;
+import org.jspecify.annotations.Nullable;
 import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.resources.LoopResources;
-import reactor.util.annotation.Nullable;
 
 import java.net.Socket;
 import java.time.Duration;
@@ -38,13 +38,11 @@ import java.util.function.Consumer;
  */
 public final class ConnectionSettings {
 
-    @Nullable
-    private final Duration connectTimeout;
+    private final @Nullable Duration connectTimeout;
 
     private final ConnectionProvider connectionProvider;
 
-    @Nullable
-    private final LoopResources loopResources;
+    private final @Nullable LoopResources loopResources;
 
     private final SSLConfig sslConfig;
 
@@ -164,12 +162,11 @@ public final class ConnectionSettings {
      */
     public static final class Builder {
 
-        @Nullable
-        private Duration connectTimeout;
+        private @Nullable Duration connectTimeout;
 
         private ConnectionProvider connectionProvider = ConnectionProvider.newConnection();
 
-        private LoopResources loopResources = null;
+        private @Nullable LoopResources loopResources = null;
 
         private LogLevel errorResponseLogLevel = LogLevel.WARN;
 

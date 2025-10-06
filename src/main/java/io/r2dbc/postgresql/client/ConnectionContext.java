@@ -16,10 +16,10 @@
 
 package io.r2dbc.postgresql.client;
 
+import org.jspecify.annotations.Nullable;
 import reactor.util.Logger;
 import reactor.util.Loggers;
 
-import javax.annotation.Nullable;
 import javax.net.ssl.SSLSession;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
@@ -42,11 +42,9 @@ public final class ConnectionContext {
 
     private static final AtomicLong CONN_ID = new AtomicLong();
 
-    @Nullable
-    private final Integer processId;
+    private final @Nullable Integer processId;
 
-    @Nullable
-    private final String channelId;
+    private final @Nullable String channelId;
 
     private final String connectionCounter;
 
@@ -107,8 +105,7 @@ public final class ConnectionContext {
         return original;
     }
 
-    @Nullable
-    public SSLSession getSslSession() {
+    public @Nullable SSLSession getSslSession() {
         return this.sslSession.get();
     }
 

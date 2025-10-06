@@ -18,7 +18,7 @@
  * R2DBC driver API with Postgres-specific extensions.
  */
 
-@NonNullApi
+@org.jspecify.annotations.NullMarked
 package io.r2dbc.postgresql.api;
 
-import reactor.util.annotation.NonNullApi;
+

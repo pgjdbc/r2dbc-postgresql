@@ -18,7 +18,7 @@
  * Support for logical and physical replication streams.
  */
 
-@NonNullApi
+@org.jspecify.annotations.NullMarked
 package io.r2dbc.postgresql.replication;
 
-import reactor.util.annotation.NonNullApi;
+

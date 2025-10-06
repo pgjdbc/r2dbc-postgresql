@@ -18,7 +18,7 @@
  * The infrastructure for exchanging messages with the server.
  */
 
-@NonNullApi
+@org.jspecify.annotations.NullMarked
 package io.r2dbc.postgresql.client;
 
-import reactor.util.annotation.NonNullApi;
+

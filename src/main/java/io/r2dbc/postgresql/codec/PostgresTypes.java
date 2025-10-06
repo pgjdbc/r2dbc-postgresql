@@ -21,9 +21,9 @@ import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 import io.r2dbc.spi.Type;
+import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.annotation.Nullable;
 
 import java.util.Objects;
 import java.util.StringJoiner;
@@ -129,8 +129,7 @@ public class PostgresTypes {
 
         private final String category;
 
-        @Nullable
-        private final PostgresqlObjectId objectId;
+        private final @Nullable PostgresqlObjectId objectId;
 
         public PostgresType(int oid, long unsignedOid, int typarray, long unsignedTyparray, String name, String category) {
             this.oid = oid;

@@ -44,10 +44,10 @@ import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.message.frontend.Parse;
 import io.r2dbc.postgresql.message.frontend.Sync;
 import io.r2dbc.postgresql.util.Operators;
+import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 import reactor.core.publisher.SynchronousSink;
-import reactor.util.annotation.Nullable;
 import reactor.util.concurrent.Queues;
 
 import java.util.ArrayList;
@@ -313,8 +313,7 @@ class ExtendedFlowDelegate {
 
         private final Binding binding;
 
-        @Nullable
-        private volatile String name;
+        private volatile @Nullable String name;
 
         private final StatementCache cache;
 

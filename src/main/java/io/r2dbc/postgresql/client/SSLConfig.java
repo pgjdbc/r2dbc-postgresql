@@ -18,7 +18,7 @@ package io.r2dbc.postgresql.client;
 
 import io.netty.handler.ssl.SslContext;
 import io.r2dbc.postgresql.util.Assert;
-import reactor.util.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLEngine;
@@ -29,17 +29,15 @@ import java.util.function.Supplier;
 
 public final class SSLConfig {
 
-    private static SSLConfig DISABLED = new SSLConfig(SSLMode.DISABLE, null, (hostname, session) -> true);
+    private static final SSLConfig DISABLED = new SSLConfig(SSLMode.DISABLE, null, (hostname, session) -> true);
 
-    @Nullable
-    private final HostnameVerifier hostnameVerifier;
+    private final @Nullable HostnameVerifier hostnameVerifier;
 
     private final SSLNegotiation sslNegotiation;
 
     private final SSLMode sslMode;
 
-    @Nullable
-    private final Supplier<SslContext> sslProvider;
+    private final @Nullable Supplier<SslContext> sslProvider;
 
     private final Function<SSLEngine, SSLEngine> sslEngineCustomizer;
 

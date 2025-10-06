@@ -41,6 +41,7 @@ import io.r2dbc.spi.R2dbcException;
 import io.r2dbc.spi.TransactionDefinition;
 import io.r2dbc.spi.ValidationDepth;
 import io.r2dbc.spi.Wrapped;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
 import reactor.core.CoreSubscriber;
@@ -52,7 +53,6 @@ import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Scheduler;
 import reactor.util.Logger;
 import reactor.util.Loggers;
-import reactor.util.annotation.Nullable;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicReference;
@@ -509,8 +509,7 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
 
         private final Sinks.Many<Notification> sink = Sinks.many().multicast().directBestEffort();
 
-        @Nullable
-        private volatile Disposable subscription = null;
+        private volatile @Nullable Disposable subscription = null;
 
         void dispose() {
             Disposable subscription = this.subscription;

@@ -17,7 +17,7 @@
 package io.r2dbc.postgresql.codec;
 
 import io.r2dbc.postgresql.message.Format;
-import reactor.util.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.function.Predicate;
@@ -36,9 +36,8 @@ class DefaultCodecLookup implements CodecLookup {
         this.codecs = codecRegistry;
     }
 
-    @Nullable
     @SuppressWarnings("unchecked")
-    synchronized <T> Codec<T> findCodec(Predicate<Codec<?>> predicate) {
+    synchronized <T> @Nullable Codec<T> findCodec(Predicate<Codec<?>> predicate) {
 
         for (Codec<?> codec : this.codecs) {
             if (predicate.test(codec)) {

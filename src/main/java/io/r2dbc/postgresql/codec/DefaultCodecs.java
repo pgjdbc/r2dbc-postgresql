@@ -24,7 +24,7 @@ import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Parameter;
 import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.Type;
-import reactor.util.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -212,9 +212,8 @@ public final class DefaultCodecs implements Codecs, CodecRegistry {
     }
 
     @Override
-    @Nullable
     @SuppressWarnings("unchecked")
-    public <T> T decode(@Nullable ByteBuf buffer, int dataType, Format format, Class<? extends T> type) {
+    public <T> @Nullable T decode(@Nullable ByteBuf buffer, int dataType, Format format, Class<? extends T> type) {
         Assert.requireNonNull(format, "format must not be null");
         Assert.requireNonNull(type, "type must not be null");
 

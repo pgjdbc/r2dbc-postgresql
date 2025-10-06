@@ -18,7 +18,7 @@
  * An implementation of the Reactive Relational Database Connection API for PostgreSQL servers.
  */
 
-@NonNullApi
+@org.jspecify.annotations.NullMarked
 package io.r2dbc.postgresql;
 
-import reactor.util.annotation.NonNullApi;
+

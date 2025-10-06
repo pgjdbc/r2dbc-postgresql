@@ -20,8 +20,8 @@ import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.api.PostgresqlConnection;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.postgresql.extension.CodecRegistrar;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
-import reactor.util.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;

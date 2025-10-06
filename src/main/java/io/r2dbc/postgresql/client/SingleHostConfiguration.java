@@ -17,7 +17,7 @@
 package io.r2dbc.postgresql.client;
 
 import io.r2dbc.postgresql.util.Assert;
-import reactor.util.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import static io.r2dbc.postgresql.PostgresqlConnectionConfiguration.DEFAULT_PORT;
 
@@ -28,13 +28,11 @@ import static io.r2dbc.postgresql.PostgresqlConnectionConfiguration.DEFAULT_PORT
  */
 public final class SingleHostConfiguration {
 
-    @Nullable
-    private final String host;
+    private final @Nullable String host;
 
     private final int port;
 
-    @Nullable
-    private final String socket;
+    private final @Nullable String socket;
 
     private SingleHostConfiguration(@Nullable String host, int port, @Nullable String socket) {
         this.host = host;
@@ -42,8 +40,7 @@ public final class SingleHostConfiguration {
         this.socket = socket;
     }
 
-    @Nullable
-    public String getHost() {
+    public @Nullable String getHost() {
         return this.host;
     }
 
@@ -73,8 +70,7 @@ public final class SingleHostConfiguration {
         return socket;
     }
 
-    @Nullable
-    public String getSocket() {
+    public @Nullable String getSocket() {
         return this.socket;
     }
 
@@ -107,13 +103,11 @@ public final class SingleHostConfiguration {
      */
     public static final class Builder {
 
-        @Nullable
-        private String host;
+        private @Nullable String host;
 
         private int port = DEFAULT_PORT;
 
-        @Nullable
-        private String socket;
+        private @Nullable String socket;
 
         /**
          * Configure the host.
@@ -166,8 +160,7 @@ public final class SingleHostConfiguration {
             return new SingleHostConfiguration(this.host, this.port, this.socket);
         }
 
-        @Nullable
-        public String getSocket() {
+        public @Nullable String getSocket() {
             return this.socket;
         }
 

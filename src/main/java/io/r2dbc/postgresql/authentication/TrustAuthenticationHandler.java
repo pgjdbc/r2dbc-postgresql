@@ -19,7 +19,7 @@ package io.r2dbc.postgresql.authentication;
 import io.r2dbc.postgresql.message.backend.AuthenticationMessage;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.util.Assert;
-import reactor.util.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An implementation of {@link AuthenticationHandler} that handles implicit trust authentication.

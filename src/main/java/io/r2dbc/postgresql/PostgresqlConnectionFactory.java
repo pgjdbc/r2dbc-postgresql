@@ -31,10 +31,10 @@ import io.r2dbc.spi.ConnectionFactoryMetadata;
 import io.r2dbc.spi.IsolationLevel;
 import io.r2dbc.spi.R2dbcException;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.annotation.Nullable;
 
 import java.time.ZoneId;
 import java.util.ArrayList;

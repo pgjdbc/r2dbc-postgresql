@@ -14,10 +14,10 @@ import io.r2dbc.postgresql.message.frontend.SASLInitialResponse;
 import io.r2dbc.postgresql.message.frontend.SASLResponse;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufferUtils;
+import org.jspecify.annotations.Nullable;
 import reactor.core.Exceptions;
 import reactor.util.Logger;
 import reactor.util.Loggers;
-import reactor.util.annotation.Nullable;
 
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
@@ -132,8 +132,7 @@ public class SASLAuthenticationHandler implements AuthenticationHandler {
         }
     }
 
-    @Nullable
-    private FrontendMessage handleAuthenticationSASLFinal(AuthenticationSASLFinal message) {
+    private @Nullable FrontendMessage handleAuthenticationSASLFinal(AuthenticationSASLFinal message) {
         try {
             this.scramClient.serverFinalMessage(ByteBufferUtils.decode(message.getAdditionalData()));
             return null;

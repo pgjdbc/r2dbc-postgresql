@@ -22,10 +22,10 @@ import io.r2dbc.postgresql.client.MultiHostConfiguration;
 import io.r2dbc.postgresql.codec.DefaultCodecs;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.IsolationLevel;
+import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import javax.annotation.Nullable;
 import java.net.SocketAddress;
 import java.time.Clock;
 import java.time.Instant;

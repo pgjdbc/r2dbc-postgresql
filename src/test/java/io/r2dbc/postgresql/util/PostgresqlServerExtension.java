@@ -19,6 +19,7 @@ package io.r2dbc.postgresql.util;
 import com.zaxxer.hikari.HikariDataSource;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.authentication.UsernameAndPassword;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -28,7 +29,6 @@ import org.testcontainers.containers.JdbcDatabaseContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.MountableFile;
-import reactor.util.annotation.Nullable;
 
 import javax.sql.DataSource;
 import java.io.File;

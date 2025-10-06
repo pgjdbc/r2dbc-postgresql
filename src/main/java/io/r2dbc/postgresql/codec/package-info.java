@@ -18,7 +18,7 @@
  * Encoders and Decoders for the type that the service provider understands.
  */
 
-@NonNullApi
+@org.jspecify.annotations.NullMarked
 package io.r2dbc.postgresql.codec;
 
-import reactor.util.annotation.NonNullApi;
+

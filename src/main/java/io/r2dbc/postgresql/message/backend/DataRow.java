@@ -23,7 +23,7 @@ import io.netty.util.ResourceLeakDetector;
 import io.netty.util.ResourceLeakDetectorFactory;
 import io.netty.util.ResourceLeakTracker;
 import io.r2dbc.postgresql.util.Assert;
-import reactor.util.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 
@@ -141,8 +141,7 @@ public final class DataRow extends AbstractReferenceCounted implements BackendMe
         return new DataRow(columns);
     }
 
-    @Nullable
-    private static ByteBuf decodeColumn(ByteBuf in) {
+    private static @Nullable ByteBuf decodeColumn(ByteBuf in) {
         Assert.requireNonNull(in, "in must not be null");
 
         int length = in.readInt();

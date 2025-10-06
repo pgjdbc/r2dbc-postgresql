@@ -22,6 +22,7 @@ import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufUtils;
+import org.jspecify.annotations.Nullable;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.io.ParseException;
@@ -30,7 +31,6 @@ import org.locationtech.jts.io.WKBWriter;
 import org.locationtech.jts.io.WKTWriter;
 import reactor.core.publisher.Mono;
 
-import javax.annotation.Nullable;
 import java.util.Collections;
 
 import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
@@ -79,7 +79,7 @@ final class PostgisGeometryCodec implements Codec<Geometry>, CodecMetadata {
     }
 
     @Override
-    public Geometry decode(@Nullable ByteBuf buffer, int dataType, Format format, Class<? extends Geometry> type) {
+    public @Nullable Geometry decode(@Nullable ByteBuf buffer, int dataType, Format format, Class<? extends Geometry> type) {
         if (buffer == null) {
             return null;
         }

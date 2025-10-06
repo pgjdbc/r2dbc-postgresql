@@ -17,7 +17,7 @@
 package io.r2dbc.postgresql.codec;
 
 import io.r2dbc.postgresql.message.Format;
-import reactor.util.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Helper used to find a {@link Codec} for encoding or decoding actions from a provided collection of codecs such as a {@link CodecRegistry}.
@@ -26,14 +26,11 @@ import reactor.util.annotation.Nullable;
  */
 interface CodecLookup extends Iterable<Codec<?>> {
 
-    @Nullable
-    <T> Codec<T> findDecodeCodec(int dataType, Format format, Class<? extends T> type);
+    <T> @Nullable Codec<T> findDecodeCodec(int dataType, Format format, Class<? extends T> type);
 
-    @Nullable
-    <T> Codec<T> findEncodeCodec(T value);
+    <T> @Nullable Codec<T> findEncodeCodec(T value);
 
-    @Nullable
-    <T> Codec<T> findEncodeNullCodec(Class<T> type);
+    <T> @Nullable Codec<T> findEncodeNullCodec(Class<T> type);
 
     /**
      * Hook called after a codec was added.

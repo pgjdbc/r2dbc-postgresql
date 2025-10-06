@@ -16,7 +16,7 @@
 
 package io.r2dbc.postgresql.authentication;
 
-import reactor.util.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public class UsernameAndPassword {
 
@@ -33,8 +33,7 @@ public class UsernameAndPassword {
         return this.username;
     }
 
-    @Nullable
-    public CharSequence getPassword() {
+    public @Nullable CharSequence getPassword() {
         return this.password;
     }
 

@@ -24,8 +24,8 @@ import io.r2dbc.postgresql.message.backend.DataRow;
 import io.r2dbc.postgresql.message.backend.RowDescription;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Row;
+import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.Mono;
-import reactor.util.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,7 +46,7 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
 
     private final List<RowDescription.Field> fields;
 
-    private final ByteBuf[] data;
+    private final @Nullable ByteBuf[] data;
 
     private volatile boolean isReleased = false;
 
@@ -77,18 +77,16 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
         return Objects.equals(this.fields, that.fields);
     }
 
-    @Nullable
     @Override
-    public <T> T get(int index, Class<T> type) {
+    public <T> @Nullable T get(int index, Class<T> type) {
         Assert.requireNonNull(type, "type must not be null");
         requireNotReleased();
 
         return decode(getColumn(index), null, type);
     }
 
-    @Nullable
     @Override
-    public <T> T get(String name, Class<T> type) {
+    public <T> @Nullable T get(String name, Class<T> type) {
         Assert.requireNonNull(name, "name must not be null");
         Assert.requireNonNull(type, "type must not be null");
         requireNotReleased();
@@ -136,8 +134,7 @@ final class PostgresqlRow implements io.r2dbc.postgresql.api.PostgresqlRow {
         }
     }
 
-    @Nullable
-    private Object postProcessResult(@Nullable Object decoded) {
+    private @Nullable Object postProcessResult(@Nullable Object decoded) {
 
         if (decoded instanceof RefCursor) {
             return createCursor((RefCursor) decoded);

@@ -31,11 +31,11 @@ import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.message.frontend.Query;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.Operators;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
-import reactor.util.annotation.Nullable;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -140,8 +140,7 @@ final class PostgresqlCopyIn {
 
         private final String sql;
 
-        @Nullable
-        private Publisher<? extends Publisher<ByteBuf>> stdin;
+        private @Nullable Publisher<? extends Publisher<ByteBuf>> stdin;
 
         Builder(ConnectionResources resources, String sql) {
             this.resources = resources;

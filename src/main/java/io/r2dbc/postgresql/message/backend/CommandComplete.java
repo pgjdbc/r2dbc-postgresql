@@ -18,7 +18,7 @@ package io.r2dbc.postgresql.message.backend;
 
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.util.Assert;
-import reactor.util.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -33,9 +33,9 @@ public final class CommandComplete implements BackendMessage {
 
     private final String command;
 
-    private final Integer rowId;
+    private final @Nullable Integer rowId;
 
-    private final Long rows;
+    private final @Nullable Long rows;
 
     /**
      * Create a new message.
@@ -79,8 +79,7 @@ public final class CommandComplete implements BackendMessage {
      *
      * @return the object ID of the inserted row
      */
-    @Nullable
-    public Integer getRowId() {
+    public @Nullable Integer getRowId() {
         return this.rowId;
     }
 
@@ -89,8 +88,7 @@ public final class CommandComplete implements BackendMessage {
      *
      * @return the number of rows affected by the command
      */
-    @Nullable
-    public Long getRows() {
+    public @Nullable Long getRows() {
         return this.rows;
     }
 

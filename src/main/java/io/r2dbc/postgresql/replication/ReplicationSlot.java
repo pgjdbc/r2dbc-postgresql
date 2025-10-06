@@ -16,7 +16,7 @@
 
 package io.r2dbc.postgresql.replication;
 
-import reactor.util.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Information returned on replication slot creation.
@@ -37,11 +37,9 @@ public final class ReplicationSlot {
 
     private final LogSequenceNumber consistentPoint;
 
-    @Nullable
-    private final String snapshotName;
+    private final @Nullable String snapshotName;
 
-    @Nullable
-    private final String outputPlugin;
+    private final @Nullable String outputPlugin;
 
     public ReplicationSlot(String slotName, ReplicationType replicationType,
                            LogSequenceNumber consistentPoint, @Nullable String snapshotName, @Nullable String outputPlugin) {
@@ -88,8 +86,7 @@ public final class ReplicationSlot {
      *
      * @return exported {@code snapshot_name}
      */
-    @Nullable
-    public String getSnapshotName() {
+    public @Nullable String getSnapshotName() {
         return this.snapshotName;
     }
 
@@ -98,8 +95,7 @@ public final class ReplicationSlot {
      *
      * @return the output plugin used on slot creation
      */
-    @Nullable
-    public String getOutputPlugin() {
+    public @Nullable String getOutputPlugin() {
         return this.outputPlugin;
     }
 

@@ -20,10 +20,10 @@ import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.client.EncodedParameter;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.annotation.Nullable;
 
 import java.util.function.Supplier;
 
@@ -71,9 +71,8 @@ abstract class AbstractCodec<T> implements Codec<T>, CodecMetadata {
         return this.type.isAssignableFrom(type);
     }
 
-    @Nullable
     @Override
-    public final T decode(@Nullable ByteBuf buffer, int dataType, Format format, Class<? extends T> type) {
+    public final @Nullable T decode(@Nullable ByteBuf buffer, int dataType, Format format, Class<? extends T> type) {
         if (buffer == null) {
             return null;
         }

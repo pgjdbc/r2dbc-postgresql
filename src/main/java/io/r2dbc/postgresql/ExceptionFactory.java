@@ -27,8 +27,8 @@ import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import io.r2dbc.spi.R2dbcPermissionDeniedException;
 import io.r2dbc.spi.R2dbcRollbackException;
 import io.r2dbc.spi.R2dbcTransientException;
+import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.SynchronousSink;
-import reactor.util.annotation.Nullable;
 
 /**
  * Factory for Postgres-specific {@link R2dbcException}s.

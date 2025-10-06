@@ -21,6 +21,7 @@ import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Clob;
 import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.Type;
+import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.net.InetAddress;
@@ -30,9 +31,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
-
-import io.r2dbc.postgresql.util.Assert;
-import reactor.util.annotation.Nullable;
 
 /**
  * Object IDs for well know PostgreSQL data types.

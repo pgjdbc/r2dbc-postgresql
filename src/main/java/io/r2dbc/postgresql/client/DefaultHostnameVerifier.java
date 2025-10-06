@@ -16,9 +16,9 @@
 
 package io.r2dbc.postgresql.client;
 
+import org.jspecify.annotations.Nullable;
 import reactor.util.Logger;
 import reactor.util.Loggers;
-import reactor.util.annotation.Nullable;
 
 import javax.naming.InvalidNameException;
 import javax.naming.ldap.LdapName;
