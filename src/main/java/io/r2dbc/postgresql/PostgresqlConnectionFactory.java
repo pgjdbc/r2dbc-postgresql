@@ -181,6 +181,16 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
 
     private Throwable cannotConnect(Throwable throwable, ConnectionStrategy strategy) {
 
+        // Rewrite ExceptionAggregator but preserve suppressed exceptions to enrich the exception context
+        if (throwable instanceof MultiHostConnectionStrategy.ExceptionAggregator) {
+            String message = throwable.getMessage() != null ? String.format("Cannot connect to %s: %s", strategy, throwable.getMessage()) : String.format("Cannot connect to %s", strategy);
+            PostgresConnectionException exception = new PostgresConnectionException(message, throwable.getCause());
+            for (Throwable t : throwable.getSuppressed()) {
+                exception.addSuppressed(t);
+            }
+            return exception;
+        }
+
         if (throwable instanceof R2dbcException) {
             return throwable;
         }
@@ -225,6 +235,7 @@ public final class PostgresqlConnectionFactory implements ConnectionFactory {
         private static final String CONNECTION_DOES_NOT_EXIST = "08003";
 
         private final ErrorDetails errorDetails;
+
 
         public PostgresConnectionException(String reason, @Nullable Throwable cause) {
             super(reason, CONNECTION_DOES_NOT_EXIST, 0, null, cause);

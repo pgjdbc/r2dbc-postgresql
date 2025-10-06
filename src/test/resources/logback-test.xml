@@ -24,6 +24,7 @@
     </appender>
 
     <logger name="io.r2dbc.postgresql" level="INFO"/>
+    <logger name="io.r2dbc.postgresql.client.ConnectionContext" level="INFO"/>
     <logger name="org.testcontainers"  level="INFO"/>
     <logger name="reactor.netty"       level="WARN"/>
     <logger name="stream"              level="INFO"/>
