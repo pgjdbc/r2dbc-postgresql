@@ -51,7 +51,7 @@
         <scram-client.version>3.1</scram-client.version>
         <spring-framework.version>5.3.39</spring-framework.version>
         <testcontainers.version>1.21.3</testcontainers.version>
-        <jts-core.version>1.19.0</jts-core.version>
+        <jts-core.version>1.20.0</jts-core.version>
     </properties>
 
     <licenses>
