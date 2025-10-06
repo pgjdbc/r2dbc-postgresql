@@ -19,12 +19,11 @@ package io.r2dbc.postgresql.client;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.postgresql.api.PostgresqlException;
+import io.r2dbc.postgresql.util.Disposable;
 import org.junit.jupiter.api.Test;
-import reactor.netty.DisposableChannel;
-import reactor.netty.DisposableServer;
-import reactor.netty.tcp.TcpServer;
 import reactor.test.StepVerifier;
 
+import java.net.InetSocketAddress;
 import java.nio.channels.ClosedChannelException;
 import java.util.function.Consumer;
 
@@ -33,16 +32,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class DowntimeIntegrationTests {
 
     @Test
-    void failSslHandshakeIfInboundClosed() {
-        verifyError(SSLMode.REQUIRE, error ->
+    void failSslHandshakeIfInboundClosed(@Disposable InetSocketAddress faultyServer) {
+        verifyError(faultyServer, SSLMode.REQUIRE, error ->
             assertThat(error)
                 .isInstanceOf(AbstractPostgresSSLHandlerAdapter.PostgresqlSslException.class)
                 .hasMessage("Connection closed during SSL negotiation"));
     }
 
     @Test
-    void failSslTunnelIfInboundClosed() {
-        verifyError(SSLMode.TUNNEL, error -> {
+    void failSslTunnelIfInboundClosed(@Disposable InetSocketAddress faultyServer) {
+        verifyError(faultyServer, SSLMode.TUNNEL, error -> {
             assertThat(error)
                 .isInstanceOf(PostgresqlException.class)
                 .cause()
@@ -55,31 +54,19 @@ public class DowntimeIntegrationTests {
         });
     }
 
-    // Simulate server downtime, where connections are accepted and then closed immediately
-    static DisposableServer newServer() {
-        return TcpServer.create()
-            .doOnConnection(DisposableChannel::dispose)
-            .bindNow();
-    }
-
-    static PostgresqlConnectionFactory newConnectionFactory(DisposableServer server, SSLMode sslMode) {
+    static PostgresqlConnectionFactory newConnectionFactory(InetSocketAddress server, SSLMode sslMode) {
         return new PostgresqlConnectionFactory(
             PostgresqlConnectionConfiguration.builder()
-                .host(server.host())
-                .port(server.port())
+                .host(server.getHostString())
+                .port(server.getPort())
                 .username("test")
                 .sslMode(sslMode)
                 .build());
     }
 
-    static void verifyError(SSLMode sslMode, Consumer<Throwable> assertions) {
-        DisposableServer server = newServer();
+    static void verifyError(InetSocketAddress server, SSLMode sslMode, Consumer<Throwable> assertions) {
         PostgresqlConnectionFactory connectionFactory = newConnectionFactory(server, sslMode);
-        try {
-            connectionFactory.create().as(StepVerifier::create).verifyErrorSatisfies(assertions);
-        } finally {
-            server.disposeNow();
-        }
+        connectionFactory.create().as(StepVerifier::create).verifyErrorSatisfies(assertions);
     }
 
 }
