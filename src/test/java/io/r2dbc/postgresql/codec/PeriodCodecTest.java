@@ -1,3 +1,19 @@
+/*
+ * Copyright 2017 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.r2dbc.postgresql.codec;
 
 import io.netty.buffer.ByteBuf;
@@ -31,18 +47,18 @@ class PeriodCodecTest {
 
     @Test
     void decodeDays() {
-        final int days = 4;
+        int days = 4;
 
-        final Period period = Period.ofDays(days);
+        Period period = Period.ofDays(days);
         assertDecodeOfPeriod(period);
     }
 
     @Test
     void decodeJunkString() {
-        final String junkString = "hello world";
-        final ByteBuf buffer = TEST.buffer();
+        String junkString = "hello world";
+        ByteBuf buffer = TEST.buffer();
 
-        final int charsWritten = buffer.writeCharSequence(junkString, Charset.defaultCharset());
+        int charsWritten = buffer.writeCharSequence(junkString, Charset.defaultCharset());
         assertThat(charsWritten).isEqualTo(junkString.length());
 
         assertThatExceptionOfType(DateTimeParseException.class)
@@ -51,9 +67,9 @@ class PeriodCodecTest {
 
     @Test
     void decodeMonths() {
-        final int months = 3;
+        int months = 3;
 
-        final Period period = Period.ofMonths(months);
+        Period period = Period.ofMonths(months);
         assertDecodeOfPeriod(period);
     }
 
@@ -64,25 +80,25 @@ class PeriodCodecTest {
 
     @Test
     void decodeWeeks() {
-        final int weeks = 7;
+        int weeks = 7;
 
-        final Period period = Period.ofWeeks(weeks);
+        Period period = Period.ofWeeks(weeks);
         assertDecodeOfPeriod(period);
     }
 
     @Test
     void decodeYearsMonthsDays() {
-        final int years = 5;
-        final int months = 4;
-        final int days = 7;
+        int years = 5;
+        int months = 4;
+        int days = 7;
 
-        final Period period = Period.of(years, months, days);
+        Period period = Period.of(years, months, days);
         assertDecodeOfPeriod(period);
     }
 
     @Test
     void doCanDecode() {
-        final PeriodCodec codec = new PeriodCodec(TEST);
+        PeriodCodec codec = new PeriodCodec(TEST);
 
         assertThat(codec.doCanDecode(VARCHAR, FORMAT_TEXT)).isTrue();
         assertThat(codec.doCanDecode(CHAR, FORMAT_TEXT)).isTrue();
@@ -116,9 +132,9 @@ class PeriodCodecTest {
     }
 
     private static void assertDecodeOfPeriod(Period period) {
-        final ByteBuf buffer = TEST.buffer();
+        ByteBuf buffer = TEST.buffer();
 
-        final int charsWritten = buffer.writeCharSequence(period.toString(), Charset.defaultCharset());
+        int charsWritten = buffer.writeCharSequence(period.toString(), Charset.defaultCharset());
         assertThat(charsWritten).isEqualTo(period.toString().length());
 
         assertThat(new PeriodCodec(TEST)

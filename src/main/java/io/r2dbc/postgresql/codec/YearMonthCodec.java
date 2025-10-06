@@ -20,9 +20,13 @@ import io.netty.buffer.ByteBufAllocator;
 
 import java.time.YearMonth;
 
+/**
+ * @since 1.0.8
+ */
 final class YearMonthCodec extends StringCodecDelegate<YearMonth> {
 
     YearMonthCodec(ByteBufAllocator byteBufAllocator) {
         super(YearMonth.class, byteBufAllocator, YearMonth::toString, YearMonth::parse);
     }
+
 }

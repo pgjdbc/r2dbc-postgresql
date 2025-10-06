@@ -20,9 +20,13 @@ import io.netty.buffer.ByteBufAllocator;
 
 import java.time.Year;
 
+/**
+ * @since 1.0.8
+ */
 final class YearCodec extends IntegerCodecDelegate<Year> {
 
     YearCodec(ByteBufAllocator byteBufAllocator) {
         super(Year.class, byteBufAllocator, Year::getValue, Year::of);
     }
+
 }

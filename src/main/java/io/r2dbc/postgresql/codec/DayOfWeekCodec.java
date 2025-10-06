@@ -20,9 +20,13 @@ import io.netty.buffer.ByteBufAllocator;
 
 import java.time.DayOfWeek;
 
+/**
+ * @since 1.0.8
+ */
 final class DayOfWeekCodec extends IntegerCodecDelegate<DayOfWeek> {
 
     DayOfWeekCodec(ByteBufAllocator byteBufAllocator) {
         super(DayOfWeek.class, byteBufAllocator, DayOfWeek::getValue, DayOfWeek::of);
     }
+
 }

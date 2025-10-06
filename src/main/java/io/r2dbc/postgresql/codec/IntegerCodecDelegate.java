@@ -24,6 +24,9 @@ import io.r2dbc.postgresql.util.Assert;
 
 import java.util.function.Function;
 
+/**
+ * @since 1.0.8
+ */
 class IntegerCodecDelegate<T> extends AbstractCodec<T> {
 
     private final IntegerCodec delegate;
@@ -39,35 +42,36 @@ class IntegerCodecDelegate<T> extends AbstractCodec<T> {
 
     @Override
     boolean doCanDecode(PostgresqlObjectId type, Format format) {
-        return delegate.doCanDecode(type, format);
+        return this.delegate.doCanDecode(type, format);
     }
 
     @Override
     T doDecode(ByteBuf buffer, PostgresTypeIdentifier dataType, Format format, Class<? extends T> type) {
-        final Integer number = delegate.doDecode(buffer, dataType, format, Integer.TYPE);
-        return fromIntegerConverter.apply(number);
+        final Integer number = this.delegate.doDecode(buffer, dataType, format, Integer.TYPE);
+        return this.fromIntegerConverter.apply(number);
     }
 
     @Override
     EncodedParameter doEncode(T value) {
         Assert.requireNonNull(value, "value must not be null");
-        return delegate.doEncode(toIntegerConverter.apply(value));
+        return this.delegate.doEncode(this.toIntegerConverter.apply(value));
     }
 
     @Override
     EncodedParameter doEncode(T value, PostgresTypeIdentifier dataType) {
         Assert.requireNonNull(value, "value must not be null");
         Assert.requireNonNull(dataType, "dataType must not be null");
-        return delegate.doEncode(toIntegerConverter.apply(value), dataType);
+        return this.delegate.doEncode(this.toIntegerConverter.apply(value), dataType);
     }
 
     @Override
-    public Iterable<? extends PostgresTypeIdentifier> getDataTypes() {
-        return delegate.getDataTypes();
+    public Iterable<PostgresTypeIdentifier> getDataTypes() {
+        return this.delegate.getDataTypes();
     }
 
     @Override
     public EncodedParameter encodeNull() {
-        return delegate.encodeNull();
+        return this.delegate.encodeNull();
     }
+
 }
