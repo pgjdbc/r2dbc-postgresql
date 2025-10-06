@@ -607,6 +607,9 @@ Logging facilities:
 
 * Driver Logging (`io.r2dbc.postgresql`)
 * Query Logging (`io.r2dbc.postgresql.QUERY` on `DEBUG` level)
+* Connection Context (`io.r2dbc.postgresql.client.ConnectionContext`)
+    * `DEBUG` level enables connection and process identifiers in log messages and exceptions (`[cid: 0x1][pid: 109]`)
+    * `TRACE` level enables socket information (remote and local addresses) to the connection context (`[cid: 0x1][pid: 109][id: 0x79dfc4d4, L:/127.0.0.1:49391 - R:localhost/127.0.0.1:49366]`)
 * Parameters' values Logging (`io.r2dbc.postgresql.PARAM` on `DEBUG` level)
 * Transport Logging (`io.r2dbc.postgresql.client`)
     * `DEBUG` enables `Message` exchange logging

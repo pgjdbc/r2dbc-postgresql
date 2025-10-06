@@ -35,7 +35,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import static io.r2dbc.postgresql.MultiHostConnectionStrategy.TargetServerType.ANY;
@@ -73,7 +74,7 @@ public final class MultiHostConnectionStrategy implements ConnectionStrategy {
 
     @Override
     public Mono<Client> connect() {
-        return Mono.defer(() -> connect(this.multiHostConfiguration.getTargetServerType()));
+        return connect(this.multiHostConfiguration.getTargetServerType());
     }
 
     @Override
@@ -83,40 +84,37 @@ public final class MultiHostConnectionStrategy implements ConnectionStrategy {
     }
 
     public Mono<Client> connect(TargetServerType targetServerType) {
-        AtomicReference<Throwable> exceptionRef = new AtomicReference<>();
+        List<Throwable> errors = new CopyOnWriteArrayList<>();
 
-        return Mono.defer(() -> attemptConnection(targetServerType))
+        return attemptConnection(targetServerType, errors::add)
             .onErrorResume(e -> {
-                if (!exceptionRef.compareAndSet(null, e)) {
-                    exceptionRef.get().addSuppressed(e);
-                }
+                errors.add(e);
                 return Mono.empty();
             })
-            .switchIfEmpty(Mono.defer(() -> targetServerType == PREFER_SECONDARY ? attemptConnection(PRIMARY) : Mono.empty()))
+            .switchIfEmpty(Mono.defer(() -> targetServerType == PREFER_SECONDARY ? attemptConnection(PRIMARY, errors::add) : Mono.empty()))
             .switchIfEmpty(Mono.error(() -> {
-                Throwable error = exceptionRef.get();
-                if (error == null) {
-                    return new PostgresqlConnectionFactory.PostgresConnectionException(String.format("No server matches target type '%s'", targetServerType), null);
+                if (errors.isEmpty()) {
+                    return new ExceptionAggregator(String.format("No server matches target type '%s'", targetServerType), null);
                 } else {
-                    return new PostgresqlConnectionFactory.PostgresConnectionException(String.format("Cannot connect to a host of %s", this.addresses), error);
+                    RuntimeException exception = new ExceptionAggregator(null, errors.size() == 1 ?
+                        errors.get(0) : null);
+
+                    if (errors.size() > 1) {
+                        errors.forEach(exception::addSuppressed);
+                    }
+                    return exception;
                 }
             }));
     }
 
-    private Mono<Client> attemptConnection(TargetServerType targetServerType) {
-        AtomicReference<Throwable> exceptionRef = new AtomicReference<>();
+    private Mono<Client> attemptConnection(TargetServerType targetServerType, Consumer<Throwable> errorHandler) {
         return getCandidates(targetServerType).concatMap(candidate -> this.attemptConnection(targetServerType, candidate)
                 .onErrorResume(e -> {
-                    if (!exceptionRef.compareAndSet(null, e)) {
-                        exceptionRef.get().addSuppressed(e);
-                    }
+                    errorHandler.accept(e);
                     this.statusMap.put(candidate, HostConnectOutcome.fail(candidate));
                     return Mono.empty();
                 }))
-            .next()
-            .switchIfEmpty(Mono.defer(() -> exceptionRef.get() != null
-                ? Mono.error(exceptionRef.get())
-                : Mono.empty()));
+            .next();
     }
 
     private Mono<Client> attemptConnection(TargetServerType targetServerType, SocketAddress candidate) {
@@ -227,6 +225,13 @@ public final class MultiHostConnectionStrategy implements ConnectionStrategy {
          */
         boolean test(SocketAddress address, HostStatus hostStatus);
 
+    }
+
+    static class ExceptionAggregator extends RuntimeException {
+
+        public ExceptionAggregator(@Nullable String message, @Nullable Throwable cause) {
+            super(message, cause);
+        }
     }
 
     private static class HostConnectOutcome {

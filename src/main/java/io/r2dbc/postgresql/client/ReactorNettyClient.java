@@ -99,10 +99,6 @@ public final class ReactorNettyClient implements Client {
 
     private static final boolean DEBUG_ENABLED = logger.isDebugEnabled();
 
-    private static final Supplier<PostgresConnectionClosedException> UNEXPECTED = () -> new PostgresConnectionClosedException("Connection unexpectedly closed");
-
-    private static final Supplier<PostgresConnectionClosedException> EXPECTED = () -> new PostgresConnectionClosedException("Connection closed");
-
     private final ByteBufAllocator byteBufAllocator;
 
     private final ConnectionSettings settings;
@@ -110,6 +106,10 @@ public final class ReactorNettyClient implements Client {
     private final Connection connection;
 
     private final Scheduler scheduler;
+
+    private final Supplier<PostgresConnectionClosedException> unexpected;
+
+    private final Supplier<PostgresConnectionClosedException> expected;
 
     private ConnectionContext context;
 
@@ -148,11 +148,14 @@ public final class ReactorNettyClient implements Client {
         Assert.requireNonNull(connection, "Connection must not be null");
         this.settings = Assert.requireNonNull(settings, "ConnectionSettings must not be null");
 
+
         connection.addHandlerLast(new EnsureSubscribersCompleteChannelHandler(this.requestSink));
         connection.addHandlerLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE - 5, 1, 4, -4, 0));
         this.connection = connection;
         this.byteBufAllocator = connection.outbound().alloc();
         this.context = new ConnectionContext().withChannelId(connection.channel().toString());
+        this.unexpected = () -> new PostgresConnectionClosedException(this.context.getMessage("Connection unexpectedly closed"));
+        this.expected = () -> new PostgresConnectionClosedException(this.context.getMessage("Connection closed"));
 
         EventLoop eventLoop = connection.channel().eventLoop();
         this.scheduler = Schedulers.fromExecutorService(eventLoop, eventLoop.toString());
@@ -194,7 +197,7 @@ public final class ReactorNettyClient implements Client {
 
             this.notificationProcessor.tryEmitComplete();
 
-            drainError(EXPECTED);
+            drainError(expected);
 
             boolean connected = isConnected();
             if (this.isClosed.compareAndSet(false, true)) {
@@ -519,9 +522,9 @@ public final class ReactorNettyClient implements Client {
 
     private void handleClose() {
         if (this.isClosed.compareAndSet(false, true)) {
-            drainError(UNEXPECTED);
+            drainError(unexpected);
         } else {
-            drainError(EXPECTED);
+            drainError(expected);
         }
     }
 
@@ -531,7 +534,7 @@ public final class ReactorNettyClient implements Client {
             drainError(() -> this.messageSubscriber.createClientClosedException(error));
         }
 
-        drainError(() -> new PostgresConnectionException(error));
+        drainError(() -> new PostgresConnectionException(this.context, error));
     }
 
     private void drainError(Supplier<? extends Throwable> supplier) {
@@ -589,8 +592,8 @@ public final class ReactorNettyClient implements Client {
 
         private final static ErrorDetails ERROR_DETAILS = ErrorDetails.fromCodeAndMessage(CONNECTION_FAILURE, "An I/O error occurred while sending to the backend or receiving from the backend");
 
-        public PostgresConnectionException(Throwable cause) {
-            super(ERROR_DETAILS.getMessage(), ERROR_DETAILS.getCode(), 0, null, cause);
+        public PostgresConnectionException(ConnectionContext context, Throwable cause) {
+            super(context.getMessage(ERROR_DETAILS.getMessage()), ERROR_DETAILS.getCode(), 0, null, cause);
         }
 
         @Override
@@ -772,7 +775,7 @@ public final class ReactorNettyClient implements Client {
         }
 
         PostgresConnectionClosedException createClientClosedException(@Nullable Throwable cause) {
-            return new PostgresConnectionClosedException("Cannot exchange messages because the connection is closed", cause);
+            return new PostgresConnectionClosedException(ReactorNettyClient.this.context.getMessage("Cannot exchange messages because the connection is closed"), cause);
         }
 
         /**
