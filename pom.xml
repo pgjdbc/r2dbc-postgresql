@@ -24,7 +24,7 @@
 
     <groupId>org.postgresql</groupId>
     <artifactId>r2dbc-postgresql</artifactId>
-    <version>1.0.8.BUILD-SNAPSHOT</version>
+    <version>1.0.8.RELEASE</version>
     <packaging>jar</packaging>
 
     <name>Reactive Relational Database Connectivity - Postgresql</name>
@@ -429,6 +429,7 @@
                 <extensions>true</extensions>
                 <configuration>
                     <publishingServerId>central</publishingServerId>
+                    <autoPublish>true</autoPublish>
                 </configuration>
             </plugin>
         </plugins>
@@ -596,7 +597,7 @@
 
                     <plugin>
                         <groupId>org.sonatype.central</groupId>
-                            <artifactId>central-publishing-maven-plugin</artifactId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
                     </plugin>
 
                 </plugins>
