@@ -37,7 +37,7 @@ final class SASLInitialResponseUnitTests {
 
     @Test
     void encode() {
-        assertThat(new SASLInitialResponse(ByteBuffer.allocate(4).putInt(100), "test-name")).encoded()
+        assertThat(new SASLInitialResponse(ByteBuffer.allocate(4).putInt(100).flip(), "test-name")).encoded()
             .isDeferred()
             .isEncodedAs(buffer -> {
                 buffer

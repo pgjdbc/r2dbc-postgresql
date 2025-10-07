@@ -18,6 +18,7 @@ package io.r2dbc.postgresql.util;
 
 import io.netty.buffer.ByteBuf;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
@@ -54,6 +55,7 @@ public final class ByteBufferUtils {
 
         ByteBuffer buffer = StandardCharsets.UTF_8.encode(s.toString());
         buffer.position(buffer.limit());
+        ((Buffer) buffer).flip();
         return buffer;
     }
 
@@ -68,7 +70,7 @@ public final class ByteBufferUtils {
 
         ByteBuffer out = ByteBuffer.allocate(source.readableBytes());
         source.readBytes(out);
-        out.flip();
+        ((Buffer) out).flip();
         return out;
     }
 

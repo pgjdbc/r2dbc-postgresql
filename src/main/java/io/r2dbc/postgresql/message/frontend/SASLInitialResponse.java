@@ -38,7 +38,7 @@ import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeSiz
  */
 public final class SASLInitialResponse implements FrontendMessage {
 
-    private final ByteBuffer initialResponse;
+    private final @Nullable ByteBuffer initialResponse;
 
     private final String name;
 
@@ -50,12 +50,7 @@ public final class SASLInitialResponse implements FrontendMessage {
      * @throws IllegalArgumentException if {@code name} is {@code null}
      */
     public SASLInitialResponse(@Nullable ByteBuffer initialResponse, String name) {
-        if (initialResponse == null) {
-            this.initialResponse = null;
-        } else {
-            initialResponse.flip();
-            this.initialResponse = initialResponse;
-        }
+        this.initialResponse = initialResponse;
         this.name = Assert.requireNonNull(name, "name must not be null");
     }
 

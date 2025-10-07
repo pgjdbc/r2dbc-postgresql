@@ -36,7 +36,7 @@ final class SASLResponseUnitTests {
 
     @Test
     void encode() {
-        assertThat(new SASLResponse(ByteBuffer.allocate(4).putInt(100))).encoded()
+        assertThat(new SASLResponse(ByteBuffer.allocate(4).putInt(100).flip())).encoded()
             .isDeferred()
             .isEncodedAs(buffer -> buffer
                 .writeByte('p')

@@ -21,6 +21,7 @@ import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.util.Assert;
+import io.r2dbc.postgresql.util.ByteBufferUtils;
 import org.jspecify.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
@@ -372,9 +373,7 @@ public abstract class Json {
         public <T> T mapBuffer(Function<ByteBuffer, ? extends T> mappingFunction) {
             assertNotReleased();
 
-            ByteBuffer buffer = ByteBuffer.allocate(this.buffer.readableBytes());
-            this.buffer.readBytes(buffer);
-            buffer.flip();
+            ByteBuffer buffer = ByteBufferUtils.toByteBuffer(this.buffer);
             release();
 
             return mappingFunction.apply(buffer);
