@@ -1,6 +1,105 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+1.1.0.RELEASE
+-----------------------------------------
+* Cancel signal does not interrupt cursored query fetching #536
+* Implement support for interval units. #566
+* Bump postgresql from 42.5.0 to 42.5.1 #568
+* Remove rogue newline in readme #569
+* Expose API to subscribe to Postgres notice messages #570
+* Integration test fails on JDK > 8 because of Instant resolution change #572
+* Error when storing BC dates (e.g. "0000-12-31T01:01:00Z") #578
+* Bump Netty to 4.1.89.Final, CVE-2022-41915 #584
+* Upgrade to Project Reactor 2022.0.3 #585
+* Add codecs for `DayOfWeek`, `Month`, `MonthDay`, `Period`, `Year`, `YearMonth` #591
+* key param javadoc description #593
+* Adapt integration test to be Java 11 forward-compatible #594
+* Creating connections can hang during server downtime #595
+* Driver reports I/O error when rowsUpdated is greater than Integer.MAX_VALUE #597
+* Upgrade dependencies #599
+* Make `CodecMetadata.getDataTypes()` more flexible #600
+* Add `PostgresqlResult.filter(…)` overrides to return `PostgresqlResult` instead of `Result` #602
+* Upgrade to Reactor 2022.0.9 #604
+* Support for pgvector #612
+* Add support for dynamic usernames and passwords #613
+* Upgrade dependencies #616
+* Do not require `typarray` column when auto-registering extensions #621
+* `NullPointerException` at `SingleHostConnectionFunction#getCredentials` when configuration password is `null` #622
+* Upgrade dependencies #628
+* Do not require typarray column when auto-registering extensions #632
+* README.md #633
+* Set SNI on SSL connections #634
+* Performance issue with PostgresqlRow.getColumn(String name) when select many columns #636
+* Bump org.postgresql:postgresql from 42.6.0 to 42.7.2 #637
+* Resolve a LEAK warning in unit test #642
+* Update SCRAM dependency to 3.0 #645
+* Defer oid and typarray to stage when an extension is supported #649
+* Add support for `sslnegotation=direct` #651
+* SNIHostName is going to throw an exception when hostname has a trailing dot #656
+* Postgres 11 compatibility #657
+* Update scram-client to 3.1 #659
+* Introduce fast-path handling for decoding primitive values #662
+* Introduce `ObjectCodec` to support `bindNull(Object.class)` #664
+* Explore acquisition scheduler offloading #668
+* Fix self-suppression when standby is unavailable #678
+* Include `OID` explicitly in the `SELECT` clause for older Postgres databases #680
+* Switch to Sonatype Central Publishing #681
+* Bump com.ongres.scram:scram-common from 3.1 to 3.2 #682
+* Upgrade to JTS 1.20.0 #688
+* Add JSpecify nullability annotations to Java APIs #689
+* Ensure Java 8 `ByteBuffer`API usage #690
+
+1.0.8.RELEASE
+-----------------------------------------
+* Add codecs for `DayOfWeek`, `Month`, `MonthDay`, `Period`, `Year`, `YearMonth` #591
+* Fix self-suppression when standby is unavailable #678
+* Include `OID` explicitly in the `SELECT` clause for older Postgres databases #680
+* Switch to Sonatype Central Publishing #681
+
+1.0.7.RELEASE
+-----------------------------------------
+* Explore acquisition scheduler offloading #668
+
+1.0.6.RELEASE
+-----------------------------------------
+* Defer oid and typarray to stage when an extension is supported #649
+* SNIHostName is going to throw an exception when hostname has a trailing dot #656
+* Postgres 11 compatibility #657
+* Introduce fast-path handling for decoding primitive values #662
+* Introduce `ObjectCodec` to support `bindNull(Object.class)` #664
+
+1.0.5.RELEASE
+-----------------------------------------
+* Do not require typarray column when auto-registering extensions #632
+* Set SNI on SSL connections #634
+* Performance issue with PostgresqlRow.getColumn(String name) when select many columns #636
+* Resolve a LEAK warning in unit test #642
+
+
+1.0.4.RELEASE
+-----------------------------------------
+* Do not require `typarray` column when auto-registering extensions #621
+* `NullPointerException` at `SingleHostConnectionFunction#getCredentials` when configuration password is `null` #622
+* Upgrade dependencies #628
+
+1.0.3.RELEASE
+-----------------------------------------
+* Support for pgvector #612
+* Add support for dynamic usernames and passwords #613
+* Upgrade dependencies #616
+
+1.0.2.RELEASE
+-----------------------------------------
+* Cancel signal does not interrupt cursored query fetching #536
+* Expose API to subscribe to Postgres notice messages #570
+* key param javadoc description #593
+* Adapt integration test to be Java 11 forward-compatible #594
+* Creating connections can hang during server downtime #595
+* Driver reports I/O error when rowsUpdated is greater than Integer.MAX_VALUE #597
+* Add `PostgresqlResult.filter(…)` overrides to return `PostgresqlResult` instead of `Result` #602
+* Upgrade to Reactor 2022.0.9 #604
+
 1.0.0.RELEASE
 -----------------------------------------
 * Associate `PostgresConnectionClosedException` with error code `08006` #538
