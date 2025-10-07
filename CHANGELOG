@@ -1,6 +1,17 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+1.0.8.RELEASE
+-----------------------------------------
+* Add codecs for `DayOfWeek`, `Month`, `MonthDay`, `Period`, `Year`, `YearMonth` #591
+* Fix self-suppression when standby is unavailable #678
+* Include `OID` explicitly in the `SELECT` clause for older Postgres databases #680
+* Switch to Sonatype Central Publishing #681
+
+1.0.7.RELEASE
+-----------------------------------------
+* Explore acquisition scheduler offloading #668
+
 1.0.6.RELEASE
 -----------------------------------------
 * Defer oid and typarray to stage when an extension is supported #649
