@@ -5,7 +5,7 @@ name: Stage release to Maven Central
 
 on:
   push:
-    branches: [ release-0.x ]
+    branches: [ release ]
 
 jobs:
   release:
