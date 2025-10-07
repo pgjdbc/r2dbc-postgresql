@@ -24,7 +24,7 @@
 
     <groupId>org.postgresql</groupId>
     <artifactId>r2dbc-postgresql</artifactId>
-    <version>1.1.0.BUILD-SNAPSHOT</version>
+    <version>1.1.0.RELEASE</version>
     <packaging>jar</packaging>
 
     <name>Reactive Relational Database Connectivity - Postgresql</name>
@@ -272,8 +272,8 @@
                         <arg>-Xlint:-serial</arg>
                     </compilerArgs>
                     <showWarnings>true</showWarnings>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
                 </configuration>
             </plugin>
             <plugin>
