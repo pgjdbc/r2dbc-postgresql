@@ -435,6 +435,8 @@
                 <extensions>true</extensions>
                 <configuration>
                     <publishingServerId>central</publishingServerId>
+                    <autoPublish>true</autoPublish>
+                    <deploymentName>R2DBC Postgresql ${project.version}</deploymentName>
                 </configuration>
             </plugin>
         </plugins>
