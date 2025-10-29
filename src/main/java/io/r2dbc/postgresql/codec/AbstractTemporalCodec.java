@@ -45,7 +45,7 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
  *
  * @param <T> the type that is handled by this {@link Codec}
  */
-abstract class AbstractTemporalCodec<T extends Temporal> extends BuiltinCodecSupport<T> {
+abstract class AbstractTemporalCodec<T extends Temporal> extends BuiltinCodecSupport<T> implements PreferredCodec {
 
     private static final Set<PostgresqlObjectId> SUPPORTED_TYPES = EnumSet.of(DATE, TIMESTAMP, TIMESTAMPTZ, TIME, TIMETZ);
 
@@ -62,16 +62,8 @@ abstract class AbstractTemporalCodec<T extends Temporal> extends BuiltinCodecSup
     }
 
     @Override
-    public boolean canDecode(int dataType, Format format, Class<?> type) {
-        Assert.requireNonNull(format, "format must not be null");
-        Assert.requireNonNull(type, "type must not be null");
-
-        if (type == Object.class) {
-            if (PostgresqlObjectId.isValid(dataType) && PostgresqlObjectId.valueOf(dataType) != getDefaultType()) {
-                return false;
-            }
-        }
-        return super.canDecode(dataType, format, type);
+    public boolean isPreferred(int dataType, Format format, Class<?> type) {
+        return isPreferenceType(type) && PostgresqlObjectId.isValid(dataType) && PostgresqlObjectId.valueOf(dataType) == getDefaultType();
     }
 
     @Override
@@ -164,6 +156,10 @@ abstract class AbstractTemporalCodec<T extends Temporal> extends BuiltinCodecSup
 
     static <T> T potentiallyConvert(Temporal temporal, Class<T> expectedType, Function<Temporal, T> converter) {
         return expectedType.isInstance(temporal) ? expectedType.cast(temporal) : converter.apply(temporal);
+    }
+
+    private static boolean isPreferenceType(Class<?> type) {
+        return type == Object.class || type == Temporal.class;
     }
 
 }

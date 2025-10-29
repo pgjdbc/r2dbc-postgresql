@@ -45,7 +45,12 @@ final class ByteCodec extends AbstractCodec<Byte> implements ArrayCodecDelegate<
     }
 
     @Override
-    boolean doCanDecode(PostgresqlObjectId type, @Nullable Format format) {
+    public boolean canDecode(int dataType, Format format, Class<?> type) {
+        return super.canDecode(dataType, format, type) && this.delegate.canDecode(dataType, format, Short.class);
+    }
+
+    @Override
+    boolean doCanDecode(PostgresqlObjectId type, Format format) {
         Assert.requireNonNull(type, "type must not be null");
 
         return this.delegate.doCanDecode(type, format);

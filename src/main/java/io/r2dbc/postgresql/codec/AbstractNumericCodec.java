@@ -44,7 +44,7 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
  *
  * @param <T> the type that is handled by this {@link Codec}.
  */
-abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> implements ArrayCodecDelegate<T> {
+abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> implements ArrayCodecDelegate<T>, PreferredCodec {
 
     private static final Set<PostgresqlObjectId> SUPPORTED_TYPES = EnumSet.of(INT2, INT4, INT8, FLOAT4, FLOAT8, NUMERIC, OID);
 
@@ -56,16 +56,8 @@ abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> i
     }
 
     @Override
-    public boolean canDecode(int dataType, Format format, Class<?> type) {
-        Assert.requireNonNull(format, "format must not be null");
-        Assert.requireNonNull(type, "type must not be null");
-
-        if (type == Object.class) {
-            if (PostgresqlObjectId.isValid(dataType) && PostgresqlObjectId.valueOf(dataType) != getDefaultType()) {
-                return false;
-            }
-        }
-        return super.canDecode(dataType, format, type);
+    public boolean isPreferred(int dataType, Format format, Class<?> type) {
+        return isPreferenceType(type) && PostgresqlObjectId.isValid(dataType) && PostgresqlObjectId.valueOf(dataType) == getDefaultType();
     }
 
     @Override
@@ -156,6 +148,10 @@ abstract class AbstractNumericCodec<T extends Number> extends AbstractCodec<T> i
      * @return the {@link PostgresqlObjectId} for to identify whether this codec is the default codec.
      */
     abstract PostgresqlObjectId getDefaultType();
+
+    static boolean isPreferenceType(Class<?> type) {
+        return type == Object.class || type == Number.class;
+    }
 
     private static <T> T potentiallyConvert(Number number, Class<T> expectedType, Function<Number, T> converter) {
         return expectedType.isInstance(number) ? expectedType.cast(number) : converter.apply(number);
