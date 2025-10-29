@@ -270,6 +270,7 @@
                     <release>8</release>
                 </configuration>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -287,11 +288,13 @@
                     </archive>
                 </configuration>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
                 <version>3.1.1</version>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
@@ -313,6 +316,7 @@
                     </execution>
                 </executions>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
@@ -338,6 +342,7 @@
                     </execution>
                 </executions>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
@@ -351,6 +356,7 @@
                     </execution>
                 </executions>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -368,6 +374,7 @@
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
@@ -391,6 +398,7 @@
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
+
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>
@@ -422,18 +430,20 @@
                     </execution>
                 </executions>
             </plugin>
+
             <plugin>
                 <groupId>org.sonatype.central</groupId>
                 <artifactId>central-publishing-maven-plugin</artifactId>
                 <version>0.8.0</version>
                 <extensions>true</extensions>
                 <configuration>
-                    <publishingServerId>central</publishingServerId>
                     <autoPublish>true</autoPublish>
                     <deploymentName>R2DBC Postgresql ${project.version}</deploymentName>
+                    <publishingServerId>central</publishingServerId>
                 </configuration>
             </plugin>
         </plugins>
+
         <resources>
             <resource>
                 <directory>${project.basedir}</directory>
@@ -454,6 +464,7 @@
 
         <profile>
             <id>jmh</id>
+
             <dependencies>
                 <dependency>
                     <groupId>com.github.mp911de.microbenchmark-runner</groupId>
@@ -474,6 +485,7 @@
                     <scope>test</scope>
                 </dependency>
             </dependencies>
+
             <build>
                 <plugins>
                     <plugin>
@@ -495,6 +507,7 @@
                             </execution>
                         </executions>
                     </plugin>
+
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
@@ -510,6 +523,7 @@
                             <skip>true</skip>
                         </configuration>
                     </plugin>
+
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>exec-maven-plugin</artifactId>
@@ -536,6 +550,7 @@
                     </plugin>
                 </plugins>
             </build>
+
             <repositories>
                 <repository>
                     <id>jitpack.io</id>
@@ -546,6 +561,7 @@
 
         <profile>
             <id>snapshot</id>
+
             <build>
                 <plugins>
                     <plugin>
@@ -558,12 +574,11 @@
 
         <profile>
             <id>central</id>
+
             <build>
                 <pluginManagement>
                     <plugins>
-
                         <!-- Sign JARs -->
-
                         <plugin>
                             <groupId>org.apache.maven.plugins</groupId>
                             <artifactId>maven-gpg-plugin</artifactId>
@@ -584,13 +599,10 @@
                                 </execution>
                             </executions>
                         </plugin>
-
                     </plugins>
-
                 </pluginManagement>
 
                 <plugins>
-
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
@@ -600,20 +612,9 @@
                         <groupId>org.sonatype.central</groupId>
                         <artifactId>central-publishing-maven-plugin</artifactId>
                     </plugin>
-
                 </plugins>
-
             </build>
-
-            <distributionManagement>
-                <repository>
-                    <id>sonatype</id>
-                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-                </repository>
-            </distributionManagement>
-
         </profile>
-
     </profiles>
 
 </project>
