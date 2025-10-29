@@ -27,8 +27,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.time.OffsetDateTime;
+import java.time.Year;
 import java.util.Collections;
 import java.util.EnumSet;
 
@@ -46,6 +49,7 @@ import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT4;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT4_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT8_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.LINE_ARRAY;
+import static io.r2dbc.postgresql.codec.PostgresqlObjectId.OID;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.POINT_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.POLYGON_ARRAY;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.TEXT;
@@ -135,6 +139,14 @@ final class DefaultCodecsUnitTests {
     void delegatePriority() {
         assertThat(this.codecs.decode(TEST.buffer(2).writeShort((byte) 100), INT2.getObjectId(), FORMAT_BINARY, Object.class)).isInstanceOf(Short.class);
         assertThat(this.codecs.decode(ByteBufUtils.encode(TEST, "100"), INT2.getObjectId(), FORMAT_TEXT, Object.class)).isInstanceOf(Short.class);
+        assertThat(this.codecs.decode(ByteBufUtils.encode(TEST, "100"), OID.getObjectId(), FORMAT_TEXT, Object.class)).isInstanceOf(Integer.class);
+        assertThat(this.codecs.decode(ByteBufUtils.encode(TEST, "4294967295"), OID.getObjectId(), FORMAT_TEXT, Object.class)).isInstanceOf(Integer.class);
+        assertThat(this.codecs.decode(ByteBufUtils.encode(TEST, "100"), OID.getObjectId(), FORMAT_TEXT, Number.class)).isInstanceOf(Integer.class);
+        assertThat(this.codecs.decode(ByteBufUtils.encode(TEST, "100"), OID.getObjectId(), FORMAT_TEXT, Long.class)).isInstanceOf(Long.class);
+        assertThat(this.codecs.decode(ByteBufUtils.encode(TEST, "1"), INT2.getObjectId(), FORMAT_TEXT, Byte.class)).isInstanceOf(Byte.class);
+        assertThat(this.codecs.decode(ByteBufUtils.encode(TEST, "1"), INT2.getObjectId(), FORMAT_TEXT, DayOfWeek.class)).isInstanceOf(DayOfWeek.class);
+        assertThat(this.codecs.decode(ByteBufUtils.encode(TEST, "1"), INT2.getObjectId(), FORMAT_TEXT, Month.class)).isInstanceOf(Month.class);
+        assertThat(this.codecs.decode(ByteBufUtils.encode(TEST, "1"), INT2.getObjectId(), FORMAT_TEXT, Year.class)).isInstanceOf(Year.class);
         assertThat(this.codecs.decode(ByteBufUtils.encode(TEST, "test"), VARCHAR.getObjectId(), FORMAT_TEXT, Object.class)).isInstanceOf(String.class);
         assertThat(this.codecs.decode(ByteBufUtils.encode(TEST, "2018-11-04 15:35:00.847108"), TIMESTAMP.getObjectId(), FORMAT_TEXT, Object.class)).isInstanceOf(LocalDateTime.class);
         assertThat(this.codecs.decode(ByteBufUtils.encode(TEST, "2018-11-05 00:35:43.048593+09"), TIMESTAMPTZ.getObjectId(), FORMAT_TEXT, Object.class)).isInstanceOf(OffsetDateTime.class);

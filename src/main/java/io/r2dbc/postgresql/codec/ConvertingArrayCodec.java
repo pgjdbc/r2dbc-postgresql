@@ -21,6 +21,7 @@ import io.netty.buffer.ByteBufAllocator;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 
+import java.lang.reflect.Array;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -43,7 +44,7 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
  *
  * @param <T>
  */
-final class ConvertingArrayCodec<T> extends ArrayCodec<T> {
+final class ConvertingArrayCodec<T> extends ArrayCodec<T> implements PreferredCodec {
 
     static final Set<PostgresqlObjectId> NUMERIC_ARRAY_TYPES = EnumSet.of(INT2_ARRAY, INT4_ARRAY, INT8_ARRAY, FLOAT4_ARRAY, FLOAT8_ARRAY, NUMERIC_ARRAY, OID_ARRAY);
 
@@ -53,25 +54,27 @@ final class ConvertingArrayCodec<T> extends ArrayCodec<T> {
 
     private final Class<T> componentType;
 
+    private final Class<?> arrayClass;
+
     private final Set<PostgresqlObjectId> supportedTypes;
 
     public ConvertingArrayCodec(ByteBufAllocator byteBufAllocator, ArrayCodecDelegate<T> delegate, Class<T> componentType, Set<PostgresqlObjectId> supportedTypes) {
         super(byteBufAllocator, delegate, componentType);
         this.delegate = delegate;
         this.componentType = componentType;
+        this.arrayClass = Array.newInstance(this.componentType, 0).getClass();
         this.supportedTypes = supportedTypes;
     }
 
     @Override
+    public boolean isPreferred(int dataType, Format format, Class<?> type) {
+        return type == Object.class && dataType == getDelegate().getArrayDataType().getObjectId();
+    }
+
+    @Override
     public boolean canDecode(int dataType, Format format, Class<?> type) {
-
-        // consider delegate priority
-        if (type == Object.class && dataType == getDelegate().getArrayDataType().getObjectId()) {
-            return true;
-        }
-
         return PostgresqlObjectId.isValid(dataType) && this.supportedTypes.contains(PostgresqlObjectId.valueOf(dataType)) &&
-            type.isArray() && getActualComponentType(type).isAssignableFrom(getComponentType());
+            (type.isAssignableFrom(this.arrayClass) || (type.isArray() && getActualComponentType(type).isAssignableFrom(getComponentType())));
     }
 
     @Override
