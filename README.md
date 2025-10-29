@@ -189,7 +189,7 @@ r2dbc:postgresql:failover://user:foo@host1:5433,host2:5432,host3
 For example an application can create two connection pools. One data source is for writes, another for reads. The write pool limits connections only to a primary node:
 
 ```
-r2dbc:postgresql:failover://user:foo@host1:5433,host2:5432,host3?targetServerType=primary.
+r2dbc:postgresql:failover://user:foo@host1:5433,host2:5432,host3?targetServerType=primary
 ```
 
 ## Cursors
