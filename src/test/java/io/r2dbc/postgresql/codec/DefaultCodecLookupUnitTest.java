@@ -19,14 +19,12 @@ package io.r2dbc.postgresql.codec;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.temporal.Temporal;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Predicate;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT2;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
@@ -43,9 +41,6 @@ class DefaultCodecLookupUnitTest {
     DefaultCodecs codecs;
 
     DefaultCodecLookup codecFinder;
-
-    @Captor
-    ArgumentCaptor<Predicate<Codec<?>>> predicateArgumentCaptor;
 
     @Mock
     Codec<String> stringCodec;
@@ -110,6 +105,17 @@ class DefaultCodecLookupUnitTest {
     @Test
     void findEncodeNullCodecNotFound() {
         assertThat(this.codecFinder.findEncodeNullCodec(DefaultCodecsUnitTests.class)).isNull();
+    }
+
+    @Test
+    void considersPreference() {
+        assertThat(this.codecFinder.findDecodeCodec(PostgresqlObjectId.OID.getObjectId(), FORMAT_TEXT, Object.class)).isInstanceOf(IntegerCodec.class);
+        assertThat(this.codecFinder.findDecodeCodec(PostgresqlObjectId.OID.getObjectId(), FORMAT_TEXT, Number.class)).isInstanceOf(IntegerCodec.class);
+        assertThat(this.codecFinder.findDecodeCodec(PostgresqlObjectId.INT4.getObjectId(), FORMAT_TEXT, Object.class)).isInstanceOf(IntegerCodec.class);
+
+        assertThat(this.codecFinder.findDecodeCodec(PostgresqlObjectId.INT8.getObjectId(), FORMAT_TEXT, Object.class)).isInstanceOf(LongCodec.class);
+        assertThat(this.codecFinder.findDecodeCodec(PostgresqlObjectId.INT8.getObjectId(), FORMAT_TEXT, Number.class)).isInstanceOf(LongCodec.class);
+        assertThat(this.codecFinder.findDecodeCodec(PostgresqlObjectId.DATE.getObjectId(), FORMAT_TEXT, Temporal.class)).isInstanceOf(LocalDateCodec.class);
     }
 
 }

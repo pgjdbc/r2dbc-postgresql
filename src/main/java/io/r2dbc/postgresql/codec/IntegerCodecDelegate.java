@@ -41,6 +41,11 @@ class IntegerCodecDelegate<T> extends AbstractCodec<T> {
     }
 
     @Override
+    public boolean canDecode(int dataType, Format format, Class<?> type) {
+        return super.canDecode(dataType, format, type) && this.delegate.canDecode(dataType, format, Integer.class);
+    }
+
+    @Override
     boolean doCanDecode(PostgresqlObjectId type, Format format) {
         return this.delegate.doCanDecode(type, format);
     }

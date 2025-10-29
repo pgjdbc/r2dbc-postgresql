@@ -32,6 +32,11 @@ final class IntegerCodec extends AbstractNumericCodec<Integer> implements Primit
     }
 
     @Override
+    public boolean isPreferred(int dataType, Format format, Class<?> type) {
+        return (isPreferenceType(type) && dataType == PostgresqlObjectId.OID.getObjectId()) || super.isPreferred(dataType, format, type);
+    }
+
+    @Override
     public PrimitiveCodec<Integer> getPrimitiveCodec() {
         return new PrimitiveCodec<>(Integer.TYPE, Integer.class, this);
     }

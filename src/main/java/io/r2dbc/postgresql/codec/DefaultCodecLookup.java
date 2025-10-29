@@ -49,6 +49,10 @@ class DefaultCodecLookup implements CodecLookup {
 
     @Override
     public <T> Codec<T> findDecodeCodec(int dataType, Format format, Class<? extends T> type) {
+        Codec<T> preferred = findCodec(codec -> codec instanceof PreferredCodec && ((PreferredCodec) codec).isPreferred(dataType, format, type) && codec.canDecode(dataType, format, type));
+        if (preferred != null) {
+            return preferred;
+        }
         return findCodec(codec -> codec.canDecode(dataType, format, type));
     }
 

@@ -477,6 +477,8 @@ This reference table shows the type mapping between [PostgreSQL][p] and Java dat
 | [`xml`][psql-xml-ref]                            | Not yet supported.                                                                                                                                                                                                                                                                                       |
 | [`vector`][psql-vector-ref]                      | **`Vector`**, [`float[]`][java-float-ref]                                                                                                                                                                                                                                                                | 
 
+**Note on `Integer` `oid` usage**: Postgres OIDs are unsigned 32 bit integers. Make sure to consider how Java represents unsigned integers when working with large OID values or convert the value to
+`long` through `Integer.toUnsignedLong(int)`.
 
 Types in **bold** indicate the native (default) Java type.
 
@@ -649,7 +651,7 @@ You don't need to build from source to use R2DBC PostgreSQL (binaries in Maven C
  $ ./mvnw clean install
 ```
 
-If you want to build with the regular `mvn` command, you will need [Maven v3.5.0 or above](https://maven.apache.org/run-maven/index.html).
+If you want to build with the regular `mvn` command, you will need [Maven v3.9.0 or above](https://maven.apache.org/run-maven/index.html).
 
 _Also see [CONTRIBUTING.adoc](.github/CONTRIBUTING.adoc) if you wish to submit pull requests._
 
