@@ -1,6 +1,10 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+1.0.9.RELEASE
+-----------------------------------------
+* Codec preference is not considered leading to OID value decoding through `DayOfWeek` #693
+
 1.0.8.RELEASE
 -----------------------------------------
 * Add codecs for `DayOfWeek`, `Month`, `MonthDay`, `Period`, `Year`, `YearMonth` #591
