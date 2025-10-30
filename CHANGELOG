@@ -1,6 +1,10 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+1.1.1.RELEASE
+-----------------------------------------
+* Codec preference is not considered leading to OID value decoding through `DayOfWeek` #693
+
 1.1.0.RELEASE
 -----------------------------------------
 * Cancel signal does not interrupt cursored query fetching #536
