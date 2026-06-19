@@ -29,19 +29,21 @@ final class CancelRequestMessageFlowUnitTests {
 
     @Test
     void exchange() {
+        byte[] secretKey = {0, 0, 0, (byte) 200};
+
         Client client = TestClient.builder()
-            .expectRequest(new CancelRequest(100, 200)).thenRespond()
+            .expectRequest(new CancelRequest(100, secretKey)).thenRespond()
             .build();
 
         CancelRequestMessageFlow
-            .exchange(client, 100, 200)
+            .exchange(client, 100, secretKey)
             .as(StepVerifier::create)
             .verifyComplete();
     }
 
     @Test
     void exchangeNoClient() {
-        assertThatIllegalArgumentException().isThrownBy(() -> CancelRequestMessageFlow.exchange(null, 100, 200))
+        assertThatIllegalArgumentException().isThrownBy(() -> CancelRequestMessageFlow.exchange(null, 100, new byte[]{0, 0, 0, (byte) 200}))
             .withMessage("client must not be null");
     }
 

@@ -69,6 +69,8 @@ public final class BackendMessageDecoder {
                 return ErrorResponse.decode(body);
             case FUNCTION_CALL_RESPONSE:
                 return FunctionCallResponse.decode(body);
+            case NEGOTIATE_PROTOCOL_VERSION:
+                return NegotiateProtocolVersion.decode(body);
             case NO_DATA:
                 return NoData.INSTANCE;
             case NOTICE_RESPONSE:
@@ -170,6 +172,7 @@ public final class BackendMessageDecoder {
         EMPTY_QUERY_RESPONSE('I'),
         ERROR_RESPONSE('E'),
         FUNCTION_CALL_RESPONSE('V'),
+        NEGOTIATE_PROTOCOL_VERSION('v'),
         NO_DATA('n'),
         NOTICE_RESPONSE('N'),
         NOTIFICATION_RESPONSE('A'),

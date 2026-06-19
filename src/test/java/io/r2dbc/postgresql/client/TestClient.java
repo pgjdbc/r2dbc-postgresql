@@ -61,13 +61,13 @@ public final class TestClient implements Client {
 
     private final Sinks.Many<Flux<BackendMessage>> responseProcessor = Sinks.many().replay().all();
 
-    private final Integer secretKey;
+    private final byte[] secretKey;
 
     private final TransactionStatus transactionStatus;
 
     private final Version version;
 
-    private TestClient(boolean expectClose, boolean connected, @Nullable Integer processId, @Nullable Integer secretKey, Flux<Window> windows, TransactionStatus transactionStatus, Version version) {
+    private TestClient(boolean expectClose, boolean connected, @Nullable Integer processId, @Nullable byte[] secretKey, Flux<Window> windows, TransactionStatus transactionStatus, Version version) {
         this.expectClose = expectClose;
         this.connected = connected;
         this.processId = processId;
@@ -146,7 +146,7 @@ public final class TestClient implements Client {
     }
 
     @Override
-    public Optional<Integer> getSecretKey() {
+    public Optional<byte[]> getSecretKey() {
         return Optional.ofNullable(this.secretKey);
     }
 
@@ -204,7 +204,7 @@ public final class TestClient implements Client {
 
         private Integer processId = null;
 
-        private Integer secretKey = null;
+        private byte[] secretKey = null;
 
         private TransactionStatus transactionStatus = IDLE;
 
@@ -244,7 +244,7 @@ public final class TestClient implements Client {
             return this;
         }
 
-        public Builder secretKey(Integer secretKey) {
+        public Builder secretKey(byte[] secretKey) {
             this.secretKey = Assert.requireNonNull(secretKey, "secretKey must not be null");
             return this;
         }

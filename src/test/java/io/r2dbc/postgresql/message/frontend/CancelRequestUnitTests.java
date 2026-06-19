@@ -27,13 +27,24 @@ final class CancelRequestUnitTests {
 
     @Test
     void encode() {
-        assertThat(new CancelRequest(100, 200)).encoded()
+        assertThat(new CancelRequest(100, new byte[]{0, 0, 0, (byte) 200})).encoded()
             .isDeferred()
             .isEncodedAs(buffer -> buffer
                 .writeInt(16)
                 .writeInt(80877102)
                 .writeInt(100)
                 .writeInt(200));
+    }
+
+    @Test
+    void encodeVariableLengthSecretKey() {
+        assertThat(new CancelRequest(100, new byte[]{1, 2, 3, 4, 5, 6})).encoded()
+            .isDeferred()
+            .isEncodedAs(buffer -> buffer
+                .writeInt(18)
+                .writeInt(80877102)
+                .writeInt(100)
+                .writeBytes(new byte[]{1, 2, 3, 4, 5, 6}));
     }
 
 }
