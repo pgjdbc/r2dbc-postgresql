@@ -115,7 +115,19 @@ final class BackendMessageDecoderUnitTests {
     @Test
     void backendKeyData() {
         BackendMessage message = decode('K', buffer -> buffer.writeInt(100).writeInt(200));
-        assertThat(message).isEqualTo(new BackendKeyData(100, 200));
+        assertThat(message).isEqualTo(new BackendKeyData(100, new byte[]{0, 0, 0, (byte) 200}));
+    }
+
+    @Test
+    void negotiateProtocolVersion() {
+        BackendMessage message = decode('v', buffer -> {
+            buffer.writeInt(0);
+            buffer.writeInt(1);
+            buffer.writeCharSequence("_pq_.foo", UTF_8);
+            buffer.writeByte(0);
+            return buffer;
+        });
+        assertThat(message).isEqualTo(new NegotiateProtocolVersion(0, Collections.singletonList("_pq_.foo")));
     }
 
     @Test

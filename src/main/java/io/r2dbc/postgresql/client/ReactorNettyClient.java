@@ -37,6 +37,7 @@ import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.BackendMessageDecoder;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.Field;
+import io.r2dbc.postgresql.message.backend.NegotiateProtocolVersion;
 import io.r2dbc.postgresql.message.backend.NoticeResponse;
 import io.r2dbc.postgresql.message.backend.NotificationResponse;
 import io.r2dbc.postgresql.message.backend.ParameterStatus;
@@ -124,7 +125,7 @@ public final class ReactorNettyClient implements Client {
 
     private volatile Integer processId;
 
-    private volatile Integer secretKey;
+    private volatile byte[] secretKey;
 
     private volatile TimeZone timeZone;
 
@@ -313,6 +314,17 @@ public final class ReactorNettyClient implements Client {
             return true;
         }
 
+        if (message.getClass() == NegotiateProtocolVersion.class) {
+
+            if (DEBUG_ENABLED) {
+                NegotiateProtocolVersion negotiate = (NegotiateProtocolVersion) message;
+                logger.debug(this.context.getMessage(String.format("Server negotiated protocol minor version 3.%d, unsupported protocol options: %s", negotiate.getProtocolMinorVersion(),
+                    negotiate.getUnsupportedOptions())));
+            }
+
+            return true;
+        }
+
         if (message.getClass() == ErrorResponse.class) {
             this.settings.getErrorResponseLogLevel().log(logger, () -> String.format("Error: %s", toString(((ErrorResponse) message).getFields())));
         }
@@ -491,7 +503,7 @@ public final class ReactorNettyClient implements Client {
     }
 
     @Override
-    public Optional<Integer> getSecretKey() {
+    public Optional<byte[]> getSecretKey() {
         return Optional.ofNullable(this.secretKey);
     }
 
@@ -524,7 +536,7 @@ public final class ReactorNettyClient implements Client {
     public Mono<Void> cancelRequest() {
         return Mono.defer(() -> {
             int processId = this.getProcessId().orElseThrow(() -> new IllegalStateException("Connection does not yet have a processId"));
-            int secretKey = this.getSecretKey().orElseThrow(() -> new IllegalStateException("Connection does not yet have a secretKey"));
+            byte[] secretKey = this.getSecretKey().orElseThrow(() -> new IllegalStateException("Connection does not yet have a secretKey"));
 
             return ReactorNettyClient.connect(this.connection.channel().remoteAddress(), this.settings)
                 .flatMap(client -> CancelRequestMessageFlow.exchange(client, processId, secretKey).then(Mono.defer(client::closeConnection))

@@ -129,11 +129,11 @@ public interface Client {
     Scheduler getScheduler();
 
     /**
-     * Returns the connected process secret key if it has been communicated.
+     * Returns the connected process secret key if it has been communicated. The key is 4 bytes when using protocol version 3.0/3.1 and variable-length (up to 256 bytes) since protocol version 3.2.
      *
      * @return the connected process secret key if it has been communicated
      */
-    Optional<Integer> getSecretKey();
+    Optional<byte[]> getSecretKey();
 
     /**
      * Returns the current time zone.

@@ -35,7 +35,7 @@ public final class CancelRequestMessageFlow {
      * @return the messages received after authentication is complete, in response to this exchange
      * @throws IllegalArgumentException if {@code Client} is {@code null}
      */
-    public static Mono<Void> exchange(Client client, int processId, int secretKey) {
+    public static Mono<Void> exchange(Client client, int processId, byte[] secretKey) {
         Assert.requireNonNull(client, "client must not be null");
 
         return client.exchange(Mono.just(new CancelRequest(processId, secretKey))).then();

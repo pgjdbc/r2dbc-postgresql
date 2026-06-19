@@ -87,13 +87,14 @@ final class StartupMessageFlowUnitTests {
     @Test
     void exchangeAuthenticationOther() {
         Client client = TestClient.builder()
-            .expectRequest(new StartupMessage("test-database", "test-username", new TestStartupParameterProvider())).thenRespond(AuthenticationOk.INSTANCE, new BackendKeyData(100, 200))
+            .expectRequest(new StartupMessage("test-database", "test-username", new TestStartupParameterProvider())).thenRespond(AuthenticationOk.INSTANCE, new BackendKeyData(100, new byte[]{0, 0,
+                0, (byte) 200}))
             .build();
 
         StartupMessageFlow
             .exchange("test-application-name", m -> this.authenticationHandler, client, "test-database", "test-username")
             .as(StepVerifier::create)
-            .expectNext(new BackendKeyData(100, 200))
+            .expectNext(new BackendKeyData(100, new byte[]{0, 0, 0, (byte) 200}))
             .verifyComplete();
     }
 

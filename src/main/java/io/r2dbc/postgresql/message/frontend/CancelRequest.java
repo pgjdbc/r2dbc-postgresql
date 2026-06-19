@@ -22,6 +22,7 @@ import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeInt;
@@ -37,17 +38,18 @@ public final class CancelRequest implements FrontendMessage {
 
     private final int processId;
 
-    private final int secretKey;
+    private final byte[] secretKey;
 
     /**
      * Create a new message.
      *
      * @param processId the process id of the target backend
-     * @param secretKey the secret key for the target backend
+     * @param secretKey the secret key for the target backend. Always 4 bytes before protocol version 3.2, variable-length (up to 256 bytes) since 3.2
+     * @throws IllegalArgumentException if {@code secretKey} is {@code null}
      */
-    public CancelRequest(int processId, int secretKey) {
+    public CancelRequest(int processId, byte[] secretKey) {
         this.processId = processId;
-        this.secretKey = secretKey;
+        this.secretKey = Assert.requireNonNull(secretKey, "secretKey must not be null");
     }
 
     @Override
@@ -55,12 +57,12 @@ public final class CancelRequest implements FrontendMessage {
         Assert.requireNonNull(byteBufAllocator, "byteBufAllocator must not be null");
 
         return Mono.fromSupplier(() -> {
-            ByteBuf out = byteBufAllocator.ioBuffer(16);
+            ByteBuf out = byteBufAllocator.ioBuffer(12 + this.secretKey.length);
 
             writeLengthPlaceholder(out);
             writeInt(out, REQUEST_CODE);
             writeInt(out, this.processId);
-            writeInt(out, this.secretKey);
+            out.writeBytes(this.secretKey);
 
             return writeSize(out, 0);
         });
@@ -76,19 +78,19 @@ public final class CancelRequest implements FrontendMessage {
         }
         CancelRequest that = (CancelRequest) o;
         return this.processId == that.processId &&
-            this.secretKey == that.secretKey;
+            Arrays.equals(this.secretKey, that.secretKey);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.processId, this.secretKey);
+        return 31 * Objects.hash(this.processId) + Arrays.hashCode(this.secretKey);
     }
 
     @Override
     public String toString() {
         return "CancelRequest{" +
             "processId=" + this.processId +
-            ", secretKey=" + this.secretKey +
+            ", secretKey=" + Arrays.toString(this.secretKey) +
             '}';
     }
 
