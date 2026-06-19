@@ -41,6 +41,7 @@ import reactor.test.publisher.TestPublisher;
 import static io.r2dbc.postgresql.message.backend.ReadyForQuery.TransactionStatus.IDLE;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for {@link PostgresqlCopyIn}.
@@ -77,6 +78,8 @@ final class PostgresqlCopyInUnitTests {
             .as(StepVerifier::create)
             .expectError(PostgresqlNonTransientResourceException.class)
             .verify();
+
+        assertThat(byteBuffer.refCnt()).describedAs("CopyData buffer must be released on failure").isZero();
     }
 
     @Test
