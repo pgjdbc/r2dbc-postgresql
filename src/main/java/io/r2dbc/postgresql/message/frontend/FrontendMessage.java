@@ -35,6 +35,16 @@ public interface FrontendMessage {
     Publisher<ByteBuf> encode(ByteBufAllocator byteBufAllocator);
 
     /**
+     * Release any resources (such as bound parameter buffers) held by this message without encoding it. Invoked when a
+     * message is discarded before reaching the wire, e.g. when the connection is closed or the conversation is cancelled
+     * while the message is still queued. The default implementation does nothing. Implementations that own
+     * reference-counted buffers must release them here and must be idempotent so that disposal is safe regardless of
+     * whether the message was already encoded.
+     */
+    default void dispose() {
+    }
+
+    /**
      * Interface for messages that can be directly encoded without producing a {@link Publisher} first.
      */
     interface DirectEncoder {

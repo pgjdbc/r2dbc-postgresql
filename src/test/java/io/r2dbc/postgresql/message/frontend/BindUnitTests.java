@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql.message.frontend;
 
+import io.netty.buffer.ByteBuf;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -24,6 +25,7 @@ import static io.netty.util.CharsetUtil.UTF_8;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageAssert.assertThat;
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
@@ -119,6 +121,48 @@ final class BindUnitTests {
                 return buffer;
             });
 
+    }
+
+    @Test
+    void encodeReleasesParameters() {
+        ByteBuf parameter = TEST.buffer(4).writeInt(100);
+        Bind bind = new Bind("test-name", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(parameter), Collections.singletonList(FORMAT_BINARY), "test-source");
+
+        ByteBuf out = TEST.buffer();
+        try {
+            bind.encode(out);
+        } finally {
+            out.release();
+        }
+
+        assertThat(parameter.refCnt()).isZero();
+    }
+
+    @Test
+    void disposeReleasesParametersWithoutEncoding() {
+        ByteBuf parameter = TEST.buffer(4).writeInt(100);
+        Bind bind = new Bind("test-name", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(parameter), Collections.singletonList(FORMAT_BINARY), "test-source");
+
+        bind.dispose();
+
+        assertThat(parameter.refCnt()).isZero();
+    }
+
+    @Test
+    void disposeIsIdempotentAfterEncode() {
+        ByteBuf parameter = TEST.buffer(4).writeInt(100);
+        Bind bind = new Bind("test-name", Collections.singletonList(FORMAT_BINARY), Collections.singletonList(parameter), Collections.singletonList(FORMAT_BINARY), "test-source");
+
+        ByteBuf out = TEST.buffer();
+        try {
+            bind.encode(out);
+        } finally {
+            out.release();
+        }
+        bind.dispose();
+        bind.dispose();
+
+        assertThat(parameter.refCnt()).isZero();
     }
 
 }

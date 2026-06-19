@@ -195,6 +195,7 @@ public final class ReactorNettyClient implements Client {
 
         Mono<Void> request = this.requestSink.asFlux()
             .concatMap(Function.identity())
+            .doOnDiscard(FrontendMessage.class, FrontendMessage::dispose)
             .flatMap(message -> {
                 if (DEBUG_ENABLED) {
                     logger.debug(this.context.getMessage(String.format("Request:  %s", message)));
@@ -261,7 +262,10 @@ public final class ReactorNettyClient implements Client {
     }
 
     private void doSendRequest(Publisher<FrontendMessage> it) {
-        this.requestSink.emitNext(it, Sinks.EmitFailureHandler.FAIL_FAST);
+        // Serialize all emissions to the unicast requestSink under the same monitor that registers conversations
+        synchronized (this.messageSubscriber.conversations) {
+            this.requestSink.emitNext(it, Sinks.EmitFailureHandler.FAIL_FAST);
+        }
     }
 
     private Mono<Void> resumeError(Throwable throwable) {
@@ -711,6 +715,7 @@ public final class ReactorNettyClient implements Client {
 
             if (this.sink.isCancelled()) {
                 ReferenceCountUtil.release(item);
+                return;
             }
 
             decrementDemand();
@@ -836,11 +841,26 @@ public final class ReactorNettyClient implements Client {
 
             this.demand.decrementAndGet();
 
-            // fast-path
-            if (this.buffer.isEmpty()) {
-                Conversation conversation = this.conversations.peek();
-                if (conversation != null && conversation.hasDemand()) {
-                    emit(conversation, message);
+            // fast-path: emit directly while holding the drain guard so we cannot overtake an item that a
+            // concurrent drain (triggered by demand on another thread) has polled from the buffer but not yet
+            // emitted.
+            if (this.buffer.isEmpty() && this.drain.compareAndSet(false, true)) {
+
+                Conversation conversation = null;
+                boolean emitted = false;
+                try {
+                    if (this.buffer.isEmpty()) {
+                        conversation = this.conversations.peek();
+                        if (conversation != null && conversation.hasDemand()) {
+                            emit(conversation, message);
+                            emitted = true;
+                        }
+                    }
+                } finally {
+                    this.drain.compareAndSet(true, false);
+                }
+
+                if (emitted) {
                     potentiallyDemandMore(conversation);
                     return;
                 }

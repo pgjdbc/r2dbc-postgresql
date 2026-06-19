@@ -19,6 +19,7 @@ package io.r2dbc.postgresql.message.frontend;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
+import io.netty.util.ReferenceCountUtil;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.util.Assert;
 import org.reactivestreams.Publisher;
@@ -27,6 +28,7 @@ import reactor.core.publisher.Mono;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeByte;
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageUtils.writeBytes;
@@ -68,6 +70,8 @@ public final class Bind implements FrontendMessage, FrontendMessage.DirectEncode
 
     private final String source;
 
+    private final AtomicBoolean released = new AtomicBoolean();
+
     /**
      * Create a new message.
      *
@@ -104,32 +108,42 @@ public final class Bind implements FrontendMessage, FrontendMessage.DirectEncode
     @Override
     public void encode(ByteBuf byteBuf) {
 
-        writeByte(byteBuf, 'B');
+        try {
+            writeByte(byteBuf, 'B');
 
-        int writerIndex = byteBuf.writerIndex();
+            int writerIndex = byteBuf.writerIndex();
 
-        writeLengthPlaceholder(byteBuf);
-        writeCStringUTF8(byteBuf, this.name);
-        writeCStringUTF8(byteBuf, this.source);
+            writeLengthPlaceholder(byteBuf);
+            writeCStringUTF8(byteBuf, this.name);
+            writeCStringUTF8(byteBuf, this.source);
 
-        writeShort(byteBuf, this.parameterFormats.size());
-        this.parameterFormats.forEach(format -> writeShort(byteBuf, format.getDiscriminator()));
+            writeShort(byteBuf, this.parameterFormats.size());
+            this.parameterFormats.forEach(format -> writeShort(byteBuf, format.getDiscriminator()));
 
-        writeShort(byteBuf, this.parameters.size());
-        this.parameters.forEach(parameters -> {
-            if (parameters == NULL_VALUE) {
-                writeInt(byteBuf, NULL);
-            } else {
-                writeInt(byteBuf, parameters.readableBytes());
-                writeBytes(byteBuf, parameters);
-                parameters.release();
-            }
-        });
+            writeShort(byteBuf, this.parameters.size());
+            this.parameters.forEach(parameters -> {
+                if (parameters == NULL_VALUE) {
+                    writeInt(byteBuf, NULL);
+                } else {
+                    writeInt(byteBuf, parameters.readableBytes());
+                    writeBytes(byteBuf, parameters);
+                }
+            });
 
-        writeShort(byteBuf, this.resultFormats.size());
-        this.resultFormats.forEach(format -> writeShort(byteBuf, format.getDiscriminator()));
+            writeShort(byteBuf, this.resultFormats.size());
+            this.resultFormats.forEach(format -> writeShort(byteBuf, format.getDiscriminator()));
 
-        writeSize(byteBuf, writerIndex);
+            writeSize(byteBuf, writerIndex);
+        } finally {
+            dispose();
+        }
+    }
+
+    @Override
+    public void dispose() {
+        if (this.released.compareAndSet(false, true)) {
+            this.parameters.forEach(ReferenceCountUtil::release);
+        }
     }
 
     @Override
