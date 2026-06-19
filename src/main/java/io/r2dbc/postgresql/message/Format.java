@@ -40,7 +40,7 @@ public enum Format {
 
     private static final Set<Format> BINARY = Collections.unmodifiableSet(EnumSet.of(Format.FORMAT_BINARY));
 
-    private static final Set<Format> TEXT = Collections.unmodifiableSet(EnumSet.of(Format.FORMAT_BINARY));
+    private static final Set<Format> TEXT = Collections.unmodifiableSet(EnumSet.of(Format.FORMAT_TEXT));
 
     private static final Set<Format> ALL = Collections.unmodifiableSet(EnumSet.of(Format.FORMAT_BINARY, FORMAT_TEXT));
 
