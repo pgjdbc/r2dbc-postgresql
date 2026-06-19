@@ -54,6 +54,7 @@ import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.HOST_RECHE
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.LEGACY_POSTGRESQL_DRIVER;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.LOAD_BALANCE_HOSTS;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.LOCK_WAIT_TIMEOUT;
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.MAX_MESSAGE_SIZE;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.OPTIONS;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.POSTGRESQL_DRIVER;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.PREFER_ATTACHED_BUFFERS;
@@ -254,6 +255,20 @@ final class PostgresqlConnectionFactoryProviderUnitTests {
             .build());
 
         assertThat(factory.getConfiguration().getChannelBindingMode()).isEqualTo(ChannelBindingMode.PREFER);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Test
+    void supportsMaxMessageSize() {
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option((Option) MAX_MESSAGE_SIZE, "1024")
+            .build());
+
+        assertThat(factory.getConfiguration().getMaxMessageSize()).isEqualTo(1024);
     }
 
     @Test

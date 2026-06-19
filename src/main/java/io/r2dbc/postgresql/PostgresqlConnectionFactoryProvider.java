@@ -139,6 +139,13 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<LoopResources> LOOP_RESOURCES = Option.valueOf("loopResources");
 
     /**
+     * Maximum size (in bytes) of a single protocol message/frame received from the server. Defaults to effectively unbounded.
+     *
+     * @since 1.1.2
+     */
+    public static final Option<Integer> MAX_MESSAGE_SIZE = Option.valueOf("maxMessageSize");
+
+    /**
      * Notice Response Log Level.
      */
     public static final Option<LogLevel> NOTICE_LOG_LEVEL = Option.valueOf("noticeLogLevel");
@@ -384,6 +391,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         mapper.from(FORCE_BINARY).map(OptionMapper::toBoolean).to(builder::forceBinary);
         mapper.from(LOCK_WAIT_TIMEOUT).map(OptionMapper::toDuration).to(builder::lockWaitTimeout);
         mapper.fromTyped(LOOP_RESOURCES).to(builder::loopResources);
+        mapper.from(MAX_MESSAGE_SIZE).map(OptionMapper::toInteger).to(builder::maxMessageSize);
         mapper.from(NOTICE_LOG_LEVEL).map(it -> OptionMapper.toEnum(it, LogLevel.class)).to(builder::noticeLogLevel);
         mapper.from(OPTIONS).map(PostgresqlConnectionFactoryProvider::convertToMap).to(builder::options);
         mapper.from(PORT).map(OptionMapper::toInteger).to(builder::port);

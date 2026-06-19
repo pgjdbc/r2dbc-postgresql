@@ -161,10 +161,28 @@ final class PostgresqlConnectionConfigurationUnitTests {
             .hasFieldOrProperty("sslConfig")
             .hasFieldOrPropertyWithValue("tcpKeepAlive", false)
             .hasFieldOrPropertyWithValue("tcpNoDelay", true)
+            .hasFieldOrPropertyWithValue("maxMessageSize", Integer.MAX_VALUE - 5)
             .hasFieldOrPropertyWithValue("loopResources", null);
 
         assertThat(configuration.getOptions())
             .containsEntry("search_path", "test-schema");
+    }
+
+    @Test
+    void builderMaxMessageSize() {
+        PostgresqlConnectionConfiguration configuration = PostgresqlConnectionConfiguration.builder()
+            .host("test-host")
+            .username("test-username")
+            .maxMessageSize(1024)
+            .build();
+
+        assertThat(configuration).hasFieldOrPropertyWithValue("maxMessageSize", 1024);
+    }
+
+    @Test
+    void builderRejectsNonPositiveMaxMessageSize() {
+        assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().maxMessageSize(0))
+            .withMessage("maxMessageSize must be greater than zero");
     }
 
     @Test

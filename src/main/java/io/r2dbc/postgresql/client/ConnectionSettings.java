@@ -38,11 +38,20 @@ import java.util.function.Consumer;
  */
 public final class ConnectionSettings {
 
+    /**
+     * Default maximum size (in bytes) of a single protocol message/frame. Equal to the largest frame the length field can describe; effectively unbounded.
+     *
+     * @since 1.1.2
+     */
+    public static final int DEFAULT_MAX_MESSAGE_SIZE = Integer.MAX_VALUE - 5;
+
     private final @Nullable Duration connectTimeout;
 
     private final ConnectionProvider connectionProvider;
 
     private final @Nullable LoopResources loopResources;
+
+    private final int maxMessageSize;
 
     private final SSLConfig sslConfig;
 
@@ -56,11 +65,12 @@ public final class ConnectionSettings {
 
     private final LogLevel noticeLogLevel;
 
-    ConnectionSettings(@Nullable Duration connectTimeout, ConnectionProvider connectionProvider, @Nullable LoopResources loopResources,
+    ConnectionSettings(@Nullable Duration connectTimeout, ConnectionProvider connectionProvider, @Nullable LoopResources loopResources, int maxMessageSize,
                        SSLConfig sslConfig, Map<String, String> startupOptions, boolean tcpKeepAlive, boolean tcpNoDelay, LogLevel errorResponseLogLevel, LogLevel noticeLogLevel) {
         this.connectTimeout = connectTimeout;
         this.connectionProvider = connectionProvider;
         this.loopResources = loopResources;
+        this.maxMessageSize = maxMessageSize;
         this.sslConfig = sslConfig;
         this.startupOptions = startupOptions;
         this.tcpKeepAlive = tcpKeepAlive;
@@ -84,7 +94,7 @@ public final class ConnectionSettings {
      * @return a {@link Builder} that is pre-initialized with the current values
      */
     public Builder mutate() {
-        return new Builder().connectionProvider(this.connectionProvider).loopResources(this.loopResources)
+        return new Builder().connectionProvider(this.connectionProvider).loopResources(this.loopResources).maxMessageSize(this.maxMessageSize)
             .errorResponseLogLevel(this.errorResponseLogLevel).noticeLogLevel(this.noticeLogLevel).sslConfig(this.sslConfig)
             .connectTimeout(this.connectTimeout).startupOptions(this.startupOptions).tcpKeepAlive(this.tcpKeepAlive).tcpNoDelay(this.tcpNoDelay);
     }
@@ -131,6 +141,10 @@ public final class ConnectionSettings {
         return this.loopResources;
     }
 
+    int getMaxMessageSize() {
+        return this.maxMessageSize;
+    }
+
     SSLConfig getSslConfig() {
         return this.sslConfig;
     }
@@ -168,6 +182,8 @@ public final class ConnectionSettings {
 
         private @Nullable LoopResources loopResources = null;
 
+        private int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
+
         private LogLevel errorResponseLogLevel = LogLevel.WARN;
 
         private LogLevel noticeLogLevel = LogLevel.DEBUG;
@@ -189,7 +205,7 @@ public final class ConnectionSettings {
          * @return a configured {@link ConnectionSettings}
          */
         public ConnectionSettings build() {
-            return new ConnectionSettings(this.connectTimeout, this.connectionProvider, this.loopResources, this.sslConfig,
+            return new ConnectionSettings(this.connectTimeout, this.connectionProvider, this.loopResources, this.maxMessageSize, this.sslConfig,
                 this.startupOptions, this.tcpKeepAlive, this.tcpNoDelay, this.errorResponseLogLevel, this.noticeLogLevel);
         }
 
@@ -219,12 +235,27 @@ public final class ConnectionSettings {
          * Configure the {@link LoopResources}.
          * The {@link LoopResources}'s lifecycle should be managed externally.
          *
-         * @param loopResources the {@link LoopResources}.
+         * @param loopResources the {@link LoopResources}
          * @return this {@link Builder}
          * @since 0.8.5
          */
         public Builder loopResources(@Nullable LoopResources loopResources) {
             this.loopResources = loopResources;
+            return this;
+        }
+
+        /**
+         * Configure the maximum size (in bytes) of a single protocol message/frame. Frames whose announced length exceeds this value fail the connection with a {@code TooLongFrameException}.
+         * Defaults to {@link #DEFAULT_MAX_MESSAGE_SIZE}.
+         *
+         * @param maxMessageSize the maximum message size in bytes
+         * @return this {@link Builder}
+         * @throws IllegalArgumentException if {@code maxMessageSize} is not greater than zero
+         * @since 1.1.2
+         */
+        public Builder maxMessageSize(int maxMessageSize) {
+            Assert.isTrue(maxMessageSize > 0, "maxMessageSize must be greater than zero");
+            this.maxMessageSize = maxMessageSize;
             return this;
         }
 

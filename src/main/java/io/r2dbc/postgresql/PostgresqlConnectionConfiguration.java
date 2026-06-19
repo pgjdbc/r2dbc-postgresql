@@ -105,6 +105,8 @@ public final class PostgresqlConnectionConfiguration {
 
     private final @Nullable LoopResources loopResources;
 
+    private final int maxMessageSize;
+
     private final @Nullable MultiHostConfiguration multiHostConfiguration;
 
     private final LogLevel noticeLogLevel;
@@ -134,7 +136,7 @@ public final class PostgresqlConnectionConfiguration {
     private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions, ChannelBindingMode channelBindingMode, boolean compatibilityMode, @Nullable Duration connectTimeout,
                                               @Nullable String database, LogLevel errorResponseLogLevel, List<Extension> extensions, ToIntFunction<String> fetchSize, boolean forceBinary,
                                               @Nullable Duration lockWaitTimeout,
-                                              @Nullable LoopResources loopResources, @Nullable MultiHostConfiguration multiHostConfiguration, LogLevel noticeLogLevel,
+                                              @Nullable LoopResources loopResources, int maxMessageSize, @Nullable MultiHostConfiguration multiHostConfiguration, LogLevel noticeLogLevel,
                                               @Nullable Map<String, String> options, @Nullable Publisher<CharSequence> password, boolean preferAttachedBuffers, int preparedStatementCacheQueries,
                                               @Nullable String schema, @Nullable SingleHostConfiguration singleHostConfiguration, SSLConfig sslConfig, @Nullable Duration statementTimeout,
                                               boolean tcpKeepAlive, boolean tcpNoDelay, TimeZone timeZone, Publisher<String> username) {
@@ -149,6 +151,7 @@ public final class PostgresqlConnectionConfiguration {
         this.fetchSize = fetchSize;
         this.forceBinary = forceBinary;
         this.loopResources = loopResources;
+        this.maxMessageSize = maxMessageSize;
         this.multiHostConfiguration = multiHostConfiguration;
         this.noticeLogLevel = noticeLogLevel;
         this.options = options == null ? new LinkedHashMap<>() : new LinkedHashMap<>(options);
@@ -202,6 +205,7 @@ public final class PostgresqlConnectionConfiguration {
             ", forceBinary='" + this.forceBinary + '\'' +
             ", lockWaitTimeout='" + this.lockWaitTimeout +
             ", loopResources='" + this.loopResources + '\'' +
+            ", maxMessageSize=" + this.maxMessageSize +
             ", multiHostConfiguration='" + this.multiHostConfiguration + '\'' +
             ", noticeLogLevel='" + this.noticeLogLevel + '\'' +
             ", options='" + this.options + '\'' +
@@ -309,6 +313,10 @@ public final class PostgresqlConnectionConfiguration {
         return this.forceBinary;
     }
 
+    int getMaxMessageSize() {
+        return this.maxMessageSize;
+    }
+
     boolean isTcpKeepAlive() {
         return this.tcpKeepAlive;
     }
@@ -335,6 +343,7 @@ public final class PostgresqlConnectionConfiguration {
             .tcpKeepAlive(isTcpKeepAlive())
             .tcpNoDelay(isTcpNoDelay())
             .loopResources(this.loopResources)
+            .maxMessageSize(this.maxMessageSize)
             .build();
     }
 
@@ -377,6 +386,8 @@ public final class PostgresqlConnectionConfiguration {
         private boolean forceBinary = false;
 
         private @Nullable Duration lockWaitTimeout;
+
+        private int maxMessageSize = ConnectionSettings.DEFAULT_MAX_MESSAGE_SIZE;
 
         private MultiHostConfiguration.@Nullable Builder multiHostConfiguration;
 
@@ -494,7 +505,7 @@ public final class PostgresqlConnectionConfiguration {
 
             return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.channelBindingMode, this.compatibilityMode, this.connectTimeout, this.database,
                 this.errorResponseLogLevel,
-                this.extensions, this.fetchSize, this.forceBinary, this.lockWaitTimeout, this.loopResources, multiHostConfiguration,
+                this.extensions, this.fetchSize, this.forceBinary, this.lockWaitTimeout, this.loopResources, this.maxMessageSize, multiHostConfiguration,
                 this.noticeLogLevel, this.options, this.password, this.preferAttachedBuffers,
                 this.preparedStatementCacheQueries, this.schema, singleHostConfiguration,
                 this.createSslConfig(this.sslSni), this.statementTimeout, this.tcpKeepAlive, this.tcpNoDelay, this.timeZone, this.username);
@@ -717,6 +728,23 @@ public final class PostgresqlConnectionConfiguration {
          */
         public Builder loopResources(LoopResources loopResources) {
             this.loopResources = Assert.requireNonNull(loopResources, "loopResources must not be null");
+            return this;
+        }
+
+        /**
+         * Configure the maximum size (in bytes) of a single protocol message/frame received from the server. Frames whose announced length exceeds this value fail the connection with a
+         * {@code TooLongFrameException} instead of being buffered.
+         * Defaults to {@link ConnectionSettings#DEFAULT_MAX_MESSAGE_SIZE}
+         * (effectively unbounded). Note that PostgreSQL field values may be up to about 1 GB, so lower this only to a value that still accommodates the largest expected row or {@code COPY} chunk.
+         *
+         * @param maxMessageSize the maximum message size in bytes
+         * @return this {@link Builder}
+         * @throws IllegalArgumentException if {@code maxMessageSize} is not greater than zero
+         * @since 1.1.2
+         */
+        public Builder maxMessageSize(int maxMessageSize) {
+            Assert.isTrue(maxMessageSize > 0, "maxMessageSize must be greater than zero");
+            this.maxMessageSize = maxMessageSize;
             return this;
         }
 
@@ -1161,6 +1189,7 @@ public final class PostgresqlConnectionConfiguration {
                 ", forceBinary='" + this.forceBinary + '\'' +
                 ", lockWaitTimeout='" + this.lockWaitTimeout + '\'' +
                 ", loopResources='" + this.loopResources + '\'' +
+                ", maxMessageSize='" + this.maxMessageSize + '\'' +
                 ", multiHostConfiguration='" + this.multiHostConfiguration + '\'' +
                 ", noticeLogLevel='" + this.noticeLogLevel + '\'' +
                 ", parameters='" + this.options + '\'' +
