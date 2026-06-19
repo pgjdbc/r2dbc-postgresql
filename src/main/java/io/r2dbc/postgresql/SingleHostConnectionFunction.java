@@ -54,7 +54,7 @@ final class SingleHostConnectionFunction implements ConnectionFunction {
     }
 
     protected AuthenticationHandler getAuthenticationHandler(AuthenticationMessage message, UsernameAndPassword usernameAndPassword, ConnectionContext context) {
-        return AuthenticationHandler.getAuthenticationHandler(message, usernameAndPassword, context);
+        return AuthenticationHandler.getAuthenticationHandler(message, usernameAndPassword, context, this.configuration.getChannelBindingMode());
     }
 
     Mono<UsernameAndPassword> getCredentials() {

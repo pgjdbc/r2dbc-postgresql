@@ -4,6 +4,7 @@ import com.ongres.scram.client.ScramClient;
 import com.ongres.scram.common.StringPreparation;
 import com.ongres.scram.common.exception.ScramException;
 import com.ongres.scram.common.util.TlsServerEndpoint;
+import io.r2dbc.postgresql.client.ChannelBindingMode;
 import io.r2dbc.postgresql.client.ConnectionContext;
 import io.r2dbc.postgresql.message.backend.AuthenticationMessage;
 import io.r2dbc.postgresql.message.backend.AuthenticationSASL;
@@ -14,6 +15,7 @@ import io.r2dbc.postgresql.message.frontend.SASLInitialResponse;
 import io.r2dbc.postgresql.message.frontend.SASLResponse;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.postgresql.util.ByteBufferUtils;
+import io.r2dbc.spi.R2dbcPermissionDeniedException;
 import org.jspecify.annotations.Nullable;
 import reactor.core.Exceptions;
 import reactor.util.Logger;
@@ -35,10 +37,12 @@ public class SASLAuthenticationHandler implements AuthenticationHandler {
 
     private final ConnectionContext context;
 
+    private final ChannelBindingMode channelBinding;
+
     private ScramClient scramClient;
 
     /**
-     * Create a new handler.
+     * Create a new handler using the default {@link ChannelBindingMode#PREFER} channel binding mode.
      *
      * @param password the password to use for authentication
      * @param username the username to use for authentication
@@ -46,9 +50,24 @@ public class SASLAuthenticationHandler implements AuthenticationHandler {
      * @throws IllegalArgumentException if {@code password} or {@code user} is {@code null}
      */
     public SASLAuthenticationHandler(CharSequence password, String username, ConnectionContext context) {
+        this(password, username, context, ChannelBindingMode.PREFER);
+    }
+
+    /**
+     * Create a new handler.
+     *
+     * @param password       the password to use for authentication
+     * @param username       the username to use for authentication
+     * @param context        the connection context
+     * @param channelBinding the channel binding preference
+     * @throws IllegalArgumentException if {@code password}, {@code user}, {@code context} or {@code channelBinding} is {@code null}
+     * @since 1.1.2
+     */
+    public SASLAuthenticationHandler(CharSequence password, String username, ConnectionContext context, ChannelBindingMode channelBinding) {
         this.password = Assert.requireNonNull(password, "password must not be null");
         this.username = Assert.requireNonNull(username, "username must not be null");
         this.context = Assert.requireNonNull(context, "context must not be null");
+        this.channelBinding = Assert.requireNonNull(channelBinding, "channelBinding must not be null");
     }
 
     /**
@@ -95,12 +114,23 @@ public class SASLAuthenticationHandler implements AuthenticationHandler {
             .stringPreparation(StringPreparation.POSTGRESQL_PREPARATION);
 
         SSLSession sslSession = this.context.getSslSession();
+        boolean sslEstablished = sslSession != null && sslSession.isValid();
 
-        if (sslSession != null && sslSession.isValid()) {
+        if (this.channelBinding == ChannelBindingMode.REQUIRE && !sslEstablished) {
+            throw new R2dbcPermissionDeniedException("Channel binding is required (channelBinding=require) but the connection is not using SSL");
+        }
+
+        if (this.channelBinding != ChannelBindingMode.DISABLE && sslEstablished) {
             builder.channelBinding(TlsServerEndpoint.TLS_SERVER_END_POINT, extractSslEndpoint(sslSession));
         }
 
         this.scramClient = builder.build();
+
+        // The SCRAM library silently downgrades to a non-bound mechanism if the server does not advertise SCRAM-SHA-256-PLUS (or no channel binding data is available). Reject this when channel
+        // binding was required to prevent a man-in-the-middle from stripping the -PLUS mechanism.
+        if (this.channelBinding == ChannelBindingMode.REQUIRE && !this.scramClient.getScramMechanism().isPlus()) {
+            throw new R2dbcPermissionDeniedException("Channel binding is required (channelBinding=require) but the server did not offer a channel-binding SCRAM mechanism (SCRAM-SHA-256-PLUS)");
+        }
 
         return new SASLInitialResponse(ByteBufferUtils.encode(this.scramClient.clientFirstMessage().toString()), this.scramClient.getScramMechanism().getName());
     }
