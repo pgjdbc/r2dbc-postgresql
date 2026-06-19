@@ -33,6 +33,11 @@ final class TransactionStatusUnitTests {
     }
 
     @Test
+    void valueOfUnknown() {
+        assertThat(TransactionStatus.valueOf(ReadyForQuery.TransactionStatus.UNKNOWN)).isEqualTo(TransactionStatus.UNKNOWN);
+    }
+
+    @Test
     void valueOfNoT() {
         assertThatIllegalArgumentException().isThrownBy(() -> TransactionStatus.valueOf((ReadyForQuery.TransactionStatus) null))
             .withMessage("t must not be null");
