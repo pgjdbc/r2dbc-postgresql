@@ -108,4 +108,24 @@ final class ConnectionSettingsUnitTests {
         assertThat(mutated).hasFieldOrPropertyWithValue("loopResources", loopResources2);
     }
 
+    @Test
+    void builderDefaultsMaxMessageSize() {
+        assertThat(ConnectionSettings.builder().build()).hasFieldOrPropertyWithValue("maxMessageSize", ConnectionSettings.DEFAULT_MAX_MESSAGE_SIZE);
+    }
+
+    @Test
+    void builderRejectsNonPositiveMaxMessageSize() {
+        assertThatIllegalArgumentException().isThrownBy(() -> ConnectionSettings.builder().maxMessageSize(0))
+            .withMessage("maxMessageSize must be greater than zero");
+    }
+
+    @Test
+    void mutateMaxMessageSize() {
+        ConnectionSettings connectionSettings = ConnectionSettings.builder().build();
+
+        ConnectionSettings mutated = connectionSettings.mutate(builder -> builder.maxMessageSize(1024));
+
+        assertThat(mutated).hasFieldOrPropertyWithValue("maxMessageSize", 1024);
+    }
+
 }

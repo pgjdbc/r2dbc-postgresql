@@ -152,7 +152,7 @@ public final class ReactorNettyClient implements Client {
 
 
         connection.addHandlerLast(new EnsureSubscribersCompleteChannelHandler(this.requestSink));
-        connection.addHandlerLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE - 5, 1, 4, -4, 0));
+        connection.addHandlerLast(new LengthFieldBasedFrameDecoder(this.settings.getMaxMessageSize(), 1, 4, -4, 0));
         this.connection = connection;
         this.byteBufAllocator = connection.outbound().alloc();
 
