@@ -85,6 +85,9 @@ public final class Parse implements FrontendMessage, FrontendMessage.DirectEncod
     public void encode(ByteBuf byteBuf) {
 
         writeByte(byteBuf, 'P');
+
+        int writerIndex = byteBuf.writerIndex();
+
         writeLengthPlaceholder(byteBuf);
         writeCStringUTF8(byteBuf, this.name);
         writeCStringUTF8(byteBuf, this.query);
@@ -94,7 +97,7 @@ public final class Parse implements FrontendMessage, FrontendMessage.DirectEncod
             writeInt(byteBuf, parameter);
         }
 
-        writeSize(byteBuf);
+        writeSize(byteBuf, writerIndex);
     }
 
     @Override
