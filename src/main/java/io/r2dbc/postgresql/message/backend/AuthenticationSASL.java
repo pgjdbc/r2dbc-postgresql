@@ -82,7 +82,7 @@ public final class AuthenticationSASL implements AuthenticationMessage {
 
         List<String> authenticationMechanisms = new ArrayList<>();
 
-        while (TERMINAL != in.getByte(in.readerIndex())) {
+        while (in.isReadable() && TERMINAL != in.getByte(in.readerIndex())) {
             authenticationMechanisms.add(readCStringUTF8(in));
         }
 

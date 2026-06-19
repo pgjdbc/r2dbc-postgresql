@@ -49,4 +49,23 @@ final class AuthenticationSASLUnitTests {
             .isEqualTo(new AuthenticationSASL(Collections.singletonList("test-authentication-mechanism")));
     }
 
+    @Test
+    void decodeEmptyBody() {
+        assertThat(AuthenticationSASL.class)
+            .decoded(buffer -> buffer)
+            .isEqualTo(new AuthenticationSASL(Collections.emptyList()));
+    }
+
+    @Test
+    void decodeUnterminatedList() {
+        assertThat(AuthenticationSASL.class)
+            .decoded(buffer -> {
+                buffer.writeCharSequence("test-authentication-mechanism", UTF_8);
+                buffer.writeByte(0);
+
+                return buffer;
+            })
+            .isEqualTo(new AuthenticationSASL(Collections.singletonList("test-authentication-mechanism")));
+    }
+
 }
