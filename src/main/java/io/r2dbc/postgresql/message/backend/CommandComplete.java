@@ -29,7 +29,7 @@ import static io.r2dbc.postgresql.message.backend.BackendMessageUtils.readCStrin
  */
 public final class CommandComplete implements BackendMessage {
 
-    private final static String[] NO_ROW_ID_TAGS = {"SELECT", "UPDATE", "DELETE", "COPY", "FETCH", "MOVE",};
+    private final static String[] NO_ROW_ID_TAGS = {"SELECT", "UPDATE", "DELETE", "MERGE", "COPY", "FETCH", "MOVE",};
 
     private final String command;
 

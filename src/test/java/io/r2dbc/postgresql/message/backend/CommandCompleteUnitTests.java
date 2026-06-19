@@ -114,6 +114,26 @@ final class CommandCompleteUnitTests {
     }
 
     @Test
+    void decodeMerge() {
+        assertThat(CommandComplete.class)
+            .decoded(buffer -> {
+                buffer.writeCharSequence("MERGE 100", UTF_8);
+                buffer.writeByte(0);
+
+                return buffer;
+            })
+            .isEqualTo(new CommandComplete("MERGE", null, 100L));
+        assertThat(CommandComplete.class)
+            .decoded(buffer -> {
+                buffer.writeCharSequence("MERGE 4294967294", UTF_8);
+                buffer.writeByte(0);
+
+                return buffer;
+            })
+            .isEqualTo(new CommandComplete("MERGE", null, 4294967294L));
+    }
+
+    @Test
     void decodeMove() {
         assertThat(CommandComplete.class)
             .decoded(buffer -> {
