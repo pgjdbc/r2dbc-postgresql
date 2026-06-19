@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql.message.frontend;
 
+import io.netty.buffer.ByteBuf;
 import org.junit.jupiter.api.Test;
 
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageAssert.assertThat;
@@ -42,6 +43,27 @@ final class CopyDataUnitTests {
                 .writeByte('d')
                 .writeInt(8)
                 .writeInt(100));
+    }
+
+    @Test
+    void disposeReleasesBuffer() {
+        ByteBuf buffer = TEST.buffer(4).writeInt(100);
+        CopyData data = new CopyData(buffer);
+
+        data.dispose();
+
+        org.assertj.core.api.Assertions.assertThat(buffer.refCnt()).isZero();
+    }
+
+    @Test
+    void disposeIsIdempotent() {
+        ByteBuf buffer = TEST.buffer(4).writeInt(100);
+        CopyData data = new CopyData(buffer);
+
+        data.dispose();
+        data.dispose();
+
+        org.assertj.core.api.Assertions.assertThat(buffer.refCnt()).isZero();
     }
 
 }

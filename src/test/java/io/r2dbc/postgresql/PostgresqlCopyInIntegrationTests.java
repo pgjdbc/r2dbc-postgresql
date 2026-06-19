@@ -20,6 +20,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.r2dbc.postgresql.ExceptionFactory.PostgresqlBadGrammarException;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 
@@ -144,6 +146,24 @@ class PostgresqlCopyInIntegrationTests extends AbstractIntegrationTests {
         Flux<ByteBuf> data = Flux.just(byteBuf("something,something-invalid\n"));
 
         verifyCopyInFailed(sql, data, "syntax error at or near \"command\"");
+    }
+
+    @Test
+    void shouldReleaseBufferWhenDataArrivesAfterStatementFailure() {
+        String sql = "COPY invalid command";
+        ByteBuf buffer = byteBuf("something,something-invalid\n");
+
+        // Delay the data so that the backend reports the statement failure (and the copy is stopped) before the
+        // CopyData is produced. The CopyData is then dropped on the request side and must still be released.
+        Flux<ByteBuf> data = Flux.just(buffer).delayElements(Duration.ofMillis(100));
+
+        this.connection.copyIn(sql, data)
+            .as(StepVerifier::create)
+            .consumeErrorWith(e -> assertThat(e).isInstanceOf(PostgresqlBadGrammarException.class))
+            .verify();
+
+        Awaitility.await().atMost(Duration.ofSeconds(5)).until(() -> buffer.refCnt() == 0);
+        assertThat(buffer.refCnt()).describedAs("CopyData buffer must be released").isZero();
     }
 
     @Test
