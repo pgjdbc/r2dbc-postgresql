@@ -103,8 +103,12 @@ final class SSLSessionHandlerAdapter extends AbstractPostgresSSLHandlerAdapter {
             completeHandshakeExceptionally(e);
             return;
         }
+        if (msg.readableBytes() > 0) {
+            completeHandshakeExceptionally(new PostgresqlSslException("Protocol violation: Server sent additional bytes after the SSL response"));
+            return;
+        }
+
         ctx.channel().pipeline().addFirst(this.getSslHandler());
-        ctx.fireChannelRead(msg.retain());
     }
 
 }
