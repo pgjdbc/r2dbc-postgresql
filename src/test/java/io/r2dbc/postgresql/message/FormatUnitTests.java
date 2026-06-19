@@ -39,6 +39,13 @@ final class FormatUnitTests {
     }
 
     @Test
+    void shouldReturnFormats() {
+        assertThat(Format.text()).containsExactly(FORMAT_TEXT);
+        assertThat(Format.binary()).containsExactly(FORMAT_BINARY);
+        assertThat(Format.all()).containsExactlyInAnyOrder(FORMAT_TEXT, FORMAT_BINARY);
+    }
+
+    @Test
     void valueOfBinary() {
         assertThat(Format.valueOf((short) 1)).isEqualTo(FORMAT_BINARY);
     }
