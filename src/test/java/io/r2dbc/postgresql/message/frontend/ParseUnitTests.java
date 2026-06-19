@@ -16,11 +16,14 @@
 
 package io.r2dbc.postgresql.message.frontend;
 
+import io.netty.buffer.ByteBuf;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static io.netty.util.CharsetUtil.UTF_8;
 import static io.r2dbc.postgresql.message.frontend.FrontendMessageAssert.assertThat;
 import static io.r2dbc.postgresql.message.frontend.Parse.UNSPECIFIED;
+import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
@@ -67,6 +70,27 @@ final class ParseUnitTests {
 
                 return buffer;
             });
+    }
+
+    @Test
+    void encodeAtNonZeroOffset() {
+        ByteBuf buffer = TEST.buffer();
+        byte[] prefix = {1, 2, 3, 4, 5};
+        buffer.writeBytes(prefix);
+        int start = buffer.writerIndex();
+
+        new Parse("test-name", new int[]{UNSPECIFIED}, "test-query").encode(buffer);
+
+        // length must be written relative to the message start, not absolute index 1
+        Assertions.assertThat(buffer.getByte(start)).isEqualTo((byte) 'P');
+        Assertions.assertThat(buffer.getInt(start + 1)).isEqualTo(31);
+
+        // the preceding message bytes must be left untouched
+        byte[] actualPrefix = new byte[prefix.length];
+        buffer.getBytes(0, actualPrefix);
+        Assertions.assertThat(actualPrefix).isEqualTo(prefix);
+
+        buffer.release();
     }
 
 }
