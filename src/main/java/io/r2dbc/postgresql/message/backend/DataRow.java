@@ -132,7 +132,7 @@ public final class DataRow extends AbstractReferenceCounted implements BackendMe
     static DataRow decode(ByteBuf in) {
         Assert.requireNonNull(in, "in must not be null");
 
-        int columnCount = in.readShort();
+        int columnCount = in.readUnsignedShort();
         ByteBuf[] columns = new ByteBuf[columnCount];
 
         for (int i = 0; i < columnCount; i++) {
