@@ -21,6 +21,7 @@ import io.netty.handler.ssl.OpenSsl;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import io.r2dbc.postgresql.client.ChannelBindingMode;
 import io.r2dbc.postgresql.client.ConnectionSettings;
 import io.r2dbc.postgresql.client.DefaultHostnameVerifier;
 import io.r2dbc.postgresql.client.MultiHostConfiguration;
@@ -84,6 +85,8 @@ public final class PostgresqlConnectionConfiguration {
 
     private final boolean autodetectExtensions;
 
+    private final ChannelBindingMode channelBindingMode;
+
     private final boolean compatibilityMode;
 
     private final @Nullable Duration connectTimeout;
@@ -128,14 +131,16 @@ public final class PostgresqlConnectionConfiguration {
 
     private final Publisher<String> username;
 
-    private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions, boolean compatibilityMode, @Nullable Duration connectTimeout, @Nullable String database
-        , LogLevel errorResponseLogLevel, List<Extension> extensions, ToIntFunction<String> fetchSize, boolean forceBinary, @Nullable Duration lockWaitTimeout,
+    private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions, ChannelBindingMode channelBindingMode, boolean compatibilityMode, @Nullable Duration connectTimeout,
+                                              @Nullable String database, LogLevel errorResponseLogLevel, List<Extension> extensions, ToIntFunction<String> fetchSize, boolean forceBinary,
+                                              @Nullable Duration lockWaitTimeout,
                                               @Nullable LoopResources loopResources, @Nullable MultiHostConfiguration multiHostConfiguration, LogLevel noticeLogLevel,
                                               @Nullable Map<String, String> options, @Nullable Publisher<CharSequence> password, boolean preferAttachedBuffers, int preparedStatementCacheQueries,
                                               @Nullable String schema, @Nullable SingleHostConfiguration singleHostConfiguration, SSLConfig sslConfig, @Nullable Duration statementTimeout,
                                               boolean tcpKeepAlive, boolean tcpNoDelay, TimeZone timeZone, Publisher<String> username) {
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
         this.autodetectExtensions = autodetectExtensions;
+        this.channelBindingMode = Assert.requireNonNull(channelBindingMode, "channelBindingMode must not be null");
         this.compatibilityMode = compatibilityMode;
         this.connectTimeout = connectTimeout;
         this.errorResponseLogLevel = errorResponseLogLevel;
@@ -187,6 +192,7 @@ public final class PostgresqlConnectionConfiguration {
         return "PostgresqlConnectionConfiguration{" +
             "applicationName='" + this.applicationName + '\'' +
             ", autodetectExtensions='" + this.autodetectExtensions + '\'' +
+            ", channelBindingMode=" + this.channelBindingMode +
             ", compatibilityMode=" + this.compatibilityMode +
             ", connectTimeout=" + this.connectTimeout +
             ", errorResponseLogLevel=" + this.errorResponseLogLevel +
@@ -212,6 +218,10 @@ public final class PostgresqlConnectionConfiguration {
 
     String getApplicationName() {
         return this.applicationName;
+    }
+
+    ChannelBindingMode getChannelBindingMode() {
+        return this.channelBindingMode;
     }
 
     boolean isCompatibilityMode() {
@@ -350,6 +360,8 @@ public final class PostgresqlConnectionConfiguration {
 
         private boolean autodetectExtensions = true;
 
+        private ChannelBindingMode channelBindingMode = ChannelBindingMode.PREFER;
+
         private boolean compatibilityMode = false;
 
         private @Nullable Duration connectTimeout;
@@ -443,6 +455,21 @@ public final class PostgresqlConnectionConfiguration {
         }
 
         /**
+         * Configure the channel binding preference for SCRAM (SASL) authentication. Mirrors libpq's {@code channel_binding} parameter. Defaults to {@link ChannelBindingMode#PREFER}. Use
+         * {@link ChannelBindingMode#REQUIRE} to fail authentication unless the connection is encrypted and the server offers a channel-binding SCRAM mechanism (e.g. {@code SCRAM-SHA-256-PLUS}),
+         * preventing a silent downgrade.
+         *
+         * @param channelBindingMode the channel binding mode to use
+         * @return this {@link Builder}
+         * @throws IllegalArgumentException if {@code channelBindingMode} is {@code null}
+         * @since 1.1.2
+         */
+        public Builder channelBinding(ChannelBindingMode channelBindingMode) {
+            this.channelBindingMode = Assert.requireNonNull(channelBindingMode, "channelBindingMode must not be null");
+            return this;
+        }
+
+        /**
          * Returns a configured {@link PostgresqlConnectionConfiguration}.
          *
          * @return a configured {@link PostgresqlConnectionConfiguration}
@@ -465,7 +492,8 @@ public final class PostgresqlConnectionConfiguration {
                 throw new IllegalArgumentException("username must not be null");
             }
 
-            return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.compatibilityMode, this.connectTimeout, this.database, this.errorResponseLogLevel,
+            return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.channelBindingMode, this.compatibilityMode, this.connectTimeout, this.database,
+                this.errorResponseLogLevel,
                 this.extensions, this.fetchSize, this.forceBinary, this.lockWaitTimeout, this.loopResources, multiHostConfiguration,
                 this.noticeLogLevel, this.options, this.password, this.preferAttachedBuffers,
                 this.preparedStatementCacheQueries, this.schema, singleHostConfiguration,
@@ -1123,6 +1151,7 @@ public final class PostgresqlConnectionConfiguration {
             return "Builder{" +
                 "applicationName='" + this.applicationName + '\'' +
                 ", autodetectExtensions='" + this.autodetectExtensions + '\'' +
+                ", channelBindingMode='" + this.channelBindingMode + '\'' +
                 ", compatibilityMode='" + this.compatibilityMode + '\'' +
                 ", connectTimeout='" + this.connectTimeout + '\'' +
                 ", database='" + this.database + '\'' +

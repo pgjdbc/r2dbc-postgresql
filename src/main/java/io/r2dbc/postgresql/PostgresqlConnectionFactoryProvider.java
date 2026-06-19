@@ -17,6 +17,7 @@
 package io.r2dbc.postgresql;
 
 import io.netty.handler.ssl.SslContextBuilder;
+import io.r2dbc.postgresql.client.ChannelBindingMode;
 import io.r2dbc.postgresql.client.DefaultHostnameVerifier;
 import io.r2dbc.postgresql.client.SSLMode;
 import io.r2dbc.postgresql.client.SSLNegotiation;
@@ -65,6 +66,20 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
      * Auto-detect extensions.
      */
     public static final Option<Boolean> AUTODETECT_EXTENSIONS = Option.valueOf("autodetectExtensions");
+
+    /**
+     * Channel binding preference for SCRAM (SASL) authentication. Allowed values: {@code disable}, {@code prefer} (default), {@code require}.
+     *
+     * @since 1.1.2
+     */
+    public static final Option<ChannelBindingMode> CHANNEL_BINDING = Option.valueOf("channelBinding");
+
+    /**
+     * Channel binding preference alias (libpq style).
+     *
+     * @since 1.1.2
+     */
+    public static final Option<ChannelBindingMode> CHANNEL_BINDING_ALIAS = Option.valueOf("channel_binding");
 
     /**
      * Compatibility query mode for cursored query execution.
@@ -357,6 +372,8 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
 
         mapper.fromTyped(APPLICATION_NAME).to(builder::applicationName);
         mapper.from(AUTODETECT_EXTENSIONS).map(OptionMapper::toBoolean).to(builder::autodetectExtensions);
+        mapper.from(CHANNEL_BINDING).map(PostgresqlConnectionFactoryProvider::toChannelBindingMode).to(builder::channelBinding).otherwise(() ->
+            mapper.from(CHANNEL_BINDING_ALIAS).map(PostgresqlConnectionFactoryProvider::toChannelBindingMode).to(builder::channelBinding));
         mapper.from(COMPATIBILITY_MODE).map(OptionMapper::toBoolean).to(builder::compatibilityMode);
         mapper.from(CONNECT_TIMEOUT).map(OptionMapper::toDuration).to(builder::connectTimeout);
         mapper.fromTyped(CURRENT_SCHEMA).to(builder::schema).otherwise(() -> mapper.fromTyped(SCHEMA).to(builder::schema));
@@ -458,6 +475,14 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         }
 
         return (SSLMode) it;
+    }
+
+    private static ChannelBindingMode toChannelBindingMode(Object it) {
+        if (it instanceof String) {
+            return ChannelBindingMode.fromValue(it.toString());
+        }
+
+        return (ChannelBindingMode) it;
     }
 
     private static SSLNegotiation toSSLNegotiation(Object it) {

@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql;
 
+import io.r2dbc.postgresql.client.ChannelBindingMode;
 import io.r2dbc.postgresql.client.MultiHostConfiguration;
 import io.r2dbc.postgresql.client.MultiHostConfiguration.ServerHost;
 import io.r2dbc.postgresql.client.SSLConfig;
@@ -41,6 +42,8 @@ import java.util.TimeZone;
 import java.util.function.Supplier;
 
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.AUTODETECT_EXTENSIONS;
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.CHANNEL_BINDING;
+import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.CHANNEL_BINDING_ALIAS;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.COMPATIBILITY_MODE;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.ERROR_RESPONSE_LOG_LEVEL;
 import static io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider.EXTENSIONS;
@@ -211,6 +214,46 @@ final class PostgresqlConnectionFactoryProviderUnitTests {
         SSLConfig sslConfig = factory.getConfiguration().getSslConfig();
 
         assertThat(sslConfig.getSslNegotiation()).isEqualTo(SSLNegotiation.DIRECT);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Test
+    void supportsChannelBinding() {
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option((Option) CHANNEL_BINDING, "require")
+            .build());
+
+        assertThat(factory.getConfiguration().getChannelBindingMode()).isEqualTo(ChannelBindingMode.REQUIRE);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Test
+    void supportsChannelBindingAlias() {
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .option((Option) CHANNEL_BINDING_ALIAS, "disable")
+            .build());
+
+        assertThat(factory.getConfiguration().getChannelBindingMode()).isEqualTo(ChannelBindingMode.DISABLE);
+    }
+
+    @Test
+    void channelBindingDefaultsToPrefer() {
+        PostgresqlConnectionFactory factory = this.provider.create(builder()
+            .option(DRIVER, POSTGRESQL_DRIVER)
+            .option(HOST, "test-host")
+            .option(PASSWORD, "test-password")
+            .option(USER, "test-user")
+            .build());
+
+        assertThat(factory.getConfiguration().getChannelBindingMode()).isEqualTo(ChannelBindingMode.PREFER);
     }
 
     @Test

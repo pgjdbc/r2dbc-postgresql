@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql.authentication;
 
+import io.r2dbc.postgresql.client.ChannelBindingMode;
 import io.r2dbc.postgresql.client.ConnectionContext;
 import io.r2dbc.postgresql.message.backend.AuthenticationMessage;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
@@ -48,12 +49,26 @@ public interface AuthenticationHandler {
      * @since 1.1
      */
     static AuthenticationHandler getAuthenticationHandler(AuthenticationMessage message, UsernameAndPassword usernameAndPassword, ConnectionContext context) {
+        return getAuthenticationHandler(message, usernameAndPassword, context, ChannelBindingMode.PREFER);
+    }
+
+    /**
+     * Return a suitable {@link AuthenticationHandler} for the given {@link AuthenticationMessage} and {@link UsernameAndPassword}.
+     *
+     * @param message             the message to handle
+     * @param usernameAndPassword authentication credentials
+     * @param context             connection context
+     * @param channelBinding      the channel binding preference applied to SASL/SCRAM authentication
+     * @return the authentication handler
+     * @since 1.1.2
+     */
+    static AuthenticationHandler getAuthenticationHandler(AuthenticationMessage message, UsernameAndPassword usernameAndPassword, ConnectionContext context, ChannelBindingMode channelBinding) {
         if (PasswordAuthenticationHandler.supports(message)) {
             CharSequence password = Assert.requireNonNull(usernameAndPassword.getPassword(), "Password must not be null");
             return new PasswordAuthenticationHandler(password, usernameAndPassword.getUsername());
         } else if (SASLAuthenticationHandler.supports(message)) {
             CharSequence password = Assert.requireNonNull(usernameAndPassword.getPassword(), "Password must not be null");
-            return new SASLAuthenticationHandler(password, usernameAndPassword.getUsername(), context);
+            return new SASLAuthenticationHandler(password, usernameAndPassword.getUsername(), context, channelBinding);
         } else {
             throw new IllegalStateException(String.format("Unable to provide AuthenticationHandler capable of handling %s", message));
         }
