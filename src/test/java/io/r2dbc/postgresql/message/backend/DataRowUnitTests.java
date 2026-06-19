@@ -55,6 +55,21 @@ final class DataRowUnitTests {
     }
 
     @Test
+    void decodeColumnCountAboveSignedShortRange() {
+        int columnCount = 0x8000; // 32768; negative when read as a signed short
+        ByteBuf buffer = TEST.buffer();
+        buffer.writeShort(columnCount);
+        for (int i = 0; i < columnCount; i++) {
+            buffer.writeInt(-1); // NULL column, no payload to release
+        }
+
+        DataRow dataRow = DataRow.decode(buffer);
+
+        org.assertj.core.api.Assertions.assertThat(dataRow.getColumns()).hasSize(columnCount);
+        buffer.release();
+    }
+
+    @Test
     void decodeNullColumn() {
         assertThat(DataRow.class)
             .cleaner(this.cleaner)

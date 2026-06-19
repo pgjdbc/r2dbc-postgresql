@@ -16,11 +16,14 @@
 
 package io.r2dbc.postgresql.message.backend;
 
+import io.netty.buffer.ByteBuf;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 
 import static io.r2dbc.postgresql.message.backend.BackendMessageAssert.assertThat;
+import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
@@ -41,6 +44,21 @@ final class ParameterDescriptionUnitTests {
                 .writeShort(1)
                 .writeInt(100))
             .isEqualTo(new ParameterDescription(Collections.singletonList(100)));
+    }
+
+    @Test
+    void decodeParameterCountAboveSignedShortRange() {
+        int count = 0x8000; // 32768; negative when read as a signed short
+        ByteBuf buffer = TEST.buffer();
+        buffer.writeShort(count);
+        for (int i = 0; i < count; i++) {
+            buffer.writeInt(i);
+        }
+
+        ParameterDescription description = ParameterDescription.decode(buffer);
+
+        Assertions.assertThat(description.getParameters()).hasSize(count);
+        buffer.release();
     }
 
 }
