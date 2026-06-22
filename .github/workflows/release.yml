@@ -1,11 +1,13 @@
 # This workflow will build a Java project with Maven
 # For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
 
-name: Stage release to Maven Central
+name: Publish release to Maven Central
 
 on:
   push:
     branches: [ release ]
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+.RELEASE'
 
 jobs:
   release:
