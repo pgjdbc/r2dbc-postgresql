@@ -18,11 +18,7 @@ package io.r2dbc.postgresql.api;
 
 import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.message.frontend.CancelRequest;
-import io.r2dbc.spi.Connection;
-import io.r2dbc.spi.IsolationLevel;
-import io.r2dbc.spi.R2dbcNonTransientResourceException;
-import io.r2dbc.spi.TransactionDefinition;
-import io.r2dbc.spi.ValidationDepth;
+import io.r2dbc.spi.*;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
@@ -69,6 +65,15 @@ public interface PostgresqlConnection extends Connection {
      * @since 1.0
      */
     CopyInBuilder copyIn(String sql);
+
+    /**
+     * Executes one or more PostgreSQL COPY ... TO STDOUT statements and returns the {@link PostgresqlCopyOutResult}s.
+     * {@link PostgresqlCopyOutResult} objects must be fully consumed to ensure full execution of the {@link Statement}.
+     *
+     * @return the {@link PostgresqlCopyOutResult}s, returned by each statement
+     * @since 1.2
+     */
+    Flux<io.r2dbc.postgresql.api.PostgresqlCopyOutResult> copyOut(String sql);
 
     /**
      * Use {@code COPY FROM STDIN} for very fast copying into a database table.

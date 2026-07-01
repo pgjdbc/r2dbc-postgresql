@@ -19,11 +19,7 @@ package io.r2dbc.postgresql;
 import io.netty.util.AbstractReferenceCounted;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.ReferenceCounted;
-import io.r2dbc.postgresql.message.backend.BackendMessage;
-import io.r2dbc.postgresql.message.backend.CommandComplete;
-import io.r2dbc.postgresql.message.backend.DataRow;
-import io.r2dbc.postgresql.message.backend.ErrorResponse;
-import io.r2dbc.postgresql.message.backend.RowDescription;
+import io.r2dbc.postgresql.message.backend.*;
 import io.r2dbc.postgresql.util.Assert;
 import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Row;
@@ -127,6 +123,16 @@ final class PostgresqlResult extends AbstractReferenceCounted implements io.r2db
                     if (message instanceof DataRow) {
                         PostgresqlRow row = PostgresqlRow.toRow(this.resources, (DataRow) message, this.metadata, this.rowDescription);
                         sink.next(f.apply(row, this.metadata));
+                        return;
+                    }
+
+                    if (message instanceof CopyOutResponse) {
+                        sink.error(new IllegalStateException("COPY ... TO STDOUT statements may only be used with PostgresqlConnection.copyOut()"));
+                        return;
+                    }
+
+                    if (message instanceof CopyInResponse) {
+                        sink.error(new IllegalStateException("COPY ... FROM STDIN statements may only be used with PostgresqlConnection.copyIn()"));
                     }
 
                 } finally {
