@@ -57,7 +57,7 @@ import static io.r2dbc.postgresql.util.PredicateUtils.or;
  */
 final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlStatement {
 
-    private static final Predicate<BackendMessage> WINDOW_UNTIL = or(CommandComplete.class::isInstance, EmptyQueryResponse.class::isInstance, ErrorResponse.class::isInstance);
+    static final Predicate<BackendMessage> WINDOW_UNTIL = or(CommandComplete.class::isInstance, EmptyQueryResponse.class::isInstance, ErrorResponse.class::isInstance);
 
     private final ArrayDeque<Binding> bindings;
 
