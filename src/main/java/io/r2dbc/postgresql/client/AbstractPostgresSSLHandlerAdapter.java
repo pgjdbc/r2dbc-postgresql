@@ -19,6 +19,7 @@ package io.r2dbc.postgresql.client;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
@@ -46,7 +47,16 @@ abstract class AbstractPostgresSSLHandlerAdapter extends ChannelInboundHandlerAd
     AbstractPostgresSSLHandlerAdapter(ByteBufAllocator alloc, SocketAddress socketAddress, SSLConfig sslConfig) {
         this.sslConfig = sslConfig;
 
-        SSLEngine sslEngine = sslConfig.getSslProvider().get().newEngine(alloc);
+        SslContext sslContext = sslConfig.getSslProvider().get();
+        SSLEngine sslEngine;
+        if (socketAddress instanceof InetSocketAddress) {
+            InetSocketAddress inetSocketAddress = (InetSocketAddress) socketAddress;
+            String hostString = inetSocketAddress.getHostString();
+            sslEngine = sslContext.newEngine(alloc, hostString, inetSocketAddress.getPort());
+        } else {
+            sslEngine = sslContext.newEngine(alloc);
+        }
+
         SSLParameters sslParameters = sslConfig.getSslParametersFactory().apply(socketAddress);
         sslEngine.setSSLParameters(sslParameters);
 
