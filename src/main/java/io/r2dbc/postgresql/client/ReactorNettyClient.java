@@ -1032,9 +1032,19 @@ public final class ReactorNettyClient implements Client {
                 receiver.onError(supplier.get());
             }
 
-            while (!this.buffer.isEmpty()) {
-                ReferenceCountUtil.release(this.buffer.poll());
-            }
+            // Drain the buffer under the single-consumer guard. The buffer is an Spsc queue to avoid double-releasing it (IllegalReferenceCountException).
+            do {
+                if (this.drain.compareAndSet(false, true)) {
+                    try {
+                        BackendMessage message;
+                        while ((message = this.buffer.poll()) != null) {
+                            ReferenceCountUtil.release(message);
+                        }
+                    } finally {
+                        this.drain.compareAndSet(true, false);
+                    }
+                }
+            } while (!this.buffer.isEmpty());
         }
 
     }

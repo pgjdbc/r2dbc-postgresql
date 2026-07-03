@@ -66,6 +66,33 @@ final class BlobCodecUnitTests {
     }
 
     @Test
+    void streamThenDiscardMustNotOverReleaseSharedBuffer() {
+
+        // The decoded column is a retained slice that shares its refCnt with the frame decoder's cumulation
+        // buffer. Consuming the Blob via stream() and then discard() (as Flux.usingWhen does) must not release
+        // the shared buffer twice, which would corrupt the still-alive cumulation (IllegalReferenceCountException).
+        io.netty.buffer.ByteBuf cumulation = TEST.buffer();
+        cumulation.writeBytes("\\x746573742d76616c7565".getBytes());
+        io.netty.buffer.ByteBuf column = cumulation.readRetainedSlice(cumulation.readableBytes());
+        assertThat(cumulation.refCnt()).isEqualTo(2);
+
+        Blob blob = new BlobCodec(TEST).doDecode(column, BYTEA, FORMAT_TEXT, Blob.class);
+        column.release(); // DataRow.deallocate() releases the column once
+
+        Flux.from(blob.stream()).reduce(TEST.compositeBuffer(), (a, b) -> a.addComponent(true, Unpooled.wrappedBuffer(b)))
+            .as(StepVerifier::create)
+            .expectNextCount(1)
+            .verifyComplete();
+
+        reactor.core.publisher.Mono.from(blob.discard()).block();
+
+        assertThat(cumulation.refCnt())
+            .describedAs("shared cumulation refCnt after stream()+discard()")
+            .isOne();
+        cumulation.release();
+    }
+
+    @Test
     void doCanDecode() {
         BlobCodec codec = new BlobCodec(TEST);
 
