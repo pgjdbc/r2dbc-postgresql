@@ -63,7 +63,6 @@ import reactor.core.scheduler.Schedulers;
 import reactor.netty.Connection;
 import reactor.netty.channel.AbortedException;
 import reactor.netty.tcp.TcpClient;
-import reactor.netty.transport.NameResolverProvider;
 import reactor.util.Logger;
 import reactor.util.Loggers;
 import reactor.util.concurrent.Queues;
@@ -101,10 +100,6 @@ public final class ReactorNettyClient implements Client {
     private static final Logger logger = Loggers.getLogger(ReactorNettyClient.class);
 
     private static final boolean DEBUG_ENABLED = logger.isDebugEnabled();
-
-    static void configureNameResolver(NameResolverProvider.NameResolverSpec nameResolverSpec) {
-        nameResolverSpec.roundRobinSelection(true);
-    }
 
     private final ByteBufAllocator byteBufAllocator;
 
@@ -154,7 +149,6 @@ public final class ReactorNettyClient implements Client {
     private ReactorNettyClient(Connection connection, ConnectionSettings settings) {
         Assert.requireNonNull(connection, "Connection must not be null");
         this.settings = Assert.requireNonNull(settings, "ConnectionSettings must not be null");
-
 
         connection.addHandlerLast(new EnsureSubscribersCompleteChannelHandler(this.requestSink));
         connection.addHandlerLast(new LengthFieldBasedFrameDecoder(this.settings.getMaxMessageSize(), 1, 4, -4, 0));
@@ -430,7 +424,7 @@ public final class ReactorNettyClient implements Client {
         }
 
         if (socketAddress instanceof InetSocketAddress) {
-            tcpClient = tcpClient.resolver(ReactorNettyClient::configureNameResolver);
+            tcpClient = tcpClient.resolver(it -> it.roundRobinSelection(true));
             tcpClient = tcpClient.option(ChannelOption.SO_KEEPALIVE, settings.isTcpKeepAlive());
             tcpClient = tcpClient.option(ChannelOption.TCP_NODELAY, settings.isTcpNoDelay());
         }
