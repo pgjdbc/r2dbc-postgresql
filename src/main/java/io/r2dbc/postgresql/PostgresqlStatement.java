@@ -250,12 +250,17 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
         }
 
         return exchange.windowUntil(WINDOW_UNTIL)
-            .doOnDiscard(ReferenceCounted.class, ReferenceCountUtil::release) // ensure release of rows within WindowPredicate
-            .map(messages -> PostgresqlResult.toResult(this.resources, messages, factory))
+            .<io.r2dbc.postgresql.api.PostgresqlResult>map(messages -> PostgresqlResult.toResult(this.resources, messages, factory))
             .as(source -> Operators.discardOnCancel(source, () -> {
                 canceled.set(true);
                 onCancel.complete(null);
-            }));
+            }))
+            // ensure release of rows within WindowPredicate and of results that discardOnCancel drops after
+            // cancellation. Releasing a result drains its messages (see PostgresqlResult.deallocate()) so that the
+            // conversation can complete and the connection remains usable. The discard handler is registered here,
+            // downstream of discardOnCancel, because the discard context propagates upstream only: registered above
+            // the mapping it would not apply to the mapped results.
+            .doOnDiscard(ReferenceCounted.class, ReferenceCountUtil::release);
     }
 
     private static void tryNextBinding(Iterator<Binding> iterator, Sinks.Many<Binding> bindingSink, AtomicBoolean canceled) {
