@@ -59,6 +59,10 @@ public final class PostgresStartupParameterProvider implements StartupMessage.St
 
         if (this.options != null) {
             for (Map.Entry<String, String> option : this.options.entrySet()) {
+                // Driver hard-codes UTF-8 decode for text/identifiers/errors; allow only utf8.
+                if ("client_encoding".equalsIgnoreCase(option.getKey())) {
+                    continue;
+                }
                 writer.write(option.getKey(), option.getValue());
             }
         }
