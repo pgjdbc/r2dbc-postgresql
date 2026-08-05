@@ -765,6 +765,8 @@ public final class PostgresqlConnectionConfiguration {
          * These parameters are applied once after creating a new connection. This is useful for setting up client-specific
          * <a href="https://www.postgresql.org/docs/current/runtime-config-client.html#RUNTIME-CONFIG-CLIENT-FORMAT">runtime parameters</a>
          * like statement timeouts, time zones etc.
+         * <p>
+         * {@code client_encoding} cannot be overridden: the driver always uses UTF-8 for text decoding.
          *
          * @param options the options
          * @return this {@link Builder}
