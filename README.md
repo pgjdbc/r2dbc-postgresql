@@ -151,7 +151,7 @@ Binding also allowed positional index (zero-based) references.  The parameter in
 
 ### Maven configuration
 
-Artifacts can be found on [Maven Central](https://central.sonatype.com/search?q=r2dbc-postgresql).
+Artifacts can be found on [Maven Central](https://central.sonatype.com/artifact/org.postgresql/r2dbc-postgresql).
 
 ```xml
 <dependency>
