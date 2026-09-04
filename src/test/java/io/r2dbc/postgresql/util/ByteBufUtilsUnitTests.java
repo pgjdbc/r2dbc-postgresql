@@ -20,10 +20,10 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.junit.jupiter.api.Test;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 import static io.r2dbc.postgresql.util.TestByteBufAllocator.TEST;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,23 +44,45 @@ final class ByteBufUtilsUnitTests {
     }
 
     @Test
-    void combineShouldReturnSingleBufferAsIs() {
+    void combineShouldPassThroughSingleMonoBuffer() {
 
         ByteBuf buffer = ByteBufUtils.encode(TEST, "hello-world");
 
-        assertThat(ByteBufUtils.combine(Collections.singletonList(buffer), TEST)).isSameAs(buffer);
+        assertThat(ByteBufUtils.combine(Mono.just(buffer), TEST).block()).isSameAs(buffer);
 
         buffer.release();
     }
 
     @Test
-    void combineShouldConcatenateMultipleBuffers() {
+    void combineShouldEmitZeroLengthBufferForEmptyMono() {
+
+        ByteBuf combined = ByteBufUtils.combine(Mono.empty(), TEST).block();
+
+        assertThat(combined.readableBytes()).isZero();
+        assertThat(combined).isNotSameAs(Unpooled.EMPTY_BUFFER);
+
+        combined.release();
+    }
+
+    @Test
+    void combineShouldNotEmitEmptyBufferSentinelForMonoSource() {
+
+        ByteBuf combined = ByteBufUtils.combine(Mono.just(Unpooled.EMPTY_BUFFER), TEST).block();
+
+        assertThat(combined.readableBytes()).isZero();
+        assertThat(combined).isNotSameAs(Unpooled.EMPTY_BUFFER);
+
+        combined.release();
+    }
+
+    @Test
+    void combineShouldConcatenateFluxBuffers() {
 
         ByteBuf first = ByteBufUtils.encode(TEST, "hello");
         ByteBuf second = ByteBufUtils.encode(TEST, "-");
         ByteBuf third = ByteBufUtils.encode(TEST, "world");
 
-        ByteBuf combined = ByteBufUtils.combine(Arrays.asList(first, second, third), TEST);
+        ByteBuf combined = ByteBufUtils.combine(Flux.just(first, second, third), TEST).block();
 
         assertThat(combined.readableBytes()).isEqualTo(11);
         assertThat(ByteBufUtils.decode(combined.duplicate())).isEqualTo("hello-world");
@@ -72,20 +94,9 @@ final class ByteBufUtilsUnitTests {
     }
 
     @Test
-    void combineShouldReturnEmptyBufferForEmptyList() {
+    void combineShouldEmitZeroLengthBufferForEmptyFlux() {
 
-        ByteBuf combined = ByteBufUtils.combine(Collections.<ByteBuf>emptyList(), TEST);
-
-        assertThat(combined.readableBytes()).isZero();
-        assertThat(combined).isNotSameAs(Unpooled.EMPTY_BUFFER);
-
-        combined.release();
-    }
-
-    @Test
-    void combineShouldNotReturnEmptyBufferSentinelForSingleEmptyBuffer() {
-
-        ByteBuf combined = ByteBufUtils.combine(Collections.singletonList(Unpooled.EMPTY_BUFFER), TEST);
+        ByteBuf combined = ByteBufUtils.combine(Flux.empty(), TEST).block();
 
         assertThat(combined.readableBytes()).isZero();
         assertThat(combined).isNotSameAs(Unpooled.EMPTY_BUFFER);
@@ -96,10 +107,8 @@ final class ByteBufUtilsUnitTests {
     @Test
     void combineShouldRejectNullArguments() {
 
-        List<ByteBuf> buffers = Collections.emptyList();
-
         assertThatIllegalArgumentException().isThrownBy(() -> ByteBufUtils.combine(null, TEST));
-        assertThatIllegalArgumentException().isThrownBy(() -> ByteBufUtils.combine(buffers, null));
+        assertThatIllegalArgumentException().isThrownBy(() -> ByteBufUtils.combine(Mono.empty(), null));
     }
 
 }

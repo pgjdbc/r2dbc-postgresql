@@ -215,9 +215,7 @@ public final class ExtendedQueryMessageFlow {
                 if (f == EncodedParameter.NULL_VALUE) {
                     return Flux.just(Bind.NULL_VALUE);
                 } else {
-                    return Flux.from(f)
-                        .collectList()
-                        .map(buffers -> ByteBufUtils.combine(buffers, allocator));
+                    return ByteBufUtils.combine(f, allocator);
                 }
             })
             .collectList()
