@@ -16,7 +16,7 @@
 
 package io.r2dbc.postgresql.client;
 
-import io.netty.buffer.Unpooled;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.ReferenceCounted;
 import io.r2dbc.postgresql.message.Format;
@@ -37,6 +37,7 @@ import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.message.frontend.Parse;
 import io.r2dbc.postgresql.message.frontend.Sync;
 import io.r2dbc.postgresql.util.Assert;
+import io.r2dbc.postgresql.util.ByteBufUtils;
 import io.r2dbc.postgresql.util.Operators;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
@@ -93,7 +94,7 @@ public final class ExtendedQueryMessageFlow {
 
         return Flux.defer(() -> {
 
-            Flux<FrontendMessage> bindFlow = toBindFlow(client.getContext(), binding, portal, statementName, query, forceBinary);
+            Flux<FrontendMessage> bindFlow = toBindFlow(client.getContext(), binding, portal, statementName, query, forceBinary, client.getByteBufAllocator());
 
             if (fetchSize == NO_LIMIT) {
                 return fetchAll(bindFlow, client, portal);
@@ -206,7 +207,8 @@ public final class ExtendedQueryMessageFlow {
         return client.exchange(Flux.just(new CompositeFrontendMessage(new Close(name, ExecutionType.STATEMENT), Sync.INSTANCE))).as(Operators::discardOnCancel);
     }
 
-    private static Flux<FrontendMessage> toBindFlow(ConnectionContext connectionContext, Binding binding, String portal, String statementName, String query, boolean forceBinary) {
+    private static Flux<FrontendMessage> toBindFlow(ConnectionContext connectionContext, Binding binding, String portal, String statementName, String query, boolean forceBinary,
+                                                    ByteBufAllocator allocator) {
 
         return Flux.fromIterable(binding.getParameterValues())
             .flatMap(f -> {
@@ -214,7 +216,8 @@ public final class ExtendedQueryMessageFlow {
                     return Flux.just(Bind.NULL_VALUE);
                 } else {
                     return Flux.from(f)
-                        .reduce(Unpooled.compositeBuffer(), (c, b) -> c.addComponent(true, b));
+                        .collectList()
+                        .map(buffers -> ByteBufUtils.combine(buffers, allocator));
                 }
             })
             .collectList()

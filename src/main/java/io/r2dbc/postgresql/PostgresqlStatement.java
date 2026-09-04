@@ -17,7 +17,7 @@
 package io.r2dbc.postgresql;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.ReferenceCounted;
 import io.r2dbc.postgresql.client.Binding;
@@ -30,6 +30,7 @@ import io.r2dbc.postgresql.message.backend.EmptyQueryResponse;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.frontend.Bind;
 import io.r2dbc.postgresql.util.Assert;
+import io.r2dbc.postgresql.util.ByteBufUtils;
 import io.r2dbc.postgresql.util.GeneratedValuesUtils;
 import io.r2dbc.postgresql.util.Operators;
 import io.r2dbc.spi.Statement;
@@ -215,7 +216,7 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
                 if (this.bindings.size() == 1) {
 
                     Binding binding = this.bindings.peekFirst();
-                    Flux<BackendMessage> messages = collectBindingParameters(binding).flatMapMany(values -> ExtendedFlowDelegate.runQuery(this.resources, factory, sql, binding, values, fetchSize,
+                    Flux<BackendMessage> messages = collectBindingParameters(binding, this.resources.getClient().getByteBufAllocator()).flatMapMany(values -> ExtendedFlowDelegate.runQuery(this.resources, factory, sql, binding, values, fetchSize,
                         new AtomicBoolean()));
                     return Flux.just(PostgresqlResult.toResult(this.resources, messages, factory));
                 }
@@ -230,7 +231,7 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
                 return bindings.asFlux()
                     .map(it -> {
                         Flux<BackendMessage> messages =
-                            collectBindingParameters(it).flatMapMany(values -> ExtendedFlowDelegate.runQuery(this.resources, factory, sql, it, values, this.fetchSize, canceled)).doOnComplete(() -> tryNextBinding(iterator, bindings, canceled));
+                            collectBindingParameters(it, this.resources.getClient().getByteBufAllocator()).flatMapMany(values -> ExtendedFlowDelegate.runQuery(this.resources, factory, sql, it, values, this.fetchSize, canceled)).doOnComplete(() -> tryNextBinding(iterator, bindings, canceled));
 
                         return PostgresqlResult.toResult(this.resources, messages, factory);
                     })
@@ -275,7 +276,7 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
         }
     }
 
-    private static Mono<List<ByteBuf>> collectBindingParameters(Binding binding) {
+    private static Mono<List<ByteBuf>> collectBindingParameters(Binding binding, ByteBufAllocator allocator) {
 
         return Flux.fromIterable(binding.getParameterValues())
             .concatMap(f -> {
@@ -283,7 +284,8 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
                     return Flux.just(Bind.NULL_VALUE);
                 } else {
                     return Flux.from(f)
-                        .reduce(Unpooled.compositeBuffer(), (c, b) -> c.addComponent(true, b));
+                        .collectList()
+                        .map(buffers -> ByteBufUtils.combine(buffers, allocator));
                 }
             })
             .collectList();

@@ -18,6 +18,10 @@ package io.r2dbc.postgresql.util;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.CompositeByteBuf;
+import io.netty.buffer.Unpooled;
+
+import java.util.List;
 
 import static io.netty.util.CharsetUtil.UTF_8;
 
@@ -57,6 +61,34 @@ public final class ByteBufUtils {
         ByteBuf byteBuf = byteBufAllocator.buffer();
         byteBuf.writeCharSequence(s, UTF_8);
         return byteBuf;
+    }
+
+    /**
+     * Combine the given {@link ByteBuf}s into a single {@link ByteBuf}, taking ownership of the given buffers. A single buffer is returned as-is to avoid allocating a
+     * {@link CompositeByteBuf} for the common single-buffer case (issue #735).
+     *
+     * @param buffers   the {@link ByteBuf}s to combine
+     * @param allocator the {@link ByteBufAllocator} to use if a buffer needs to be allocated
+     * @return the combined {@link ByteBuf}, never {@link Unpooled#EMPTY_BUFFER} as callers use that instance as a SQL NULL sentinel
+     * @throws IllegalArgumentException if {@code buffers} or {@code allocator} is {@code null}
+     */
+    @SuppressWarnings("unchecked")
+    public static ByteBuf combine(List<? extends ByteBuf> buffers, ByteBufAllocator allocator) {
+        Assert.requireNonNull(buffers, "buffers must not be null");
+        Assert.requireNonNull(allocator, "allocator must not be null");
+
+        if (buffers.size() == 1) {
+            ByteBuf buffer = buffers.get(0);
+            return buffer != Unpooled.EMPTY_BUFFER ? buffer : allocator.buffer(0);
+        }
+
+        if (buffers.isEmpty()) {
+            return allocator.buffer(0);
+        }
+
+        CompositeByteBuf composite = allocator.compositeBuffer(buffers.size());
+        composite.addComponents(true, (Iterable<ByteBuf>) buffers);
+        return composite;
     }
 
 }
