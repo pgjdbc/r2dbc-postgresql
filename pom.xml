@@ -368,6 +368,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.6.0</version>
                 <configuration>
+                    <redirectTestOutputToFile>true</redirectTestOutputToFile>
                     <runOrder>random</runOrder>
                     <excludes>
                         <exclude>**/*IntegrationTests.java</exclude>
@@ -394,6 +395,7 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <redirectTestOutputToFile>true</redirectTestOutputToFile>
                     <runOrder>random</runOrder>
                     <includes>
                         <include>**/*TestKit.java</include>
