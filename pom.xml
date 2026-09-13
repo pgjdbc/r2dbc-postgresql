@@ -36,7 +36,7 @@
         <awaitility.version>4.3.0</awaitility.version>
         <hikari-cp.version>4.0.3</hikari-cp.version>
         <java.version>1.8</java.version>
-        <jspecify.version>1.0.0</jspecify.version>
+        <jspecify.version>1.0.1</jspecify.version>
         <junit.version>6.1.0</junit.version>
         <jmh.version>1.37</jmh.version>
         <mbr.version>1.0.0</mbr.version>
