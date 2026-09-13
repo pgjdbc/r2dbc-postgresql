@@ -50,7 +50,7 @@
         <reactor.version>2022.0.22</reactor.version>
         <scram-client.version>3.4</scram-client.version>
         <spring-framework.version>5.3.39</spring-framework.version>
-        <testcontainers.version>1.21.4</testcontainers.version>
+        <testcontainers.version>2.0.5</testcontainers.version>
         <jts-core.version>1.20.0</jts-core.version>
     </properties>
 
@@ -239,7 +239,7 @@
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>postgresql</artifactId>
+            <artifactId>testcontainers-postgresql</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
