@@ -27,7 +27,7 @@ import io.r2dbc.spi.R2dbcException;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -227,13 +227,13 @@ final class HighAvailabilityClusterIntegrationTests {
             .verifyError(R2dbcException.class);
     }
 
-    private Mono<Boolean> isConnectedToPrimary(MultiHostConnectionStrategy.TargetServerType targetServerType, PostgreSQLContainer<?>... servers) {
+    private Mono<Boolean> isConnectedToPrimary(MultiHostConnectionStrategy.TargetServerType targetServerType, PostgreSQLContainer... servers) {
         PostgresqlConnectionFactory connectionFactory = this.configure(targetServerType, servers);
 
         return Mono.usingWhen(connectionFactory.create(), this::isPrimary, Connection::close);
     }
 
-    private Mono<Boolean> isConnectedToPrimary(MultiHostConnectionStrategy.TargetServerType targetServerType, PostgreSQLContainer<?> primaryServer, InetSocketAddress failingServer) {
+    private Mono<Boolean> isConnectedToPrimary(MultiHostConnectionStrategy.TargetServerType targetServerType, PostgreSQLContainer primaryServer, InetSocketAddress failingServer) {
         PostgresqlConnectionFactory connectionFactory = this.configure(targetServerType, primaryServer, failingServer);
 
         return Mono.usingWhen(connectionFactory.create(), this::isPrimary, Connection::close);
@@ -247,11 +247,10 @@ final class HighAvailabilityClusterIntegrationTests {
             .next();
     }
 
-    private PostgresqlConnectionFactory configure(MultiHostConnectionStrategy.TargetServerType targetServerType, PostgreSQLContainer<?>... servers) {
+    private PostgresqlConnectionFactory configure(MultiHostConnectionStrategy.TargetServerType targetServerType, PostgreSQLContainer... servers) {
         return configure(targetServerType, servers[0], builder -> {
 
-
-            for (PostgreSQLContainer<?> server : servers) {
+            for (PostgreSQLContainer server : servers) {
 
                 if (server == servers[0]) {
                     continue;
@@ -261,7 +260,7 @@ final class HighAvailabilityClusterIntegrationTests {
         });
     }
 
-    private PostgresqlConnectionFactory configure(MultiHostConnectionStrategy.TargetServerType targetServerType, PostgreSQLContainer<?> primaryServer,
+    private PostgresqlConnectionFactory configure(MultiHostConnectionStrategy.TargetServerType targetServerType, PostgreSQLContainer primaryServer,
                                                   InetSocketAddress... addresses) {
 
         return configure(targetServerType, primaryServer, builder -> {
@@ -272,7 +271,7 @@ final class HighAvailabilityClusterIntegrationTests {
         });
     }
 
-    private PostgresqlConnectionFactory configure(MultiHostConnectionStrategy.TargetServerType targetServerType, PostgreSQLContainer<?> primaryServer,
+    private PostgresqlConnectionFactory configure(MultiHostConnectionStrategy.TargetServerType targetServerType, PostgreSQLContainer primaryServer,
                                                   Consumer<PostgresqlConnectionConfiguration.Builder> builderCustomizer) {
         PostgresqlConnectionConfiguration.Builder builder = PostgresqlConnectionConfiguration.builder();
         builder.addHost(primaryServer.getHost(), primaryServer.getMappedPort(5432));

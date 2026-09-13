@@ -27,7 +27,7 @@ import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 import org.testcontainers.containers.Network;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.MountableFile;
 
 import javax.sql.DataSource;
@@ -44,18 +44,18 @@ import java.util.function.Supplier;
 import static org.testcontainers.utility.MountableFile.forHostPath;
 
 /**
- * JUnit Extension to establish a Postgres database context during integration tests.
- * Uses either {@link TestContainer Testcontainers} or a {@link External locally available database}.
+ * JUnit Extension to establish a Postgres database context during integration tests. Uses either {@link TestContainer
+ * Testcontainers} or a {@link External locally available database}.
  */
 public final class PostgresqlServerExtension implements BeforeAllCallback, AfterAllCallback {
 
     static final String IMAGE_NAME = "postgres:18";
 
-    static PostgreSQLContainer<?> containerInstance = null;
+    static PostgreSQLContainer containerInstance = null;
 
     static Network containerNetwork = null;
 
-    private final Supplier<PostgreSQLContainer<?>> container = () -> {
+    private final Supplier<PostgreSQLContainer> container = () -> {
 
         if (PostgresqlServerExtension.containerInstance != null) {
             return PostgresqlServerExtension.containerInstance;
@@ -133,7 +133,8 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
         HikariDataSource dataSource = new HikariDataSource();
         dataSource.setUsername(getUsername());
         dataSource.setPassword(getPassword());
-        dataSource.setJdbcUrl(String.format("jdbc:postgresql://%s:%d/%s?prepareThreshold=1", getHost(), getPort(), getDatabase()));
+        dataSource.setJdbcUrl(
+            String.format("jdbc:postgresql://%s:%d/%s?prepareThreshold=1", getHost(), getPort(), getDatabase()));
 
         this.dataSource = dataSource;
         this.jdbcOperations = new JdbcTemplate(this.dataSource);
@@ -148,7 +149,8 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
     }
 
     public PostgresqlConnectionConfiguration.Builder configBuilder() {
-        return PostgresqlConnectionConfiguration.builder().database(getDatabase()).host(getHost()).port(getPort()).username(getUsername()).password(getPassword());
+        return PostgresqlConnectionConfiguration.builder().database(getDatabase()).host(getHost()).port(getPort())
+            .username(getUsername()).password(getPassword());
     }
 
     public PostgresqlConnectionConfiguration getConnectionConfiguration() {
@@ -200,17 +202,16 @@ public final class PostgresqlServerExtension implements BeforeAllCallback, After
         return this.postgres;
     }
 
-    private <T extends PostgreSQLContainer<T>> T container() {
-        T container = new PostgreSQLContainer<T>(this.imageName)
+    private PostgreSQLContainer container() {
+        PostgreSQLContainer container = new PostgreSQLContainer(this.imageName)
             .withCopyFileToContainer(getHostPath("server.crt", 0600), "/var/server.crt")
             .withCopyFileToContainer(getHostPath("server.key", 0600), "/var/server.key")
             .withCopyFileToContainer(getHostPath("client.crt", 0600), "/var/client.crt")
             .withCopyFileToContainer(getHostPath("pg_hba.conf", 0600), "/var/pg_hba.conf")
             .withCopyFileToContainer(getHostPath("setup.sh", 0755), "/var/setup.sh")
-            .withCopyFileToContainer(getHostPath("test-db-init-script.sql", 0755), "/docker-entrypoint-initdb.d/test-db-init-script.sql")
-            .withReuse(true)
-            .withNetworkAliases("r2dbc-postgres")
-            .withCommand("/var/setup.sh")
+            .withCopyFileToContainer(getHostPath("test-db-init-script.sql", 0755),
+                "/docker-entrypoint-initdb.d/test-db-init-script.sql")
+            .withReuse(true).withNetworkAliases("r2dbc-postgres").withCommand("/var/setup.sh")
             .withNetwork(PostgresqlServerExtension.containerNetwork);
 
         return container;

@@ -17,8 +17,8 @@
 package io.r2dbc.postgresql.util;
 
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 /**
  * {@code pgpool} extension that can be added in front of {@link PostgresqlServerExtension}.

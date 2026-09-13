@@ -23,8 +23,8 @@ import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.testcontainers.containers.Network;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
@@ -41,11 +41,11 @@ public class PostgresqlHighAvailabilityClusterExtension implements BeforeAllCall
 
     static final String IMAGE_NAME = "postgres:13.3";
 
-    private PostgreSQLContainer<?> primary;
+    private PostgreSQLContainer primary;
 
     private HikariDataSource primaryDataSource;
 
-    private PostgreSQLContainer<?> standby;
+    private PostgreSQLContainer standby;
 
     private HikariDataSource standbyDataSource;
 
@@ -72,7 +72,7 @@ public class PostgresqlHighAvailabilityClusterExtension implements BeforeAllCall
         this.startStandby(network);
     }
 
-    public PostgreSQLContainer<?> getPrimary() {
+    public PostgreSQLContainer getPrimary() {
         return this.primary;
     }
 
@@ -80,7 +80,7 @@ public class PostgresqlHighAvailabilityClusterExtension implements BeforeAllCall
         return new JdbcTemplate(this.primaryDataSource);
     }
 
-    public PostgreSQLContainer<?> getStandby() {
+    public PostgreSQLContainer getStandby() {
         return this.standby;
     }
 
@@ -106,7 +106,7 @@ public class PostgresqlHighAvailabilityClusterExtension implements BeforeAllCall
     }
 
     private void startPrimary(Network network) {
-        this.primary = new PostgreSQLContainer<>(IMAGE_NAME)
+        this.primary = new PostgreSQLContainer(IMAGE_NAME)
             .withNetwork(network)
             .withNetworkAliases("postgres-primary")
             .withCopyFileToContainer(getHostPath("setup-primary.sh", 0755), "/docker-entrypoint-initdb.d/setup-primary.sh")
@@ -138,15 +138,17 @@ public class PostgresqlHighAvailabilityClusterExtension implements BeforeAllCall
     }
 
     // setWaitStrategy() doesn't seem to work, only inside constructor
-    static class CustomPostgreSQLContainer extends PostgreSQLContainer<CustomPostgreSQLContainer> {
+    static class CustomPostgreSQLContainer extends PostgreSQLContainer {
+
         public CustomPostgreSQLContainer(String dockerImageName) {
             super(DockerImageName.parse(dockerImageName));
             this.waitStrategy =
-                    new LogMessageWaitStrategy()
-                            .withRegEx(".*database system is ready to accept .*connections.*\\s")
-                            .withTimes(1)
-                            .withStartupTimeout(Duration.of(60L, ChronoUnit.SECONDS));
+                new LogMessageWaitStrategy()
+                    .withRegEx(".*database system is ready to accept .*connections.*\\s")
+                    .withTimes(1)
+                    .withStartupTimeout(Duration.of(60L, ChronoUnit.SECONDS));
         }
+
     }
 
 }
