@@ -42,7 +42,7 @@
         <mbr.version>1.0.0</mbr.version>
         <logback.version>1.5.34</logback.version>
         <mockito.version>4.11.0</mockito.version>
-        <netty.version>4.1.135.Final</netty.version>
+        <netty.version>4.1.138.Final</netty.version>
         <postgresql.version>42.7.13</postgresql.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
