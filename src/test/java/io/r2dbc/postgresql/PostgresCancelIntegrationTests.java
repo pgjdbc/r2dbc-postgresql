@@ -105,6 +105,29 @@ final class PostgresCancelIntegrationTests extends AbstractIntegrationTests {
             .verify();
     }
 
+    @Timeout(30)
+    @RepeatedTest(5)
+    void shouldReuseConnectionWhenResultIsDiscardedAfterCancel() {
+
+        // Cancel while the response is still streaming and without consuming the result. The result is emitted after
+        // the cancellation and must be released so that its messages get drained.
+        this.connection.createStatement("SELECT * FROM lots_of_data")
+            .execute()
+            .as(publisher -> StepVerifier.create(publisher, 0))
+            .expectSubscription()
+            .thenAwait(Duration.ofMillis(200))
+            .thenCancel()
+            .verify(Duration.ofSeconds(5));
+
+        this.connection.createStatement("SELECT 1")
+            .execute()
+            .flatMap(it -> it.map((row, rowMetadata) -> row.get(0, Integer.class)))
+            .as(StepVerifier::create)
+            .expectNext(1)
+            .expectComplete()
+            .verify(Duration.ofSeconds(5));
+    }
+
     @Test
     void cancelRequest() {
         Mono<Void> cancel = this.connection.cancelRequest()
