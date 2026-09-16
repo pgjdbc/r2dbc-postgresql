@@ -37,7 +37,7 @@ class DefaultCodecLookup implements CodecLookup {
     }
 
     @SuppressWarnings("unchecked")
-    synchronized <T> @Nullable Codec<T> findCodec(Predicate<Codec<?>> predicate) {
+    <T> @Nullable Codec<T> findCodec(Predicate<Codec<?>> predicate) {
 
         for (Codec<?> codec : this.codecs) {
             if (predicate.test(codec)) {
