@@ -96,6 +96,8 @@ public final class PostgresqlConnectionConfiguration {
 
     private final List<Extension> extensions;
 
+    private final @Nullable Function<Throwable, LogLevel> exceptionLogLevel;
+
     private final ToIntFunction<String> fetchSize;
 
     private final boolean forceBinary;
@@ -133,10 +135,10 @@ public final class PostgresqlConnectionConfiguration {
     private final Publisher<String> username;
 
     private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions, ChannelBindingMode channelBindingMode, boolean compatibilityMode, @Nullable Duration connectTimeout,
-                                              @Nullable String database, LogLevel errorResponseLogLevel, List<Extension> extensions, ToIntFunction<String> fetchSize, boolean forceBinary,
-                                              @Nullable Duration lockWaitTimeout,
-                                              @Nullable LoopResources loopResources, int maxMessageSize, @Nullable MultiHostConfiguration multiHostConfiguration, LogLevel noticeLogLevel,
-                                              @Nullable Map<String, String> options, @Nullable Publisher<CharSequence> password, boolean preferAttachedBuffers, int preparedStatementCacheQueries,
+                                              @Nullable String database, LogLevel errorResponseLogLevel, List<Extension> extensions, @Nullable Function<Throwable, LogLevel> exceptionLogLevel,
+                                              ToIntFunction<String> fetchSize, boolean forceBinary, @Nullable Duration lockWaitTimeout, @Nullable LoopResources loopResources, int maxMessageSize,
+                                              @Nullable MultiHostConfiguration multiHostConfiguration, LogLevel noticeLogLevel, @Nullable Map<String, String> options,
+                                              @Nullable Publisher<CharSequence> password, boolean preferAttachedBuffers, int preparedStatementCacheQueries,
                                               @Nullable String schema, @Nullable SingleHostConfiguration singleHostConfiguration, SSLConfig sslConfig, @Nullable Duration statementTimeout,
                                               boolean tcpKeepAlive, boolean tcpNoDelay, TimeZone timeZone, Publisher<String> username) {
         this.applicationName = Assert.requireNonNull(applicationName, "applicationName must not be null");
@@ -145,6 +147,7 @@ public final class PostgresqlConnectionConfiguration {
         this.compatibilityMode = compatibilityMode;
         this.connectTimeout = connectTimeout;
         this.errorResponseLogLevel = errorResponseLogLevel;
+        this.exceptionLogLevel = exceptionLogLevel;
         this.extensions = Assert.requireNonNull(extensions, "extensions must not be null");
         this.database = database;
         this.fetchSize = fetchSize;
@@ -333,7 +336,13 @@ public final class PostgresqlConnectionConfiguration {
     }
 
     ConnectionSettings getConnectionSettings() {
-        return ConnectionSettings.builder()
+        ConnectionSettings.Builder builder = ConnectionSettings.builder();
+
+        if (this.exceptionLogLevel != null) {
+            builder.exceptionLogLevel(this.exceptionLogLevel);
+        }
+
+        return builder
             .connectTimeout(getConnectTimeout())
             .errorResponseLogLevel(this.errorResponseLogLevel)
             .noticeLogLevel(this.noticeLogLevel)
@@ -379,6 +388,8 @@ public final class PostgresqlConnectionConfiguration {
         private LogLevel errorResponseLogLevel = LogLevel.DEBUG;
 
         private final List<Extension> extensions = new ArrayList<>();
+
+        private @Nullable Function<Throwable, LogLevel> exceptionLogLevel;
 
         private ToIntFunction<String> fetchSize = sql -> NO_LIMIT;
 
@@ -503,10 +514,8 @@ public final class PostgresqlConnectionConfiguration {
             }
 
             return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.channelBindingMode, this.compatibilityMode, this.connectTimeout, this.database,
-                this.errorResponseLogLevel,
-                this.extensions, this.fetchSize, this.forceBinary, this.lockWaitTimeout, this.loopResources, this.maxMessageSize, multiHostConfiguration,
-                this.noticeLogLevel, this.options, this.password, this.preferAttachedBuffers,
-                this.preparedStatementCacheQueries, this.schema, singleHostConfiguration,
+                this.errorResponseLogLevel, this.extensions, this.exceptionLogLevel, this.fetchSize, this.forceBinary, this.lockWaitTimeout, this.loopResources, this.maxMessageSize,
+                multiHostConfiguration, this.noticeLogLevel, this.options, this.password, this.preferAttachedBuffers, this.preparedStatementCacheQueries, this.schema, singleHostConfiguration,
                 this.createSslConfig(this.sslSni), this.statementTimeout, this.tcpKeepAlive, this.tcpNoDelay, this.timeZone, this.username);
         }
 
@@ -586,6 +595,18 @@ public final class PostgresqlConnectionConfiguration {
          */
         public Builder errorResponseLogLevel(LogLevel errorResponseLogLevel) {
             this.errorResponseLogLevel = Assert.requireNonNull(errorResponseLogLevel, "errorResponseLogLevel must not be null");
+            return this;
+        }
+
+        /**
+         * Configure the {@link LogLevel function} for {@link Throwable} logging. By default, SSL exceptions are logged on {@link LogLevel#DEBUG} and other exceptions as {@link LogLevel#INFO}.
+         *
+         * @param logLevel the log level to use.
+         * @return this {@link ConnectionSettings.Builder}
+         * @since 1.1.3
+         */
+        public Builder exceptionLogLevel(Function<Throwable, LogLevel> logLevel) {
+            this.exceptionLogLevel = Assert.requireNonNull(logLevel, "logLevel must not be null");
             return this;
         }
 

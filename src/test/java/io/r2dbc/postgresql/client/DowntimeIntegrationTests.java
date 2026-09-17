@@ -20,6 +20,7 @@ import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.postgresql.api.PostgresqlException;
 import io.r2dbc.postgresql.util.Disposable;
+import io.r2dbc.postgresql.util.LogLevel;
 import org.junit.jupiter.api.Test;
 import reactor.test.StepVerifier;
 
@@ -60,6 +61,7 @@ public class DowntimeIntegrationTests {
             PostgresqlConnectionConfiguration.builder()
                 .host(server.getHostString())
                 .port(server.getPort())
+                .exceptionLogLevel(it -> LogLevel.DEBUG)
                 .username("test")
                 .sslMode(sslMode)
                 .build());

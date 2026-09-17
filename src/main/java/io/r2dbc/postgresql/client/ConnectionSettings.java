@@ -101,7 +101,7 @@ public final class ConnectionSettings {
      */
     public Builder mutate() {
         return new Builder().connectionProvider(this.connectionProvider).loopResources(this.loopResources).maxMessageSize(this.maxMessageSize)
-            .errorResponseLogLevel(this.errorResponseLogLevel).noticeLogLevel(this.noticeLogLevel).sslConfig(this.sslConfig)
+            .errorResponseLogLevel(this.errorResponseLogLevel).noticeLogLevel(this.noticeLogLevel).exceptionLogLevel(this.logLevelFunction).sslConfig(this.sslConfig)
             .connectTimeout(this.connectTimeout).startupOptions(this.startupOptions).tcpKeepAlive(this.tcpKeepAlive).tcpNoDelay(this.tcpNoDelay);
     }
 
