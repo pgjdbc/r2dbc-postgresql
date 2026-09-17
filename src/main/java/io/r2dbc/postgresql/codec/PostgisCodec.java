@@ -31,28 +31,39 @@ import org.locationtech.jts.io.WKBWriter;
 import org.locationtech.jts.io.WKTWriter;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 import static io.r2dbc.postgresql.message.Format.FORMAT_BINARY;
 import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
 
 /**
- * PostGIS codec using {@link WKBReader} and {@link WKTWriter}.
+ * PostGIS codec using {@link WKBReader} and {@link WKTWriter}, shared between the {@code geometry} and {@code geography} Postgres types.
+ * <p>Both types decode to and encode from the same JTS {@link Geometry} representation, so a single codec instance handles both, the same way {@link StringCodec} handles {@code text} and
+ * {@code varchar} alike. Values encoded without an explicit target type default to the {@code geometry} OID; Postgres applies its own {@code geometry -> geography} implicit cast where a
+ * {@code geography} value is actually required.
  */
-final class PostgisGeometryCodec implements Codec<Geometry>, CodecMetadata {
+final class PostgisCodec implements Codec<Geometry>, CodecMetadata {
 
     private static final Class<Geometry> TYPE = Geometry.class;
 
     private final GeometryFactory geometryFactory = new GeometryFactory();
 
-    private final int oid;
+    private final int geometryOid;
+
+    private final int geographyOid;
 
     /**
-     * Create a new {@link PostgisGeometryCodec}.
+     * Create a new {@link PostgisCodec}.
+     *
+     * @param geometryOid  the OID of the {@code geometry} type, used as the default encoding target
+     * @param geographyOid the OID of the {@code geography} type, or {@link PostgresTypes#NO_SUCH_TYPE} if not present
      */
-    PostgisGeometryCodec(int oid) {
-        this.oid = oid;
+    PostgisCodec(int geometryOid, int geographyOid) {
+        this.geometryOid = geometryOid;
+        this.geographyOid = geographyOid;
     }
 
     @Override
@@ -61,7 +72,7 @@ final class PostgisGeometryCodec implements Codec<Geometry>, CodecMetadata {
         Assert.requireNonNull(type, "type must not be null");
 
         // Object = Geometry or Geometry = type (Geometry subtype)
-        return dataType == this.oid && (type.isAssignableFrom(TYPE) || TYPE.isAssignableFrom(type));
+        return (dataType == this.geometryOid || dataType == this.geographyOid) && (type.isAssignableFrom(TYPE) || TYPE.isAssignableFrom(type));
     }
 
     @Override
@@ -95,24 +106,24 @@ final class PostgisGeometryCodec implements Codec<Geometry>, CodecMetadata {
 
     @Override
     public EncodedParameter encode(Object value) {
+        return encode(value, this.geometryOid);
+    }
+
+    @Override
+    public EncodedParameter encode(Object value, int dataType) {
         Assert.requireType(value, Geometry.class, "value must be Geometry type");
         Geometry geometry = (Geometry) value;
 
         WKBWriter writer = new WKBWriter(2, true);
 
-        return new EncodedParameter(FORMAT_BINARY, this.oid, Mono.fromSupplier(
+        return new EncodedParameter(FORMAT_BINARY, dataType, Mono.fromSupplier(
             () -> Unpooled.wrappedBuffer(writer.write(geometry))
         ));
     }
 
     @Override
-    public EncodedParameter encode(Object value, int dataType) {
-        return encode(value);
-    }
-
-    @Override
     public EncodedParameter encodeNull() {
-        return new EncodedParameter(FORMAT_BINARY, this.oid, NULL_VALUE);
+        return new EncodedParameter(FORMAT_BINARY, this.geometryOid, NULL_VALUE);
     }
 
     @Override
@@ -122,7 +133,14 @@ final class PostgisGeometryCodec implements Codec<Geometry>, CodecMetadata {
 
     @Override
     public Iterable<PostgresTypeIdentifier> getDataTypes() {
-        return Collections.singleton(AbstractCodec.getDataType(this.oid));
+        List<PostgresTypeIdentifier> dataTypes = new ArrayList<>(2);
+        dataTypes.add(AbstractCodec.getDataType(this.geometryOid));
+
+        if (this.geographyOid != PostgresTypes.NO_SUCH_TYPE) {
+            dataTypes.add(AbstractCodec.getDataType(this.geographyOid));
+        }
+
+        return Collections.unmodifiableList(dataTypes);
     }
 
 }

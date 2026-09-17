@@ -47,15 +47,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
- * Unit tests for {@link PostgisGeometryCodec}.
+ * Unit tests for {@link PostgisCodec}.
  */
-final class PostgisGeometryCodecUnitTests {
+final class PostgisCodecUnitTests {
 
     private static final int WGS84_SRID = 4326;
 
-    private static final int dataType = 23456;
+    private static final int geometryOid = 23456;
 
-    private final PostgisGeometryCodec codec = new PostgisGeometryCodec(dataType);
+    private static final int geographyOid = 23457;
+
+    private final PostgisCodec codec = new PostgisCodec(geometryOid, geographyOid);
 
     private final WKBWriter wkbWriter = new WKBWriter();
 
@@ -65,33 +67,43 @@ final class PostgisGeometryCodecUnitTests {
 
     @Test
     void canDecodeNoFormat() {
-        assertThatIllegalArgumentException().isThrownBy(() -> this.codec.canDecode(dataType, null, Geometry.class))
+        assertThatIllegalArgumentException().isThrownBy(() -> this.codec.canDecode(geometryOid, null, Geometry.class))
             .withMessage("format must not be null");
     }
 
     @Test
     void canDecodeNoClass() {
-        assertThatIllegalArgumentException().isThrownBy(() -> this.codec.canDecode(dataType, FORMAT_TEXT, null))
+        assertThatIllegalArgumentException().isThrownBy(() -> this.codec.canDecode(geometryOid, FORMAT_TEXT, null))
             .withMessage("type must not be null");
     }
 
     @Test
-    void canDecode() {
-        assertThat(this.codec.canDecode(dataType, FORMAT_TEXT, Geometry.class)).isTrue();
-        assertThat(this.codec.canDecode(dataType, FORMAT_BINARY, Geometry.class)).isTrue();
+    void canDecodeGeometryAndGeography() {
+        assertThat(this.codec.canDecode(geometryOid, FORMAT_TEXT, Geometry.class)).isTrue();
+        assertThat(this.codec.canDecode(geometryOid, FORMAT_BINARY, Geometry.class)).isTrue();
+        assertThat(this.codec.canDecode(geographyOid, FORMAT_TEXT, Geometry.class)).isTrue();
+        assertThat(this.codec.canDecode(geographyOid, FORMAT_BINARY, Geometry.class)).isTrue();
 
-        assertThat(this.codec.canDecode(dataType, FORMAT_TEXT, Point.class)).isTrue();
-        assertThat(this.codec.canDecode(dataType, FORMAT_TEXT, MultiPoint.class)).isTrue();
-        assertThat(this.codec.canDecode(dataType, FORMAT_TEXT, LineString.class)).isTrue();
-        assertThat(this.codec.canDecode(dataType, FORMAT_TEXT, LinearRing.class)).isTrue();
-        assertThat(this.codec.canDecode(dataType, FORMAT_TEXT, MultiLineString.class)).isTrue();
-        assertThat(this.codec.canDecode(dataType, FORMAT_TEXT, Polygon.class)).isTrue();
-        assertThat(this.codec.canDecode(dataType, FORMAT_TEXT, MultiPolygon.class)).isTrue();
-        assertThat(this.codec.canDecode(dataType, FORMAT_TEXT, GeometryCollection.class)).isTrue();
+        assertThat(this.codec.canDecode(geometryOid, FORMAT_TEXT, Point.class)).isTrue();
+        assertThat(this.codec.canDecode(geometryOid, FORMAT_TEXT, MultiPoint.class)).isTrue();
+        assertThat(this.codec.canDecode(geometryOid, FORMAT_TEXT, LineString.class)).isTrue();
+        assertThat(this.codec.canDecode(geometryOid, FORMAT_TEXT, LinearRing.class)).isTrue();
+        assertThat(this.codec.canDecode(geometryOid, FORMAT_TEXT, MultiLineString.class)).isTrue();
+        assertThat(this.codec.canDecode(geometryOid, FORMAT_TEXT, Polygon.class)).isTrue();
+        assertThat(this.codec.canDecode(geometryOid, FORMAT_TEXT, MultiPolygon.class)).isTrue();
+        assertThat(this.codec.canDecode(geometryOid, FORMAT_TEXT, GeometryCollection.class)).isTrue();
 
         assertThat(this.codec.canDecode(VARCHAR.getObjectId(), FORMAT_BINARY, Geometry.class)).isFalse();
         assertThat(this.codec.canDecode(JSON.getObjectId(), FORMAT_TEXT, Geometry.class)).isFalse();
         assertThat(this.codec.canDecode(JSONB.getObjectId(), FORMAT_BINARY, Geometry.class)).isFalse();
+    }
+
+    @Test
+    void canDecodeGeographyAbsent() {
+        PostgisCodec noGeography = new PostgisCodec(geometryOid, PostgresTypes.NO_SUCH_TYPE);
+
+        assertThat(noGeography.canDecode(geometryOid, FORMAT_TEXT, Geometry.class)).isTrue();
+        assertThat(noGeography.canDecode(geographyOid, FORMAT_TEXT, Geometry.class)).isFalse();
     }
 
     @Test
@@ -117,26 +129,45 @@ final class PostgisGeometryCodecUnitTests {
 
     @Test
     @SuppressWarnings("unchecked")
-    void decode() {
+    void decodeFromGeometryOid() {
         byte[] pointBytes = this.wkbWriter.write(this.point);
         ByteBuf pointByteBuf = ByteBufUtils.encode(TEST, WKBWriter.toHex(pointBytes));
 
-        assertThat(this.codec.decode(pointByteBuf, dataType, FORMAT_TEXT, Geometry.class)).isEqualTo(this.point);
+        assertThat(this.codec.decode(pointByteBuf, geometryOid, FORMAT_TEXT, Geometry.class)).isEqualTo(this.point);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void decodeFromGeographyOid() {
+        byte[] pointBytes = this.wkbWriter.write(this.point);
+        ByteBuf pointByteBuf = ByteBufUtils.encode(TEST, WKBWriter.toHex(pointBytes));
+
+        assertThat(this.codec.decode(pointByteBuf, geographyOid, FORMAT_TEXT, Geometry.class)).isEqualTo(this.point);
     }
 
     @Test
     @SuppressWarnings("unchecked")
     void decodeNoByteBuf() {
-        assertThat(this.codec.decode(null, dataType, FORMAT_TEXT, Geometry.class)).isNull();
+        assertThat(this.codec.decode(null, geometryOid, FORMAT_TEXT, Geometry.class)).isNull();
     }
 
     @Test
-    void encode() {
+    void encodeDefaultsToGeometryOid() {
         ByteBuf encoded = Unpooled.wrappedBuffer(new WKBWriter(2, true).write(this.point));
 
         ParameterAssert.assertThat(this.codec.encode(this.point))
             .hasFormat(FORMAT_BINARY)
-            .hasType(dataType)
+            .hasType(geometryOid)
+            .hasValue(encoded);
+    }
+
+    @Test
+    void encodeWithExplicitGeographyOid() {
+        ByteBuf encoded = Unpooled.wrappedBuffer(new WKBWriter(2, true).write(this.point));
+
+        ParameterAssert.assertThat(this.codec.encode(this.point, geographyOid))
+            .hasFormat(FORMAT_BINARY)
+            .hasType(geographyOid)
             .hasValue(encoded);
     }
 
@@ -147,9 +178,9 @@ final class PostgisGeometryCodecUnitTests {
     }
 
     @Test
-    void encodeNull() {
-        assertThat(new PostgisGeometryCodec(dataType).encodeNull())
-            .isEqualTo(new EncodedParameter(FORMAT_BINARY, dataType, NULL_VALUE));
+    void encodeNullUsesGeometryOid() {
+        assertThat(this.codec.encodeNull())
+            .isEqualTo(new EncodedParameter(FORMAT_BINARY, geometryOid, NULL_VALUE));
     }
 
 }
