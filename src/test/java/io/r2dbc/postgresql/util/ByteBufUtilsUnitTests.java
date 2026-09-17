@@ -48,7 +48,7 @@ final class ByteBufUtilsUnitTests {
 
         ByteBuf buffer = ByteBufUtils.encode(TEST, "hello-world");
 
-        assertThat(ByteBufUtils.combine(Mono.just(buffer), TEST).block()).isSameAs(buffer);
+        assertThat(ByteBufUtils.aggregate(Mono.just(buffer), TEST).block()).isSameAs(buffer);
 
         buffer.release();
     }
@@ -56,7 +56,7 @@ final class ByteBufUtilsUnitTests {
     @Test
     void combineShouldEmitZeroLengthBufferForEmptyMono() {
 
-        ByteBuf combined = ByteBufUtils.combine(Mono.empty(), TEST).block();
+        ByteBuf combined = ByteBufUtils.aggregate(Mono.empty(), TEST).block();
 
         assertThat(combined.readableBytes()).isZero();
         assertThat(combined).isNotSameAs(Unpooled.EMPTY_BUFFER);
@@ -67,7 +67,7 @@ final class ByteBufUtilsUnitTests {
     @Test
     void combineShouldNotEmitEmptyBufferSentinelForMonoSource() {
 
-        ByteBuf combined = ByteBufUtils.combine(Mono.just(Unpooled.EMPTY_BUFFER), TEST).block();
+        ByteBuf combined = ByteBufUtils.aggregate(Mono.just(Unpooled.EMPTY_BUFFER), TEST).block();
 
         assertThat(combined.readableBytes()).isZero();
         assertThat(combined).isNotSameAs(Unpooled.EMPTY_BUFFER);
@@ -82,7 +82,7 @@ final class ByteBufUtilsUnitTests {
         ByteBuf second = ByteBufUtils.encode(TEST, "-");
         ByteBuf third = ByteBufUtils.encode(TEST, "world");
 
-        ByteBuf combined = ByteBufUtils.combine(Flux.just(first, second, third), TEST).block();
+        ByteBuf combined = ByteBufUtils.aggregate(Flux.just(first, second, third), TEST).block();
 
         assertThat(combined.readableBytes()).isEqualTo(11);
         assertThat(ByteBufUtils.decode(combined.duplicate())).isEqualTo("hello-world");
@@ -96,7 +96,7 @@ final class ByteBufUtilsUnitTests {
     @Test
     void combineShouldEmitZeroLengthBufferForEmptyFlux() {
 
-        ByteBuf combined = ByteBufUtils.combine(Flux.empty(), TEST).block();
+        ByteBuf combined = ByteBufUtils.aggregate(Flux.empty(), TEST).block();
 
         assertThat(combined.readableBytes()).isZero();
         assertThat(combined).isNotSameAs(Unpooled.EMPTY_BUFFER);
@@ -107,8 +107,8 @@ final class ByteBufUtilsUnitTests {
     @Test
     void combineShouldRejectNullArguments() {
 
-        assertThatIllegalArgumentException().isThrownBy(() -> ByteBufUtils.combine(null, TEST));
-        assertThatIllegalArgumentException().isThrownBy(() -> ByteBufUtils.combine(Mono.empty(), null));
+        assertThatIllegalArgumentException().isThrownBy(() -> ByteBufUtils.aggregate(null, TEST));
+        assertThatIllegalArgumentException().isThrownBy(() -> ByteBufUtils.aggregate(Mono.empty(), null));
     }
 
 }
