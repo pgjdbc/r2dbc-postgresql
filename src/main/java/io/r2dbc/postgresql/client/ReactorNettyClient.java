@@ -68,7 +68,6 @@ import reactor.util.Loggers;
 import reactor.util.concurrent.Queues;
 import reactor.util.context.Context;
 
-import javax.net.ssl.SSLException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.time.Duration;
@@ -272,18 +271,9 @@ public final class ReactorNettyClient implements Client {
 
         handleConnectionError(throwable);
         this.requestSink.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
-
-        if (isSslException(throwable)) {
-            logger.debug(this.context.getMessage("Connection Error"), throwable);
-        } else {
-            logger.warn(this.context.getMessage("Connection Error"), throwable);
-        }
+        this.settings.getLogLevel(throwable).log(logger, this.context.getMessage("Connection Error"), throwable);
 
         return close();
-    }
-
-    private static boolean isSslException(Throwable throwable) {
-        return throwable instanceof SSLException || throwable.getCause() instanceof SSLException;
     }
 
     /**
@@ -905,12 +895,7 @@ public final class ReactorNettyClient implements Client {
             ReactorNettyClient.this.requestSink.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
             this.terminated = true;
 
-            if (isSslException(throwable)) {
-                logger.debug(ReactorNettyClient.this.context.getMessage("Connection Error"), throwable);
-            } else {
-                logger.error(ReactorNettyClient.this.context.getMessage("Connection Error"), throwable);
-            }
-
+            ReactorNettyClient.this.settings.getLogLevel(throwable).log(logger, ReactorNettyClient.this.context.getMessage("Connection Error"), throwable);
             ReactorNettyClient.this.close().subscribe();
         }
 

@@ -25,11 +25,13 @@ import org.jspecify.annotations.Nullable;
 import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.resources.LoopResources;
 
+import javax.net.ssl.SSLException;
 import java.net.Socket;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Value object capturing common connection settings.
@@ -53,6 +55,12 @@ public final class ConnectionSettings {
 
     private final int maxMessageSize;
 
+    private final Function<Throwable, LogLevel> logLevelFunction;
+
+    private final LogLevel errorResponseLogLevel;
+
+    private final LogLevel noticeLogLevel;
+
     private final SSLConfig sslConfig;
 
     private final Map<String, String> startupOptions;
@@ -61,12 +69,9 @@ public final class ConnectionSettings {
 
     private final boolean tcpNoDelay;
 
-    private final LogLevel errorResponseLogLevel;
-
-    private final LogLevel noticeLogLevel;
-
     ConnectionSettings(@Nullable Duration connectTimeout, ConnectionProvider connectionProvider, @Nullable LoopResources loopResources, int maxMessageSize,
-                       SSLConfig sslConfig, Map<String, String> startupOptions, boolean tcpKeepAlive, boolean tcpNoDelay, LogLevel errorResponseLogLevel, LogLevel noticeLogLevel) {
+                       Function<Throwable, LogLevel> logLevelFunction, LogLevel errorResponseLogLevel, LogLevel noticeLogLevel, SSLConfig sslConfig, Map<String, String> startupOptions,
+                       boolean tcpKeepAlive, boolean tcpNoDelay) {
         this.connectTimeout = connectTimeout;
         this.connectionProvider = connectionProvider;
         this.loopResources = loopResources;
@@ -77,6 +82,7 @@ public final class ConnectionSettings {
         this.tcpNoDelay = tcpNoDelay;
         this.errorResponseLogLevel = errorResponseLogLevel;
         this.noticeLogLevel = noticeLogLevel;
+        this.logLevelFunction = logLevelFunction;
     }
 
     /**
@@ -145,6 +151,18 @@ public final class ConnectionSettings {
         return this.maxMessageSize;
     }
 
+    LogLevel getErrorResponseLogLevel() {
+        return this.errorResponseLogLevel;
+    }
+
+    LogLevel getNoticeLogLevel() {
+        return this.noticeLogLevel;
+    }
+
+    LogLevel getLogLevel(Throwable throwable) {
+        return this.logLevelFunction.apply(throwable);
+    }
+
     SSLConfig getSslConfig() {
         return this.sslConfig;
     }
@@ -161,13 +179,6 @@ public final class ConnectionSettings {
         return this.tcpNoDelay;
     }
 
-    LogLevel getErrorResponseLogLevel() {
-        return this.errorResponseLogLevel;
-    }
-
-    LogLevel getNoticeLogLevel() {
-        return this.noticeLogLevel;
-    }
 
     /**
      * A builder for {@link ConnectionSettings} instances.
@@ -183,6 +194,8 @@ public final class ConnectionSettings {
         private @Nullable LoopResources loopResources = null;
 
         private int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
+
+        private Function<Throwable, LogLevel> exceptionLogLevel = e -> e instanceof SSLException || e.getCause() instanceof SSLException ? LogLevel.DEBUG : LogLevel.INFO;
 
         private LogLevel errorResponseLogLevel = LogLevel.WARN;
 
@@ -205,8 +218,9 @@ public final class ConnectionSettings {
          * @return a configured {@link ConnectionSettings}
          */
         public ConnectionSettings build() {
-            return new ConnectionSettings(this.connectTimeout, this.connectionProvider, this.loopResources, this.maxMessageSize, this.sslConfig,
-                this.startupOptions, this.tcpKeepAlive, this.tcpNoDelay, this.errorResponseLogLevel, this.noticeLogLevel);
+            return new ConnectionSettings(this.connectTimeout, this.connectionProvider, this.loopResources, this.maxMessageSize, this.exceptionLogLevel, this.errorResponseLogLevel,
+                this.noticeLogLevel, this.sslConfig,
+                this.startupOptions, this.tcpKeepAlive, this.tcpNoDelay);
         }
 
         /**
@@ -256,6 +270,30 @@ public final class ConnectionSettings {
         public Builder maxMessageSize(int maxMessageSize) {
             Assert.isTrue(maxMessageSize > 0, "maxMessageSize must be greater than zero");
             this.maxMessageSize = maxMessageSize;
+            return this;
+        }
+
+        /**
+         * Configure the {@link LogLevel} for {@link Throwable} logging. By default, SSL exceptions are logged on {@link LogLevel#DEBUG} and other exceptions as {@link LogLevel#INFO}.
+         *
+         * @param logLevel the log level to use.
+         * @return this {@link Builder}
+         * @since 1.1.3
+         */
+        public Builder exceptionLogLevel(LogLevel logLevel) {
+            Assert.requireNonNull(logLevel, "logLevel must not be null");
+            return exceptionLogLevel(it -> logLevel);
+        }
+
+        /**
+         * Configure the {@link LogLevel function} for {@link Throwable} logging. By default, SSL exceptions are logged on {@link LogLevel#DEBUG} and other exceptions as {@link LogLevel#INFO}.
+         *
+         * @param logLevel the log level to use.
+         * @return this {@link Builder}
+         * @since 1.1.3
+         */
+        public Builder exceptionLogLevel(Function<Throwable, LogLevel> logLevel) {
+            this.exceptionLogLevel = Assert.requireNonNull(logLevel, "logLevel must not be null");
             return this;
         }
 
