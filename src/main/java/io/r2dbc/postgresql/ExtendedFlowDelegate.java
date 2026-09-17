@@ -46,6 +46,7 @@ import io.r2dbc.postgresql.message.frontend.Sync;
 import io.r2dbc.postgresql.util.Operators;
 import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 import reactor.core.publisher.SynchronousSink;
 import reactor.util.concurrent.Queues;
@@ -138,7 +139,7 @@ class ExtendedFlowDelegate {
         Sinks.Many<FrontendMessage> requests = Sinks.many().unicast().onBackpressureBuffer(Queues.<FrontendMessage>small().get());
         MessageFactory factory = () -> operator.getMessages(Arrays.asList(new Execute(portal, NO_LIMIT), new Close(portal, PORTAL), Sync.INSTANCE));
 
-        return client.exchange(operator.takeUntil(), Flux.<FrontendMessage>just(new CompositeFrontendMessage(factory.createMessages())).concatWith(requests.asFlux()))
+        return client.exchange(operator.takeUntil(), Mono.<FrontendMessage>fromSupplier(() -> new CompositeFrontendMessage(factory.createMessages())).concatWith(requests.asFlux()))
             .handle(handleReprepare(requests, operator, factory))
             .doFinally(ignore -> operator.close(requests))
             .as(Operators::discardOnCancel);
@@ -162,7 +163,7 @@ class ExtendedFlowDelegate {
         MessageFactory factory = () -> operator.getMessages(Arrays.asList(new Execute(portal, fetchSize), Sync.INSTANCE));
         Predicate<BackendMessage> takeUntil = operator.takeUntil();
 
-        return client.exchange(it -> done.get() && takeUntil.test(it), Flux.<FrontendMessage>just(new CompositeFrontendMessage(factory.createMessages())).concatWith(requests.asFlux()))
+        return client.exchange(it -> done.get() && takeUntil.test(it), Mono.<FrontendMessage>fromSupplier(() -> new CompositeFrontendMessage(factory.createMessages())).concatWith(requests.asFlux()))
             .handle(handleReprepare(requests, operator, factory))
             .handle((BackendMessage message, SynchronousSink<BackendMessage> sink) -> {
 
@@ -223,7 +224,7 @@ class ExtendedFlowDelegate {
 
         MessageFactory factory = () -> operator.getMessages(Arrays.asList(new Execute(portal, fetchSize), Flush.INSTANCE));
 
-        return client.exchange(operator.takeUntil(), Flux.<FrontendMessage>just(new CompositeFrontendMessage(factory.createMessages())).concatWith(requests.asFlux()))
+        return client.exchange(operator.takeUntil(), Mono.<FrontendMessage>fromSupplier(() -> new CompositeFrontendMessage(factory.createMessages())).concatWith(requests.asFlux()))
             .handle(handleReprepare(requests, operator, factory))
             .handle((BackendMessage message, SynchronousSink<BackendMessage> sink) -> {
 
