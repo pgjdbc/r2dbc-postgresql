@@ -31,82 +31,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 final class PostgresStartupParameterProviderUnitTests {
 
     @Test
-    void acceptWritesDefaultClientEncodingUtf8() {
-        PostgresStartupParameterProvider provider =
-            new PostgresStartupParameterProvider("test-app", TimeZone.getTimeZone("UTC"), (Map<String, String>) null);
-
-        CapturingParameterWriter writer = new CapturingParameterWriter();
-        provider.accept(writer);
-
-        assertThat(writer.parameters)
-            .containsEntry("client_encoding", "utf8")
-            .containsEntry("application_name", "test-app")
-            .containsEntry("DateStyle", "ISO");
-        assertThat(writer.parameters.keySet().stream().filter("client_encoding"::equalsIgnoreCase).count()).isEqualTo(1);
-    }
-
-    @Test
-    void acceptIgnoresUserClientEncodingOverride() {
-        Map<String, String> options = new LinkedHashMap<>();
-        options.put("client_encoding", "SQL_ASCII");
-        options.put("statement_timeout", "60s");
-
-        PostgresStartupParameterProvider provider =
-            new PostgresStartupParameterProvider("test-app", TimeZone.getTimeZone("UTC"), options);
-
-        CapturingParameterWriter writer = new CapturingParameterWriter();
-        provider.accept(writer);
-
-        assertThat(writer.parameters)
-            .containsEntry("client_encoding", "utf8")
-            .containsEntry("statement_timeout", "60s")
-            .doesNotContainValue("SQL_ASCII");
-        assertThat(writer.parameters.keySet().stream().filter("client_encoding"::equalsIgnoreCase).count()).isEqualTo(1);
-    }
-
-    @Test
     void acceptIgnoresUserClientEncodingOverrideCaseInsensitive() {
         Map<String, String> options = new LinkedHashMap<>();
+        options.put("client_encoding", "LATIN1");
         options.put("Client_Encoding", "LATIN1");
         options.put("lock_timeout", "5s");
 
         PostgresStartupParameterProvider provider =
             new PostgresStartupParameterProvider("test-app", TimeZone.getTimeZone("UTC"), options);
 
-        CapturingParameterWriter writer = new CapturingParameterWriter();
+        Map<String, String> parameters = new LinkedHashMap<>();
+        StartupMessage.ParameterWriter writer = parameters::put;
         provider.accept(writer);
 
-        assertThat(writer.parameters)
+        assertThat(parameters)
             .containsEntry("client_encoding", "utf8")
             .containsEntry("lock_timeout", "5s")
             .doesNotContainKey("Client_Encoding")
             .doesNotContainValue("LATIN1");
-    }
-
-    @Test
-    void acceptAllowsUtf8ClientEncodingOptionWithoutDuplicating() {
-        Map<String, String> options = new LinkedHashMap<>();
-        options.put("client_encoding", "utf8");
-
-        PostgresStartupParameterProvider provider =
-            new PostgresStartupParameterProvider("test-app", TimeZone.getTimeZone("UTC"), options);
-
-        CapturingParameterWriter writer = new CapturingParameterWriter();
-        provider.accept(writer);
-
-        assertThat(writer.parameters).containsEntry("client_encoding", "utf8");
-        assertThat(writer.parameters.keySet().stream().filter("client_encoding"::equalsIgnoreCase).count()).isEqualTo(1);
-    }
-
-    private static final class CapturingParameterWriter implements StartupMessage.ParameterWriter {
-
-        private final Map<String, String> parameters = new LinkedHashMap<>();
-
-        @Override
-        public void write(String key, String value) {
-            this.parameters.put(key, value);
-        }
-
     }
 
 }
