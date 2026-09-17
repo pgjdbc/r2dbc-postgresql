@@ -109,8 +109,6 @@ final class PostgresCancelIntegrationTests extends AbstractIntegrationTests {
     @RepeatedTest(5)
     void shouldReuseConnectionWhenResultIsDiscardedAfterCancel() {
 
-        // Cancel while the response is still streaming and without consuming the result. The result is emitted after
-        // the cancellation and must be released so that its messages get drained.
         this.connection.createStatement("SELECT * FROM lots_of_data")
             .execute()
             .as(publisher -> StepVerifier.create(publisher, 0))
