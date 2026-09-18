@@ -26,7 +26,9 @@ import io.r2dbc.spi.R2dbcException;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import io.r2dbc.spi.R2dbcPermissionDeniedException;
 import io.r2dbc.spi.R2dbcRollbackException;
+import io.r2dbc.spi.R2dbcTimeoutException;
 import io.r2dbc.spi.R2dbcTransientException;
+import io.r2dbc.spi.R2dbcTransientResourceException;
 import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.SynchronousSink;
 
@@ -84,6 +86,11 @@ final class ExceptionFactory {
             case "28000":
             case "28P01":
                 return new PostgresqlAuthenticationFailure(errorDetails, sql);
+            case "25P04": // transaction_timeout
+                return new PostgresqlTimeoutException(errorDetails, sql);
+            case "55P03": // lock_not_available
+            case "57014": // query_canceled
+                return new PostgresqlTransientResourceException(errorDetails, sql);
         }
 
         String codeClass = errorDetails.getCode().length() > 2 ? errorDetails.getCode().substring(0, 2) : "99";
@@ -231,6 +238,25 @@ final class ExceptionFactory {
     }
 
     /**
+     * Postgres-specific {@link R2dbcTimeoutException}.
+     */
+    static final class PostgresqlTimeoutException extends R2dbcTimeoutException implements PostgresqlException {
+
+        private final ErrorDetails errorDetails;
+
+        PostgresqlTimeoutException(ErrorDetails errorDetails, @Nullable String sql) {
+            super(errorDetails.getMessage(), errorDetails.getCode(), 0, sql);
+            this.errorDetails = errorDetails;
+        }
+
+        @Override
+        public ErrorDetails getErrorDetails() {
+            return this.errorDetails;
+        }
+
+    }
+
+    /**
      * Postgres-specific {@link R2dbcTransientException}.
      */
     static final class PostgresqlTransientException extends R2dbcTransientException implements PostgresqlException {
@@ -238,6 +264,25 @@ final class ExceptionFactory {
         private final ErrorDetails errorDetails;
 
         PostgresqlTransientException(ErrorDetails errorDetails, @Nullable String sql) {
+            super(errorDetails.getMessage(), errorDetails.getCode(), 0, sql);
+            this.errorDetails = errorDetails;
+        }
+
+        @Override
+        public ErrorDetails getErrorDetails() {
+            return this.errorDetails;
+        }
+
+    }
+
+    /**
+     * Postgres-specific {@link R2dbcTransientResourceException}.
+     */
+    static final class PostgresqlTransientResourceException extends R2dbcTransientResourceException implements PostgresqlException {
+
+        private final ErrorDetails errorDetails;
+
+        PostgresqlTransientResourceException(ErrorDetails errorDetails, @Nullable String sql) {
             super(errorDetails.getMessage(), errorDetails.getCode(), 0, sql);
             this.errorDetails = errorDetails;
         }

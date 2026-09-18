@@ -23,6 +23,8 @@ import io.r2dbc.postgresql.message.backend.Field;
 import io.r2dbc.postgresql.message.backend.Field.FieldType;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import io.r2dbc.spi.R2dbcPermissionDeniedException;
+import io.r2dbc.spi.R2dbcTimeoutException;
+import io.r2dbc.spi.R2dbcTransientResourceException;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.SynchronousSink;
 
@@ -88,6 +90,57 @@ final class ExceptionFactoryUnitTests {
         ExceptionFactory.INSTANCE.handleErrorResponse(message, sink);
 
         verify(sink, times(1)).error(isA(R2dbcNonTransientResourceException.class));
+        verify(sink, times(0)).next(eq(message));
+    }
+
+    @Test
+    void isCreatingTimeoutExceptionForTransactionTimeout() {
+        List<Field> fields = Arrays.asList(
+            new Field(FieldType.CODE, "25P04"),
+            new Field(FieldType.MESSAGE, "error message desc")
+        );
+
+        BackendMessage message = new ErrorResponse(fields);
+
+        SynchronousSink<BackendMessage> sink = createSinkMock();
+
+        ExceptionFactory.INSTANCE.handleErrorResponse(message, sink);
+
+        verify(sink, times(1)).error(isA(R2dbcTimeoutException.class));
+        verify(sink, times(0)).next(eq(message));
+    }
+
+    @Test
+    void isCreatingTransientResourceExceptionForLockNotAvailable() {
+        List<Field> fields = Arrays.asList(
+            new Field(FieldType.CODE, "55P03"),
+            new Field(FieldType.MESSAGE, "error message desc")
+        );
+
+        BackendMessage message = new ErrorResponse(fields);
+
+        SynchronousSink<BackendMessage> sink = createSinkMock();
+
+        ExceptionFactory.INSTANCE.handleErrorResponse(message, sink);
+
+        verify(sink, times(1)).error(isA(R2dbcTransientResourceException.class));
+        verify(sink, times(0)).next(eq(message));
+    }
+
+    @Test
+    void isCreatingTransientResourceExceptionForQueryCanceled() {
+        List<Field> fields = Arrays.asList(
+            new Field(FieldType.CODE, "57014"),
+            new Field(FieldType.MESSAGE, "error message desc")
+        );
+
+        BackendMessage message = new ErrorResponse(fields);
+
+        SynchronousSink<BackendMessage> sink = createSinkMock();
+
+        ExceptionFactory.INSTANCE.handleErrorResponse(message, sink);
+
+        verify(sink, times(1)).error(isA(R2dbcTransientResourceException.class));
         verify(sink, times(0)).next(eq(message));
     }
 
