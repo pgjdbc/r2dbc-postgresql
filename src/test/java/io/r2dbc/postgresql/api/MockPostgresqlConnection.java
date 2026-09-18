@@ -58,6 +58,11 @@ public final class MockPostgresqlConnection implements PostgresqlConnection {
     }
 
     @Override
+    public Flux<PostgresqlCopyOutResult> copyOut(String sql) {
+        return Flux.empty();
+    }
+
+    @Override
     public PostgresqlBatch createBatch() {
         return null;
     }
