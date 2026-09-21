@@ -1,6 +1,24 @@
 R2DBC PostgreSQL Changelog
 =============================
 
+1.1.3.RELEASE
+-----------------------------------------
+* DefaultNameResolver blocks event loop during DNS resolution #721
+* Use non-blocking DNS resolution for client connections #724
+* Add `InsecureTrustManagerFactory` based on `X509ExtendedTrustManager` #725
+* Avoid per-parameter `CompositeByteBuf` and Reactor pipeline in `collectBindingParameters` #735
+* Avoid per-parameter CompositeByteBuf when collecting bind parameters #738
+* Remove `synchronized` from `CachedCodecLookup.findCodec` and avoid per-lookup key boxing and lambda #748
+* Remove locking and allocation from codec lookup #749
+* Reference-counting and concurrency issues in `ReactorNettyClient` #717
+* `ReactorNettyClient` stuck on cancelled Conversation #661
+* Release results that are discarded after cancellation #731
+* User options can override client_encoding, breaking UTF-8 decoding #715
+* Prevent user options from overriding `client_encoding` #732
+* Bind parameter ByteBufs leak when a statement is cancelled before it is flushed #734
+* ReactorNettyClient logs connection errors at error level #740
+* Update artifact link from search result to the actual artifact page #737
+
 1.1.1.RELEASE
 -----------------------------------------
 * Codec preference is not considered leading to OID value decoding through `DayOfWeek` #693
