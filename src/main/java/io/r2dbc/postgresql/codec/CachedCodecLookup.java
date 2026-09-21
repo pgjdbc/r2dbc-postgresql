@@ -81,12 +81,12 @@ class CachedCodecLookup implements CodecLookup {
 
             if (c instanceof CodecMetadata) {
                 CodecMetadata metadata = (CodecMetadata) c;
-                cacheEncode(c, metadata.type());
-                arrayClass.ifPresent(ac -> cacheEncode(c, ac));
+                cacheEncodeIfAbsent(c, metadata.type());
+                arrayClass.ifPresent(ac -> cacheEncodeIfAbsent(c, ac));
                 for (PostgresTypeIdentifier identifier : metadata.getDataTypes()) {
                     for (Format format : metadata.getFormats()) {
-                        cacheDecode(c, metadata.type(), identifier.getObjectId(), format);
-                        arrayClass.ifPresent(ac -> cacheDecode(c, ac, identifier.getObjectId(), format));
+                        cacheDecodeIfAbsent(c, metadata.type(), identifier.getObjectId(), format);
+                        arrayClass.ifPresent(ac -> cacheDecodeIfAbsent(c, ac, identifier.getObjectId(), format));
                     }
                 }
             }
@@ -96,7 +96,7 @@ class CachedCodecLookup implements CodecLookup {
             for (Format format : Format.all()) {
                 Codec<?> c = this.delegate.findDecodeCodec(identifier.getObjectId(), format, Object.class);
                 if (c != null) {
-                    cacheDecode(c, Object.class, identifier.getObjectId(), format);
+                    cacheDecodeIfAbsent(c, Object.class, identifier.getObjectId(), format);
                 }
             }
         }
@@ -104,7 +104,7 @@ class CachedCodecLookup implements CodecLookup {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> Codec<T> findDecodeCodec(int dataType, Format format, Class<? extends T> type) {
+    public <T> @Nullable Codec<T> findDecodeCodec(int dataType, Format format, Class<? extends T> type) {
         DecodeCache cache = this.decodeCodecsCache.get(type);
         if (cache != null) {
             Codec<?> cached = cache.get(dataType, format);
@@ -116,14 +116,14 @@ class CachedCodecLookup implements CodecLookup {
         LOG.trace("[codec-finder dataType={}, format={}, type={}] Decode codec not found in cache", dataType, format, type.getName());
         Codec<T> codec = this.delegate.findDecodeCodec(dataType, format, type);
         if (codec != null) {
-            cacheDecode(codec, type, dataType, format);
+            cacheDecodeIfAbsent(codec, type, dataType, format);
         }
         return codec;
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> Codec<T> findEncodeCodec(T value) {
+    public <T> @Nullable Codec<T> findEncodeCodec(T value) {
         Class<?> type = value.getClass();
         Codec<?> cached = this.encodeCodecsCache.get(type);
         if (cached != null) {
@@ -140,7 +140,7 @@ class CachedCodecLookup implements CodecLookup {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> Codec<T> findEncodeNullCodec(Class<T> type) {
+    public <T> @Nullable Codec<T> findEncodeNullCodec(Class<T> type) {
         Codec<?> cached = this.encodeNullCodecsCache.get(type);
         if (cached != null) {
             return (Codec<T>) cached;
@@ -154,7 +154,7 @@ class CachedCodecLookup implements CodecLookup {
         return codec;
     }
 
-    private void cacheDecode(Codec<?> codec, Class<?> type, int dataType, Format format) {
+    private void cacheDecodeIfAbsent(Codec<?> codec, Class<?> type, int dataType, Format format) {
         // Validate once at population time so that a cache hit can skip canDecode.
         if (!codec.canDecode(dataType, format, type)) {
             return;
@@ -162,7 +162,7 @@ class CachedCodecLookup implements CodecLookup {
         this.decodeCodecsCache.computeIfAbsent(type, t -> new DecodeCache()).putIfAbsent(dataType, format, codec);
     }
 
-    private void cacheEncode(Codec<?> c, Class<?> type) {
+    private void cacheEncodeIfAbsent(Codec<?> c, Class<?> type) {
         this.encodeCodecsCache.putIfAbsent(type, c);
         if (c.canEncodeNull(type)) {
             this.encodeNullCodecsCache.putIfAbsent(type, c);
@@ -170,9 +170,8 @@ class CachedCodecLookup implements CodecLookup {
     }
 
     /**
-     * Decode codecs for one target type, keyed by {@code (format, dataType)}. Reads are lock-free and do not allocate.
-     * Writes copy the map they replace, so readers never observe a map under mutation; they only happen while the cache
-     * is being populated.
+     * Decode codecs for one target type, keyed by {@code (format, dataType)}. Reads are lock- and allocation-free.
+     * Writes copy the map they replace, so readers never observe a map under mutation.
      */
     static final class DecodeCache {
 

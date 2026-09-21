@@ -19,14 +19,20 @@ package io.r2dbc.postgresql.codec;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.UnpooledByteBufAllocator;
 import io.r2dbc.postgresql.BenchmarkSettings;
+import org.junit.platform.commons.annotation.Testable;
 import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OperationsPerInvocation;
+import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.Threads;
 import org.openjdk.jmh.infra.Blackhole;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.concurrent.TimeUnit;
 
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.FLOAT4;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.FLOAT8;
@@ -44,6 +50,10 @@ import static io.r2dbc.postgresql.message.Format.FORMAT_TEXT;
  * Benchmarks for {@link CachedCodecLookup} cache hits in isolation (no decoding, no buffer allocation).
  * Every {@code row.get(...)} and every bound parameter goes through one of these lookups.
  */
+@BenchmarkMode(Mode.Throughput)
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
+@Threads(10)
+@Testable
 public class CodecLookupBenchmarks extends BenchmarkSettings {
 
     @State(Scope.Benchmark)
