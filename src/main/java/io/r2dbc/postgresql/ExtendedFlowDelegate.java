@@ -299,6 +299,11 @@ class ExtendedFlowDelegate {
             || "RevalidateCachedPlan".equals(routine); // <= 9.1
     }
 
+    /**
+     * Factory for the messages of a single roundtrip. Messages must not be created before the request stream gets subscribed:
+     * {@link ExtendedFlowOperator#getMessages(Collection)} retains the bound parameter buffers for the {@link Bind} it creates and these are released by encoding or disposing that
+     * message. Creating messages for a request stream that never gets subscribed (e.g. because the connection is closed) would strand the retained buffers.
+     */
     interface MessageFactory {
 
         List<FrontendMessage.DirectEncoder> createMessages();

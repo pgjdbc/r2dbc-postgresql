@@ -199,7 +199,9 @@ public final class ReactorNettyClient implements Client {
                 if (DEBUG_ENABLED) {
                     logger.debug(this.context.getMessage(String.format("Request:  %s", message)));
                 }
-                return connection.outbound().send(message.encode(this.byteBufAllocator));
+                // send(...) does not subscribe the encode publisher if the channel is no longer active, hence dispose the message once the write attempt terminated.
+                // dispose() is idempotent and a no-op for messages that got encoded.
+                return connection.outbound().send(message.encode(this.byteBufAllocator)).then().doFinally(ignore -> message.dispose());
             }, 1)
             .then();
 
