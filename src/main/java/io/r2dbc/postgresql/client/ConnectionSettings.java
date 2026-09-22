@@ -49,6 +49,8 @@ public final class ConnectionSettings {
 
     private final @Nullable Duration connectTimeout;
 
+    private final @Nullable Duration responseTimeout;
+
     private final ConnectionProvider connectionProvider;
 
     private final @Nullable LoopResources loopResources;
@@ -69,10 +71,11 @@ public final class ConnectionSettings {
 
     private final boolean tcpNoDelay;
 
-    ConnectionSettings(@Nullable Duration connectTimeout, ConnectionProvider connectionProvider, @Nullable LoopResources loopResources, int maxMessageSize,
+    ConnectionSettings(@Nullable Duration connectTimeout, @Nullable Duration responseTimeout, ConnectionProvider connectionProvider, @Nullable LoopResources loopResources, int maxMessageSize,
                        Function<Throwable, LogLevel> logLevelFunction, LogLevel errorResponseLogLevel, LogLevel noticeLogLevel, SSLConfig sslConfig, Map<String, String> startupOptions,
                        boolean tcpKeepAlive, boolean tcpNoDelay) {
         this.connectTimeout = connectTimeout;
+        this.responseTimeout = responseTimeout;
         this.connectionProvider = connectionProvider;
         this.loopResources = loopResources;
         this.maxMessageSize = maxMessageSize;
@@ -102,7 +105,7 @@ public final class ConnectionSettings {
     public Builder mutate() {
         return new Builder().connectionProvider(this.connectionProvider).loopResources(this.loopResources).maxMessageSize(this.maxMessageSize)
             .errorResponseLogLevel(this.errorResponseLogLevel).noticeLogLevel(this.noticeLogLevel).exceptionLogLevel(this.logLevelFunction).sslConfig(this.sslConfig)
-            .connectTimeout(this.connectTimeout).startupOptions(this.startupOptions).tcpKeepAlive(this.tcpKeepAlive).tcpNoDelay(this.tcpNoDelay);
+            .connectTimeout(this.connectTimeout).responseTimeout(this.responseTimeout).startupOptions(this.startupOptions).tcpKeepAlive(this.tcpKeepAlive).tcpNoDelay(this.tcpNoDelay);
     }
 
     /**
@@ -115,6 +118,11 @@ public final class ConnectionSettings {
         Builder builder = mutate();
         mutator.accept(builder);
         return builder.build();
+    }
+
+    @Nullable
+    Duration getResponseTimeout() {
+        return this.responseTimeout;
     }
 
     boolean hasConnectionTimeout() {
@@ -189,6 +197,8 @@ public final class ConnectionSettings {
 
         private @Nullable Duration connectTimeout;
 
+        private @Nullable Duration responseTimeout;
+
         private ConnectionProvider connectionProvider = ConnectionProvider.newConnection();
 
         private @Nullable LoopResources loopResources = null;
@@ -218,7 +228,8 @@ public final class ConnectionSettings {
          * @return a configured {@link ConnectionSettings}
          */
         public ConnectionSettings build() {
-            return new ConnectionSettings(this.connectTimeout, this.connectionProvider, this.loopResources, this.maxMessageSize, this.exceptionLogLevel, this.errorResponseLogLevel,
+            return new ConnectionSettings(this.connectTimeout, this.responseTimeout, this.connectionProvider, this.loopResources, this.maxMessageSize, this.exceptionLogLevel,
+                this.errorResponseLogLevel,
                 this.noticeLogLevel, this.sslConfig,
                 this.startupOptions, this.tcpKeepAlive, this.tcpNoDelay);
         }
@@ -231,6 +242,25 @@ public final class ConnectionSettings {
          */
         public Builder connectTimeout(@Nullable Duration connectTimeout) {
             this.connectTimeout = connectTimeout;
+            return this;
+        }
+
+        /**
+         * Configure the client-side response inactivity timeout. Unconfigured or zero disables the timeout.
+         * While a response is outstanding, inbound bytes reset the timeout. Buffered responses awaiting
+         * consumption and COPY input waiting to be supplied by the client suspend it. Expiry closes
+         * the connection and fails all outstanding exchanges.
+         * This is not a total query timeout; even a valid long-running statement can exceed this limit.
+         *
+         * @param responseTimeout the timeout, or {@code null} to disable
+         * @return this {@link Builder}
+         * @throws IllegalArgumentException if negative or greater than {@link Long#MAX_VALUE} nanoseconds
+         * @since 1.2
+         */
+        public Builder responseTimeout(@Nullable Duration responseTimeout) {
+            Assert.isTrue(responseTimeout == null || (!responseTimeout.isNegative() && responseTimeout.compareTo(Duration.ofNanos(Long.MAX_VALUE)) <= 0),
+                "responseTimeout must be between zero and Long.MAX_VALUE nanoseconds");
+            this.responseTimeout = responseTimeout;
             return this;
         }
 

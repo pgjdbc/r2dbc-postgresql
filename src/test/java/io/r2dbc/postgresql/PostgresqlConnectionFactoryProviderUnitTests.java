@@ -91,6 +91,25 @@ final class PostgresqlConnectionFactoryProviderUnitTests {
     private final PostgresqlConnectionFactoryProvider provider = new PostgresqlConnectionFactoryProvider();
 
     @Test
+    void responseTimeoutThroughUrlAndTypedOption() {
+        PostgresqlConnectionFactory fromUrl = this.provider.create(ConnectionFactoryOptions.parse(
+            "r2dbc:postgresql://user:password@localhost/test?responseTimeout=PT0.25S"));
+        PostgresqlConnectionFactory typed = this.provider.create(builder().option(DRIVER, POSTGRESQL_DRIVER)
+            .option(HOST, "localhost").option(USER, "user")
+            .option(PostgresqlConnectionFactoryProvider.RESPONSE_TIMEOUT, Duration.ofMillis(250)).build());
+        assertThat(fromUrl.getConfiguration().getConnectionSettings()).hasFieldOrPropertyWithValue("responseTimeout", Duration.ofMillis(250));
+        assertThat(typed.getConfiguration().getConnectionSettings()).hasFieldOrPropertyWithValue("responseTimeout", Duration.ofMillis(250));
+    }
+
+    @Test
+    void rejectsInvalidResponseTimeoutFromUrl() {
+        for (String value : new String[]{"-PT1S", "invalid", "PT9223372037S"}) {
+            assertThatThrownBy(() -> this.provider.create(ConnectionFactoryOptions.parse(
+                "r2dbc:postgresql://user@localhost/test?responseTimeout=" + value))).isInstanceOf(IllegalArgumentException.class);
+        }
+    }
+
+    @Test
     void doesNotSupportWithWrongDriver() {
         assertThat(this.provider.supports(ConnectionFactoryOptions.builder()
             .option(DRIVER, "test-driver")

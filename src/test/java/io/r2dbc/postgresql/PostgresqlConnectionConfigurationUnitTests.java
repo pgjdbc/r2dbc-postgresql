@@ -34,6 +34,19 @@ import static org.mockito.Mockito.mock;
 final class PostgresqlConnectionConfigurationUnitTests {
 
     @Test
+    void responseTimeoutIsClientSideAndDisabledByDefault() {
+        PostgresqlConnectionConfiguration.Builder builder = PostgresqlConnectionConfiguration.builder().host("localhost").username("user");
+        assertThat(builder.build().getConnectionSettings()).hasFieldOrPropertyWithValue("responseTimeout", null);
+        PostgresqlConnectionConfiguration configuration = builder.responseTimeout(Duration.ofSeconds(2)).build();
+        assertThat(configuration.getConnectionSettings()).hasFieldOrPropertyWithValue("responseTimeout", Duration.ofSeconds(2));
+        assertThat(configuration.getConnectionSettings()).hasFieldOrPropertyWithValue("startupOptions", java.util.Collections.emptyMap());
+        assertThat(builder.responseTimeout(Duration.ZERO).build().getConnectionSettings()).hasFieldOrPropertyWithValue("responseTimeout", Duration.ZERO);
+        assertThat(builder.responseTimeout(null).build().getConnectionSettings()).hasFieldOrPropertyWithValue("responseTimeout", null);
+        assertThatIllegalArgumentException().isThrownBy(() -> builder.responseTimeout(Duration.ofNanos(-1)));
+        assertThatIllegalArgumentException().isThrownBy(() -> builder.responseTimeout(Duration.ofSeconds(Long.MAX_VALUE)));
+    }
+
+    @Test
     void builderNoApplicationName() {
         assertThatIllegalArgumentException().isThrownBy(() -> PostgresqlConnectionConfiguration.builder().applicationName(null))
             .withMessage("applicationName must not be null");

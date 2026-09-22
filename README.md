@@ -107,6 +107,7 @@ Mono<Connection> connectionMono = Mono.from(connectionFactory.create());
 | `sslHostnameVerifier`           | `javax.net.ssl.HostnameVerifier` implementation. _(Optional)_                                                                                                                                                                                                                                                                
 | `sslSni`                        | Enable/disable SNI to send the configured `host` name during the SSL handshake.  Defaults to `true`. _(Optional)_                                                                                                                                                                                                            
 | `statementTimeout`              | Statement timeout. _(Optional)_                                                                                                                                                                                                                                                                                              
+| `responseTimeout`               | Client-side response inactivity timeout (`Duration` or ISO-8601 duration, e.g. `PT30S`). Unconfigured or zero disables it. See [Response inactivity timeout](#response-inactivity-timeout). _(Optional)_ |
 | `targetServerType`              | Type of server to use when using multi-host operations. Supported values: `ANY`, `PRIMARY`, `SECONDARY`, `PREFER_SECONDARY`. Defaults to `ANY`. _(Optional)_                                                                                                                                                                 
 | `tcpNoDelay`                    | Enable/disable TCP NoDelay. Enabled by default. _(Optional)_                                                                                                                                                                                                                                                                 
 | `tcpKeepAlive`                  | Enable/disable TCP KeepAlive. Disabled by default. _(Optional)_                                                                                                                                                                                                                                                              
@@ -664,6 +665,41 @@ Running the JMH benchmarks builds and runs the benchmarks without running tests.
 ```bash
  $ ./mvnw clean install -Pjmh
 ```
+
+## Response inactivity timeout
+
+`responseTimeout` bounds inbound inactivity while a protocol response is outstanding.
+It is disabled by default; `null` in the builder or a zero duration also disables it.
+Negative values and values exceeding `Long.MAX_VALUE` nanoseconds are rejected.
+
+```java
+PostgresqlConnectionConfiguration.builder()
+    .host("localhost")
+    .username("postgres")
+    .password("postgres")
+    .responseTimeout(Duration.ofSeconds(30))
+    .build();
+```
+
+The equivalent URL option is `r2dbc:postgresql://postgres:postgres@localhost/postgres?responseTimeout=PT30S`.
+It is a client-side setting and does not set PostgreSQL's `statement_timeout`.
+
+Inbound bytes, including partial protocol messages and asynchronous notifications, reset the inactivity window.
+Idle connections without an outstanding exchange are unaffected. The timer is suspended while received
+responses await consumption in the driver's buffer, or while a `COPY FROM STDIN` operation awaits client input.
+It starts a fresh window when those pauses end. This avoids treating slow consumption or a paused upload as
+server unresponsiveness; it does not bound how long an application may retain a connection or buffered data.
+
+When the timeout expires, the driver closes the physical connection without waiting for a `Terminate` or
+`CancelRequest` exchange and fails outstanding exchanges with a connection resource error (SQLSTATE `08006`).
+The connection cannot be reused, and pipelined operations on that connection may fail together. Applications
+must still close their connection handles, for example through `usingWhen`, to release pool resources.
+
+This is an inactivity limit, not a total query deadline: a long result stream can continue as data arrives,
+while a valid long-running statement that produces no response can time out. It does not guarantee immediate
+cancellation of server-side work. Checks run on the connection's event loop, so a blocked event loop can delay
+expiry. `connectTimeout` still controls TCP connection establishment; the response timer applies to exchanges
+on the connected channel (including the PostgreSQL startup exchange), not the SSL handshake itself.
 
 ## License
 This project is released under version 2.0 of the [Apache License][l].

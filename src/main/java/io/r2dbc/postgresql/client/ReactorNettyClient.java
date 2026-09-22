@@ -20,6 +20,7 @@ import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoop;
@@ -35,6 +36,7 @@ import io.r2dbc.postgresql.api.PostgresqlException;
 import io.r2dbc.postgresql.message.backend.BackendKeyData;
 import io.r2dbc.postgresql.message.backend.BackendMessage;
 import io.r2dbc.postgresql.message.backend.BackendMessageDecoder;
+import io.r2dbc.postgresql.message.backend.CopyInResponse;
 import io.r2dbc.postgresql.message.backend.ErrorResponse;
 import io.r2dbc.postgresql.message.backend.Field;
 import io.r2dbc.postgresql.message.backend.NegotiateProtocolVersion;
@@ -42,6 +44,8 @@ import io.r2dbc.postgresql.message.backend.NoticeResponse;
 import io.r2dbc.postgresql.message.backend.NotificationResponse;
 import io.r2dbc.postgresql.message.backend.ParameterStatus;
 import io.r2dbc.postgresql.message.backend.ReadyForQuery;
+import io.r2dbc.postgresql.message.frontend.CopyDone;
+import io.r2dbc.postgresql.message.frontend.CopyFail;
 import io.r2dbc.postgresql.message.frontend.FrontendMessage;
 import io.r2dbc.postgresql.message.frontend.Terminate;
 import io.r2dbc.postgresql.util.Assert;
@@ -108,6 +112,8 @@ public final class ReactorNettyClient implements Client {
 
     private final Scheduler scheduler;
 
+    private final @Nullable ResponseInactivityTimeout responseTimeout;
+
     private final Supplier<PostgresConnectionClosedException> unexpected;
 
     private final Supplier<PostgresConnectionClosedException> expected;
@@ -121,6 +127,8 @@ public final class ReactorNettyClient implements Client {
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
     private final BackendMessageSubscriber messageSubscriber = new BackendMessageSubscriber();
+
+    private volatile @Nullable PostgresConnectionClosedException responseTimeoutError;
 
     private volatile Integer processId;
 
@@ -149,8 +157,6 @@ public final class ReactorNettyClient implements Client {
         Assert.requireNonNull(connection, "Connection must not be null");
         this.settings = Assert.requireNonNull(settings, "ConnectionSettings must not be null");
 
-        connection.addHandlerLast(new EnsureSubscribersCompleteChannelHandler(this.requestSink));
-        connection.addHandlerLast(new LengthFieldBasedFrameDecoder(this.settings.getMaxMessageSize(), 1, 4, -4, 0));
         this.connection = connection;
         this.byteBufAllocator = connection.outbound().alloc();
 
@@ -176,6 +182,24 @@ public final class ReactorNettyClient implements Client {
 
         EventLoop eventLoop = connection.channel().eventLoop();
         this.scheduler = Schedulers.fromExecutorService(eventLoop, eventLoop.toString());
+
+        Duration responseTimeout = settings.getResponseTimeout();
+        this.responseTimeout = responseTimeout == null || responseTimeout.isZero() ? null :
+            new ResponseInactivityTimeout(responseTimeout, this.scheduler, System::nanoTime, () -> abortResponseTimeout(responseTimeout));
+
+        connection.addHandlerLast(new EnsureSubscribersCompleteChannelHandler(this.requestSink));
+        if (this.responseTimeout != null) {
+            // Observe decrypted bytes before framing: a partial, large backend message is also activity.
+            connection.addHandlerLast(new ChannelInboundHandlerAdapter() {
+
+                @Override
+                public void channelRead(ChannelHandlerContext ctx, Object message) throws Exception {
+                    ReactorNettyClient.this.responseTimeout.onResponse();
+                    super.channelRead(ctx, message);
+                }
+            });
+        }
+        connection.addHandlerLast(new LengthFieldBasedFrameDecoder(this.settings.getMaxMessageSize(), 1, 4, -4, 0));
 
         AtomicReference<Throwable> receiveError = new AtomicReference<>();
 
@@ -543,8 +567,21 @@ public final class ReactorNettyClient implements Client {
         return joiner.toString();
     }
 
-    private void handleClose() {
+    private void abortResponseTimeout(Duration timeout) {
         if (this.isClosed.compareAndSet(false, true)) {
+            this.responseTimeoutError = new PostgresConnectionClosedException(this.context.getMessage("No inbound response for " + timeout));
+            // Close the transport before notifying application code. Neither a Terminate write nor
+            // a slow error callback may keep the unresponsive socket alive.
+            this.connection.dispose();
+            drainError(() -> this.responseTimeoutError);
+            this.requestSink.tryEmitComplete();
+        }
+    }
+
+    private void handleClose() {
+        if (this.responseTimeoutError != null) {
+            drainError(() -> this.responseTimeoutError);
+        } else if (this.isClosed.compareAndSet(false, true)) {
             drainError(unexpected);
         } else {
             drainError(expected);
@@ -561,6 +598,10 @@ public final class ReactorNettyClient implements Client {
     }
 
     private void drainError(Supplier<? extends Throwable> supplier) {
+
+        if (this.responseTimeout != null) {
+            this.responseTimeout.dispose();
+        }
 
         this.messageSubscriber.close(supplier);
 
@@ -675,6 +716,12 @@ public final class ReactorNettyClient implements Client {
         // access via DEMAND_UPDATER
         private volatile long demand;
 
+        private volatile boolean started;
+
+        private volatile boolean copyIn;
+
+        private volatile boolean copyInputEnded;
+
         private Conversation(Predicate<BackendMessage> takeUntil, FluxSink<BackendMessage> sink) {
             this.sink = sink;
             this.takeUntil = takeUntil;
@@ -786,7 +833,22 @@ public final class ReactorNettyClient implements Client {
                             return;
                         }
 
-                        sender.accept(requests);
+                        if (ReactorNettyClient.this.responseTimeout == null) {
+                            sender.accept(requests);
+                        } else {
+                            sink.onCancel(this::tryDrainLoop);
+                            AtomicBoolean started = new AtomicBoolean();
+                            sender.accept(Flux.from(requests).doOnNext(message -> {
+                                if (started.compareAndSet(false, true)) {
+                                    conversation.started = true;
+                                    ReactorNettyClient.this.responseTimeout.conversationStarted();
+                                }
+                                if (message instanceof CopyDone || message instanceof CopyFail) {
+                                    conversation.copyInputEnded = true;
+                                    updateResponseTimeout();
+                                }
+                            }));
+                        }
                     } else {
                         sink.error(new RequestQueueException("Cannot exchange messages because the request queue limit is exceeded"));
                     }
@@ -852,7 +914,7 @@ public final class ReactorNettyClient implements Client {
                 try {
                     if (this.buffer.isEmpty()) {
                         conversation = this.conversations.peek();
-                        if (conversation != null && conversation.hasDemand()) {
+                        if (conversation != null && (conversation.hasDemand() || (ReactorNettyClient.this.responseTimeout != null && conversation.isCancelled()))) {
                             emit(conversation, message);
                             emitted = true;
                         }
@@ -875,6 +937,7 @@ public final class ReactorNettyClient implements Client {
                 return;
             }
 
+            updateResponseTimeout();
             tryDrainLoop();
         }
 
@@ -918,9 +981,30 @@ public final class ReactorNettyClient implements Client {
         }
 
         private void tryDrainLoop() {
-            while (hasBufferedItems() && hasDownstreamDemand()) {
-                if (!drainLoop()) {
-                    return;
+            try {
+                while (hasBufferedItems() && hasDownstreamDemand()) {
+                    if (!drainLoop()) {
+                        return;
+                    }
+                }
+            } finally {
+                updateResponseTimeout();
+            }
+        }
+
+        private void updateResponseTimeout() {
+            ResponseInactivityTimeout timeout = ReactorNettyClient.this.responseTimeout;
+            if (timeout != null) {
+                // Consumers may drain on another thread. Sample the current buffer under the watchdog
+                // lock so a delayed pause cannot overwrite a newer resume after the buffer was drained.
+                synchronized (timeout) {
+                    Conversation conversation = this.conversations.peek();
+                    timeout.inputPending(conversation != null && conversation.copyIn && !conversation.copyInputEnded);
+                    if (hasBufferedItems()) {
+                        timeout.pause();
+                    } else {
+                        timeout.resume();
+                    }
                 }
             }
         }
@@ -948,7 +1032,7 @@ public final class ReactorNettyClient implements Client {
                         break;
                     }
 
-                    if (conversation.hasDemand()) {
+                    if (conversation.hasDemand() || (ReactorNettyClient.this.responseTimeout != null && conversation.isCancelled())) {
 
                         BackendMessage item = this.buffer.poll();
 
@@ -972,14 +1056,22 @@ public final class ReactorNettyClient implements Client {
         }
 
         private void potentiallyDemandMore(@Nullable Conversation lastConversation) {
+            updateResponseTimeout();
             if (lastConversation == null || lastConversation.hasDemand() || lastConversation.isCancelled()) {
                 demandMore();
             }
         }
 
         private void emit(Conversation conversation, BackendMessage item) {
+            if (ReactorNettyClient.this.responseTimeout != null && (item instanceof CopyInResponse || item instanceof ErrorResponse)) {
+                conversation.copyIn = item instanceof CopyInResponse;
+                updateResponseTimeout();
+            }
             if (conversation.canComplete(item)) {
                 this.conversations.poll();
+                if (conversation.started && ReactorNettyClient.this.responseTimeout != null) {
+                    ReactorNettyClient.this.responseTimeout.conversationCompleted();
+                }
                 conversation.complete(item);
             } else {
                 conversation.emit(item);
@@ -996,7 +1088,7 @@ public final class ReactorNettyClient implements Client {
 
             Conversation conversation = this.conversations.peek();
 
-            return conversation != null && conversation.hasDemand();
+            return conversation != null && (conversation.hasDemand() || (ReactorNettyClient.this.responseTimeout != null && conversation.isCancelled()));
         }
 
         private boolean hasBufferedItems() {

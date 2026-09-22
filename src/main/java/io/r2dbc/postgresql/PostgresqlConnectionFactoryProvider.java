@@ -273,6 +273,13 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
     public static final Option<Duration> STATEMENT_TIMEOUT = ConnectionFactoryOptions.STATEMENT_TIMEOUT;
 
     /**
+     * Client-side response inactivity timeout. Unconfigured or zero disables the timeout.
+     *
+     * @since 1.2
+     */
+    public static final Option<Duration> RESPONSE_TIMEOUT = Option.valueOf("responseTimeout");
+
+    /**
      * Target server type. Allowed values: any, primary, secondary, preferSecondary.
      *
      * @since 1.0
@@ -397,6 +404,7 @@ public final class PostgresqlConnectionFactoryProvider implements ConnectionFact
         mapper.from(PORT).map(OptionMapper::toInteger).to(builder::port);
         mapper.from(PREFER_ATTACHED_BUFFERS).map(OptionMapper::toBoolean).to(builder::preferAttachedBuffers);
         mapper.from(PREPARED_STATEMENT_CACHE_QUERIES).map(OptionMapper::toInteger).to(builder::preparedStatementCacheQueries);
+        mapper.from(RESPONSE_TIMEOUT).map(OptionMapper::toDuration).to(builder::responseTimeout);
         mapper.from(STATEMENT_TIMEOUT).map(OptionMapper::toDuration).to(builder::statementTimeout);
         mapper.from(TCP_KEEPALIVE).map(OptionMapper::toBoolean).to(builder::tcpKeepAlive);
         mapper.from(TCP_NODELAY).map(OptionMapper::toBoolean).to(builder::tcpNoDelay);
