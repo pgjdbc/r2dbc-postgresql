@@ -16,6 +16,8 @@
 
 package io.r2dbc.postgresql;
 
+import io.netty.util.ReferenceCountUtil;
+import io.netty.util.ReferenceCounted;
 import io.r2dbc.postgresql.api.CopyInBuilder;
 import io.r2dbc.postgresql.api.ErrorDetails;
 import io.r2dbc.postgresql.api.Notification;
@@ -58,6 +60,7 @@ import java.time.Duration;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
+import static io.r2dbc.postgresql.PostgresqlStatement.WINDOW_UNTIL;
 import static io.r2dbc.postgresql.client.TransactionStatus.IDLE;
 import static io.r2dbc.postgresql.client.TransactionStatus.OPEN;
 
@@ -231,6 +234,17 @@ final class PostgresqlConnection implements io.r2dbc.postgresql.api.PostgresqlCo
     @Override
     public CopyInBuilder copyIn(String sql) {
         return new PostgresqlCopyIn.Builder(this.resources, sql);
+    }
+
+    @Override
+    public Flux<io.r2dbc.postgresql.api.PostgresqlCopyOutResult> copyOut(String sql) {
+        ExceptionFactory factory = ExceptionFactory.withSql(sql);
+
+        return SimpleQueryMessageFlow.exchange(this.resources.getClient(), sql)
+            .windowUntil(WINDOW_UNTIL)
+            .doOnDiscard(ReferenceCounted .class, ReferenceCountUtil::release) // ensure release of rows within WindowPredicate
+            .map(messages -> PostgresqlCopyOutResult.toCopyOutResult(messages, factory));
+
     }
 
     @Override
