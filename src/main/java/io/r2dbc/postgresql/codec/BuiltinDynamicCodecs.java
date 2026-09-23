@@ -34,8 +34,6 @@ import java.util.stream.Collectors;
  */
 public class BuiltinDynamicCodecs implements CodecRegistrar {
 
-    private static final Object EMPTY = new Object();
-
     enum BuiltinCodec {
 
         HSTORE("hstore"),
@@ -47,7 +45,18 @@ public class BuiltinDynamicCodecs implements CodecRegistrar {
             public boolean isSupported() {
                 return this.jtsPresent;
             }
-        }, VECTOR("vector");
+        },
+        POSTGIS_GEOGRAPHY("geography") {
+
+            private final boolean jtsPresent = isPresent(BuiltinDynamicCodecs.class.getClassLoader(), "org.locationtech.jts.geom.Geometry");
+
+            @Override
+            public boolean isSupported() {
+                return this.jtsPresent;
+            }
+        },
+
+        VECTOR("vector");
 
         private final String name;
 
@@ -60,8 +69,6 @@ public class BuiltinDynamicCodecs implements CodecRegistrar {
             switch (this) {
                 case HSTORE:
                     return Collections.singletonList(new HStoreCodec(byteBufAllocator, oid));
-                case POSTGIS_GEOMETRY:
-                    return Collections.singletonList(new PostgisGeometryCodec(oid));
                 case VECTOR:
                     VectorCodec vectorCodec = new VectorCodec(byteBufAllocator, oid, typarray);
                     List<Codec<?>> codecs = new ArrayList<>(3);
@@ -105,17 +112,62 @@ public class BuiltinDynamicCodecs implements CodecRegistrar {
             .flatMap(it -> it.map((row, rowMetadata) -> {
 
                     String typname = row.get("typname", String.class);
-
                     BuiltinCodec lookup = BuiltinCodec.lookup(typname);
-                    if (lookup.isSupported()) {
-                        int oid = PostgresqlObjectId.toInt(row.get("oid", Long.class));
-                        int typarray = rowMetadata.contains("typarray") ? PostgresqlObjectId.toInt(row.get("typarray", Long.class)) : PostgresTypes.NO_SUCH_TYPE;
-                        lookup.createCodec(byteBufAllocator, oid, typarray).forEach(registry::addLast);
-                    }
+                    int oid = PostgresqlObjectId.toInt(row.get("oid", Long.class));
+                    int typarray = rowMetadata.contains("typarray") ? PostgresqlObjectId.toInt(row.get("typarray", Long.class)) : PostgresTypes.NO_SUCH_TYPE;
 
-                    return EMPTY;
+                    return new DiscoveredType(lookup, oid, typarray);
                 })
-            ).then();
+            )
+            .collectList()
+            .doOnNext(types -> registerCodecs(types, byteBufAllocator, registry))
+            .then();
+    }
+
+    void registerCodecs(List<DiscoveredType> types, ByteBufAllocator byteBufAllocator, CodecRegistry registry) {
+
+        int geometryOid = PostgresTypes.NO_SUCH_TYPE;
+        int geographyOid = PostgresTypes.NO_SUCH_TYPE;
+
+        for (DiscoveredType discovered : types) {
+
+            if (!discovered.codec.isSupported()) {
+                continue;
+            }
+
+            switch (discovered.codec) {
+                case POSTGIS_GEOMETRY:
+                    geometryOid = discovered.oid;
+                    continue;
+                case POSTGIS_GEOGRAPHY:
+                    geographyOid = discovered.oid;
+                    continue;
+                default:
+                    discovered.codec.createCodec(byteBufAllocator, discovered.oid, discovered.typarray).forEach(registry::addLast);
+            }
+        }
+
+        // geometry and geography share a single codec so that a plain JTS Geometry is unambiguous for encoding; Postgres applies its own
+        // geometry -> geography implicit cast wherever a geography value is actually required.
+        if (geometryOid != PostgresTypes.NO_SUCH_TYPE) {
+            registry.addLast(new PostgisCodec(geometryOid, geographyOid));
+        }
+    }
+
+    static final class DiscoveredType {
+
+        private final BuiltinCodec codec;
+
+        private final int oid;
+
+        private final int typarray;
+
+        DiscoveredType(BuiltinCodec codec, int oid, int typarray) {
+            this.codec = codec;
+            this.oid = oid;
+            this.typarray = typarray;
+        }
+
     }
 
     private PostgresqlStatement createQuery(PostgresqlConnection connection) {
