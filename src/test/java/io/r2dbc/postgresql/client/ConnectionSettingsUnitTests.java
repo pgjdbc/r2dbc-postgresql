@@ -34,6 +34,16 @@ import static org.mockito.Mockito.mock;
 final class ConnectionSettingsUnitTests {
 
     @Test
+    void responseTimeoutSurvivesMutationAndValidatesRange() {
+        ConnectionSettings settings = ConnectionSettings.builder().responseTimeout(Duration.ofSeconds(2)).build();
+        assertThat(settings.mutate().build().getResponseTimeout()).isEqualTo(Duration.ofSeconds(2));
+        assertThat(settings.mutate().responseTimeout(null).build().getResponseTimeout()).isNull();
+        assertThat(settings.mutate().responseTimeout(Duration.ZERO).build().getResponseTimeout()).isEqualTo(Duration.ZERO);
+        assertThatIllegalArgumentException().isThrownBy(() -> ConnectionSettings.builder().responseTimeout(Duration.ofNanos(-1)));
+        assertThatIllegalArgumentException().isThrownBy(() -> ConnectionSettings.builder().responseTimeout(Duration.ofSeconds(Long.MAX_VALUE)));
+    }
+
+    @Test
     void builderNoConnectionProvider() {
         assertThatIllegalArgumentException().isThrownBy(() -> ConnectionSettings.builder().connectionProvider(null))
             .withMessage("connectionProvider must not be null");

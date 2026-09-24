@@ -90,6 +90,8 @@ public final class PostgresqlConnectionConfiguration {
 
     private final @Nullable Duration connectTimeout;
 
+    private final @Nullable Duration responseTimeout;
+
     private final String database;
 
     private final LogLevel errorResponseLogLevel;
@@ -135,7 +137,8 @@ public final class PostgresqlConnectionConfiguration {
     private final Publisher<String> username;
 
     private PostgresqlConnectionConfiguration(String applicationName, boolean autodetectExtensions, ChannelBindingMode channelBindingMode, boolean compatibilityMode, @Nullable Duration connectTimeout,
-                                              @Nullable String database, LogLevel errorResponseLogLevel, List<Extension> extensions, @Nullable Function<Throwable, LogLevel> exceptionLogLevel,
+                                              @Nullable String database, @Nullable Duration responseTimeout, LogLevel errorResponseLogLevel, List<Extension> extensions,
+                                              @Nullable Function<Throwable, LogLevel> exceptionLogLevel,
                                               ToIntFunction<String> fetchSize, boolean forceBinary, @Nullable Duration lockWaitTimeout, @Nullable LoopResources loopResources, int maxMessageSize,
                                               @Nullable MultiHostConfiguration multiHostConfiguration, LogLevel noticeLogLevel, @Nullable Map<String, String> options,
                                               @Nullable Publisher<CharSequence> password, boolean preferAttachedBuffers, int preparedStatementCacheQueries,
@@ -146,6 +149,7 @@ public final class PostgresqlConnectionConfiguration {
         this.channelBindingMode = Assert.requireNonNull(channelBindingMode, "channelBindingMode must not be null");
         this.compatibilityMode = compatibilityMode;
         this.connectTimeout = connectTimeout;
+        this.responseTimeout = responseTimeout;
         this.errorResponseLogLevel = errorResponseLogLevel;
         this.exceptionLogLevel = exceptionLogLevel;
         this.extensions = Assert.requireNonNull(extensions, "extensions must not be null");
@@ -200,6 +204,7 @@ public final class PostgresqlConnectionConfiguration {
             ", channelBindingMode=" + this.channelBindingMode +
             ", compatibilityMode=" + this.compatibilityMode +
             ", connectTimeout=" + this.connectTimeout +
+            ", responseTimeout=" + this.responseTimeout +
             ", errorResponseLogLevel=" + this.errorResponseLogLevel +
             ", database='" + this.database + '\'' +
             ", extensions=" + this.extensions +
@@ -344,6 +349,7 @@ public final class PostgresqlConnectionConfiguration {
 
         return builder
             .connectTimeout(getConnectTimeout())
+            .responseTimeout(this.responseTimeout)
             .errorResponseLogLevel(this.errorResponseLogLevel)
             .noticeLogLevel(this.noticeLogLevel)
             .sslConfig(getSslConfig())
@@ -382,6 +388,8 @@ public final class PostgresqlConnectionConfiguration {
         private boolean compatibilityMode = false;
 
         private @Nullable Duration connectTimeout;
+
+        private @Nullable Duration responseTimeout;
 
         private @Nullable String database;
 
@@ -514,6 +522,7 @@ public final class PostgresqlConnectionConfiguration {
             }
 
             return new PostgresqlConnectionConfiguration(this.applicationName, this.autodetectExtensions, this.channelBindingMode, this.compatibilityMode, this.connectTimeout, this.database,
+                this.responseTimeout,
                 this.errorResponseLogLevel, this.extensions, this.exceptionLogLevel, this.fetchSize, this.forceBinary, this.lockWaitTimeout, this.loopResources, this.maxMessageSize,
                 multiHostConfiguration, this.noticeLogLevel, this.options, this.password, this.preferAttachedBuffers, this.preparedStatementCacheQueries, this.schema, singleHostConfiguration,
                 this.createSslConfig(this.sslSni), this.statementTimeout, this.tcpKeepAlive, this.tcpNoDelay, this.timeZone, this.username);
@@ -540,6 +549,25 @@ public final class PostgresqlConnectionConfiguration {
          */
         public Builder connectTimeout(@Nullable Duration connectTimeout) {
             this.connectTimeout = connectTimeout;
+            return this;
+        }
+
+        /**
+         * Configure the client-side response inactivity timeout. Unconfigured or zero disables the timeout.
+         * While a response is outstanding, inbound bytes reset the timeout. Buffered responses awaiting
+         * consumption and COPY input waiting to be supplied by the client suspend it. Expiry closes
+         * the connection and fails all outstanding exchanges.
+         * This is not a total query timeout; even a valid long-running statement can exceed this limit.
+         *
+         * @param responseTimeout the timeout, or {@code null} to disable
+         * @return this {@link Builder}
+         * @throws IllegalArgumentException if negative or greater than {@link Long#MAX_VALUE} nanoseconds
+         * @since 1.2
+         */
+        public Builder responseTimeout(@Nullable Duration responseTimeout) {
+            Assert.isTrue(responseTimeout == null || (!responseTimeout.isNegative() && responseTimeout.compareTo(Duration.ofNanos(Long.MAX_VALUE)) <= 0),
+                "responseTimeout must be between zero and Long.MAX_VALUE nanoseconds");
+            this.responseTimeout = responseTimeout;
             return this;
         }
 
@@ -1203,6 +1231,7 @@ public final class PostgresqlConnectionConfiguration {
                 ", autodetectExtensions='" + this.autodetectExtensions + '\'' +
                 ", channelBindingMode='" + this.channelBindingMode + '\'' +
                 ", compatibilityMode='" + this.compatibilityMode + '\'' +
+                ", responseTimeout='" + this.responseTimeout + '\'' +
                 ", connectTimeout='" + this.connectTimeout + '\'' +
                 ", database='" + this.database + '\'' +
                 ", extensions='" + this.extensions + '\'' +
