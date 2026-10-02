@@ -16,6 +16,7 @@
 
 package io.r2dbc.postgresql;
 
+import io.netty.buffer.ByteBuf;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.client.*;
 import io.r2dbc.postgresql.codec.MockCodecs;
@@ -23,7 +24,10 @@ import io.r2dbc.postgresql.message.backend.*;
 import io.r2dbc.postgresql.message.frontend.*;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import org.junit.jupiter.api.Test;
+import org.reactivestreams.Subscription;
+import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.Arrays;
@@ -31,6 +35,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static io.r2dbc.postgresql.client.EncodedParameter.NULL_VALUE;
 import static io.r2dbc.postgresql.codec.PostgresqlObjectId.INT4;
@@ -166,6 +171,42 @@ final class PostgresqlStatementUnitTests {
             .flatMap(PostgresqlResult::getRowsUpdated)
             .as(StepVerifier::create)
             .verifyError(R2dbcNonTransientResourceException.class);
+    }
+
+    @Test
+    void executeCancelledWhileEncodingReleasesEncodedValues() {
+        ByteBuf first = TEST.buffer(4).writeInt(100);
+        ByteBuf second = TEST.buffer(4).writeInt(200);
+        AtomicReference<Subscription> rowsUpdated = new AtomicReference<>();
+
+        // A cancellation, for example from another thread, arrives while the values are being encoded
+        Mono<ByteBuf> secondValue = Mono.fromSupplier(() -> {
+            rowsUpdated.get().cancel();
+            return second;
+        });
+
+        MockCodecs codecs = MockCodecs.builder()
+            .encoding(100, new EncodedParameter(FORMAT_BINARY, INT4.getObjectId(), Mono.just(first)))
+            .encoding(200, new EncodedParameter(FORMAT_BINARY, INT4.getObjectId(), secondValue))
+            .build();
+
+        PostgresqlResult result = new PostgresqlStatement(MockContext.builder().codecs(codecs).build(), "test-query-$1-$2")
+            .bind("$1", 100)
+            .bind("$2", 200)
+            .execute()
+            .blockFirst();
+
+        result.getRowsUpdated().subscribe(new BaseSubscriber<Long>() {
+
+            @Override
+            protected void hookOnSubscribe(Subscription subscription) {
+                rowsUpdated.set(subscription);
+                subscription.request(1);
+            }
+        });
+
+        assertThat(first.refCnt()).isZero();
+        assertThat(second.refCnt()).isZero();
     }
 
     @Test

@@ -286,7 +286,8 @@ final class PostgresqlStatement implements io.r2dbc.postgresql.api.PostgresqlSta
                     return ByteBufUtils.aggregate(f, allocator);
                 }
             })
-            .collectList();
+            .collectList()
+            .doOnDiscard(ReferenceCounted.class, ReferenceCountUtil::release); // release values a cancellation drops before the query takes them over
     }
 
     private void clearBindings(Iterator<Binding> iterator, AtomicBoolean canceled) {
