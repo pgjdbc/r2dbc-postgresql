@@ -44,15 +44,21 @@ final class PostgisGeometryCodec implements Codec<Geometry>, CodecMetadata {
 
     private static final Class<Geometry> TYPE = Geometry.class;
 
-    private final GeometryFactory geometryFactory = new GeometryFactory();
+    private static final GeometryFactory GEOMETRY_FACTORY = new GeometryFactory();
 
     private final int oid;
 
+    private final boolean encoder;
+
     /**
      * Create a new {@link PostgisGeometryCodec}.
+     *
+     * @param oid     the OID of the PostGIS type
+     * @param encoder whether this codec encodes {@link Geometry} values
      */
-    PostgisGeometryCodec(int oid) {
+    PostgisGeometryCodec(int oid, boolean encoder) {
         this.oid = oid;
+        this.encoder = encoder;
     }
 
     @Override
@@ -68,14 +74,14 @@ final class PostgisGeometryCodec implements Codec<Geometry>, CodecMetadata {
     public boolean canEncode(Object value) {
         Assert.requireNonNull(value, "value must not be null");
 
-        return TYPE.isInstance(value);
+        return this.encoder && TYPE.isInstance(value);
     }
 
     @Override
     public boolean canEncodeNull(Class<?> type) {
         Assert.requireNonNull(type, "type must not be null");
 
-        return TYPE.isAssignableFrom(type);
+        return this.encoder && TYPE.isAssignableFrom(type);
     }
 
     @Override
@@ -87,7 +93,7 @@ final class PostgisGeometryCodec implements Codec<Geometry>, CodecMetadata {
         Assert.isTrue(format == FORMAT_TEXT, "format must be FORMAT_TEXT");
 
         try {
-            return new WKBReader(this.geometryFactory).read(WKBReader.hexToBytes(ByteBufUtils.decode(buffer)));
+            return new WKBReader(GEOMETRY_FACTORY).read(WKBReader.hexToBytes(ByteBufUtils.decode(buffer)));
         } catch (ParseException e) {
             throw new IllegalArgumentException(e);
         }
@@ -95,19 +101,19 @@ final class PostgisGeometryCodec implements Codec<Geometry>, CodecMetadata {
 
     @Override
     public EncodedParameter encode(Object value) {
+        return encode(value, this.oid);
+    }
+
+    @Override
+    public EncodedParameter encode(Object value, int dataType) {
         Assert.requireType(value, Geometry.class, "value must be Geometry type");
         Geometry geometry = (Geometry) value;
 
         WKBWriter writer = new WKBWriter(2, true);
 
-        return new EncodedParameter(FORMAT_BINARY, this.oid, Mono.fromSupplier(
+        return new EncodedParameter(FORMAT_BINARY, dataType, Mono.fromSupplier(
             () -> Unpooled.wrappedBuffer(writer.write(geometry))
         ));
-    }
-
-    @Override
-    public EncodedParameter encode(Object value, int dataType) {
-        return encode(value);
     }
 
     @Override

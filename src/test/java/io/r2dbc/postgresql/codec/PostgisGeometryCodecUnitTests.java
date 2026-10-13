@@ -55,7 +55,7 @@ final class PostgisGeometryCodecUnitTests {
 
     private static final int dataType = 23456;
 
-    private final PostgisGeometryCodec codec = new PostgisGeometryCodec(dataType);
+    private final PostgisGeometryCodec codec = new PostgisGeometryCodec(dataType, true);
 
     private final WKBWriter wkbWriter = new WKBWriter();
 
@@ -116,6 +116,15 @@ final class PostgisGeometryCodecUnitTests {
     }
 
     @Test
+    void canEncodeDecodeOnly() {
+        PostgisGeometryCodec decodeOnly = new PostgisGeometryCodec(dataType, false);
+
+        assertThat(decodeOnly.canEncode(this.geometryFactory.createPoint())).isFalse();
+        assertThat(decodeOnly.canEncodeNull(Geometry.class)).isFalse();
+        assertThat(decodeOnly.canDecode(dataType, FORMAT_TEXT, Geometry.class)).isTrue();
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     void decode() {
         byte[] pointBytes = this.wkbWriter.write(this.point);
@@ -141,6 +150,16 @@ final class PostgisGeometryCodecUnitTests {
     }
 
     @Test
+    void encodeWithDataType() {
+        ByteBuf encoded = Unpooled.wrappedBuffer(new WKBWriter(2, true).write(this.point));
+
+        ParameterAssert.assertThat(this.codec.encode(this.point, 34567))
+            .hasFormat(FORMAT_BINARY)
+            .hasType(34567)
+            .hasValue(encoded);
+    }
+
+    @Test
     void encodeNoValue() {
         assertThatIllegalArgumentException().isThrownBy(() -> this.codec.encode(null))
             .withMessage("value must not be null");
@@ -148,7 +167,7 @@ final class PostgisGeometryCodecUnitTests {
 
     @Test
     void encodeNull() {
-        assertThat(new PostgisGeometryCodec(dataType).encodeNull())
+        assertThat(new PostgisGeometryCodec(dataType, true).encodeNull())
             .isEqualTo(new EncodedParameter(FORMAT_BINARY, dataType, NULL_VALUE));
     }
 

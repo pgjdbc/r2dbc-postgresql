@@ -36,16 +36,22 @@ public class BuiltinDynamicCodecs implements CodecRegistrar {
 
     private static final Object EMPTY = new Object();
 
+    private static final boolean JTS_PRESENT = isPresent(BuiltinDynamicCodecs.class.getClassLoader(), "org.locationtech.jts.geom.Geometry");
+
     enum BuiltinCodec {
 
         HSTORE("hstore"),
         POSTGIS_GEOMETRY("geometry") {
 
-            private final boolean jtsPresent = isPresent(BuiltinDynamicCodecs.class.getClassLoader(), "org.locationtech.jts.geom.Geometry");
+            @Override
+            public boolean isSupported() {
+                return JTS_PRESENT;
+            }
+        }, POSTGIS_GEOGRAPHY("geography") {
 
             @Override
             public boolean isSupported() {
-                return this.jtsPresent;
+                return JTS_PRESENT;
             }
         }, VECTOR("vector");
 
@@ -61,7 +67,10 @@ public class BuiltinDynamicCodecs implements CodecRegistrar {
                 case HSTORE:
                     return Collections.singletonList(new HStoreCodec(byteBufAllocator, oid));
                 case POSTGIS_GEOMETRY:
-                    return Collections.singletonList(new PostgisGeometryCodec(oid));
+                    return Collections.singletonList(new PostgisGeometryCodec(oid, true));
+                case POSTGIS_GEOGRAPHY:
+                    // decode-only so that Geometry values encode as geometry; Postgres casts geometry to geography implicitly
+                    return Collections.singletonList(new PostgisGeometryCodec(oid, false));
                 case VECTOR:
                     VectorCodec vectorCodec = new VectorCodec(byteBufAllocator, oid, typarray);
                     List<Codec<?>> codecs = new ArrayList<>(3);

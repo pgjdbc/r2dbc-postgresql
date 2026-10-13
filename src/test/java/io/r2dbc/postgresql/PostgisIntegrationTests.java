@@ -18,9 +18,11 @@ package io.r2dbc.postgresql;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.CoordinateSequence;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.PrecisionModel;
 import org.locationtech.jts.geom.impl.PackedCoordinateSequenceFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -81,6 +83,44 @@ final class PostgisIntegrationTests extends AbstractIntegrationTests {
             assertThat(actual).isEqualTo(point);
             assertThat(((Point) actual).getSRID()).isEqualTo(point.getSRID());
         }).verifyComplete();
+    }
+
+    @Test
+    void shouldWriteGeometryValueIntoGeographyColumnViaImplicitCast() {
+
+        JdbcOperations jdbcOperations = SERVER.getJdbcOperations();
+
+        jdbcOperations.execute("DROP TABLE IF EXISTS geo_test_geography");
+        jdbcOperations.execute("CREATE TABLE geo_test_geography (geog geography(Point, 4326))");
+
+        GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
+        Point point = geometryFactory.createPoint(new Coordinate(-73.985428, 40.748817));
+
+        this.connection.createStatement("INSERT INTO geo_test_geography VALUES($1)").bind("$1", point).execute().flatMap(it -> it.getRowsUpdated()).then().as(StepVerifier::create).verifyComplete();
+
+        this.connection.createStatement("SELECT * FROM geo_test_geography").execute().flatMap(it -> it.map(row -> row.get("geog"))).as(StepVerifier::create).consumeNextWith(actual -> {
+            assertThat(actual).isEqualTo(point);
+        }).verifyComplete();
+    }
+
+    @Test
+    void shouldResolveWhereClauseOperatorAgainstGeographyColumn() {
+
+        JdbcOperations jdbcOperations = SERVER.getJdbcOperations();
+
+        jdbcOperations.execute("DROP TABLE IF EXISTS geo_test_geography_where");
+        jdbcOperations.execute("CREATE TABLE geo_test_geography_where (geog geography(Point, 4326))");
+
+        GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
+        Point point = geometryFactory.createPoint(new Coordinate(-73.985428, 40.748817));
+
+        jdbcOperations.update("INSERT INTO geo_test_geography_where VALUES(ST_GeogFromText(?))", String.format("SRID=4326;POINT(%s %s)", point.getX(), point.getY()));
+
+        this.connection.createStatement("SELECT * FROM geo_test_geography_where WHERE geog = $1").bind("$1", point).execute()
+            .flatMap(it -> it.map(row -> row.get("geog")))
+            .as(StepVerifier::create)
+            .consumeNextWith(actual -> assertThat(actual).isEqualTo(point))
+            .verifyComplete();
     }
 
 }
