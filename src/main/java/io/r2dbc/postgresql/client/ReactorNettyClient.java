@@ -27,6 +27,7 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.resolver.AddressResolverGroup;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -62,7 +63,10 @@ import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.netty.Connection;
 import reactor.netty.channel.AbortedException;
+import reactor.netty.resources.LoopResources;
 import reactor.netty.tcp.TcpClient;
+import reactor.netty.tcp.TcpClientConfig;
+import reactor.netty.transport.NameResolverProvider;
 import reactor.util.Logger;
 import reactor.util.Loggers;
 import reactor.util.concurrent.Queues;
@@ -71,11 +75,14 @@ import reactor.util.context.Context;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.StringJoiner;
 import java.util.TimeZone;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
@@ -99,6 +106,11 @@ public final class ReactorNettyClient implements Client {
     private static final Logger logger = Loggers.getLogger(ReactorNettyClient.class);
 
     private static final boolean DEBUG_ENABLED = logger.isDebugEnabled();
+
+    private static final NameResolverProvider NAME_RESOLVER_PROVIDER = NameResolverProvider.builder().roundRobinSelection(true).build();
+
+    // Shared across connections, a resolver group per connection leaks its UDP sockets.
+    private static final ConcurrentMap<List<Object>, AddressResolverGroup<?>> RESOLVERS = new ConcurrentHashMap<>();
 
     private final ByteBufAllocator byteBufAllocator;
 
@@ -407,23 +419,7 @@ public final class ReactorNettyClient implements Client {
         Assert.requireNonNull(socketAddress, "socketAddress must not be null");
         Assert.requireNonNull(settings, "settings must not be null");
 
-        TcpClient tcpClient = TcpClient.create(settings.getConnectionProvider()).remoteAddress(() -> socketAddress);
-
-        if (settings.hasLoopResources()) {
-            tcpClient = tcpClient.runOn(settings.getRequiredLoopResources());
-        }
-
-        if (socketAddress instanceof InetSocketAddress) {
-            tcpClient = tcpClient.resolver(it -> it.roundRobinSelection(true));
-            tcpClient = tcpClient.option(ChannelOption.SO_KEEPALIVE, settings.isTcpKeepAlive());
-            tcpClient = tcpClient.option(ChannelOption.TCP_NODELAY, settings.isTcpNoDelay());
-        }
-
-        if (settings.hasConnectionTimeout()) {
-            tcpClient = tcpClient.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, settings.getConnectTimeoutMs());
-        }
-
-        return tcpClient.doOnChannelInit((observer, channel, remoteAddress) -> {
+        return createTcpClient(socketAddress, settings).doOnChannelInit((observer, channel, remoteAddress) -> {
             ChannelPipeline pipeline = channel.pipeline();
 
             InternalLogger logger = InternalLoggerFactory.getInstance(ReactorNettyClient.class);
@@ -436,6 +432,40 @@ public final class ReactorNettyClient implements Client {
         }).connect().flatMap(it ->
             getSslHandshake(it.channel()).thenReturn(new ReactorNettyClient(it, settings))
         );
+    }
+
+    static TcpClient createTcpClient(SocketAddress socketAddress, ConnectionSettings settings) {
+
+        TcpClient tcpClient = TcpClient.create(settings.getConnectionProvider()).remoteAddress(() -> socketAddress);
+
+        if (settings.hasLoopResources()) {
+            tcpClient = tcpClient.runOn(settings.getRequiredLoopResources());
+        }
+
+        if (socketAddress instanceof InetSocketAddress) {
+            TcpClientConfig config = tcpClient.configuration();
+            tcpClient = tcpClient.resolver(getOrCreateResolver(config.loopResources(), config.isPreferNative()));
+            tcpClient = tcpClient.option(ChannelOption.SO_KEEPALIVE, settings.isTcpKeepAlive());
+            tcpClient = tcpClient.option(ChannelOption.TCP_NODELAY, settings.isTcpNoDelay());
+        }
+
+        if (settings.hasConnectionTimeout()) {
+            tcpClient = tcpClient.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, settings.getConnectTimeoutMs());
+        }
+
+        return tcpClient;
+    }
+
+    private static AddressResolverGroup<?> getOrCreateResolver(LoopResources loopResources, boolean preferNative) {
+
+        List<Object> key = Arrays.asList(loopResources, preferNative);
+        AddressResolverGroup<?> resolver = RESOLVERS.get(key);
+
+        if (resolver != null) {
+            return resolver;
+        }
+
+        return RESOLVERS.computeIfAbsent(key, it -> NAME_RESOLVER_PROVIDER.newNameResolverGroup(loopResources, preferNative));
     }
 
     private static void registerSslHandler(SocketAddress socketAddress, SSLConfig sslConfig, Channel channel) {
