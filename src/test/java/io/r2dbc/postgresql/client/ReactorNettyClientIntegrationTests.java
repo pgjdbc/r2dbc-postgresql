@@ -43,6 +43,7 @@ import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.util.ReflectionUtils;
+import reactor.core.CoreSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
@@ -138,6 +139,23 @@ final class ReactorNettyClientIntegrationTests {
             .thenMany(this.client.exchange(Mono.empty()))
             .as(StepVerifier::create)
             .verifyErrorSatisfies(t -> assertThat(t).isInstanceOf(R2dbcNonTransientResourceException.class).hasMessage("Cannot exchange messages because the connection is closed"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void inboundErrorShouldCloseChannel() {
+
+        Connection connection = (Connection) ReflectionUtils.getField(CONNECTION, this.client);
+        Field field = ReflectionUtils.findField(ReactorNettyClient.class, "messageSubscriber");
+        ReflectionUtils.makeAccessible(field);
+        CoreSubscriber<BackendMessage> messageSubscriber = (CoreSubscriber<BackendMessage>) ReflectionUtils.getField(field, this.client);
+
+        messageSubscriber.onError(new ReactorNettyClient.ResponseQueueException("Response queue is full"));
+
+        connection.onDispose()
+            .as(StepVerifier::create)
+            .expectComplete()
+            .verify(Duration.ofSeconds(5));
     }
 
     @Test
