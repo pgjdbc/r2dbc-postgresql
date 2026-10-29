@@ -228,11 +228,11 @@ public final class ReactorNettyClient implements Client {
                     .doOnNext(message -> logger.debug(this.context.getMessage(String.format("Request:  %s", message))))
                     .concatMap(message -> this.connection.outbound().send(message.encode(this.connection.outbound().alloc())))
                     .then()
-                    .doOnSuccess(v -> this.connection.dispose())
+                    .doFinally(s -> this.connection.dispose())
                     .then(this.connection.onDispose());
             }
 
-            return Mono.empty();
+            return this.connection.channel().isOpen() ? closeConnection() : Mono.empty();
         });
     }
 
