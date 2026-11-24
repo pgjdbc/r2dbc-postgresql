@@ -1334,11 +1334,15 @@ public final class PostgresqlConnectionConfiguration {
 
             return () -> {
                 try {
-                    return this.sslContextBuilderCustomizer.apply(sslContextBuilder).build();
+                    return buildSslContext(this.sslContextBuilderCustomizer.apply(sslContextBuilder));
                 } catch (SSLException e) {
                     throw new IllegalStateException("Failed to create SslContext", e);
                 }
             };
+        }
+
+        private static SslContext buildSslContext(SslContextBuilder builder) throws SSLException {
+            return builder.build();
         }
 
         private SingleHostConfiguration.Builder prepareSingleHostConfiguration() {

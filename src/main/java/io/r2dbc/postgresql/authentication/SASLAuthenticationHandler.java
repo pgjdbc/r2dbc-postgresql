@@ -124,7 +124,7 @@ public class SASLAuthenticationHandler implements AuthenticationHandler {
             builder.channelBinding(TlsServerEndpoint.TLS_SERVER_END_POINT, extractSslEndpoint(sslSession));
         }
 
-        this.scramClient = builder.build();
+        this.scramClient = buildScramClient(builder);
 
         // The SCRAM library silently downgrades to a non-bound mechanism if the server does not advertise SCRAM-SHA-256-PLUS (or no channel binding data is available). Reject this when channel
         // binding was required to prevent a man-in-the-middle from stripping the -PLUS mechanism.
@@ -133,6 +133,10 @@ public class SASLAuthenticationHandler implements AuthenticationHandler {
         }
 
         return new SASLInitialResponse(ByteBufferUtils.encode(this.scramClient.clientFirstMessage().toString()), this.scramClient.getScramMechanism().getName());
+    }
+
+    private static ScramClient buildScramClient(ScramClient.FinalBuildStage builder) {
+        return builder.build();
     }
 
     private static byte[] extractSslEndpoint(SSLSession sslSession) {

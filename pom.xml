@@ -41,6 +41,7 @@
         <jmh.version>1.37</jmh.version>
         <mbr.version>1.0.0</mbr.version>
         <logback.version>1.5.38</logback.version>
+        <blockhound.version>1.0.19.RELEASE</blockhound.version>
         <mockito.version>4.11.0</mockito.version>
         <netty.version>4.2.18.Final</netty.version>
         <postgresql.version>42.7.13</postgresql.version>
@@ -120,6 +121,12 @@
     </dependencyManagement>
 
     <dependencies>
+        <dependency>
+            <groupId>io.projectreactor.tools</groupId>
+            <artifactId>blockhound</artifactId>
+            <version>${blockhound.version}</version>
+            <optional>true</optional>
+        </dependency>
         <dependency>
             <groupId>io.r2dbc</groupId>
             <artifactId>r2dbc-spi</artifactId>
